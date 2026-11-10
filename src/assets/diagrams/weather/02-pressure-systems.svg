@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 430" role="img" aria-labelledby="ti de"><title id="ti">High and low pressure systems</title><desc id="de">Two circles seen from above, Northern Hemisphere. Around a high pressure area, air circulates clockwise, called anticyclonic, with dry descending air and typically good weather. Around a low pressure area, air circulates counterclockwise, called cyclonic, flowing in to replace rising air, with increasing cloudiness and precipitation.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="s m" x="365" y="26" style="font-size:17px">Northern Hemisphere</text>
+<text class="t m" x="185" y="62">High pressure</text>
+<circle class="o sky" cx="185" cy="165" r="78"/>
+<path class="acc" d="M212 92A78 78 0 0 1 262 151"/><path class="ah" d="M263 160L252 147L270 144z"/>
+<path class="acc" d="M258 192A78 78 0 0 1 199 242"/><path class="ah" d="M190 243L203 232L206 250z"/>
+<path class="acc" d="M158 238A78 78 0 0 1 108 179"/><path class="ah" d="M107 170L118 183L100 186z"/>
+<path class="acc" d="M112 138A78 78 0 0 1 171 88"/><path class="ah" d="M180 87L167 98L164 80z"/>
+<text class="t m" x="185" y="150" style="font-size:30px">H</text>
+<path class="dk" d="M185 168L185 210"/><path class="dh" d="M185 222L176 208L194 208z"/>
+<text class="t m" x="545" y="62">Low pressure</text>
+<circle class="o rose" cx="545" cy="165" r="78"/>
+<path class="acc" d="M622 151A78 78 0 0 0 572 92"/><path class="ah" d="M563 89L580 85L574 102z"/>
+<path class="acc" d="M559 242A78 78 0 0 0 618 192"/><path class="ah" d="M621 183L625 200L608 194z"/>
+<path class="acc" d="M468 179A78 78 0 0 0 518 238"/><path class="ah" d="M527 241L510 245L516 228z"/>
+<path class="acc" d="M531 88A78 78 0 0 0 472 138"/><path class="ah" d="M469 147L465 130L482 136z"/>
+<text class="t m" x="545" y="150" style="font-size:30px">L</text>
+<path class="dk" d="M545 222L545 180"/><path class="dh" d="M545 168L554 182L536 182z"/>
+<text class="s m" x="185" y="266" style="font-size:19px">Sinking air</text>
+<text class="s m" x="545" y="266" style="font-size:19px">Rising air</text>
+<text class="t m" x="185" y="300" style="font-size:20px">Clockwise (anticyclonic)</text>
+<text class="s m" x="185" y="326">Dry, descending air</text>
+<text class="s m" x="185" y="352">Good weather typical</text>
+<text class="t m" x="545" y="300" style="font-size:20px">Counterclockwise (cyclonic)</text>
+<text class="s m" x="545" y="326">Air flows in, replaces rising air</text>
+<text class="s m" x="545" y="352">Increasing cloudiness, precipitation</text>
+<text class="s m" x="365" y="408">Air flows from high pressure toward low pressure.</text>
+</svg>

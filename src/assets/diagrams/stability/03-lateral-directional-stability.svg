@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 817" role="img" aria-labelledby="ti de"><title id="ti">Lateral and directional stability: what makes the airplane self-righting</title><desc id="de">Four lateral stability design factors: dihedral, sweepback, keel effect and weight distribution. Dihedral: outer wing tips higher than the roots; in a sideslip the wing slipping into the wind has more AOA and lift, which raises the windward wing. As a rough estimate 10 degrees of sweepback gives about 1 degree of effective dihedral and a high wing gives about 5 degrees more than a low wing. Sweepback: the low wing presents its leading edge more perpendicular to the airflow, gains lift and rises. Keel effect: the fuselage acts like a keel, with most keel area above the CG, and its weight acts like a pendulum. Directional stability: more side area aft of the CG than ahead plus a vertical fin makes the airplane act like a weather vane; the pilot must reestablish the original heading. Drawings are schematic.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Lateral and directional stability: what makes the airplane self-righting</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Lateral (rolling) stability has four design factors: dihedral, sweepback, keel effect and weight</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">distribution. Directional (yawing) stability comes mostly from the fin. Drawings are schematic.</text>
+<rect x="20" y="91.0" width="337" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="108.0" style="font-size:13px">Dihedral</text>
+<rect class="cl" x="20" y="121.0" width="337" height="104" rx="8"/>
+<path d="M70 183.0L307 183.0" class="dk" style="stroke-width:1.2;opacity:0.6;stroke-dasharray:6 5"/>
+<path d="M78.5 161.0L188.5 183.0L298.5 161.0" class="dk" style="stroke-width:4;opacity:1"/>
+<ellipse cx="188.5" cy="181.0" rx="12" ry="14" class="sky" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t" x="76.5" y="153.0" style="font-size:11.5px">tip higher than root</text>
+<text class="s m" x="188.5" y="219.0" style="font-size:10.5px">rear view, nose toward you (schematic)</text>
+<circle cx="31" cy="243.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="247.0" style="font-size:11.5px">Outer wing tips higher than the wing roots</text>
+<circle cx="31" cy="262.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="266.0" style="font-size:11.5px">A gust rolls the airplane and the sideslip brings</text>
+<text class="s" x="40" y="281.0" style="font-size:11.5px">the relative wind from the side: the wing slipping</text>
+<text class="s" x="40" y="296.0" style="font-size:11.5px">into the wind has more AOA and lift, the other wing</text>
+<text class="s" x="40" y="311.0" style="font-size:11.5px">less</text>
+<circle cx="31" cy="326.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="330.0" style="font-size:11.5px">The change in lift gives a rolling moment that</text>
+<text class="s" x="40" y="345.0" style="font-size:11.5px">raises the windward wing: stable roll due to</text>
+<text class="s" x="40" y="360.0" style="font-size:11.5px">sideslip</text>
+<circle cx="31" cy="375.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="379.0" style="font-size:11.5px">Rough estimates: 10 degrees of sweepback gives</text>
+<text class="s" x="40" y="394.0" style="font-size:11.5px">about 1 degree of effective dihedral; a high wing</text>
+<text class="s" x="40" y="409.0" style="font-size:11.5px">gives about 5 degrees more effective dihedral than</text>
+<text class="s" x="40" y="424.0" style="font-size:11.5px">a low wing</text>
+<rect x="373" y="91.0" width="337" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="108.0" style="font-size:13px">Sweepback</text>
+<rect class="cl" x="373" y="121.0" width="337" height="104" rx="8"/>
+<path d="M535.5 135.0L535.5 213.0L541.5 219.0L547.5 213.0L547.5 135.0Q541.5 127.0 535.5 135.0Z" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M535.5 161.0L429.5 199.0L429.5 211.0L535.5 189.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M547.5 161.0L653.5 199.0L653.5 211.0L547.5 189.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M535.5 205.0L505.5 213.0L505.5 219.0L535.5 217.0Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M547.5 205.0L577.5 213.0L577.5 219.0L547.5 217.0Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<text class="s m" x="441.5" y="157.0" style="font-size:11px">leading edge</text>
+<text class="s m" x="441.5" y="170.0" style="font-size:11px">slopes backward</text>
+<text class="s m" x="448" y="143.0" style="font-size:10.5px">top view (schematic)</text>
+<path d="M681.5 217.0L681.5 178.0" class="dk" style="stroke-width:2"/><path d="M681.5 171.0L684.6 178.0L678.4 178.0Z" class="dh" style=""/>
+<text class="s m" x="681.5" y="163.0" style="font-size:10.5px">flight</text>
+<circle cx="384" cy="243.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="247.0" style="font-size:11.5px">A swept wing has its leading edge sloping backward</text>
+<circle cx="384" cy="262.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="266.0" style="font-size:11.5px">When a wing drops or slips, the low wing presents</text>
+<text class="s" x="393" y="281.0" style="font-size:11.5px">its leading edge more perpendicular to the relative</text>
+<text class="s" x="393" y="296.0" style="font-size:11.5px">airflow: more lift, it rises, and the attitude is</text>
+<text class="s" x="393" y="311.0" style="font-size:11.5px">restored</text>
+<circle cx="384" cy="326.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="330.0" style="font-size:11.5px">In a yaw, the forward wing gets more airspeed and</text>
+<text class="s" x="393" y="345.0" style="font-size:11.5px">drag and pulls back toward the original path; this</text>
+<text class="s" x="393" y="360.0" style="font-size:11.5px">contribution to directional stability is small</text>
+<rect x="20" y="451.0" width="337" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="468.0" style="font-size:13px">Keel effect and weight distribution</text>
+<rect class="cl" x="20" y="481.0" width="337" height="104" rx="8"/>
+<rect class="lav" x="68.5" y="509.0" width="240" height="30" style="stroke:none;fill-opacity:.55"/>
+<path d="M58.5 537.0C58.5 515.0,128.5 509.0,188.5 509.0L288.5 513.0L318.5 495.0L328.5 495.0L320.5 535.0C248.5 551.0,128.5 551.0,58.5 537.0Z" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M58.5 531.0L318.5 531.0" class="dk" style="stroke-width:1.2;opacity:0.7;stroke-dasharray:6 5"/>
+<circle cx="178.5" cy="531.0" r="5" class="ah"/>
+<text class="t m" x="178.5" y="561.0" style="font-size:11.5px">CG</text>
+<text class="t m" x="148.5" y="497.0" style="font-size:11px">greater part of the keel area is above the CG</text>
+<text class="s m" x="188.5" y="581.0" style="font-size:10.5px">side view (schematic)</text>
+<circle cx="31" cy="603.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="607.0" style="font-size:11.5px">A high wing airplane tends to turn its longitudinal</text>
+<text class="s" x="40" y="622.0" style="font-size:11.5px">axis into the relative wind (keel effect); the</text>
+<text class="s" x="40" y="637.0" style="font-size:11.5px">fuselage acts like a keel, steadying it</text>
+<circle cx="31" cy="652.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="656.0" style="font-size:11.5px">When one wing dips, the fuselage weight acts like a</text>
+<text class="s" x="40" y="671.0" style="font-size:11.5px">pendulum returning the airplane to level</text>
+<circle cx="31" cy="686.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="690.0" style="font-size:11.5px">Slipping to one side: weight plus airflow pressure</text>
+<text class="s" x="40" y="705.0" style="font-size:11.5px">on the upper keel area, both acting about the CG,</text>
+<text class="s" x="40" y="720.0" style="font-size:11.5px">roll the airplane back to wings level</text>
+<rect x="373" y="451.0" width="337" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="468.0" style="font-size:13px">Directional stability: fin and fuselage</text>
+<rect class="cl" x="373" y="481.0" width="337" height="104" rx="8"/>
+<path d="M431.5 535.0L681.5 535.0" class="dk" style="stroke-width:1.6;opacity:0.5;stroke-dasharray:6 5"/>
+<path d="M441.5 531.0L441.5 539.0L553.5 539.0L553.5 531.0Z" class="sky" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<path d="M569.5 526.0L569.5 544.0L661.5 544.0L661.5 526.0Z" class="mint" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<path d="M661.5 515.0L661.5 555.0L679.5 555.0L679.5 515.0Z" class="rose" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<circle cx="561.5" cy="535.0" r="5" class="ah"/>
+<text class="t m" x="561.5" y="559.0" style="font-size:11.5px">CG (pivot)</text>
+<text class="s m" x="497.5" y="523.0" style="font-size:11px">less side area ahead</text>
+<text class="s m" x="617.5" y="507.0" style="font-size:11px">greater side area aft</text>
+<text class="t m" x="670.5" y="571.0" style="font-size:11px">fin</text>
+<text class="s m" x="541.5" y="575.0" style="font-size:10.5px">top view, weather vane idea (schematic)</text>
+<circle cx="384" cy="603.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="607.0" style="font-size:11.5px">Directional stability is yawing stability about the</text>
+<text class="s" x="393" y="622.0" style="font-size:11.5px">vertical axis; the most easily achieved stability</text>
+<text class="s" x="393" y="637.0" style="font-size:11.5px">in design</text>
+<circle cx="384" cy="652.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="656.0" style="font-size:11.5px">Side surface greater aft than ahead of the CG, plus</text>
+<text class="s" x="393" y="671.0" style="font-size:11.5px">a vertical fin: the airplane points its nose into</text>
+<text class="s" x="393" y="686.0" style="font-size:11.5px">the relative wind like a weather vane or arrow</text>
+<circle cx="384" cy="701.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="705.0" style="font-size:11.5px">The farther aft and the larger the fin, the greater</text>
+<text class="s" x="393" y="720.0" style="font-size:11.5px">the directional stability</text>
+<circle cx="384" cy="735.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="739.0" style="font-size:11.5px">The restoring tendency is slow and ends when the</text>
+<text class="s" x="393" y="754.0" style="font-size:11.5px">skid ends; the airplane does not return to the</text>
+<text class="s" x="393" y="769.0" style="font-size:11.5px">original heading by itself and the pilot must</text>
+<text class="s" x="393" y="784.0" style="font-size:11.5px">reestablish it</text>
+</svg>

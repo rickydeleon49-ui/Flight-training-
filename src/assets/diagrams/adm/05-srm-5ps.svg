@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 635" role="img" aria-labelledby="ti de"><title id="ti">Single-pilot resource management: the 5 Ps</title><desc id="de">The 5 Ps checklist for single-pilot resource management: Plan, Plane, Pilot, Passengers, Programming. Reviewed at five decision points: preflight, pretakeoff, hourly or midpoint, pre-descent, and just before the final approach fix or traffic pattern. Managing external pressures, such as get-there-itis, with personal standard operating procedures.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Single-pilot resource management: the 5 Ps</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">SRM is about how to gather information, analyze it, and make decisions. There is no one right answer</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">in ADM: each pilot analyzes each situation in light of experience, personal minimums, and current</text>
+<text class="s" x="20" y="83.0" style="font-size:13px">physical and mental readiness.</text>
+<rect class="cl" x="20" y="107.5" width="130" height="170" rx="8"/>
+<rect x="28" y="115.5" width="114" height="30" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="85" y="135.5" style="font-size:13px">Plan</text>
+<text class="s" x="28" y="163.5" style="font-size:11px">The mission or</text>
+<text class="s" x="28" y="178.0" style="font-size:11px">task: weather,</text>
+<text class="s" x="28" y="192.5" style="font-size:11px">route, fuel,</text>
+<text class="s" x="28" y="207.0" style="font-size:11px">publications</text>
+<text class="s" x="28" y="221.5" style="font-size:11px">currency. Reviewed</text>
+<text class="s" x="28" y="236.0" style="font-size:11px">and updated several</text>
+<text class="s" x="28" y="250.5" style="font-size:11px">times in the</text>
+<text class="s" x="28" y="265.0" style="font-size:11px">flight.</text>
+<rect class="cl" x="158" y="107.5" width="130" height="170" rx="8"/>
+<rect x="166" y="115.5" width="114" height="30" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="223" y="135.5" style="font-size:13px">Plane</text>
+<text class="s" x="166" y="163.5" style="font-size:11px">Mechanical and</text>
+<text class="s" x="166" y="178.0" style="font-size:11px">cosmetic issues,</text>
+<text class="s" x="166" y="192.5" style="font-size:11px">plus database</text>
+<text class="s" x="166" y="207.0" style="font-size:11px">currency,</text>
+<text class="s" x="166" y="221.5" style="font-size:11px">automation status</text>
+<text class="s" x="166" y="236.0" style="font-size:11px">and backup systems.</text>
+<rect class="cl" x="296" y="107.5" width="130" height="170" rx="8"/>
+<rect x="304" y="115.5" width="114" height="30" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="361" y="135.5" style="font-size:13px">Pilot</text>
+<text class="s" x="304" y="163.5" style="font-size:11px">Check IMSAFE. Late</text>
+<text class="s" x="304" y="178.0" style="font-size:11px">nights, fatigue and</text>
+<text class="s" x="304" y="192.5" style="font-size:11px">long flights make</text>
+<text class="s" x="304" y="207.0" style="font-size:11px">pilots less</text>
+<text class="s" x="304" y="221.5" style="font-size:11px">critical and more</text>
+<text class="s" x="304" y="236.0" style="font-size:11px">accepting.</text>
+<rect class="cl" x="434" y="107.5" width="130" height="170" rx="8"/>
+<rect x="442" y="115.5" width="114" height="30" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="499" y="135.5" style="font-size:13px">Passengers</text>
+<text class="s" x="442" y="163.5" style="font-size:11px">Involve them in the</text>
+<text class="s" x="442" y="178.0" style="font-size:11px">decision. A rental</text>
+<text class="s" x="442" y="192.5" style="font-size:11px">car or airline</text>
+<text class="s" x="442" y="207.0" style="font-size:11px">ticket can remove</text>
+<text class="s" x="442" y="221.5" style="font-size:11px">the pressure to</text>
+<text class="s" x="442" y="236.0" style="font-size:11px">continue.</text>
+<rect class="cl" x="572" y="107.5" width="130" height="170" rx="8"/>
+<rect x="580" y="115.5" width="114" height="30" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="637" y="135.5" style="font-size:13px">Programming</text>
+<text class="s" x="580" y="163.5" style="font-size:11px">Avionics can hold</text>
+<text class="s" x="580" y="178.0" style="font-size:11px">attention for long</text>
+<text class="s" x="580" y="192.5" style="font-size:11px">periods. Plan in</text>
+<text class="s" x="580" y="207.0" style="font-size:11px">advance when to</text>
+<text class="s" x="580" y="221.5" style="font-size:11px">program, and when</text>
+<text class="s" x="580" y="236.0" style="font-size:11px">not to.</text>
+<rect class="cl" x="20" y="293.5" width="690" height="146" rx="8"/>
+<text class="t" x="32" y="315.5" style="font-size:14px">When to review the 5 Ps (the five decision points)</text>
+<circle cx="44" cy="343.5" r="11" class="ah"/><text class="t m" x="44" y="348.5" style="font-size:12px;fill:#fff">1</text>
+<text class="t" x="32" y="371.5" style="font-size:12px">Preflight</text>
+<path d="M60 343.5L150 343.5" class="dk" style="stroke-width:2"/>
+<circle cx="178" cy="343.5" r="11" class="ah"/><text class="t m" x="178" y="348.5" style="font-size:12px;fill:#fff">2</text>
+<text class="t" x="166" y="371.5" style="font-size:12px">Pretakeoff</text>
+<path d="M194 343.5L284 343.5" class="dk" style="stroke-width:2"/>
+<circle cx="312" cy="343.5" r="11" class="ah"/><text class="t m" x="312" y="348.5" style="font-size:12px;fill:#fff">3</text>
+<text class="t" x="300" y="371.5" style="font-size:12px">Hourly or midpoint</text>
+<path d="M328 343.5L418 343.5" class="dk" style="stroke-width:2"/>
+<circle cx="446" cy="343.5" r="11" class="ah"/><text class="t m" x="446" y="348.5" style="font-size:12px;fill:#fff">4</text>
+<text class="t" x="434" y="371.5" style="font-size:12px">Pre-descent</text>
+<path d="M462 343.5L552 343.5" class="dk" style="stroke-width:2"/>
+<circle cx="580" cy="343.5" r="11" class="ah"/><text class="t m" x="580" y="348.5" style="font-size:12px;fill:#fff">5</text>
+<text class="t" x="568" y="371.5" style="font-size:12px">Final approach fix</text>
+<text class="t" x="568" y="387.0" style="font-size:12px">or pattern entry</text>
+<text class="s" x="32" y="405.5" style="font-size:12px">Preflight and pretakeoff are the two critical go/no-go points. If the flight is longer than 2 hours, check</text>
+<text class="s" x="32" y="421.0" style="font-size:12px">hourly. Even the decision to make no changes is made by considering all the risk factors.</text>
+<rect class="cl" x="20" y="455.5" width="690" height="160" rx="8"/>
+<text class="t" x="32" y="477.5" style="font-size:14px">External pressures: the one that can make a pilot ignore the rest</text>
+<circle cx="35" cy="493.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="497.5" style="font-size:12px">Examples: someone waiting at the airport, a</text>
+<text class="s" x="44" y="513.0" style="font-size:12px">passenger you do not want to disappoint, wanting</text>
+<text class="s" x="44" y="528.5" style="font-size:12px">to impress ("Watch this!"), get-home-itis,</text>
+<text class="s" x="44" y="544.0" style="font-size:12px">get-there-itis, let’s-go-itis, pride.</text>
+<text class="t" x="372" y="497.5" style="font-size:12.5px">Personal SOPs the text suggests</text>
+<circle cx="375" cy="511.5" r="2.2" class="ah"/>
+<text class="s" x="384" y="515.5" style="font-size:12px">Allow time for an extra fuel stop or weather</text>
+<text class="s" x="384" y="531.0" style="font-size:12px">landing.</text>
+<circle cx="375" cy="545.5" r="2.2" class="ah"/>
+<text class="s" x="384" y="549.5" style="font-size:12px">Have backup plans for a late arrival.</text>
+<circle cx="375" cy="564.0" r="2.2" class="ah"/>
+<text class="s" x="384" y="568.0" style="font-size:12px">Tell people waiting that arrival may be delayed.</text>
+<circle cx="375" cy="582.5" r="2.2" class="ah"/>
+<text class="s" x="384" y="586.5" style="font-size:12px">Carry a small overnight kit.</text>
+<text class="t" x="32" y="609.0" style="font-size:12.5px">The key is to be ready for and accept delays.</text>
+</svg>

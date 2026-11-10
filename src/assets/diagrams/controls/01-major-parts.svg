@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 603" role="img" aria-labelledby="ti de"><title id="ti">Major airplane parts</title><desc id="de">Side view of a high-wing airplane with tricycle landing gear, labeled with the five major components: fuselage, wings, empennage, landing gear and powerplant. Fuselage: central body for crew, passengers and cargo, connecting wings and tail. Wings: main lifting surfaces with spars, ribs and stringers, ailerons and flaps. Empennage: vertical and horizontal stabilizers, rudder, elevator and trim tabs. Landing gear: wheels, floats or skis. Powerplant: engine and propeller.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Major airplane parts: five components</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Most airplane structures include a fuselage, wings, an empennage, landing gear, and a powerplant. The</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">overall characteristics are largely determined by the original design objectives. Side view of a</text>
+<text class="s" x="20" y="83.0" style="font-size:13px">high-wing airplane with tricycle gear.</text>
+<g transform="translate(0,55.5)">
+<path d="M40 272L700 272" class="dk" style="stroke-width:2;opacity:0.5"/>
+<rect x="150" y="118" width="9" height="100" rx="4" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M159 158L172 164L172 190L159 196Z" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<rect x="172" y="152" width="66" height="52" rx="12" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M238 152L352 142L580 168L580 188L352 214L238 204Z" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M268 160L318 156L318 176L268 178Z" class="cl" style="stroke:currentColor;stroke-width:1.2;stroke-linejoin:round"/>
+<path d="M285 132L420 132Q432 139 420 146L285 146Q272 139 285 132Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M335 214L350 146" class="dk" style="stroke-width:3;opacity:1"/>
+<path d="M262 204L262 248" class="dk" style="stroke-width:4;opacity:1"/>
+<circle cx="262" cy="258" r="14" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M382 210L386 248" class="dk" style="stroke-width:4;opacity:1"/>
+<circle cx="386" cy="258" r="14" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M508 168L544 98L578 98L584 170Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M508 172L596 172L596 182L508 182Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<rect x="578" y="172" width="26" height="10" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<text class="t" x="70" y="96" style="font-size:13px">Powerplant</text>
+<text class="s" x="70" y="111" style="font-size:11.5px">(engine + propeller)</text>
+<path d="M130 116L166 160" class="dk" style="stroke-width:1.5;opacity:0.7"/>
+<text class="t" x="300" y="92" style="font-size:13px">Wings</text>
+<path d="M335 96L345 130" class="dk" style="stroke-width:1.5;opacity:0.7"/>
+<text class="t" x="430" y="238" style="font-size:13px">Fuselage</text>
+<path d="M455 224L455 200" class="dk" style="stroke-width:1.5;opacity:0.7"/>
+<text class="t" x="470" y="84" style="font-size:13px">Empennage</text>
+<text class="s" x="470" y="99" style="font-size:11.5px">(tail group)</text>
+<path d="M525 106L535 128" class="dk" style="stroke-width:1.5;opacity:0.7"/>
+<text class="t m" x="324" y="304" style="font-size:13px">Landing gear (tricycle)</text>
+<path d="M270 276L296 292" class="dk" style="stroke-width:1.5;opacity:0.7"/>
+<path d="M380 276L352 292" class="dk" style="stroke-width:1.5;opacity:0.7"/>
+<text class="s m" x="324" y="318" style="font-size:11.5px">two main wheels and a nosewheel</text>
+</g>
+<rect x="20" y="395.5" width="130" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="85" y="413.5" style="font-size:13px">Fuselage</text>
+<text class="s" x="24" y="439.5" style="font-size:11.5px">Central body: holds</text>
+<text class="s" x="24" y="454.5" style="font-size:11.5px">the crew, passengers</text>
+<text class="s" x="24" y="469.5" style="font-size:11.5px">and cargo, and is</text>
+<text class="s" x="24" y="484.5" style="font-size:11.5px">the structural</text>
+<text class="s" x="24" y="499.5" style="font-size:11.5px">connection for the</text>
+<text class="s" x="24" y="514.5" style="font-size:11.5px">wings and tail.</text>
+<text class="s" x="24" y="529.5" style="font-size:11.5px">Older: open truss.</text>
+<text class="s" x="24" y="544.5" style="font-size:11.5px">Today: monocoque</text>
+<text class="s" x="24" y="559.5" style="font-size:11.5px">(single shell) or</text>
+<text class="s" x="24" y="574.5" style="font-size:11.5px">semimonocoque.</text>
+<rect x="158" y="395.5" width="130" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="223" y="413.5" style="font-size:13px">Wings</text>
+<text class="s" x="162" y="439.5" style="font-size:11.5px">Airfoils on each</text>
+<text class="s" x="162" y="454.5" style="font-size:11.5px">side of the</text>
+<text class="s" x="162" y="469.5" style="font-size:11.5px">fuselage; the main</text>
+<text class="s" x="162" y="484.5" style="font-size:11.5px">lifting surfaces.</text>
+<text class="s" x="162" y="499.5" style="font-size:11.5px">High-, mid- or</text>
+<text class="s" x="162" y="514.5" style="font-size:11.5px">low-wing. Parts:</text>
+<text class="s" x="162" y="529.5" style="font-size:11.5px">spars, ribs,</text>
+<text class="s" x="162" y="544.5" style="font-size:11.5px">stringers. Ailerons</text>
+<text class="s" x="162" y="559.5" style="font-size:11.5px">and flaps on the</text>
+<text class="s" x="162" y="574.5" style="font-size:11.5px">trailing edge.</text>
+<rect x="296" y="395.5" width="130" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="361" y="413.5" style="font-size:13px">Empennage</text>
+<text class="s" x="300" y="439.5" style="font-size:11.5px">The entire tail</text>
+<text class="s" x="300" y="454.5" style="font-size:11.5px">group. Fixed:</text>
+<text class="s" x="300" y="469.5" style="font-size:11.5px">vertical stabilizer,</text>
+<text class="s" x="300" y="484.5" style="font-size:11.5px">horizontal</text>
+<text class="s" x="300" y="499.5" style="font-size:11.5px">stabilizer. Movable:</text>
+<text class="s" x="300" y="514.5" style="font-size:11.5px">rudder, elevator,</text>
+<text class="s" x="300" y="529.5" style="font-size:11.5px">one or more trim</text>
+<text class="s" x="300" y="544.5" style="font-size:11.5px">tabs.</text>
+<rect x="434" y="395.5" width="130" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="499" y="413.5" style="font-size:13px">Landing gear</text>
+<text class="s" x="438" y="439.5" style="font-size:11.5px">Principal support</text>
+<text class="s" x="438" y="454.5" style="font-size:11.5px">when parked,</text>
+<text class="s" x="438" y="469.5" style="font-size:11.5px">taxiing, taking off</text>
+<text class="s" x="438" y="484.5" style="font-size:11.5px">or landing. Wheels,</text>
+<text class="s" x="438" y="499.5" style="font-size:11.5px">floats or skis.</text>
+<text class="s" x="438" y="514.5" style="font-size:11.5px">Third wheel on the</text>
+<text class="s" x="438" y="529.5" style="font-size:11.5px">nose = tricycle</text>
+<text class="s" x="438" y="544.5" style="font-size:11.5px">gear; at the rear =</text>
+<text class="s" x="438" y="559.5" style="font-size:11.5px">conventional</text>
+<text class="s" x="438" y="574.5" style="font-size:11.5px">(tailwheel).</text>
+<rect x="572" y="395.5" width="130" height="26" rx="10" class="cl" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="637" y="413.5" style="font-size:13px">Powerplant</text>
+<text class="s" x="576" y="439.5" style="font-size:11.5px">Usually the engine</text>
+<text class="s" x="576" y="454.5" style="font-size:11.5px">and the propeller.</text>
+<text class="s" x="576" y="469.5" style="font-size:11.5px">The engine turns the</text>
+<text class="s" x="576" y="484.5" style="font-size:11.5px">propeller; the</text>
+<text class="s" x="576" y="499.5" style="font-size:11.5px">propeller turns that</text>
+<text class="s" x="576" y="514.5" style="font-size:11.5px">into thrust. The</text>
+<text class="s" x="576" y="529.5" style="font-size:11.5px">cowling streamlines</text>
+<text class="s" x="576" y="544.5" style="font-size:11.5px">the air and helps</text>
+<text class="s" x="576" y="559.5" style="font-size:11.5px">cool the engine.</text>
+</svg>

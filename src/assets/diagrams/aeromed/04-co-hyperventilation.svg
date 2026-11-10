@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 648" role="img" aria-labelledby="ti de"><title id="ti">Carbon monoxide and hyperventilation versus hypoxia</title><desc id="de">Carbon monoxide poisoning facts, then a symptom comparison between hypoxia and hyperventilation with filled dots marking which symptoms appear in each. Visual impairment, lightheaded or dizzy sensation, and tingling are listed for both. Hyperventilation is too much carbon dioxide lost from the blood and is treated by breathing normally, slowing the breathing rate, or breathing into a paper bag.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Carbon monoxide, hypoxia and hyperventilation</text>
+<rect class="cl" x="20" y="38" width="690" height="190" rx="8"/>
+<text class="t" x="32" y="60" style="font-size:14px">Carbon monoxide (CO) poisoning</text>
+<circle cx="35" cy="76" r="2.2" class="ah"/>
+<text class="s" x="44" y="80.0" style="font-size:12px">Colorless, odorless gas from all internal</text>
+<text class="s" x="44" y="95.5" style="font-size:12px">combustion engines.</text>
+<circle cx="35" cy="110.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="114.0" style="font-size:12px">Sticks to hemoglobin about 200 times more easily</text>
+<text class="s" x="44" y="129.5" style="font-size:12px">than oxygen: hypemic hypoxia.</text>
+<circle cx="35" cy="144.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="148.0" style="font-size:12px">The body needs up to 48 hours to dispose of it. Can</text>
+<text class="s" x="44" y="163.5" style="font-size:12px">be fatal.</text>
+<circle cx="35" cy="178.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="182.0" style="font-size:12px">Heater and defrost vents can let it into the cabin,</text>
+<text class="s" x="44" y="197.5" style="font-size:12px">especially with an exhaust leak.</text>
+<circle cx="381" cy="76" r="2.2" class="ah"/>
+<text class="s" x="390" y="80.0" style="font-size:12px">Strong exhaust odor: assume CO is present. It can</text>
+<text class="s" x="390" y="95.5" style="font-size:12px">be dangerous with no odor. Cheap color-changing</text>
+<text class="s" x="390" y="111.0" style="font-size:12px">detectors exist.</text>
+<circle cx="381" cy="125.5" r="2.2" class="ah"/>
+<text class="s" x="390" y="129.5" style="font-size:12px">Effects: headache, blurred vision, dizziness,</text>
+<text class="s" x="390" y="145.0" style="font-size:12px">drowsiness, loss of muscle power.</text>
+<circle cx="381" cy="159.5" r="2.2" class="ah"/>
+<text class="s" x="390" y="163.5" style="font-size:12px">Act at once: heater off, fresh air vents and</text>
+<text class="s" x="390" y="179.0" style="font-size:12px">windows open, supplemental oxygen if available.</text>
+<circle cx="381" cy="193.5" r="2.2" class="ah"/>
+<text class="s" x="390" y="197.5" style="font-size:12px">Tobacco smoke also adds CO: smoking at sea level</text>
+<text class="s" x="390" y="213.0" style="font-size:12px">can feel like 8,000 ft.</text>
+<text class="t" x="20" y="260" style="font-size:14px">Hypoxia versus hyperventilation: symptoms in the text</text>
+<text class="t" x="30" y="288" style="font-size:13px">Symptom</text>
+<text class="t m" x="262" y="288" style="font-size:13px">Hypoxia</text>
+<text class="t m" x="340" y="288" style="font-size:13px">Hyperv.</text>
+<rect class="cl" x="20" y="296" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="311" style="font-size:12.5px">Cyanosis (blue nails and lips)</text>
+<circle cx="262" cy="306" r="5.5" class="ah"/>
+<text class="s" x="30" y="333" style="font-size:12.5px">Headache</text>
+<circle cx="262" cy="328" r="5.5" class="ah"/>
+<rect class="cl" x="20" y="340" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="355" style="font-size:12.5px">Decreased response to stimuli</text>
+<circle cx="262" cy="350" r="5.5" class="ah"/>
+<text class="s" x="30" y="377" style="font-size:12.5px">Impaired judgment</text>
+<circle cx="262" cy="372" r="5.5" class="ah"/>
+<rect class="cl" x="20" y="384" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="399" style="font-size:12.5px">Euphoria</text>
+<circle cx="262" cy="394" r="5.5" class="ah"/>
+<text class="s" x="30" y="421" style="font-size:12.5px">Drowsiness</text>
+<circle cx="262" cy="416" r="5.5" class="ah"/>
+<rect class="cl" x="20" y="428" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="443" style="font-size:12.5px">Numbness</text>
+<circle cx="262" cy="438" r="5.5" class="ah"/>
+<text class="s" x="30" y="465" style="font-size:12.5px">Visual impairment</text>
+<circle cx="262" cy="460" r="5.5" class="ah"/>
+<circle cx="340" cy="460" r="5.5" class="ah"/>
+<rect class="cl" x="20" y="472" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="487" style="font-size:12.5px">Lightheaded or dizzy sensation</text>
+<circle cx="262" cy="482" r="5.5" class="ah"/>
+<circle cx="340" cy="482" r="5.5" class="ah"/>
+<text class="s" x="30" y="509" style="font-size:12.5px">Tingling sensations</text>
+<circle cx="262" cy="504" r="5.5" class="ah"/>
+<circle cx="340" cy="504" r="5.5" class="ah"/>
+<rect class="cl" x="20" y="516" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="531" style="font-size:12.5px">Unconsciousness</text>
+<circle cx="340" cy="526" r="5.5" class="ah"/>
+<text class="s" x="30" y="553" style="font-size:12.5px">Hot and cold sensations</text>
+<circle cx="340" cy="548" r="5.5" class="ah"/>
+<rect class="cl" x="20" y="560" width="350" height="22" rx="4"/>
+<text class="s" x="30" y="575" style="font-size:12.5px">Muscle spasms</text>
+<circle cx="340" cy="570" r="5.5" class="ah"/>
+<text class="s" x="30" y="606" style="font-size:12px">Dots in both columns = shared symptom.</text>
+<text class="s" x="30" y="622" style="font-size:12px">Hyperv. = hyperventilation.</text>
+<rect class="cl" x="392" y="274" width="318" height="362" rx="8"/>
+<text class="t" x="404" y="296" style="font-size:14px">Hyperventilation</text>
+<circle cx="407" cy="312" r="2.2" class="ah"/>
+<text class="s" x="416" y="316.0" style="font-size:12px">Excessive rate and depth of breathing: too much</text>
+<text class="s" x="416" y="331.5" style="font-size:12px">carbon dioxide lost from the blood.</text>
+<circle cx="407" cy="347.0" r="2.2" class="ah"/>
+<text class="s" x="416" y="351.0" style="font-size:12px">Often triggered by an unexpected stressful</text>
+<text class="s" x="416" y="366.5" style="font-size:12px">situation, or by breathing faster at high</text>
+<text class="s" x="416" y="382.0" style="font-size:12px">altitude, with or without oxygen.</text>
+<circle cx="407" cy="397.5" r="2.2" class="ah"/>
+<text class="s" x="416" y="401.5" style="font-size:12px">Seldom incapacitates completely, but alarming.</text>
+<text class="s" x="416" y="417.0" style="font-size:12px">Anxiety and faster breathing make it worse; it</text>
+<text class="s" x="416" y="432.5" style="font-size:12px">can lead to unconsciousness.</text>
+<text class="t" x="404" y="466.0" style="font-size:14px">Treatment</text>
+<circle cx="407" cy="482.0" r="2.2" class="ah"/>
+<text class="s" x="416" y="486.0" style="font-size:12px">Restore the proper carbon dioxide level:</text>
+<text class="s" x="416" y="501.5" style="font-size:12px">breathe normally.</text>
+<circle cx="407" cy="517.0" r="2.2" class="ah"/>
+<text class="s" x="416" y="521.0" style="font-size:12px">Slow the breathing rate, breathe into a paper</text>
+<text class="s" x="416" y="536.5" style="font-size:12px">bag, or talk aloud.</text>
+<circle cx="407" cy="552.0" r="2.2" class="ah"/>
+<text class="s" x="416" y="556.0" style="font-size:12px">Recovery is usually rapid.</text>
+<circle cx="407" cy="571.5" r="2.2" class="ah"/>
+<text class="s" x="416" y="575.5" style="font-size:12px">If on supplemental oxygen, check equipment and</text>
+<text class="s" x="416" y="591.0" style="font-size:12px">flow rate to be sure it is not hypoxia.</text>
+</svg>

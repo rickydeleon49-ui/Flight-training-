@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 430" role="img" aria-labelledby="ti de"><title id="ti">Runway markings</title><desc id="de">Runway seen from the approach end. A dashed centerline runs along the runway, the runway number sits on the runway with an L, C or R letter beneath it for parallel runways, touchdown zone bars in groups of one, two and three and a broad aiming point stripe on each side of the centerline, and a displaced threshold at the near end has a ten foot wide white bar across the runway, white arrow heads just before the bar and white arrows along the centerline behind it.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<rect class="cl" x="40" y="14" width="200" height="396"/><path class="o" d="M40 14H240V410H40z"/>
+<path class="dk" style="stroke-width:5" stroke-dasharray="26 16" d="M140 14V170"/>
+<text class="t m" x="140" y="226" style="font-size:54px">36</text>
+<text class="t m" x="140" y="266" style="font-size:34px">L</text>
+<rect class="dh" x="40" y="294" width="200" height="12"/>
+<path class="dh" d="M62 326L71 342L53 342z"/>
+<path class="dh" d="M101 326L110 342L92 342z"/>
+<path class="dh" d="M140 326L149 342L131 342z"/>
+<path class="dh" d="M179 326L188 342L170 342z"/>
+<path class="dh" d="M218 326L227 342L209 342z"/>
+<path class="dh" d="M140 356L153 382L127 382z"/>
+<path class="dk" d="M140 358V368"/>
+<path class="dh" d="M140 392L153 418L127 418z"/>
+<path class="dk" d="M140 394V404"/>
+<rect class="dh" x="94" y="18" width="10" height="30"/><rect class="dh" x="176" y="18" width="10" height="30"/>
+<rect class="dh" x="94" y="58" width="10" height="30"/><rect class="dh" x="176" y="58" width="10" height="30"/>
+<rect class="dh" x="78" y="58" width="10" height="30"/><rect class="dh" x="192" y="58" width="10" height="30"/>
+<rect class="dh" x="94" y="138" width="10" height="30"/><rect class="dh" x="176" y="138" width="10" height="30"/>
+<rect class="dh" x="78" y="138" width="10" height="30"/><rect class="dh" x="192" y="138" width="10" height="30"/>
+<rect class="dh" x="62" y="138" width="10" height="30"/><rect class="dh" x="208" y="138" width="10" height="30"/>
+<rect class="dh" x="62" y="98" width="44" height="26"/><rect class="dh" x="174" y="98" width="44" height="26"/>
+<path class="dk" style="stroke-width:2;opacity:.6" d="M266 31L222 150"/><circle class="dh" cx="222" cy="150" r="4"/>
+<path class="dk" style="stroke-width:2;opacity:.6" d="M266 107L220 111"/><circle class="dh" cx="220" cy="111" r="4"/>
+<path class="dk" style="stroke-width:2;opacity:.6" d="M266 205L140 166"/><circle class="dh" cx="140" cy="166" r="4"/>
+<path class="dk" style="stroke-width:2;opacity:.6" d="M266 257L152 258"/><circle class="dh" cx="152" cy="258" r="4"/>
+<path class="dk" style="stroke-width:2;opacity:.6" d="M266 314L224 300"/><circle class="dh" cx="224" cy="300" r="4"/>
+<text class="t" x="280" y="36">Touchdown zone markings</text>
+<text class="s" x="280" y="58" style="font-size:17px">Pairs of 1, 2 and 3 bars by the centerline,</text>
+<text class="s" x="280" y="78" style="font-size:17px">coded in 500 ft steps; precision runways</text>
+<text class="t" x="280" y="112">Aiming point marking</text>
+<text class="s" x="280" y="134" style="font-size:17px">Broad white stripe each side of the</text>
+<text class="s" x="280" y="154" style="font-size:17px">centerline, about 1,000 ft from the</text>
+<text class="s" x="280" y="174" style="font-size:17px">threshold; nonprecision and precision</text>
+<text class="t" x="280" y="210">Centerline marking</text>
+<text class="s" x="280" y="232" style="font-size:17px">Uniformly spaced stripes and gaps</text>
+<text class="t" x="280" y="264">Runway number</text>
+<text class="s" x="280" y="286" style="font-size:17px">Tenth of the magnetic azimuth, as seen</text>
+<text class="s" x="280" y="306" style="font-size:17px">on approach. L, C or R for parallels</text>
+<text class="t" x="280" y="340">Displaced threshold</text>
+<text class="s" x="280" y="362" style="font-size:17px">Ten ft white bar across the runway</text>
+<text class="s" x="280" y="382" style="font-size:17px">White arrows and arrow heads before it</text>
+<text class="s" x="280" y="402" style="font-size:17px">Shortens the runway available to land on</text>
+</svg>

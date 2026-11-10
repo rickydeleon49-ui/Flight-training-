@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 430" role="img" aria-labelledby="ti de"><title id="ti">Pilotage and dead reckoning</title><desc id="de">A route from departure to destination along a course line, with a highway and a railroad as brackets on each side and a river and a lake as checkpoints. Example: 210 nautical miles at a groundspeed of 140 knots takes 1.5 hours, with checkpoints at 70 miles after 30 minutes and 140 miles after 1 hour. Pilotage is navigation by landmarks. Dead reckoning is computation from time, airspeed, distance and direction. Formulas: time equals distance over groundspeed, distance equals groundspeed times time, groundspeed equals distance over time.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:17px">Pilotage</text>
+<text class="s" x="20" y="48" style="font-size:14px">Navigation by landmarks or checkpoints.</text>
+<text class="s" x="20" y="65" style="font-size:14px">Pick prominent, easily identified features</text>
+<text class="s" x="20" y="82" style="font-size:14px">(roads, rivers, railroads, lakes, power lines).</text>
+<text class="s" x="20" y="99" style="font-size:14px">Never rely on a single checkpoint; if one is</text>
+<text class="s" x="20" y="116" style="font-size:14px">missed, look for the next, holding heading.</text>
+<text class="t" x="385" y="28" style="font-size:17px">Dead reckoning</text>
+<text class="s" x="385" y="48" style="font-size:14px">Navigation by computation from time,</text>
+<text class="s" x="385" y="65" style="font-size:14px">airspeed, distance and direction. With wind</text>
+<text class="s" x="385" y="82" style="font-size:14px">applied it gives a heading and a GS. The GS</text>
+<text class="s" x="385" y="99" style="font-size:14px">sets the time to each checkpoint; pilotage</text>
+<text class="s" x="385" y="116" style="font-size:14px">from checkpoints corrects it in flight.</text>
+<path class="o" style="stroke-width:3;opacity:0.6;stroke-dasharray:10 8" d="M40 153H690"/>
+<text class="s" x="40" y="167" style="font-size:13px">Highway (bracket)</text>
+<path class="o" style="stroke-width:3;opacity:0.6;stroke-dasharray:10 8" d="M40 257H690"/>
+<text class="s e" x="690" y="249" style="font-size:13px">Railroad (bracket)</text>
+<path class="dk" style="stroke-width:5" d="M52 205H678"/><path class="dh" d="M690.0 205.0L676.0 213.0L676.0 197.0z"/>
+<circle class="mint o" cx="44" cy="205" r="12" style="stroke-width:2.5"/>
+<path class="sky" d="M257 153C240 179 275 231 257 257" style="stroke:none"/><path class="o" style="stroke-width:7;stroke:var(--palette-sky,#8EBFDA)" d="M257 153C238 179 276 231 257 257"/>
+<ellipse class="sky o" cx="473" cy="189" rx="34" ry="20" style="stroke-width:2.5"/>
+<circle class="rose o" cx="690" cy="205" r="12" style="stroke-width:2.5"/>
+<text class="t m" x="60" y="297" style="font-size:13.5px">Departure</text>
+<text class="s m" x="60" y="313" style="font-size:13px">0 NM  0:00</text>
+<text class="t m" x="257" y="297" style="font-size:13.5px">River (checkpoint 1)</text>
+<text class="s m" x="257" y="313" style="font-size:13px">70 NM  0:30</text>
+<text class="t m" x="473" y="297" style="font-size:13.5px">Lake (checkpoint 2)</text>
+<text class="s m" x="473" y="313" style="font-size:13px">140 NM  1:00</text>
+<text class="t m" x="660" y="297" style="font-size:13.5px">Destination</text>
+<text class="s m" x="660" y="313" style="font-size:13px">210 NM  1:30</text>
+<text class="s m" x="365" y="140" style="font-size:13px">Example leg: 210 NM at GS 140 kt. Checkpoint spacing and times are Example.</text>
+<rect class="cl" x="20" y="328" width="690" height="92" rx="8"/>
+<text class="t" x="32" y="352" style="font-size:15px">Time: T = D / GS</text>
+<text class="s" x="32" y="374" style="font-size:14px">210 NM at GS 140 kt</text>
+<text class="s" x="32" y="393" style="font-size:14px">= 1.5 h = 1:30</text>
+<text class="t" x="262" y="352" style="font-size:15px">Distance: D = GS × T</text>
+<text class="s" x="262" y="374" style="font-size:14px">1 h 45 min at GS 120 kt</text>
+<text class="s" x="262" y="393" style="font-size:14px">= 120 × 1.75 = 210 NM</text>
+<text class="t" x="492" y="352" style="font-size:15px">Speed: GS = D / T</text>
+<text class="s" x="492" y="374" style="font-size:14px">270 NM in 3 h</text>
+<text class="s" x="492" y="393" style="font-size:14px">= 270 ÷ 3 = 90 kt</text>
+<text class="s" x="32" y="412" style="font-size:12.5px">Convert minutes to hours by dividing by 60 (30 min = 0.5 h); hours to minutes by multiplying by 60.</text>
+</svg>

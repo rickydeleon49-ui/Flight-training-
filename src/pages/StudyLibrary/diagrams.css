@@ -1,0 +1,51 @@
+/* DIAGRAMS-01: study diagrams. Colours come from tokens only. */
+
+.diagram-art {
+  /* The one theme variable the diagram files use that the app did not define:
+     text halos on charts use the surface the diagram sits on. */
+  --bg: var(--surface-card);
+  color: var(--text-primary);
+}
+.diagram-art svg { display: block; width: 100%; height: auto; }
+.diagram-art--loading { aspect-ratio: 730 / 430; }
+
+.diagram-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+/* The strip under a material scrolls sideways and keeps its own scrollbar. */
+.diagram-tiles--strip {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scroll-snap-type: x proximity;
+}
+.diagram-tiles--strip > li { flex: 0 0 min(15rem, 78%); scroll-snap-align: start; }
+
+.diagram-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.diagram-tile:hover { border-color: var(--border-strong); background: var(--surface-sunken); }
+.diagram-tile:hover .diagram-art { --bg: var(--surface-sunken); }
+.diagram-tile:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.diagram-tile__title { font-size: var(--text-sm); line-height: 1.3; }
+
+.dialog.dialog--diagram { width: min(60rem, calc(100vw - 2rem)); }
+.diagram-source { margin: var(--space-3) 0 0; }
+.diagram-group > summary { cursor: pointer; }

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 702" role="img" aria-labelledby="ti de"><title id="ti">Critical angle of attack: airflow separation and the stall</title><desc id="de">Left: a lift coefficient curve that rises with angle of attack to a peak labeled CL-MAX at the critical angle of attack, then drops rapidly. The critical angle varies from approximately 16 to 20 degrees depending on the aircraft design. Right: an airfoil below the critical angle with smooth airflow along the surface, and above it with the airflow separated from the upper surface. Cards: a stall can occur at any pitch attitude or airspeed; low speed, high speed and turning are the three common situations; the wing does not stop producing lift totally.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Critical angle of attack: airflow separation and the stall</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">A stall is a rapid decrease in lift caused by the separation of airflow from the wing's surface,</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">brought on by exceeding the critical AOA.</text>
+<rect class="cl" x="20" y="91.0" width="335" height="372" rx="8"/>
+<text class="t" x="32" y="113.0" style="font-size:13px">Lift (CL) against angle of attack</text>
+<path d="M52 353.0L332 353.0M52 353.0L52 163.0" class="dk" style="stroke-width:1.6"/>
+<text class="s e" x="332" y="369.0" style="font-size:10.5px">Angle of attack</text>
+<text class="s" x="58" y="171.0" style="font-size:10.5px">CL</text>
+<path d="M52 333.0C132 293.0,202 221.0,237 213.0C267 207.0,274 233.0,297 283.0" class="acc" style="stroke-width:3"/>
+<path d="M237 213.0L237 353.0" class="dk" style="stroke-width:1.3;opacity:.6;stroke-dasharray:5 4"/>
+<circle cx="237" cy="213.0" r="5" class="ah"/>
+<text class="t e" x="229" y="203.0" style="font-size:11.5px">CL-MAX</text>
+<text class="t m" x="237" y="383.0" style="font-size:11.5px">Critical AOA</text>
+<text class="s" x="112" y="261.0" style="font-size:11px">Lift increases with AOA</text>
+<text class="s" x="245" y="323.0" style="font-size:11px">Lift drops</text>
+<text class="s" x="245" y="336.0" style="font-size:11px">rapidly: stall</text>
+<circle cx="35" cy="425.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="429.0" style="font-size:11.5px">This critical AOA varies from approximately 16°</text>
+<text class="s" x="44" y="444.0" style="font-size:11.5px">to 20° depending on the aircraft's design</text>
+<rect class="cl" x="375" y="91.0" width="335" height="372" rx="8"/>
+<text class="t" x="387" y="113.0" style="font-size:13px">What happens at the wing</text>
+<text class="s" x="387" y="137.0" style="font-size:11.5px">Below the critical AOA</text>
+<g transform="translate(460 215.0) rotate(-6)"><path d="M0 0C10 -26 60 -30 150 0C80 9 20 9 0 0Z" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><path d="M0 0L150 0" class="dk" style="stroke-width:1;opacity:.5;stroke-dasharray:4 3"/></g>
+<path d="M430 171.0C521.0 161.0,599.0 161.0,690 171.0" class="dk" style="stroke-width:1.6;opacity:0.8"/>
+<path d="M430 157.0C521.0 147.0,599.0 147.0,690 157.0" class="dk" style="stroke-width:1.6;opacity:0.5"/>
+<path d="M430 237.0C521.0 249.0,599.0 249.0,690 237.0" class="dk" style="stroke-width:1.6;opacity:0.6"/>
+<path d="M385 205.0L417.0 205.0" class="acc" style="stroke-width:2"/><path d="M424 205.0L417.0 208.2L417.0 201.8Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s" x="385" y="223.0" style="font-size:9.5px">relative wind</text>
+<text class="s m" x="530" y="269.0" style="font-size:10.5px">Smooth flow follows the surface</text>
+<text class="s" x="387" y="281.0" style="font-size:11.5px">Above the critical AOA</text>
+<g transform="translate(460 383.0) rotate(-19)"><path d="M0 0C10 -26 60 -30 150 0C80 9 20 9 0 0Z" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><path d="M0 0L150 0" class="dk" style="stroke-width:1;opacity:.5;stroke-dasharray:4 3"/></g>
+<path d="M430 323.0C462.9 317.0,491.1 317.0,524 323.0" class="dk" style="stroke-width:1.6;opacity:0.8"/>
+<path d="M524 322.0C580 317.0,630 343.0,690 353.0" class="dk" style="stroke-width:1.6;opacity:.8"/>
+<path d="M430 303.0C521.0 293.0,599.0 293.0,690 303.0" class="dk" style="stroke-width:1.6;opacity:0.5"/>
+<path d="M430 397.0C520 401.0,610 397.0,690 391.0" class="dk" style="stroke-width:1.6;opacity:.6"/>
+<path d="M538 353.0c9 -12 22 -4 14 8s-16 5 -8 -6" class="acc" style="stroke-width:1.6;opacity:0.85"/>
+<path d="M572 357.0c9.9 -13.200000000000001 24.200000000000003 -4.4 15.400000000000002 8.8s-17.6 5.5 -8.8 -6.6000000000000005" class="acc" style="stroke-width:1.6;opacity:0.85"/>
+<path d="M610 367.0c9 -12 22 -4 14 8s-16 5 -8 -6" class="acc" style="stroke-width:1.6;opacity:0.85"/>
+<path d="M650 373.0c9.9 -13.200000000000001 24.200000000000003 -4.4 15.400000000000002 8.8s-17.6 5.5 -8.8 -6.6000000000000005" class="acc" style="stroke-width:1.6;opacity:0.85"/>
+<path d="M385 353.0L417.1 359.6" class="acc" style="stroke-width:2"/><path d="M424 361.0L416.5 362.7L417.8 356.5Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s" x="385" y="375.0" style="font-size:9.5px">relative wind</text>
+<text class="s m" x="570" y="445.0" style="font-size:10.5px">Airflow separates: lift falls, drag rises</text>
+<rect x="20" y="477.0" width="335" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="494.0" style="font-size:13px">It can happen at any speed</text>
+<circle cx="31" cy="515.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="519.0" style="font-size:11.5px">A stall can occur at any pitch attitude or airspeed</text>
+<circle cx="31" cy="534.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="538.0" style="font-size:11.5px">A wing stalls at the same AOA regardless of</text>
+<text class="s" x="40" y="553.0" style="font-size:11.5px">airspeed, weight, load factor or density altitude</text>
+<rect x="375" y="477.0" width="335" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="385" y="494.0" style="font-size:13px">Three common situations</text>
+<circle cx="386" cy="515.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="519.0" style="font-size:11.5px">Low speed: as airspeed falls the AOA must rise to</text>
+<text class="s" x="395" y="534.0" style="font-size:11.5px">hold altitude, until it exceeds the critical AOA</text>
+<circle cx="386" cy="549.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="553.0" style="font-size:11.5px">High speed: pulling back sharply in a 100-knot dive</text>
+<text class="s" x="395" y="568.0" style="font-size:11.5px">raises the AOA abruptly</text>
+<circle cx="386" cy="583.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="587.0" style="font-size:11.5px">Turning: the AOA must increase as the bank</text>
+<text class="s" x="395" y="602.0" style="font-size:11.5px">increases, and if it gets excessive the aircraft</text>
+<text class="s" x="395" y="617.0" style="font-size:11.5px">stalls</text>
+<rect class="cl" x="20" y="642.0" width="690" height="46" rx="8"/>
+<text class="s" x="32" y="662.0" style="font-size:12px">In a stall the wing does not totally stop producing lift; it cannot generate adequate lift to sustain</text>
+<text class="s" x="32" y="677.5" style="font-size:12px">level flight. Speed by itself is not a reliable way to avoid a stall.</text>
+</svg>

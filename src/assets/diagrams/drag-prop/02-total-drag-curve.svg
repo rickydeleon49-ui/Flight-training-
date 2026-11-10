@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 608" role="img" aria-labelledby="ti de"><title id="ti">Total drag against airspeed</title><desc id="de">Schematic graph of drag against airspeed. Parasite drag rises as the square of airspeed. Induced drag varies inversely with the square of airspeed and falls as airspeed rises. Their sum, total drag, forms a curve with a lowest point at L over D max, where total drag is at a minimum and thrust required is least, giving maximum range. Near the stalling speed total drag rises sharply because of induced drag; near never-exceed speed it rises rapidly because of parasite drag. Minimum power and maximum endurance occur at a different point.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Total drag against airspeed</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Schematic only. Total drag is parasite drag plus induced drag, and at one airspeed it is at its</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">minimum.</text>
+<rect class="cl" x="20" y="91.0" width="690" height="500" rx="8"/>
+<text class="t" x="32" y="113.0" style="font-size:13px">Drag curves for steady flight</text>
+<path d="M80.0 141.0L80.0 421.0L690.0 421.0" class="dk" style="stroke-width:2;opacity:0.8"/>
+<text class="t e" x="72" y="137.0" style="font-size:12px">Drag</text>
+<text class="s" x="82" y="443.0" style="font-size:11.5px">near stalling speed</text>
+<text class="s e" x="690" y="443.0" style="font-size:11.5px">near VNE</text>
+<text class="t m" x="465.0" y="465.0" style="font-size:12px">Airspeed, slow to fast</text>
+<path d="M80.0 406.9L88.4 405.7L96.9 404.5L105.3 403.3L113.7 402.0L122.1 400.7L130.6 399.3L139.0 397.8L147.4 396.4L155.9 394.9L164.3 393.3L172.7 391.7L181.1 390.0L189.6 388.4L198.0 386.6L206.4 384.8L214.9 383.0L223.3 381.1L231.7 379.2L240.1 377.2L248.6 375.2L257.0 373.2L265.4 371.1L273.9 368.9L282.3 366.7L290.7 364.5L299.1 362.2L307.6 359.9L316.0 357.5L324.4 355.1L332.9 352.6L341.3 350.1L349.7 347.5L358.1 344.9L366.6 342.3L375.0 339.6L383.4 336.9L391.9 334.1L400.3 331.3L408.7 328.4L417.1 325.5L425.6 322.5L434.0 319.5L442.4 316.5L450.9 313.4L459.3 310.2L467.7 307.0L476.1 303.8L484.6 300.5L493.0 297.2L501.4 293.8L509.9 290.4L518.3 287.0L526.7 283.4L535.1 279.9L543.6 276.3L552.0 272.7L560.4 269.0L568.9 265.2L577.3 261.5L585.7 257.7L594.1 253.8L602.6 249.9L611.0 245.9L619.4 241.9L627.9 237.9L636.3 233.8L644.7 229.6L653.1 225.5L661.6 221.2L670.0 217.0" class="dk" style="stroke-width:2.5;opacity:0.85;stroke-dasharray:6 5"/>
+<path d="M80.0 194.9L88.4 212.0L96.9 227.2L105.3 240.8L113.7 253.0L122.1 264.0L130.6 274.0L139.0 283.0L147.4 291.2L155.9 298.8L164.3 305.6L172.7 312.0L181.1 317.8L189.6 323.1L198.0 328.1L206.4 332.7L214.9 336.9L223.3 340.9L231.7 344.6L240.1 348.0L248.6 351.2L257.0 354.2L265.4 357.0L273.9 359.7L282.3 362.1L290.7 364.5L299.1 366.7L307.6 368.7L316.0 370.7L324.4 372.5L332.9 374.3L341.3 375.9L349.7 377.5L358.1 379.0L366.6 380.4L375.0 381.7L383.4 383.0L391.9 384.2L400.3 385.4L408.7 386.5L417.1 387.6L425.6 388.6L434.0 389.5L442.4 390.4L450.9 391.3L459.3 392.2L467.7 393.0L476.1 393.7L484.6 394.5L493.0 395.2L501.4 395.9L509.9 396.5L518.3 397.2L526.7 397.8L535.1 398.4L543.6 398.9L552.0 399.5L560.4 400.0L568.9 400.5L577.3 401.0L585.7 401.4L594.1 401.9L602.6 402.3L611.0 402.8L619.4 403.2L627.9 403.6L636.3 403.9L644.7 404.3L653.1 404.7L661.6 405.0L670.0 405.3" class="dk" style="stroke-width:2.5;opacity:0.85;stroke-dasharray:6 5"/>
+<path d="M80.0 180.8L88.4 196.7L96.9 210.7L105.3 223.0L113.7 234.0L122.1 243.6L130.6 252.2L139.0 259.9L147.4 266.6L155.9 272.6L164.3 278.0L172.7 282.7L181.1 286.8L189.6 290.5L198.0 293.7L206.4 296.5L214.9 298.9L223.3 301.0L231.7 302.8L240.1 304.2L248.6 305.4L257.0 306.4L265.4 307.1L273.9 307.6L282.3 307.9L290.7 308.0L299.1 307.9L307.6 307.6L316.0 307.2L324.4 306.6L332.9 305.9L341.3 305.0L349.7 304.1L358.1 302.9L366.6 301.7L375.0 300.4L383.4 298.9L391.9 297.3L400.3 295.7L408.7 293.9L417.1 292.0L425.6 290.1L434.0 288.0L442.4 285.9L450.9 283.7L459.3 281.4L467.7 279.0L476.1 276.5L484.6 274.0L493.0 271.4L501.4 268.7L509.9 265.9L518.3 263.1L526.7 260.2L535.1 257.3L543.6 254.2L552.0 251.1L560.4 248.0L568.9 244.7L577.3 241.4L585.7 238.1L594.1 234.7L602.6 231.2L611.0 227.7L619.4 224.1L627.9 220.4L636.3 216.7L644.7 212.9L653.1 209.1L661.6 205.2L670.0 201.3" class="acc" style="stroke-width:4;opacity:1"/>
+<path d="M290.7 308.0L290.7 421.0" class="dk" style="stroke-width:1.4;opacity:.6;stroke-dasharray:4 4"/>
+<circle cx="290.7" cy="308.0" r="7" class="ah"/>
+<text class="t m" x="290.7142857142857" y="443.0" style="font-size:12px">L/DMAX</text>
+<text class="t m" x="290.7142857142857" y="251.43478260869566" style="font-size:12px">Minimum total drag</text>
+<text class="t m" x="290.7142857142857" y="266.4347826086956" style="font-size:12px">at L/DMAX</text>
+<text class="t e" x="670.0" y="313.6086956521739" style="font-size:12px">Parasite drag</text>
+<text class="s e" x="670.0" y="328.6086956521739" style="font-size:11.5px">rises as the square of airspeed</text>
+<text class="t" x="450.85714285714283" y="356.0" style="font-size:12px">Induced drag</text>
+<text class="s" x="450.85714285714283" y="371.0" style="font-size:11.5px">falls as airspeed rises</text>
+<text class="t m" x="522.5" y="228.82608695652172" style="font-size:12px">Total drag</text>
+<circle cx="35" cy="507.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="511.0" style="font-size:11.5px">Near the stalling speed, total drag becomes greater,</text>
+<text class="s" x="44" y="526.0" style="font-size:11.5px">mainly from the sharp rise in induced drag</text>
+<circle cx="35" cy="541.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="545.0" style="font-size:11.5px">Near VNE, total drag rises rapidly from the sharp</text>
+<text class="s" x="44" y="560.0" style="font-size:11.5px">rise in parasite drag</text>
+<circle cx="378" cy="507.0" r="2.2" class="ah"/>
+<text class="s" x="387" y="511.0" style="font-size:11.5px">L/DMAX occurs at one specific CL and AOA; flown</text>
+<text class="s" x="387" y="526.0" style="font-size:11.5px">there in steady flight, total drag is at a minimum</text>
+<circle cx="378" cy="541.0" r="2.2" class="ah"/>
+<text class="s" x="387" y="545.0" style="font-size:11.5px">Thrust needed to overcome drag is least there, which</text>
+<text class="s" x="387" y="560.0" style="font-size:11.5px">gives maximum range; minimum power and maximum</text>
+<text class="s" x="387" y="575.0" style="font-size:11.5px">endurance occur at a different point</text>
+</svg>

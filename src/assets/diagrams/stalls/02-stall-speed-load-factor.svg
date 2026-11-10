@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 726" role="img" aria-labelledby="ti de"><title id="ti">Stall speed rises with load factor</title><desc id="de">Bars for an aircraft with a normal unaccelerated stalling speed of 50 knots: it stalls at 50 knots at 1 G, 100 knots at a load factor of 4 Gs, and would stall at 150 knots at 9 Gs. Cards give the bank angles from the text: significant beyond about 45 degrees, stalling speed up by about one half at about 63 degrees, load factor 3 above 72 degrees so a 45 knot aircraft must stay above 75 knots. High speed stalls: 1.7 times stalling speed gives 3 Gs and 112 knots gives 4 Gs with a 60 knot stalling speed.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Stall speed rises with load factor</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">An aircraft's stalling speed increases in proportion to the square root of the load factor, so a</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">banked turn or abrupt pull up can stall it at a seemingly safe speed.</text>
+<rect class="cl" x="20" y="91.0" width="690" height="250" rx="8"/>
+<text class="t" x="32" y="113.0" style="font-size:13px">An aircraft that stalls at 50 knots in unaccelerated flight</text>
+<text class="t" x="32" y="167.0" style="font-size:13px">1 G</text>
+<rect x="150" y="143.0" width="120.0" height="36" rx="6" class="sky" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t" x="280.0" y="167.0" style="font-size:13px">stalls at 50 knots</text>
+<text class="t" x="32" y="225.0" style="font-size:13px">4 Gs</text>
+<rect x="150" y="201.0" width="240.0" height="36" rx="6" class="lav" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t" x="400.0" y="225.0" style="font-size:13px">stalls at 100 knots</text>
+<text class="t" x="32" y="283.0" style="font-size:13px">9 Gs</text>
+<rect x="150" y="259.0" width="360.0" height="36" rx="6" class="rose" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t" x="520.0" y="283.0" style="font-size:13px">stalls at 150 knots</text>
+<text class="s" x="150" y="311.0" style="font-size:10.5px">(only if it could withstand a load factor of nine)</text>
+<text class="s" x="32" y="329.0" style="font-size:10.5px">Bar lengths are drawn to the knots shown.</text>
+<rect x="20" y="355.0" width="335" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="372.0" style="font-size:13px">Banked turns</text>
+<circle cx="31" cy="393.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="397.0" style="font-size:11.5px">Load factor becomes significant to performance and</text>
+<text class="s" x="40" y="412.0" style="font-size:11.5px">wing structure beyond approximately 45° of bank</text>
+<circle cx="31" cy="427.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="431.0" style="font-size:11.5px">At approximately 63° of bank, stalling speed is</text>
+<text class="s" x="40" y="446.0" style="font-size:11.5px">increased by approximately one-half</text>
+<circle cx="31" cy="461.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="465.0" style="font-size:11.5px">Banking more than 72° in a steep turn gives a load</text>
+<text class="s" x="40" y="480.0" style="font-size:11.5px">factor of 3: with a normal stalling speed of 45</text>
+<text class="s" x="40" y="495.0" style="font-size:11.5px">knots, keep the airspeed above 75 knots</text>
+<rect x="375" y="355.0" width="335" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="385" y="372.0" style="font-size:13px">High speed stalls</text>
+<circle cx="386" cy="393.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="397.0" style="font-size:11.5px">The only way to stall above normal stalling speed</text>
+<text class="s" x="395" y="412.0" style="font-size:11.5px">is to add load factor, such as a severe pull on the</text>
+<text class="s" x="395" y="427.0" style="font-size:11.5px">elevator</text>
+<circle cx="386" cy="442.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="446.0" style="font-size:11.5px">At 1.7 times stalling speed (about 102 knots when</text>
+<text class="s" x="395" y="461.0" style="font-size:11.5px">the stalling speed is 60 knots) the load factor is</text>
+<text class="s" x="395" y="476.0" style="font-size:11.5px">3 Gs</text>
+<circle cx="386" cy="491.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="495.0" style="font-size:11.5px">At 112 knots in the same aircraft it is 4 Gs</text>
+<rect x="20" y="520.0" width="335" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="537.0" style="font-size:13px">Why it matters</text>
+<circle cx="31" cy="558.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="562.0" style="font-size:11.5px">Danger of inadvertently stalling by raising the</text>
+<text class="s" x="40" y="577.0" style="font-size:11.5px">load factor, as in a steep turn or spiral</text>
+<circle cx="31" cy="592.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="596.0" style="font-size:11.5px">A quick pull up or any maneuver above 1 G has the</text>
+<text class="s" x="40" y="611.0" style="font-size:11.5px">same effect</text>
+<rect x="375" y="520.0" width="335" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="385" y="537.0" style="font-size:13px">Structure</text>
+<circle cx="386" cy="558.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="562.0" style="font-size:11.5px">Because the load factor is squared as the stalling</text>
+<text class="s" x="395" y="577.0" style="font-size:11.5px">speed doubles, tremendous loads can be imposed by</text>
+<text class="s" x="395" y="592.0" style="font-size:11.5px">stalling at high airspeeds</text>
+<circle cx="386" cy="607.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="611.0" style="font-size:11.5px">Older light airplanes: design maneuvering speed is</text>
+<text class="s" x="395" y="626.0" style="font-size:11.5px">approximately 1.7 times normal stalling speed; 60</text>
+<text class="s" x="395" y="641.0" style="font-size:11.5px">knots x 1.7 = 102 knots, 2.89 Gs</text>
+<rect class="cl" x="20" y="666.0" width="690" height="46" rx="8"/>
+<text class="s" x="32" y="686.0" style="font-size:12px">Abrupt back elevator near the ground, particularly in a steep turn, has caused many accidents. Check your</text>
+<text class="s" x="32" y="701.5" style="font-size:12px">own airplane's numbers in the AFM/POH.</text>
+</svg>

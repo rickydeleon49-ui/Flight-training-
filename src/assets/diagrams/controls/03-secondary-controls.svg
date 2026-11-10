@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 670" role="img" aria-labelledby="ti de"><title id="ti">Secondary controls: flaps and tabs</title><desc id="de">The four common trailing edge flap types: plain, split, slotted and Fowler, each with how it changes lift and drag. Elevator trim tabs move opposite to the elevator: nose-down trim has the tab up and the elevator down, nose-up trim has the tab down and the elevator up. An antiservo tab on a stabilator moves in the same direction as the stabilator trailing edge, making it less sensitive. Balance tabs and servo tabs are also named.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Secondary controls: flaps and tabs</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Wing flaps, leading edge devices, spoilers and trim systems make up the secondary control system. They</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">improve the performance of the airplane or relieve the pilot of excessive control forces.</text>
+<text class="t" x="20" y="101.0" style="font-size:13.5px">Four common trailing edge flaps (side view of the wing)</text>
+<rect class="cl" x="20" y="113.0" width="168" height="214" rx="8"/>
+<text class="t m" x="104" y="135.0" style="font-size:13px">Plain flap</text>
+<path d="M36 179.0Q46 165.0 76 165.0L108 171.0L108 183.0L76 187.0Q46 187.0 36 179.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<g transform="translate(108,177.0) rotate(28)"><rect x="0" y="-5" width="28" height="9" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g>
+<text class="s" x="28" y="227.0" style="font-size:11.5px">Simplest. Increases</text>
+<text class="s" x="28" y="242.0" style="font-size:11.5px">camber and lift at a</text>
+<text class="s" x="28" y="257.0" style="font-size:11.5px">given AOA, greatly</text>
+<text class="s" x="28" y="272.0" style="font-size:11.5px">increases drag, and moves</text>
+<text class="s" x="28" y="287.0" style="font-size:11.5px">the center of pressure</text>
+<text class="s" x="28" y="302.0" style="font-size:11.5px">aft: a nose-down pitching</text>
+<text class="s" x="28" y="317.0" style="font-size:11.5px">moment.</text>
+<rect class="cl" x="194" y="113.0" width="168" height="214" rx="8"/>
+<text class="t m" x="278" y="135.0" style="font-size:13px">Split flap</text>
+<path d="M210 179.0Q220 165.0 250 165.0L310 177.0L310 181.0L250 187.0Q220 187.0 210 179.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<g transform="translate(282,183.0) rotate(48)"><rect x="0" y="-1" width="28" height="4" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g>
+<text class="s" x="202" y="227.0" style="font-size:11.5px">Deflected from the lower</text>
+<text class="s" x="202" y="242.0" style="font-size:11.5px">surface only. Slightly</text>
+<text class="s" x="202" y="257.0" style="font-size:11.5px">more lift than plain,</text>
+<text class="s" x="202" y="272.0" style="font-size:11.5px">more drag from the</text>
+<text class="s" x="202" y="287.0" style="font-size:11.5px">turbulent air behind.</text>
+<rect class="cl" x="368" y="113.0" width="168" height="214" rx="8"/>
+<text class="t m" x="452" y="135.0" style="font-size:13px">Slotted flap</text>
+<path d="M384 179.0Q394 165.0 424 165.0L452 171.0L452 183.0L424 187.0Q394 187.0 384 179.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<g transform="translate(458,183.0) rotate(26)"><rect x="0" y="-5" width="28" height="9" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g>
+<path d="M434 197.0L453.3 191.1" class="acc" style="stroke-width:2"/><path d="M460 189.0L454.2 194.1L452.4 188.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s" x="376" y="227.0" style="font-size:11.5px">Most popular. A duct</text>
+<text class="s" x="376" y="242.0" style="font-size:11.5px">passes high energy air</text>
+<text class="s" x="376" y="257.0" style="font-size:11.5px">from below to the flap</text>
+<text class="s" x="376" y="272.0" style="font-size:11.5px">top, delays separation</text>
+<text class="s" x="376" y="287.0" style="font-size:11.5px">and gives a much higher</text>
+<text class="s" x="376" y="302.0" style="font-size:11.5px">lift coefficient.</text>
+<rect class="cl" x="542" y="113.0" width="168" height="214" rx="8"/>
+<text class="t m" x="626" y="135.0" style="font-size:13px">Fowler flap</text>
+<path d="M558 179.0Q568 165.0 598 165.0L626 171.0L626 183.0L598 187.0Q568 187.0 558 179.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<g transform="translate(642,185.0) rotate(22)"><rect x="0" y="-5" width="34" height="9" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g>
+<path d="M628 159.0L647.0 159.0" class="acc" style="stroke-width:2"/><path d="M654 159.0L647.0 162.2L647.0 155.8Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s" x="550" y="227.0" style="font-size:11.5px">A type of slotted flap.</text>
+<text class="s" x="550" y="242.0" style="font-size:11.5px">Slides back on tracks,</text>
+<text class="s" x="550" y="257.0" style="font-size:11.5px">adding area and camber:</text>
+<text class="s" x="550" y="272.0" style="font-size:11.5px">lift up a lot early, drag</text>
+<text class="s" x="550" y="287.0" style="font-size:11.5px">only later as it deflects</text>
+<text class="s" x="550" y="302.0" style="font-size:11.5px">down.</text>
+<text class="t" x="20" y="351.0" style="font-size:13.5px">Tabs on the trailing edge of a control surface</text>
+<rect class="cl" x="20" y="363.0" width="226" height="150" rx="8"/>
+<text class="t m" x="133" y="385.0" style="font-size:13px">Nose-down trim</text>
+<path d="M30 419.0L53.0 419.0" class="dk" style="stroke-width:2"/><path d="M60 419.0L53.0 422.1L53.0 415.9Z" class="dh" style=""/>
+<text class="s" x="34" y="409.0" style="font-size:10.5px">airflow</text>
+<rect x="46" y="423.0" width="70" height="9" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><g transform="translate(116,427.0) rotate(12)"><rect x="0" y="-4" width="52" height="9" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><g transform="translate(52,0) rotate(-32)"><rect x="0" y="-2.5" width="20" height="5" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g></g><circle cx="116" cy="427.0" r="2.5" class="dh"/>
+<text class="s" x="28" y="459.0" style="font-size:11.5px">Trim tab up, elevator trailing edge</text>
+<text class="s" x="28" y="474.0" style="font-size:11.5px">down: tail up, nose down.</text>
+<rect class="cl" x="252" y="363.0" width="226" height="150" rx="8"/>
+<text class="t m" x="365" y="385.0" style="font-size:13px">Nose-up trim</text>
+<path d="M262 419.0L285.0 419.0" class="dk" style="stroke-width:2"/><path d="M292 419.0L285.0 422.1L285.0 415.9Z" class="dh" style=""/>
+<text class="s" x="266" y="409.0" style="font-size:10.5px">airflow</text>
+<rect x="278" y="423.0" width="70" height="9" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><g transform="translate(348,427.0) rotate(-12)"><rect x="0" y="-4" width="52" height="9" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><g transform="translate(52,0) rotate(34)"><rect x="0" y="-2.5" width="20" height="5" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g></g><circle cx="348" cy="427.0" r="2.5" class="dh"/>
+<text class="s" x="260" y="459.0" style="font-size:11.5px">Trim tab down, elevator trailing</text>
+<text class="s" x="260" y="474.0" style="font-size:11.5px">edge up: tail down, nose up.</text>
+<rect class="cl" x="484" y="363.0" width="226" height="150" rx="8"/>
+<text class="t m" x="597" y="385.0" style="font-size:13px">Antiservo tab (stabilator)</text>
+<path d="M494 419.0L517.0 419.0" class="dk" style="stroke-width:2"/><path d="M524 419.0L517.0 422.1L517.0 415.9Z" class="dh" style=""/>
+<text class="s" x="498" y="409.0" style="font-size:10.5px">airflow</text>
+<g transform="translate(550,427.0) rotate(-12)"><rect x="-30" y="-4" width="100" height="9" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><g transform="translate(70,0) rotate(-16)"><rect x="0" y="-2.5" width="20" height="5" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/></g></g><circle cx="550" cy="427.0" r="2.5" class="dh"/>
+<text class="s" x="492" y="459.0" style="font-size:11.5px">Moves the same way as the</text>
+<text class="s" x="492" y="474.0" style="font-size:11.5px">stabilator trailing edge: less</text>
+<text class="s" x="492" y="489.0" style="font-size:11.5px">sensitive stabilator, and it also</text>
+<text class="s" x="492" y="504.0" style="font-size:11.5px">trims.</text>
+<rect class="cl" x="20" y="527.0" width="690" height="118" rx="8"/>
+<text class="t" x="32" y="549.0" style="font-size:13px">Trim tabs, balance tabs, servo tabs</text>
+<circle cx="35" cy="565.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="569.0" style="font-size:12px">Trim tab (most common on small airplanes: on the elevator): relieves control pressure. If you must hold</text>
+<text class="s" x="44" y="584.5" style="font-size:12px">constant back pressure, the need for nose-up trim is indicated. Elevator trim moves opposite to the</text>
+<text class="s" x="44" y="600.0" style="font-size:12px">elevator.</text>
+<circle cx="35" cy="615.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="619.5" style="font-size:12px">Balance tab: coupled to the control rod, it moves opposite to the surface to lighten control forces.</text>
+<text class="s" x="44" y="635.0" style="font-size:12px">Servo tab: moves with pilot input and the airflow moves the surface; used mainly on large aircraft.</text>
+</svg>

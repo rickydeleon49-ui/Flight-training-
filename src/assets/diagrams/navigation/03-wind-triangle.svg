@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 430" role="img" aria-labelledby="ti de"><title id="ti">Wind triangle</title><desc id="de">A wind triangle for a flight from E to P on a true course of 090 degrees. The wind blows at 40 knots from 045 degrees and true airspeed is 120 knots. The triangle gives a groundspeed of 88 knots and a wind correction angle of 14 degrees. Wind from the left, so subtract 14 from the course for a true heading of 076 degrees. Wind from the right is added.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<path class="o" style="stroke-width:2;opacity:0.5" d="M120 56V292"/>
+<text class="t m" x="120" y="50" style="font-size:14px">N</text>
+<text class="t m" x="120" y="308" style="font-size:14px">S</text>
+<path class="o" style="stroke-width:2;opacity:0.5;stroke-dasharray:6 6" d="M120 150L208 62"/>
+<text class="s" x="214" y="64" style="font-size:12.5px">wind from 045°</text>
+<path class="dk" style="stroke-width:4" d="M120 150H371"/>
+<path class="dh" d="M377.2 150.0L365.2 156.0L365.2 144.0z"/>
+<text class="t" x="154" y="142" style="font-size:14px">TC 090°</text>
+<path class="acc" d="M52.1 217.9L331.2 150.0"/><path class="ah" d="M331.2 150.0L320.2 159.9L316.9 146.3z"/>
+<path class="o" style="stroke-width:3;stroke:#7a7a7a" d="M120 150L52.1 217.9"/><path class="dh" d="M52.1 217.9L56.4 205.2L64.8 213.6z"/>
+<circle class="dh" cx="120" cy="150" r="5"/><circle class="dh" cx="52.1" cy="217.9" r="5"/><circle class="dh" cx="331.2" cy="150.0" r="5"/>
+<text class="t e" x="110" y="140" style="font-size:15px">E</text>
+<text class="t e" x="44.11774900609143" y="239.88225099390857" style="font-size:15px">W</text>
+<text class="t" x="339.2" y="172" style="font-size:15px">P</text>
+<text class="s" x="20" y="261.88225099390854" style="font-size:12.5px">Wind 40 kt</text>
+<text class="s" x="20" y="277.88225099390854" style="font-size:12.5px">(downwind)</text>
+<text class="t" x="212" y="214" style="font-size:13.5px">AS 120 kt (heading)</text>
+<path class="o" style="stroke-width:2" d="M283.2 150A48 48 0 0 0 284.6 161.4"/>
+<text class="t m" x="271.2" y="142" style="font-size:14px">WCA 14°</text>
+<text class="t" x="470" y="44" style="font-size:16px">PHAK example</text>
+<text class="s" x="470" y="64" style="font-size:14px">TC 090°. Wind 40 kt from the</text>
+<text class="s" x="470" y="81" style="font-size:14px">northeast (045°). True airspeed</text>
+<text class="s" x="470" y="98" style="font-size:14px">120 kt.</text>
+<text class="t" x="470" y="130" style="font-size:16px">Result</text>
+<text class="s" x="470" y="150" style="font-size:14px">GS = 88 kt (length of the TC line).</text>
+<text class="s" x="470" y="167" style="font-size:14px">WCA = 14°. Wind is from the left,</text>
+<text class="s" x="470" y="184" style="font-size:14px">so subtract 14° from TC 090°:</text>
+<text class="s" x="470" y="201" style="font-size:14px">TH = 076°.</text>
+<text class="t" x="470" y="232" style="font-size:16px">Applying the WCA</text>
+<text class="s" x="470" y="251" style="font-size:14px">Wind from the right of TC: add.</text>
+<text class="s" x="470" y="268" style="font-size:14px">Wind from the left: subtract.</text>
+<rect class="cl" x="20" y="326" width="690" height="94" rx="8"/>
+<text class="s" x="32" y="348" style="font-size:14px">Course: intended path over the ground.  Heading: where the nose points.</text>
+<text class="s" x="32" y="367" style="font-size:14px">Track: actual path over the ground (equals course if wind is corrected).</text>
+<text class="s" x="32" y="386" style="font-size:14px">Drift angle: angle between heading and track.</text>
+<text class="s" x="32" y="405" style="font-size:14px">WCA: correction applied to the course to get a heading so track matches course.</text>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 620" role="img" aria-labelledby="ti de"><title id="ti">METAR decoded field by field</title><desc id="de">An example METAR with made-up values, KGGG 161753Z AUTO 14021G26KT 3/4SM +TSRA BR BKN008 OVC012CB 18/17 A2970 RMK PRESFR, decoded in order: report type, station identifier, date and time in UTC, modifier, wind, visibility, weather, sky condition, temperature and dew point, altimeter setting, remarks, and the variable wind group.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Example METAR (made-up values), read left to right</text>
+<rect class="sky" x="20" y="38" width="690" height="30" rx="8"/>
+<text class="t" x="32" y="59" style="font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">METAR KGGG 161753Z AUTO 14021G26KT 3/4SM +TSRA BR BKN008 OVC012CB 18/17 A2970 RMK PRESFR</text>
+<text class="t" x="20" y="98" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">METAR</text>
+<text class="s" x="20" y="115.0" style="font-size:12.5px">Type of report. Routine METAR is sent at regular</text>
+<text class="s" x="20" y="131.0" style="font-size:12.5px">times. SPECI is a special report, any time, for</text>
+<text class="s" x="20" y="147.0" style="font-size:12.5px">rapidly changing weather or other critical</text>
+<text class="s" x="20" y="163.0" style="font-size:12.5px">information.</text>
+<text class="t" x="20" y="201.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">KGGG</text>
+<text class="s" x="20" y="218.0" style="font-size:12.5px">Station: four-letter ICAO code. In the 48 states, K</text>
+<text class="s" x="20" y="234.0" style="font-size:12.5px">plus the three-letter identifier. Alaska starts with</text>
+<text class="s" x="20" y="250.0" style="font-size:12.5px">PA, Hawaii with PH.</text>
+<text class="t" x="20" y="288.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">161753Z</text>
+<text class="s" x="20" y="305.0" style="font-size:12.5px">Date and time: 16th day, 1753 UTC. Z means Zulu</text>
+<text class="s" x="20" y="321.0" style="font-size:12.5px">(UTC), not local time.</text>
+<text class="t" x="20" y="359.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">AUTO</text>
+<text class="s" x="20" y="376.0" style="font-size:12.5px">Modifier: report came from an automated source. COR</text>
+<text class="s" x="20" y="392.0" style="font-size:12.5px">means a corrected report that replaces an earlier</text>
+<text class="s" x="20" y="408.0" style="font-size:12.5px">one.</text>
+<text class="t" x="20" y="446.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">14021G26KT</text>
+<text class="s" x="20" y="463.0" style="font-size:12.5px">Wind: from 140 degrees true, 21 knots, gusting to</text>
+<text class="s" x="20" y="479.0" style="font-size:12.5px">26. VRB = variable. Over 99 knots uses three digits.</text>
+<text class="t" x="20" y="517.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">3/4SM</text>
+<text class="s" x="20" y="534.0" style="font-size:12.5px">Prevailing visibility in statute miles. RVR, if</text>
+<text class="s" x="20" y="550.0" style="font-size:12.5px">reported: R17L/1400FT = 1,400 ft on runway 17 left.</text>
+<text class="t" x="378" y="98" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">+TSRA BR</text>
+<text class="s" x="378" y="115.0" style="font-size:12.5px">Weather: intensity first (light -, moderate, heavy</text>
+<text class="s" x="378" y="131.0" style="font-size:12.5px">+; VC = 5 to 10 mi away). Here: heavy thunderstorm</text>
+<text class="s" x="378" y="147.0" style="font-size:12.5px">with rain, and mist.</text>
+<text class="t" x="378" y="185.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">BKN008 OVC012CB</text>
+<text class="s" x="378" y="202.0" style="font-size:12.5px">Sky: amount, height, type. Broken at 800 ft,</text>
+<text class="s" x="378" y="218.0" style="font-size:12.5px">overcast at 1,200 ft with cumulonimbus. Heights are</text>
+<text class="s" x="378" y="234.0" style="font-size:12.5px">hundreds of feet AGL. VV003 = indefinite ceiling.</text>
+<text class="t" x="378" y="272.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">18/17</text>
+<text class="s" x="378" y="289.0" style="font-size:12.5px">Temperature 18 C, dew point 17 C. M before a value</text>
+<text class="s" x="378" y="305.0" style="font-size:12.5px">means below zero.</text>
+<text class="t" x="378" y="343.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">A2970</text>
+<text class="s" x="378" y="360.0" style="font-size:12.5px">Altimeter setting 29.70 inches of mercury. Always A</text>
+<text class="s" x="378" y="376.0" style="font-size:12.5px">plus four digits.</text>
+<text class="t" x="378" y="414.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">RMK PRESFR</text>
+<text class="s" x="378" y="431.0" style="font-size:12.5px">Remarks always begin with RMK. PRESFR = pressure</text>
+<text class="s" x="378" y="447.0" style="font-size:12.5px">falling rapidly; PRESRR = pressure rising.</text>
+<text class="t" x="378" y="485.0" style="font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600">dddVddd</text>
+<text class="s" x="378" y="502.0" style="font-size:12.5px">Variable wind: if direction varies more than 60</text>
+<text class="s" x="378" y="518.0" style="font-size:12.5px">degrees and speed is over 6 knots, the extremes</text>
+<text class="s" x="378" y="534.0" style="font-size:12.5px">follow, split by V.</text>
+<rect class="cl" x="20" y="576.0" width="690" height="28" rx="8"/>
+<text class="s" x="32" y="595.0" style="font-size:13px">Sky cover is reported in eighths of the sky. Automated stations do not detect or report clouds above 12,000 ft.</text>
+</svg>

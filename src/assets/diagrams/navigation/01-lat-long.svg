@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 430" role="img" aria-labelledby="ti de"><title id="ti">Latitude and longitude</title><desc id="de">A grid of part of the Earth. Parallels of latitude run east and west and are measured in degrees north or south of the equator. Meridians of longitude run from pole to pole at right angles to the equator and are measured east or west of the Prime Meridian, which passes through Greenwich, England. The 48 conterminous states lie between 25 and 49 degrees north and 67 and 125 degrees west. Washington, D.C. is about 39 degrees north, 77 degrees west, and Chicago about 42 north, 88 west. The Earth turns 15 degrees an hour, so a time zone spans 15 degrees of longitude.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<rect class="sky" x="50.0" y="85.0" width="420.0" height="195.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M80.0 85.0V280.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M170.0 85.0V280.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M260.0 85.0V280.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M350.0 85.0V280.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M440.0 85.0V280.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M50.0 190.0H470.0"/>
+<path class="o" style="stroke-width:1.5;opacity:0.35" d="M50.0 100.0H470.0"/>
+<path class="o" style="stroke-width:2.5" d="M50.0 85.0V280.0H470.0V85.0z"/>
+<path class="dk" style="stroke-width:4" d="M50.0 280.0H470.0"/>
+<path class="dk" style="stroke-width:4;stroke:var(--palette-berry,#A84C6B)" d="M440.0 85.0V280.0"/>
+<text class="t e" x="446.0" y="68" style="font-size:14px">Prime Meridian (0°)</text>
+<text class="s e" x="446.0" y="82" style="font-size:12px">through Greenwich, England</text>
+<text class="t" x="56" y="272.0" style="font-size:13px">Equator (0° latitude)</text>
+<text class="s e" x="44" y="195.0" style="font-size:12px">30°N</text>
+<text class="s e" x="44" y="105.0" style="font-size:12px">60°N</text>
+<text class="s m" x="80.0" y="298" style="font-size:12px">120°W</text>
+<text class="s m" x="170.0" y="298" style="font-size:12px">90°W</text>
+<text class="s m" x="260.0" y="298" style="font-size:12px">60°W</text>
+<text class="s m" x="350.0" y="298" style="font-size:12px">30°W</text>
+<text class="s m" x="440.0" y="298" style="font-size:12px">0°</text>
+<rect class="mint" x="65.0" y="133.0" width="174.0" height="72.0"/><rect class="o" style="stroke-width:2" x="65.0" y="133.0" width="174.0" height="72.0"/>
+<circle class="dh" cx="209.0" cy="163.0" r="4.5"/><circle class="dh" cx="176.0" cy="154.0" r="4.5"/>
+<text class="t e" x="169.0" y="150.0" style="font-size:13px">Chicago</text>
+<path class="o" style="stroke-width:1.5;opacity:0.6" d="M213.0 163.0H249.0"/>
+<text class="t" x="253.0" y="168.0" style="font-size:13px">Washington, D.C.</text>
+<text class="s" x="65.0" y="221.0" style="font-size:12px">48 conterminous states:</text>
+<text class="s" x="65.0" y="235.0" style="font-size:12px">25°–49°N, 67°–125°W</text>
+<text class="t" x="494" y="44" style="font-size:16px">Parallels of latitude</text>
+<text class="s" x="494" y="63" style="font-size:14px">Circles parallel to the equator</text>
+<text class="s" x="494" y="80" style="font-size:14px">(lines running east and west).</text>
+<text class="s" x="494" y="97" style="font-size:14px">Measure degrees N or S of the</text>
+<text class="s" x="494" y="114" style="font-size:14px">equator, up to 90° at the pole.</text>
+<text class="t" x="494" y="148" style="font-size:16px">Meridians of longitude</text>
+<text class="s" x="494" y="167" style="font-size:14px">Run pole to pole, at right angles</text>
+<text class="s" x="494" y="184" style="font-size:14px">to the equator. The Prime Meridian</text>
+<text class="s" x="494" y="201" style="font-size:14px">is the zero line; measure degrees</text>
+<text class="s" x="494" y="218" style="font-size:14px">east or west of it, to 180°.</text>
+<text class="t" x="494" y="252" style="font-size:16px">Meridians and time</text>
+<text class="s" x="494" y="271" style="font-size:14px">The Earth turns 15° an hour, so a</text>
+<text class="s" x="494" y="288" style="font-size:14px">time zone spans 15° of longitude.</text>
+<rect class="cl" x="20" y="330" width="690" height="90" rx="8"/>
+<text class="t" x="32" y="354" style="font-size:16px">Any point is located by its latitude and longitude.</text>
+<text class="s" x="32" y="378" style="font-size:15px">Washington, D.C. is approximately 39° N, 77° W. Chicago is approximately 42° N, 88° W.</text>
+<text class="s" x="32" y="402" style="font-size:14px">Schematic grid: part of the globe only, coastlines omitted, not to scale.</text>
+</svg>

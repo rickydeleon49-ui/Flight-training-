@@ -104,6 +104,7 @@ import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { useMaterialTips } from "./materialTips";
 import { RelatedStudy } from "./RelatedStudy";
+import { DiagramsStrip } from "./DiagramsStrip";
 import { jumpToMaterialHeading } from "./materialJump";
 import { MATERIAL_TABS, materialTabFrom, materialTabParams, materialTabForAnchor, type MaterialTab } from "./materialTabs";
 import { MaterialActionsMenu, MoveToFolderItem } from "./MaterialActionsMenu";
@@ -1915,6 +1916,8 @@ function MaterialDetailPage() {
           <OralScenariosCard material={material} />
 
           <MaterialVideoLinks key={material.id} materialId={material.id} />
+
+          <DiagramsStrip topic={material.topic} />
 
           </div>
         </MaterialTabPanel>

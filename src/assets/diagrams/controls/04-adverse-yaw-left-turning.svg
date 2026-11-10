@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 819" role="img" aria-labelledby="ti de"><title id="ti">Adverse yaw and the left-turning tendencies</title><desc id="de">Top view of an airplane rolling to the right: the left aileron is down with more lift and drag, the right aileron is up, and the nose yaws left, opposite the bank. Adverse yaw is worse at low airspeed and is countered with rudder. Four elements of the left-turning tendency for a clockwise propeller: torque reaction, spiraling slipstream, gyroscopic precession and P-factor.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Adverse yaw and the left-turning tendencies</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Adverse yaw comes from control use in a turn. "Torque", the left turning tendency, is made up of four</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">elements. The text assumes a propeller that turns clockwise as viewed from the pilot seat.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="254" rx="8"/>
+<text class="t" x="32" y="111.0" style="font-size:13.5px">Adverse yaw (roll to the right shown, top view)</text>
+<rect x="121" y="157.0" width="18" height="150" rx="9" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M121 199.0L30 207.0L30 233.0L121 239.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M139 199.0L230 207.0L230 233.0L139 239.0Z" class="lav" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M121 279.0L90 284.0L90 297.0L121 297.0Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M139 279.0L170 284.0L170 297.0L139 297.0Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<rect x="30" y="228.0" width="48" height="10" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<rect x="182" y="228.0" width="48" height="10" class="rose" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<text class="t" x="30" y="253.0" style="font-size:10px">left aileron down:</text>
+<text class="s" x="30" y="265.0" style="font-size:10px">more lift,</text>
+<text class="s" x="30" y="277.0" style="font-size:10px">more drag</text>
+<text class="t" x="230" y="253.0" style="font-size:10px;text-anchor:end">right aileron up:</text>
+<text class="s" x="230" y="265.0" style="font-size:10px;text-anchor:end">less lift,</text>
+<text class="s" x="230" y="277.0" style="font-size:10px;text-anchor:end">less drag</text>
+<path d="M50 193.0L50.0 173.0" class="dk" style="stroke-width:2.5"/><path d="M50 165.0L53.6 173.0L46.4 173.0Z" class="dh" style=""/>
+<text class="s m" x="50" y="159.0" style="font-size:10.5px">rises</text>
+<path d="M130 153.0L106.0 153.0" class="acc" style="stroke-width:3"/><path d="M96 153.0L106.0 148.5L106.0 157.5Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="t" x="136" y="143.0" style="font-size:11px;fill:currentColor">nose yaws left</text>
+<text class="s m" x="130" y="333.0" style="font-size:10.5px">Yaw is opposite the bank.</text>
+<circle cx="265" cy="131.0" r="2.2" class="ah"/>
+<text class="s" x="274" y="135.0" style="font-size:11.5px">Cause: the lowered aileron makes more lift and more drag. The wing</text>
+<text class="s" x="274" y="150.0" style="font-size:11.5px">slows slightly, and the airplane yaws toward the wing with more lift</text>
+<text class="s" x="274" y="165.0" style="font-size:11.5px">and drag (differential drag and a small speed difference between the</text>
+<text class="s" x="274" y="180.0" style="font-size:11.5px">wings).</text>
+<circle cx="265" cy="195.0" r="2.2" class="ah"/>
+<text class="s" x="274" y="199.0" style="font-size:11.5px">Worse at low airspeeds, with high angles of attack and large aileron</text>
+<text class="s" x="274" y="214.0" style="font-size:11.5px">deflections, and with long wing spans.</text>
+<circle cx="265" cy="229.0" r="2.2" class="ah"/>
+<text class="s" x="274" y="233.0" style="font-size:11.5px">Fix: rudder, applied with the ailerons in every coordinated turn.</text>
+<text class="s" x="274" y="248.0" style="font-size:11.5px">Elevator back pressure raises the AOA for the extra lift.</text>
+<circle cx="265" cy="263.0" r="2.2" class="ah"/>
+<text class="s" x="274" y="267.0" style="font-size:11.5px">Design aids that reduce it, not eliminate it: differential ailerons,</text>
+<text class="s" x="274" y="282.0" style="font-size:11.5px">Frise-type ailerons, coupled ailerons and rudder, flaperons.</text>
+<text class="t" x="20" y="365.0" style="font-size:13.5px">Four elements of left-turning tendency</text>
+<rect class="cl" x="20" y="375.0" width="168" height="376" rx="8"/>
+<circle cx="38" cy="395.0" r="11" class="ah"/><text class="t m" x="38" y="399.3333333333333" style="font-size:13px;fill:#fff">1</text>
+<text class="t" x="54" y="400.0" style="font-size:12.5px">Torque reaction</text>
+<circle cx="104" cy="481.0" r="30" class="sky" style="stroke:currentColor;stroke-width:1.8"/>
+<path d="M65.9 459.0A44 44 0 0 1 142.1 459.0" class="dk" style="stroke-width:2.5"/><path d="M142.1 459.0L134.1 453.2L141.1 449.2Z" class="dh" style=""/>
+<text class="s m" x="104" y="429.0" style="font-size:9.5px">propeller: clockwise</text>
+<path d="M138.6 501.0A40 40 0 0 1 69.4 501.0" class="acc" style="stroke-width:2.5"/><path d="M69.4 501.0L77.4 506.8L70.4 510.8Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s m" x="104" y="541.0" style="font-size:9.5px">reaction: airplane turns left</text>
+<text class="s" x="28" y="565.0" style="font-size:11px">Newton third law. Engine</text>
+<text class="s" x="28" y="579.5" style="font-size:11px">and propeller turn one</text>
+<text class="s" x="28" y="594.0" style="font-size:11px">way, an equal force tries</text>
+<text class="s" x="28" y="608.5" style="font-size:11px">to turn the airplane the</text>
+<text class="s" x="28" y="623.0" style="font-size:11px">other way. In flight: a</text>
+<text class="s" x="28" y="637.5" style="font-size:11px">rolling tendency about the</text>
+<text class="s" x="28" y="652.0" style="font-size:11px">longitudinal axis. Takeoff</text>
+<text class="s" x="28" y="666.5" style="font-size:11px">roll: more weight on the</text>
+<text class="s" x="28" y="681.0" style="font-size:11px">left main wheel, more drag</text>
+<text class="s" x="28" y="695.5" style="font-size:11px">on the left, a pull left.</text>
+<text class="s" x="28" y="710.0" style="font-size:11px">Correct with rudder or</text>
+<text class="s" x="28" y="724.5" style="font-size:11px">rudder trim.</text>
+<rect class="cl" x="194" y="375.0" width="168" height="376" rx="8"/>
+<circle cx="212" cy="395.0" r="11" class="ah"/><text class="t m" x="212" y="399.3333333333333" style="font-size:13px;fill:#fff">2</text>
+<text class="t" x="228" y="400.0" style="font-size:12.5px">Spiraling slipstream</text>
+<rect x="208" y="473.0" width="14" height="16" rx="3" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M222 481.0 q14 -22 28 0 t28 0 t28 0 t28 0" class="dk" style="stroke-width:2.5;opacity:.9"/>
+<path d="M222 481.0 q14 22 28 0 t28 0" class="dk" style="stroke-width:2;opacity:.5"/>
+<path d="M324 505.0L342 451.0L350 451.0L350 505.0Z" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<text class="s m" x="278" y="525.0" style="font-size:9.5px">spiral strikes the fin</text>
+<text class="s m" x="278" y="459.0" style="font-size:9.5px">slipstream</text>
+<text class="s" x="202" y="565.0" style="font-size:11px">The propeller gives the</text>
+<text class="s" x="202" y="579.5" style="font-size:11px">slipstream a corkscrew</text>
+<text class="s" x="202" y="594.0" style="font-size:11px">rotation. At high power</text>
+<text class="s" x="202" y="608.5" style="font-size:11px">and low speed the spiral</text>
+<text class="s" x="202" y="623.0" style="font-size:11px">is compact and strikes the</text>
+<text class="s" x="202" y="637.5" style="font-size:11px">left side of the vertical</text>
+<text class="s" x="202" y="652.0" style="font-size:11px">fin, a yawing moment. Also</text>
+<text class="s" x="202" y="666.5" style="font-size:11px">a rolling moment to the</text>
+<text class="s" x="202" y="681.0" style="font-size:11px">right. As speed rises the</text>
+<text class="s" x="202" y="695.5" style="font-size:11px">spiral elongates and</text>
+<text class="s" x="202" y="710.0" style="font-size:11px">weakens.</text>
+<rect class="cl" x="368" y="375.0" width="168" height="376" rx="8"/>
+<circle cx="386" cy="395.0" r="11" class="ah"/><text class="t m" x="386" y="399.3333333333333" style="font-size:13px;fill:#fff">3</text>
+<text class="t" x="402" y="400.0" style="font-size:12.5px">Gyroscopic action</text>
+<circle cx="452" cy="481.0" r="32" class="sky" style="stroke:currentColor;stroke-width:1.8"/>
+<path d="M466.4 441.5A42 42 0 0 1 484.2 508.0" class="dk" style="stroke-width:2.5"/><path d="M484.2 508.0L486.9 498.5L493.1 503.7Z" class="dh" style=""/>
+<circle cx="452" cy="449.0" r="5" class="ah"/>
+<text class="s" x="462" y="433.0" style="font-size:9.5px">force applied here</text>
+<circle cx="484" cy="481.0" r="5" class="ah"/>
+<text class="s m" x="452" y="537.0" style="font-size:9.5px">result: 90 degrees ahead,</text>
+<text class="s m" x="452" y="549.0" style="font-size:9.5px">in the direction of rotation</text>
+<text class="s" x="376" y="565.0" style="font-size:11px">A force applied to the rim</text>
+<text class="s" x="376" y="579.5" style="font-size:11px">of the spinning propeller</text>
+<text class="s" x="376" y="594.0" style="font-size:11px">acts 90 degrees ahead, in</text>
+<text class="s" x="376" y="608.5" style="font-size:11px">the direction of rotation.</text>
+<text class="s" x="376" y="623.0" style="font-size:11px">Raising the tail on</text>
+<text class="s" x="376" y="637.5" style="font-size:11px">takeoff pushes on the top</text>
+<text class="s" x="376" y="652.0" style="font-size:11px">of the disc, and the</text>
+<text class="s" x="376" y="666.5" style="font-size:11px">resulting force yaws the</text>
+<text class="s" x="376" y="681.0" style="font-size:11px">nose left. Yaw produces</text>
+<text class="s" x="376" y="695.5" style="font-size:11px">pitch, pitch produces yaw.</text>
+<rect class="cl" x="542" y="375.0" width="168" height="376" rx="8"/>
+<circle cx="560" cy="395.0" r="11" class="ah"/><text class="t m" x="560" y="399.3333333333333" style="font-size:13px;fill:#fff">4</text>
+<text class="t" x="576" y="400.0" style="font-size:12.5px">P-factor</text>
+<circle cx="626" cy="481.0" r="34" class="sky" style="stroke:currentColor;stroke-width:1.8"/>
+<path d="M626 447.0A34 34 0 0 1 626 515.0Z" class="rose" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="t m" x="643" y="477.0" style="font-size:10px">down</text>
+<text class="s m" x="609" y="477.0" style="font-size:10px">up</text>
+<circle cx="644" cy="495.0" r="4.5" class="ah"/>
+<text class="s m" x="626" y="535.0" style="font-size:9.5px">center of thrust moves right</text>
+<text class="s m" x="626" y="439.0" style="font-size:9.5px">seen from behind</text>
+<text class="s" x="550" y="565.0" style="font-size:11px">At a high AOA the</text>
+<text class="s" x="550" y="579.5" style="font-size:11px">downward-moving blade</text>
+<text class="s" x="550" y="594.0" style="font-size:11px">bites more than the</text>
+<text class="s" x="550" y="608.5" style="font-size:11px">upward-moving blade. The</text>
+<text class="s" x="550" y="623.0" style="font-size:11px">center of thrust moves</text>
+<text class="s" x="550" y="637.5" style="font-size:11px">right on the disc, so the</text>
+<text class="s" x="550" y="652.0" style="font-size:11px">nose yaws left about the</text>
+<text class="s" x="550" y="666.5" style="font-size:11px">vertical axis.</text>
+<text class="s" x="20" y="767.0" style="font-size:10.5px">Corrections named in the text: rudder or rudder trim for torque on the takeoff roll; aileron trim tabs for torque roll at</text>
+<text class="s" x="20" y="781.0" style="font-size:10.5px">other speeds; elevator and rudder for gyroscopic action; the pilot must counter whichever force is most prominent with the</text>
+<text class="s" x="20" y="795.0" style="font-size:10.5px">flight controls.</text>
+</svg>

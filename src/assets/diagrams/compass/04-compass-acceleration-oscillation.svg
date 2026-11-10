@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 615.0" role="img" aria-labelledby="ti de"><title id="ti">Acceleration and oscillation errors</title><desc id="de">Two panels for an east or west heading. Accelerating tilts the aft end of the card up and the compass shows a turn toward north. Decelerating tilts it down and the compass shows a turn toward south. Mnemonic ANDS: Acceleration-North, Deceleration-South. Last panel: a wavy line shows the compass card swinging around an average line; use the average indication between the swings when setting the heading indicator.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Acceleration and oscillation errors</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">The magnetic dip and the forces of inertia cause compass errors when you accelerate or decelerate on</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">easterly and westerly headings.</text>
+<rect class="cl" x="20" y="91.0" width="335" height="226" rx="8"/>
+<text class="t" x="32" y="113.0" style="font-size:13px">Accelerating</text>
+<text class="s" x="32" y="128.0" style="font-size:11px">on an east or west heading</text>
+<path d="M40 189.0L170 217.0" class="dk" style="stroke-width:6"/>
+<path d="M105 203.0L105 237.0" class="dk" style="stroke-width:1.5;opacity:.7"/>
+<text class="s" x="40" y="259.0" style="font-size:11px">Card tilts: aft end</text>
+<text class="s" x="40" y="272.0" style="font-size:11px">up</text>
+<text class="s" x="38" y="181.0" style="font-size:10.5px">aft</text>
+<text class="s e" x="170" y="209.0" style="font-size:10.5px">front</text>
+<path d="M50 153.0L112.0 153.0" class="dk" style="stroke-width:3"/><path d="M120 153.0L112.0 156.6L112.0 149.4Z" class="dh" style=""/>
+<text class="s" x="130" y="157.0" style="font-size:11px">speeds up</text>
+<circle cx="282" cy="195.0" r="34" class="cl" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t m" x="282.0" y="152.0" style="font-size:12px">N</text>
+<text class="t m" x="329.0" y="199.0" style="font-size:12px">E</text>
+<text class="t m" x="282.0" y="246.0" style="font-size:12px">S</text>
+<text class="t m" x="235.0" y="199.0" style="font-size:12px">W</text>
+<path d="M306.0 188.0L309.6 199.3L302.4 199.3Z" class="dh"/>
+<path d="M304.0 195.0A22 22 0 0 0 293.0 175.9" class="acc" style="stroke-width:3"/><path d="M293.0 175.9L302.8 176.9L298.8 184.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="t m" x="282" y="291.0" style="font-size:11px">Compass shows a turn</text>
+<text class="t m" x="282" y="305.0" style="font-size:11px">toward north</text>
+<rect class="cl" x="375" y="91.0" width="335" height="226" rx="8"/>
+<text class="t" x="387" y="113.0" style="font-size:13px">Decelerating</text>
+<text class="s" x="387" y="128.0" style="font-size:11px">on an east or west heading</text>
+<path d="M395 217.0L525 189.0" class="dk" style="stroke-width:6"/>
+<path d="M460 203.0L460 237.0" class="dk" style="stroke-width:1.5;opacity:.7"/>
+<text class="s" x="395" y="259.0" style="font-size:11px">Card tilts: aft end</text>
+<text class="s" x="395" y="272.0" style="font-size:11px">down</text>
+<text class="s" x="393" y="209.0" style="font-size:10.5px">aft</text>
+<text class="s e" x="525" y="181.0" style="font-size:10.5px">front</text>
+<path d="M475 153.0L413.0 153.0" class="dk" style="stroke-width:3"/><path d="M405 153.0L413.0 149.4L413.0 156.6Z" class="dh" style=""/>
+<text class="s" x="485" y="157.0" style="font-size:11px">slows down</text>
+<circle cx="637" cy="195.0" r="34" class="cl" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t m" x="637.0" y="152.0" style="font-size:12px">N</text>
+<text class="t m" x="684.0" y="199.0" style="font-size:12px">E</text>
+<text class="t m" x="637.0" y="246.0" style="font-size:12px">S</text>
+<text class="t m" x="590.0" y="199.0" style="font-size:12px">W</text>
+<path d="M661.0 202.0L657.4 190.7L664.6 190.7Z" class="dh"/>
+<path d="M659.0 195.0A22 22 0 0 1 648.0 214.1" class="acc" style="stroke-width:3"/><path d="M648.0 214.1L653.8 206.0L657.8 213.1Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="t m" x="637" y="291.0" style="font-size:11px">Compass shows a turn</text>
+<text class="t m" x="637" y="305.0" style="font-size:11px">toward south</text>
+<rect class="cl" x="20" y="329.0" width="690" height="70" rx="8"/>
+<text class="t" x="40" y="373.0" style="font-size:30px;fill:var(--palette-berry,#A84C6B)">ANDS</text>
+<text class="t" x="150" y="359.0" style="font-size:14px">Acceleration-North / Deceleration-South</text>
+<text class="s" x="150" y="379.0" style="font-size:12px">Acceleration causes an indication toward north; deceleration, toward south.</text>
+<rect class="cl" x="20" y="411.0" width="690" height="190" rx="8"/>
+<text class="t" x="32" y="433.0" style="font-size:13px">Oscillation error</text>
+<path d="M40 523.0L340 523.0" class="dk" style="stroke-width:1.5;opacity:.7;stroke-dasharray:6 5"/>
+<path d="M40.0 523.0L43.0 529.3L46.0 535.2L49.0 540.6L52.0 545.3L55.0 549.0L58.0 551.8L61.0 553.5L64.0 554.1L67.0 553.6L70.0 552.0L73.0 549.4L76.0 546.0L79.0 541.8L82.0 537.0L85.0 531.9L88.0 526.6L91.0 521.2L94.0 516.1L97.0 511.3L100.0 507.0L103.0 503.3L106.0 500.5L109.0 498.5L112.0 497.4L115.0 497.2L118.0 497.9L121.0 499.5L124.0 501.9L127.0 505.0L130.0 508.6L133.0 512.7L136.0 517.1L139.0 521.5L142.0 525.9L145.0 530.1L148.0 534.0L151.0 537.4L154.0 540.2L157.0 542.4L160.0 543.8L163.0 544.5L166.0 544.4L169.0 543.5L172.0 542.0L175.0 539.8L178.0 537.0L181.0 533.9L184.0 530.4L187.0 526.7L190.0 523.0L193.0 519.4L196.0 515.9L199.0 512.8L202.0 510.1L205.0 508.0L208.0 506.4L211.0 505.4L214.0 505.1L217.0 505.4L220.0 506.3L223.0 507.8L226.0 509.8L229.0 512.2L232.0 514.9L235.0 517.9L238.0 520.9L241.0 524.0L244.0 527.0L247.0 529.8L250.0 532.3L253.0 534.4L256.0 536.0L259.0 537.2L262.0 537.8L265.0 537.9L268.0 537.5L271.0 536.6L274.0 535.2L277.0 533.4L280.0 531.3L283.0 528.9L286.0 526.4L289.0 523.9L292.0 521.3L295.0 518.9L298.0 516.6L301.0 514.7L304.0 513.0L307.0 511.8L310.0 511.0L313.0 510.6L316.0 510.7L319.0 511.2L322.0 512.1L325.0 513.3L328.0 514.9L331.0 516.7L334.0 518.7L337.0 520.9L340.0 523.0" class="acc" style="stroke-width:2.5"/>
+<text class="t" x="40" y="471.0" style="font-size:11.5px">Card swings back and forth</text>
+<text class="s" x="40" y="583.0" style="font-size:11px">Average indication between the swings</text>
+<path d="M230.0 573.0L230.0 527.0" class="dk" style="stroke-width:1.2;opacity:.7"/>
+<circle cx="373" cy="451.0" r="2.2" class="ah"/>
+<text class="s" x="382" y="455.0" style="font-size:11.5px">A combination of all the errors above: the card</text>
+<text class="s" x="382" y="470.0" style="font-size:11.5px">fluctuates in relation to the actual heading</text>
+<circle cx="373" cy="484.0" r="2.2" class="ah"/>
+<text class="s" x="382" y="488.0" style="font-size:11.5px">Setting the gyroscopic heading indicator to agree</text>
+<text class="s" x="382" y="503.0" style="font-size:11.5px">with the compass: use the average indication between</text>
+<text class="s" x="382" y="518.0" style="font-size:11.5px">the swings</text>
+<circle cx="373" cy="532.0" r="2.2" class="ah"/>
+<text class="s" x="382" y="536.0" style="font-size:11.5px">The compass fluid damps the oscillation of the float</text>
+<text class="s" x="382" y="551.0" style="font-size:11.5px">and card</text>
+</svg>

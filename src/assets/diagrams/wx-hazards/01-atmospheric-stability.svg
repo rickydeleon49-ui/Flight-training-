@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 770" role="img" aria-labelledby="ti de"><title id="ti">Atmospheric stability: stable and unstable air</title><desc id="de">Two panels. Stable air resists vertical motion: small vertical disturbances dampen out and disappear, and cool dry air brings good, generally clear weather. Unstable air lets small vertical movements grow, causing turbulent airflow, convective activity, extensive vertical clouds and severe weather, most of all when the air is moist and warm. A bar chart of lapse rates per 1,000 feet: average 2 degrees C, dry adiabatic 3 degrees C, moist adiabatic 1.1 to 2.8 degrees C. Cards describe temperature inversions: the top acts as a lid, and high humidity can produce clouds, fog, haze or smoke with diminished visibility.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Atmospheric stability: stable and unstable air</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">The stability of the atmosphere depends on its ability to resist vertical motion. The combination of</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">moisture and temperature determines the stability of the air and the resulting weather.</text>
+<rect class="cl" x="20" y="91.0" width="335" height="336" rx="8"/>
+<text class="t" x="32" y="113.0" style="font-size:13px">Stable air</text>
+<path d="M30 261.0L345 261.0" class="dk" style="stroke-width:1.2;opacity:.5"/>
+<path d="M70 255.0L70.0 215.0" class="acc" style="stroke-width:2.5"/><path d="M70 209.0L72.7 215.0L67.3 215.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M84 209.0C92 219.0,100 209.0,106 213.0" class="dk" style="stroke-width:1.4;opacity:.5"/>
+<path d="M150 255.0L150.0 231.0" class="acc" style="stroke-width:2.5"/><path d="M150 225.0L152.7 231.0L147.3 231.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M164 225.0C172 235.0,180 225.0,186 229.0" class="dk" style="stroke-width:1.4;opacity:.5"/>
+<path d="M230 255.0L230.0 245.0" class="acc" style="stroke-width:2.5"/><path d="M230 239.0L232.7 245.0L227.3 245.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M244 239.0C252 249.0,260 239.0,266 243.0" class="dk" style="stroke-width:1.4;opacity:.5"/>
+<path d="M300 255.0L300.0 253.0" class="acc" style="stroke-width:2.5"/><path d="M300 247.0L302.7 253.0L297.3 253.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M314 247.0C322 257.0,330 247.0,336 251.0" class="dk" style="stroke-width:1.4;opacity:.5"/>
+<text class="s" x="32" y="147.0" style="font-size:11px">A small vertical push</text>
+<text class="s" x="32" y="161.0" style="font-size:11px">dies out as the parcel is</text>
+<text class="s" x="32" y="175.0" style="font-size:11px">resisted: smooth air</text>
+<circle cx="35" cy="293.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="297.0" style="font-size:11.5px">Makes vertical movement difficult; small vertical</text>
+<text class="s" x="44" y="312.0" style="font-size:11.5px">disturbances dampen out and disappear</text>
+<circle cx="35" cy="327.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="331.0" style="font-size:11.5px">Cool, dry air is very stable and resists vertical</text>
+<text class="s" x="44" y="346.0" style="font-size:11.5px">movement, which leads to good and generally clear</text>
+<text class="s" x="44" y="361.0" style="font-size:11.5px">weather</text>
+<circle cx="35" cy="376.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="380.0" style="font-size:11.5px">Inversion layers: shallow layers of smooth,</text>
+<text class="s" x="44" y="395.0" style="font-size:11.5px">stable air close to the ground</text>
+<rect class="cl" x="375" y="91.0" width="335" height="336" rx="8"/>
+<text class="t" x="387" y="113.0" style="font-size:13px">Unstable air</text>
+<path d="M410 261.0L410.0 228.0" class="acc" style="stroke-width:2.5"/><path d="M410 221.0L413.1 228.0L406.9 228.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M450 261.0L450.0 214.0" class="acc" style="stroke-width:3.3"/><path d="M450 207.0L453.1 214.0L446.9 214.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M520 261.0L520.0 199.0" class="acc" style="stroke-width:3.4"/><path d="M520 191.0L523.6 199.0L516.4 199.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M570 261.0L570.0 196.0" class="acc" style="stroke-width:3.8"/><path d="M570 187.0L574.0 196.0L566.0 196.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<path d="M620 261.0L620.0 199.0" class="acc" style="stroke-width:3.4"/><path d="M620 191.0L623.6 199.0L616.4 199.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<circle cx="560" cy="135.0" r="20" class="cl" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="588" cy="125.0" r="24" class="cl" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="616" cy="135.0" r="20" class="cl" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="586" cy="147.0" r="18" class="cl" style="stroke:currentColor;stroke-width:1.5"/>
+<path d="M390 263.0L700 263.0" class="dk" style="stroke-width:1.2;opacity:.5"/>
+<text class="s" x="387" y="135.0" style="font-size:11px">Small movements grow</text>
+<text class="s" x="387" y="149.0" style="font-size:11px">larger: tall clouds</text>
+<text class="s" x="387" y="163.0" style="font-size:11px">and turbulence</text>
+<circle cx="390" cy="293.0" r="2.2" class="ah"/>
+<text class="s" x="399" y="297.0" style="font-size:11.5px">Small vertical air movements tend to become</text>
+<text class="s" x="399" y="312.0" style="font-size:11.5px">larger, resulting in turbulent airflow and</text>
+<text class="s" x="399" y="327.0" style="font-size:11.5px">convective activity</text>
+<circle cx="390" cy="342.0" r="2.2" class="ah"/>
+<text class="s" x="399" y="346.0" style="font-size:11.5px">Can lead to significant turbulence, extensive</text>
+<text class="s" x="399" y="361.0" style="font-size:11.5px">vertical clouds and severe weather</text>
+<circle cx="390" cy="376.0" r="2.2" class="ah"/>
+<text class="s" x="399" y="380.0" style="font-size:11.5px">Greatest when the air is moist and warm: tropical</text>
+<text class="s" x="399" y="395.0" style="font-size:11.5px">regions in summer see thunderstorms on a daily</text>
+<text class="s" x="399" y="410.0" style="font-size:11.5px">basis</text>
+<rect class="cl" x="20" y="441.0" width="690" height="176" rx="8"/>
+<text class="t" x="32" y="463.0" style="font-size:13px">Lapse rate: how fast temperature falls as air rises (per 1,000 feet)</text>
+<text class="t" x="32" y="498.0" style="font-size:12px">Average, ascending air</text>
+<rect x="232.0" y="481.0" width="124.0" height="24" rx="5" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="366" y="498.0" style="font-size:12px">2 °C (3.5 °F)</text>
+<text class="t" x="32" y="530.0" style="font-size:12px">Dry adiabatic (unsaturated)</text>
+<rect x="232.0" y="513.0" width="186.0" height="24" rx="5" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="428" y="530.0" style="font-size:12px">3 °C (5.4 °F)</text>
+<text class="t" x="32" y="562.0" style="font-size:12px">Moist adiabatic</text>
+<rect x="300.2" y="545.0" width="105.4" height="24" rx="5" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="415.6" y="562.0" style="font-size:12px">1.1 to 2.8 °C (2 °F to 5 °F)</text>
+<text class="s" x="32" y="589.0" style="font-size:11px">Moist air cools at a slower rate, so it is generally less stable than dry air: it must rise higher before its</text>
+<text class="s" x="32" y="603.5" style="font-size:11px">temperature cools to that of the surrounding air. Bars are drawn in °C; the moist bar spans its stated range.</text>
+<rect x="20" y="631.0" width="335" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="648.0" style="font-size:13px">Inversion: temperature rises with altitude</text>
+<circle cx="31" cy="669.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="673.0" style="font-size:11.5px">The top of the layer acts as a lid, keeping weather</text>
+<text class="s" x="40" y="688.0" style="font-size:11.5px">and pollutants trapped below</text>
+<circle cx="31" cy="703.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="707.0" style="font-size:11.5px">High relative humidity can form clouds, fog, haze</text>
+<text class="s" x="40" y="722.0" style="font-size:11.5px">or smoke, diminishing visibility in the layer</text>
+<rect x="375" y="631.0" width="335" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="385" y="648.0" style="font-size:13px">Two kinds of inversion</text>
+<circle cx="386" cy="669.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="673.0" style="font-size:11.5px">Surface-based: on clear, cool nights the air within</text>
+<text class="s" x="395" y="688.0" style="font-size:11.5px">a few hundred feet of the ground becomes cooler</text>
+<text class="s" x="395" y="703.0" style="font-size:11.5px">than the air above it</text>
+<circle cx="386" cy="718.0" r="2.2" class="ah"/>
+<text class="s" x="395" y="722.0" style="font-size:11.5px">Frontal: warm air spreads over a layer of cooler</text>
+<text class="s" x="395" y="737.0" style="font-size:11.5px">air, or cooler air is forced under warmer air</text>
+</svg>

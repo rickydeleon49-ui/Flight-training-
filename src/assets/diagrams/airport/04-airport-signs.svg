@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 430" role="img" aria-labelledby="ti de"><title id="ti">Airport signs</title><desc id="de">Four airport sign types drawn with fixed colors. A mandatory instruction sign is red with white characters. A location sign is black with yellow characters and a yellow border and no arrows. A direction sign is yellow with black characters and an arrow. A destination sign is yellow with black characters and arrows.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<rect x="20" y="14" width="300" height="64" rx="6" fill="#C8102E" stroke="#111" stroke-width="2"/>
+<text x="170" y="60" text-anchor="middle" style="font:700 38px system-ui,-apple-system,sans-serif" fill="#fff">18-36</text>
+<rect x="385" y="14" width="300" height="64" rx="6" fill="#111" stroke="#F2C200" stroke-width="6"/>
+<text x="535" y="60" text-anchor="middle" style="font:700 38px system-ui,-apple-system,sans-serif" fill="#F2C200">A</text>
+<rect x="20" y="170" width="300" height="64" rx="6" fill="#F2C200" stroke="#111" stroke-width="2"/>
+<text x="120" y="216" text-anchor="middle" style="font:700 38px system-ui,-apple-system,sans-serif" fill="#111">B</text>
+<path d="M200 202H244" stroke="#111" stroke-width="7" stroke-linecap="round"/><path d="M258 202L240 187V217z" fill="#111"/>
+<rect x="385" y="170" width="300" height="64" rx="6" fill="#F2C200" stroke="#111" stroke-width="2"/>
+<text x="500" y="216" text-anchor="middle" style="font:700 38px system-ui,-apple-system,sans-serif" fill="#111">Terminal</text>
+<path d="M600 202H640" stroke="#111" stroke-width="7" stroke-linecap="round"/><path d="M660 202L642 187V217z" fill="#111"/>
+<text class="t" x="20" y="102" style="font-size:19px">Mandatory: red, white text</text>
+<text class="s" x="20" y="124" style="font-size:17px">Entrance to a runway, critical area,</text>
+<text class="s" x="20" y="146" style="font-size:17px">or prohibited area</text>
+<text class="t" x="385" y="102" style="font-size:19px">Location: black, yellow text</text>
+<text class="s" x="385" y="124" style="font-size:17px">Yellow border, no arrows. Identifies a</text>
+<text class="s" x="385" y="146" style="font-size:17px">taxiway or runway location</text>
+<text class="t" x="20" y="258" style="font-size:19px">Direction: yellow, black text</text>
+<text class="s" x="20" y="280" style="font-size:17px">Names the taxiway leading out of an</text>
+<text class="s" x="20" y="302" style="font-size:17px">intersection. Arrow shows the turn.</text>
+<text class="t" x="385" y="258" style="font-size:19px">Destination: yellow, black text</text>
+<text class="s" x="385" y="280" style="font-size:17px">With arrows. Shows where to find</text>
+<text class="s" x="385" y="302" style="font-size:17px">runways, terminals, cargo areas.</text>
+<text class="s" x="20" y="366" style="font-size:17px">Six types in all. Also: information signs (yellow,</text>
+<text class="s" x="20" y="388" style="font-size:17px">black text) and runway distance remaining signs</text>
+<text class="s" x="20" y="410" style="font-size:17px">(black, white numbers). Inscriptions here are examples.</text>
+</svg>

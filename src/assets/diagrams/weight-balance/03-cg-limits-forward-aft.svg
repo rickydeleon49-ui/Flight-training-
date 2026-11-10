@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 657" role="img" aria-labelledby="ti de"><title id="ti">CG limits: forward, aft, and what happens outside</title><desc id="de">Side view of an airplane with the CG range between the forward limit and the aft limit, which the manufacturer sets and publishes in the TCDS and the AFM or POH. In the PHAK worked example the range is 78 to 86 inches from the datum. A CG too far forward is nose heavy: hard to raise the nose at takeoff and landing, high nosewheel load, higher stall speed, higher control forces, and possibly impossible to flare. A CG too far aft is tail heavy: less stable, poorer recovery from stalls and spins, very light control forces that make overstress easy. If the CG is out of limits, relocate baggage, cargo or passengers before flight.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">CG limits: forward, aft, and what happens outside</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Schematic side view. Limits are published in the TCDS and the AFM/POH. The 78 and 86 inch limits are</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">the PHAK worked example.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="204" rx="8"/>
+<path d="M60 193.0C60 171.0,110 167.0,180 169.0L560 181.0L670 149.0L690 149.0L680 187.0L560 201.0L180 213.0C110 215.0,60 213.0,60 193.0Z" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M250 201.0L350 201.0L390 233.0L300 233.0Z" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<text class="t m" x="334" y="227.0" style="font-size:11.5px">wing</text>
+<rect class="mint" x="230" y="125.0" width="240" height="22" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t m" x="350.0" y="141.0" style="font-size:12px">CG range (78 to 86 in in the example)</text>
+<path d="M230 147.0L230 239.0" class="dk" style="stroke-width:2;opacity:0.9;stroke-dasharray:6 5"/>
+<path d="M470 147.0L470 239.0" class="dk" style="stroke-width:2;opacity:0.9;stroke-dasharray:6 5"/>
+<text class="t e" x="222" y="141.0" style="font-size:12px">forward limit</text>
+<text class="t" x="478" y="141.0" style="font-size:12px">aft limit</text>
+<text class="s" x="60" y="253.0" style="font-size:12px">nose</text>
+<text class="s e" x="700" y="253.0" style="font-size:12px">tail</text>
+<text class="s" x="32" y="283.0" style="font-size:12px">The CG is not fixed: it moves as variable load items are shifted or used up.</text>
+<rect x="20" y="303.0" width="337" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="320.0" style="font-size:13px">CG too far forward: nose heavy</text>
+<circle cx="31" cy="341.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="345.0" style="font-size:12px">Harder to control and raise the nose, especially</text>
+<text class="s" x="40" y="360.5" style="font-size:12px">at takeoff and landing</text>
+<circle cx="31" cy="376.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="380.0" style="font-size:12px">Landing: excessive nosewheel load, nose-over</text>
+<text class="s" x="40" y="395.5" style="font-size:12px">tendency on tailwheel airplanes, higher stall</text>
+<text class="s" x="40" y="411.0" style="font-size:12px">speed, higher control forces</text>
+<circle cx="31" cy="426.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="430.5" style="font-size:12px">Extreme: difficult or impossible to flare for</text>
+<text class="s" x="40" y="446.0" style="font-size:12px">landing</text>
+<circle cx="31" cy="461.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="465.5" style="font-size:12px">The forward limit also keeps enough elevator</text>
+<text class="s" x="40" y="481.0" style="font-size:12px">deflection available at minimum airspeed</text>
+<rect x="373" y="303.0" width="337" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="320.0" style="font-size:13px">CG too far aft: tail heavy</text>
+<circle cx="384" cy="341.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="345.0" style="font-size:12px">Less stable: reduced ability to right itself</text>
+<text class="s" x="393" y="360.5" style="font-size:12px">after maneuvering or turbulence</text>
+<circle cx="384" cy="376.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="380.0" style="font-size:12px">Reduces the capability to recover from stalls and</text>
+<text class="s" x="393" y="395.5" style="font-size:12px">spins</text>
+<circle cx="384" cy="411.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="415.0" style="font-size:12px">Very light control forces make it easy to</text>
+<text class="s" x="393" y="430.5" style="font-size:12px">overstress the aircraft</text>
+<circle cx="384" cy="446.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="450.0" style="font-size:12px">Extreme: control difficulty and violent stall</text>
+<text class="s" x="393" y="465.5" style="font-size:12px">characteristics</text>
+<rect class="cl" x="20" y="504.5" width="690" height="139.0" rx="8"/>
+<circle cx="35" cy="526.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="530.5" style="font-size:12px">Limits can vary with gross weight, and change for some operations such as acrobatic flight or gear</text>
+<text class="s" x="44" y="546.0" style="font-size:12px">retraction</text>
+<circle cx="35" cy="561.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="565.5" style="font-size:12px">CG outside limits after loading: relocate items before flight. Baggage, cargo and seat assignment</text>
+<text class="s" x="44" y="581.0" style="font-size:12px">control the CG; if tail heavy, put heavy passengers in forward seats</text>
+<circle cx="35" cy="596.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="600.5" style="font-size:12px">The CG is usually kept slightly forward of the center of lift: a nose-down tendency, desirable at high</text>
+<text class="s" x="44" y="616.0" style="font-size:12px">AOA and slow speeds</text>
+</svg>

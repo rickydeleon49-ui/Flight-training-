@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 594" role="img" aria-labelledby="ti de"><title id="ti">Computing the loaded weight and CG</title><desc id="de">PHAK computational method example. Aircraft allowances: maximum gross weight 3,400 pounds, CG range 78 to 86 inches. Load: front seat occupants 340 pounds, rear seat occupants 350 pounds, 75 gallons of fuel at 6 pounds per gallon is 450 pounds, and 80 pounds of baggage in area 1. With the empty aircraft the total weight is 3,320 pounds, derived here as 2,100 pounds empty. Steps: list the weights, enter the moment of each item as weight times arm, find total weight and total moment, then divide total moment by total weight to get the CG. The CG is 84.8 inches, inside the 78 to 86 inch range, and 3,320 pounds is under 3,400, so the aircraft is loaded within limits.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Computing the loaded weight and CG</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">PHAK computational method, worked example. Check the total weight and the CG against the aircraft</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">limits.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="150" rx="8"/>
+<text class="t" x="32" y="111.0" style="font-size:13px">Aircraft allowances and the load given</text>
+<text class="s" x="32" y="133.0" style="font-size:12.5px">Maximum gross weight: 3,400 lb</text>
+<text class="s" x="32" y="151.0" style="font-size:12.5px">CG range: 78 to 86 inches</text>
+<text class="s" x="300" y="133.0" style="font-size:12.5px">Front seat occupants</text>
+<text class="t e" x="630" y="133.0" style="font-size:12.5px">340 lb</text>
+<text class="s" x="300" y="151.0" style="font-size:12.5px">Rear seat occupants</text>
+<text class="t e" x="630" y="151.0" style="font-size:12.5px">350 lb</text>
+<text class="s" x="300" y="169.0" style="font-size:12.5px">Fuel: 75 gal x 6 lb per gal (AVGAS)</text>
+<text class="t e" x="630" y="169.0" style="font-size:12.5px">450 lb</text>
+<text class="s" x="300" y="187.0" style="font-size:12.5px">Baggage, area 1</text>
+<text class="t e" x="630" y="187.0" style="font-size:12.5px">80 lb</text>
+<text class="s" x="300" y="205.0" style="font-size:12.5px">Empty aircraft (derived)</text>
+<text class="t e" x="630" y="205.0" style="font-size:12.5px">2,100 lb</text>
+<path d="M300 213.0L630 213.0" class="dk" style="stroke-width:1.2;opacity:0.6"/>
+<text class="t" x="300" y="227.0" style="font-size:12.5px">Total weight</text>
+<text class="t e" x="630" y="227.0" style="font-size:12.5px">3,320 lb</text>
+<rect x="20" y="249.0" width="165" height="70" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="36" cy="267.0" r="10" class="ah"/><text class="t m" x="36" y="271.0" style="font-size:12px;fill:#fff">1</text>
+<text class="t" x="52" y="272.0" style="font-size:12.5px">List the weights</text>
+<text class="s" x="30" y="293.0" style="font-size:11.5px">aircraft, occupants,</text>
+<text class="s" x="30" y="308.0" style="font-size:11.5px">fuel, baggage</text>
+<path d="M186 284.0L188.0 284.0" class="dk" style="stroke-width:2"/><path d="M194 284.0L188.0 286.7L188.0 281.3Z" class="dh" style=""/>
+<rect x="195" y="249.0" width="165" height="70" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="211" cy="267.0" r="10" class="ah"/><text class="t m" x="211" y="271.0" style="font-size:12px;fill:#fff">2</text>
+<text class="t" x="227" y="272.0" style="font-size:12.5px">Find each moment</text>
+<text class="s" x="205" y="293.0" style="font-size:11.5px">weight x arm = moment</text>
+<path d="M361 284.0L363.0 284.0" class="dk" style="stroke-width:2"/><path d="M369 284.0L363.0 286.7L363.0 281.3Z" class="dh" style=""/>
+<rect x="370" y="249.0" width="165" height="70" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="386" cy="267.0" r="10" class="ah"/><text class="t m" x="386" y="271.0" style="font-size:12px;fill:#fff">3</text>
+<text class="t" x="402" y="272.0" style="font-size:12.5px">Add them up</text>
+<text class="s" x="380" y="293.0" style="font-size:11.5px">total weight and total</text>
+<text class="s" x="380" y="308.0" style="font-size:11.5px">moment</text>
+<path d="M536 284.0L538.0 284.0" class="dk" style="stroke-width:2"/><path d="M544 284.0L538.0 286.7L538.0 281.3Z" class="dh" style=""/>
+<rect x="545" y="249.0" width="165" height="70" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="561" cy="267.0" r="10" class="ah"/><text class="t m" x="561" y="271.0" style="font-size:12px;fill:#fff">4</text>
+<text class="t" x="577" y="272.0" style="font-size:12.5px">Divide</text>
+<text class="s" x="555" y="293.0" style="font-size:11.5px">CG = total moment /</text>
+<text class="s" x="555" y="308.0" style="font-size:11.5px">total weight</text>
+<rect class="cl" x="20" y="331.0" width="690" height="166" rx="8"/>
+<text class="t" x="32" y="353.0" style="font-size:13px">Result: is the load within limits?</text>
+<rect class="mint" x="187" y="406.0" width="363" height="18" style="stroke:currentColor;stroke-width:1.6"/>
+<path d="M96 424.0L640 424.0" class="dk" style="stroke-width:1.4;opacity:0.6"/>
+<path d="M96.0 424.0L96.0 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="96.0" y="444.0" style="font-size:11.5px">76</text>
+<path d="M186.66666666666666 424.0L186.66666666666666 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="186.66666666666666" y="444.0" style="font-size:11.5px">78</text>
+<path d="M277.3333333333333 424.0L277.3333333333333 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="277.3333333333333" y="444.0" style="font-size:11.5px">80</text>
+<path d="M368.0 424.0L368.0 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="368.0" y="444.0" style="font-size:11.5px">82</text>
+<path d="M458.66666666666663 424.0L458.66666666666663 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="458.66666666666663" y="444.0" style="font-size:11.5px">84</text>
+<path d="M549.3333333333334 424.0L549.3333333333334 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="549.3333333333334" y="444.0" style="font-size:11.5px">86</text>
+<path d="M640.0 424.0L640.0 430.0" class="dk" style="stroke-width:1.2;opacity:0.7"/>
+<text class="s m" x="640.0" y="444.0" style="font-size:11.5px">88</text>
+<text class="s m" x="368.0" y="461.0" style="font-size:11.5px">inches from the datum</text>
+<path d="M494.9 403.0L486.9 387.0L502.9 387.0Z" class="ah"/>
+<text class="t m" x="494.93333333333317" y="381.0" style="font-size:12.5px">CG 84.8 in</text>
+<text class="s m" x="186.66666666666666" y="401.0" style="font-size:11.5px">forward limit 78</text>
+<text class="s" x="553.3333333333334" y="401.0" style="font-size:11.5px">aft limit 86</text>
+<text class="t" x="32" y="485.0" style="font-size:12px">3,320 lb is under the 3,400 lb maximum, and the CG of 84.8 is inside 78 to 86 inches: loaded within limits.</text>
+<rect class="cl" x="20" y="507.0" width="690" height="73.0" rx="8"/>
+<circle cx="35" cy="529.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="533.0" style="font-size:12px">The aircraft weight and balance records give the empty weight, its moment and the arm of each location</text>
+<circle cx="35" cy="548.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="552.5" style="font-size:12px">The CG is a position in inches from the datum, found by dividing total moment by total weight</text>
+</svg>

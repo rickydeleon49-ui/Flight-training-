@@ -37,7 +37,7 @@ beforeEach(async () => {
 });
 afterEach(() => { cleanup(); db.close(); });
 
-const keys = ["library", "due", "history", "howto"];
+const keys = ["library", "due", "history", "diagrams", "howto"];
 function selected(index: number, focused = false) {
   const tabs = screen.getAllByRole("tab");
   expect(tabs.map((tab) => tab.tabIndex)).toEqual(keys.map((_, i) => i === index ? 0 : -1));
@@ -57,7 +57,7 @@ it("ArrowRight/Left, Home and End select and focus tabs, keep one tab stop, and 
   open();
   selected(0);
   act(() => screen.getAllByRole("tab")[0]!.focus());
-  for (const [key, index] of [["ArrowRight", 1], ["ArrowRight", 2], ["ArrowLeft", 1], ["End", 3], ["Home", 0]] as const) {
+  for (const [key, index] of [["ArrowRight", 1], ["ArrowRight", 2], ["ArrowLeft", 1], ["End", 4], ["Home", 0]] as const) {
     fireEvent.keyDown(document.activeElement!, { key });
     selected(index, true);
     const params = new URLSearchParams(screen.getByLabelText("Address").textContent!);

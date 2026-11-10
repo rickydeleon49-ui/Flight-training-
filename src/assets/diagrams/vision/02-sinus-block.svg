@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 596" role="img" aria-labelledby="ti de"><title id="ti">Sinus block</title><desc id="de">Front view of a face with the frontal sinuses above each eyebrow and the maxillary sinuses in each upper cheek. Sinus pressure equalizes through small openings to the nasal passages; a cold, sinusitis or nasal allergy can plug the opening. A sinus block occurs most frequently during descent and gives excruciating pain over the sinus area, possibly aching upper teeth and bloody mucus. Slow descent rates reduce pain. Do not fly with an upper respiratory infection or nasal allergy; decongestants are not adequate protection. See a physician if it does not clear after landing.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Sinus block</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Air pressure in the sinuses equalizes with the pressure in the flight deck through small openings that</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">connect the sinuses to the nasal passages.</text>
+<rect class="cl" x="20" y="89.0" width="300" height="306" rx="8"/>
+<ellipse cx="170" cy="239.0" rx="82" ry="108" class="cl" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<ellipse cx="136" cy="227.0" rx="12" ry="7" class="cl" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/>
+<path d="M114 207.0L158 207.0" class="dk" style="stroke-width:3;opacity:1"/>
+<path d="M106 187.0Q136 173.0 166 187.0L164 201.0L108 201.0Z" class="mint" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/>
+<path d="M102 259.0Q136 249.0 166 265.0Q136 299.0 102 285.0Z" class="rose" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/>
+<ellipse cx="204" cy="227.0" rx="12" ry="7" class="cl" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/>
+<path d="M182 207.0L226 207.0" class="dk" style="stroke-width:3;opacity:1"/>
+<path d="M174 187.0Q204 173.0 234 187.0L232 201.0L176 201.0Z" class="mint" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/>
+<path d="M170 259.0Q204 249.0 234 265.0Q204 299.0 170 285.0Z" class="rose" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/>
+<path d="M170 227.0L162 271.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<path d="M162 271.0L178 271.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<path d="M144 321.0Q170 337.0 196 321.0" class="dk" style="stroke-width:2.5;opacity:.8"/>
+<text class="t m" x="170" y="119.0" style="font-size:11.5px">Frontal sinus (above each eyebrow)</text>
+<path d="M136 125.0L136 179.0" class="dk" style="stroke-width:1;opacity:0.7"/>
+<path d="M204 125.0L204 179.0" class="dk" style="stroke-width:1;opacity:0.7"/>
+<text class="t m" x="170" y="367.0" style="font-size:11.5px">Maxillary sinus (each upper cheek)</text>
+<path d="M110 353.0L122 295.0" class="dk" style="stroke-width:1;opacity:0.7"/>
+<path d="M230 353.0L218 295.0" class="dk" style="stroke-width:1;opacity:0.7"/>
+<text class="s m" x="170" y="383.0" style="font-size:10.5px">Front view, schematic</text>
+<text class="t" x="340" y="105.0" style="font-size:13px">Why the block forms</text>
+<rect x="340" y="117.0" width="120" height="30" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="400.0" y="137.0" style="font-size:11.5px">Sinus</text>
+<rect x="478" y="117.0" width="100" height="30" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="528.0" y="137.0" style="font-size:11.5px">Small opening</text>
+<rect x="590" y="117.0" width="120" height="30" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="650.0" y="137.0" style="font-size:11.5px">Nasal passages</text>
+<path d="M462 132.0L470.0 132.0" class="dk" style="stroke-width:2"/><path d="M476 132.0L470.0 134.7L470.0 129.3Z" class="dh" style=""/>
+<path d="M580 132.0L582.0 132.0" class="dk" style="stroke-width:2"/><path d="M588 132.0L582.0 134.7L582.0 129.3Z" class="dh" style=""/>
+<text class="s" x="340" y="169.0" style="font-size:12px">An upper respiratory infection (cold or sinusitis) or a</text>
+<text class="s" x="340" y="184.5" style="font-size:12px">nasal allergic condition can produce enough congestion</text>
+<text class="s" x="340" y="200.0" style="font-size:12px">around an opening to slow equalization. As the pressure</text>
+<text class="s" x="340" y="215.5" style="font-size:12px">difference grows, congestion may plug the opening. This is</text>
+<text class="s" x="340" y="231.0" style="font-size:12px">a "sinus block".</text>
+<rect x="340" y="254.5" width="370" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="350" y="271.5" style="font-size:13px">Signs</text>
+<circle cx="351" cy="292.5" r="2.2" class="ah"/>
+<text class="s" x="360" y="296.5" style="font-size:12px">Occurs most frequently during descent</text>
+<circle cx="351" cy="312.0" r="2.2" class="ah"/>
+<text class="s" x="360" y="316.0" style="font-size:12px">Usually excruciating pain over the sinus area</text>
+<circle cx="351" cy="331.5" r="2.2" class="ah"/>
+<text class="s" x="360" y="335.5" style="font-size:12px">A maxillary sinus block can also make the upper teeth</text>
+<text class="s" x="360" y="351.0" style="font-size:12px">ache</text>
+<circle cx="351" cy="366.5" r="2.2" class="ah"/>
+<text class="s" x="360" y="370.5" style="font-size:12px">Bloody mucus may discharge from the nasal passages</text>
+<rect x="340" y="398.0" width="370" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="350" y="415.0" style="font-size:13px">What the text says</text>
+<circle cx="351" cy="436.0" r="2.2" class="ah"/>
+<text class="s" x="360" y="440.0" style="font-size:12px">Slow descent rates can reduce the associated pain</text>
+<circle cx="351" cy="455.5" r="2.2" class="ah"/>
+<text class="s" x="360" y="459.5" style="font-size:12px">Avoid by not flying with an upper respiratory</text>
+<text class="s" x="360" y="475.0" style="font-size:12px">infection or nasal allergic condition</text>
+<circle cx="351" cy="490.5" r="2.2" class="ah"/>
+<text class="s" x="360" y="494.5" style="font-size:12px">Decongestant sprays or drops usually do not give</text>
+<text class="s" x="360" y="510.0" style="font-size:12px">adequate protection; oral decongestants have side</text>
+<text class="s" x="360" y="525.5" style="font-size:12px">effects that can impair pilot performance</text>
+<circle cx="351" cy="541.0" r="2.2" class="ah"/>
+<text class="s" x="360" y="545.0" style="font-size:12px">If a block does not clear shortly after landing,</text>
+<text class="s" x="360" y="560.5" style="font-size:12px">consult a physician</text>
+</svg>
