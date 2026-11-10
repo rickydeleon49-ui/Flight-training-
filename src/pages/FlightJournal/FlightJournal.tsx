@@ -12,7 +12,7 @@ import {
   PlusIcon,
   Select,
 } from "@/components/ui";
-import { formatLongDate, todayIso } from "@/lib/dates";
+import { formatLogbookDate, formatLongDate, todayIso } from "@/lib/dates";
 import { collectFeedback, goalsWithFeedback } from "@/logic/feedback";
 import {
   flightActivity,
@@ -23,12 +23,33 @@ import {
   hasFlightLogData,
   privatePilotPart61Reference,
 } from "@/logic/flightLog";
+import { logbookPages } from "@/logic/logbookPages";
 import { lessonsAwaitingDebrief } from "@/logic/preparation";
 import { useAppData } from "@/state/AppDataContext";
 
 import "./journal.css";
 
 type View = "log" | "debriefs" | "feedback";
+
+const PAGE_KEY = "flightdeck.logbookPage";
+
+function readStoredPage(): number | null {
+  try {
+    const n = Number(window.sessionStorage.getItem(PAGE_KEY));
+    return Number.isInteger(n) && n >= 1 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function storePage(n: number | null): void {
+  try {
+    if (n === null) window.sessionStorage.removeItem(PAGE_KEY);
+    else window.sessionStorage.setItem(PAGE_KEY, String(n));
+  } catch {
+    // Remembering the page is a convenience only.
+  }
+}
 
 export function FlightJournal() {
   const { data } = useAppData();
@@ -53,6 +74,23 @@ export function FlightJournal() {
     () => data.journalEntries.filter(hasFlightLogData),
     [data.journalEntries],
   );
+  const pages = useMemo(() => logbookPages(data.journalEntries), [data.journalEntries]);
+  const [storedPage, setStoredPage] = useState<number | null>(readStoredPage);
+  const [seenFlights, setSeenFlights] = useState(loggedFlights.length);
+  if (seenFlights !== loggedFlights.length) {
+    // Adding a flight opens the newest page again.
+    if (loggedFlights.length > seenFlights) {
+      setStoredPage(null);
+      storePage(null);
+    }
+    setSeenFlights(loggedFlights.length);
+  }
+  const pageNumber = Math.min(Math.max(storedPage ?? pages.length, 1), Math.max(pages.length, 1));
+  const ledger = pages[pageNumber - 1];
+  const goToPage = (n: number) => {
+    setStoredPage(n);
+    storePage(n);
+  };
   const notesWithoutFlightCount = data.journalEntries.length - loggedFlights.length;
   const totals = useMemo(() => flightLogTotals(data.journalEntries), [data.journalEntries]);
   const activity = useMemo(
@@ -328,6 +366,32 @@ export function FlightJournal() {
                   }
                 />
               ) : (
+                <>
+                {pages.length > 1 ? (
+                  <div className="ledger-pager">
+                    <button
+                      type="button"
+                      className="button button--secondary button--small"
+                      aria-label="Previous page"
+                      disabled={pageNumber <= 1}
+                      onClick={() => goToPage(pageNumber - 1)}
+                    >
+                      ‹
+                    </button>
+                    <span className="small numeric" role="status" aria-live="polite">
+                      Page {pageNumber} of {pages.length}
+                    </span>
+                    <button
+                      type="button"
+                      className="button button--secondary button--small"
+                      aria-label="Next page"
+                      disabled={pageNumber >= pages.length}
+                      onClick={() => goToPage(pageNumber + 1)}
+                    >
+                      ›
+                    </button>
+                  </div>
+                ) : null}
                 <div className="flight-log-table-wrap">
                   <table className="flight-log-table">
                     <thead>
@@ -343,10 +407,10 @@ export function FlightJournal() {
                       </tr>
                     </thead>
                     <tbody>
-                      {loggedFlights.map((entry) => (
+                      {(ledger?.entries ?? []).map((entry) => (
                         <tr key={entry.id}>
                           <td>
-                            <Link to={`/journal/${entry.id}`}>{entry.date}</Link>
+                            <Link to={`/journal/${entry.id}`}>{formatLogbookDate(entry.date)}</Link>
                           </td>
                           <td>{flightRoute(entry)}</td>
                           <td>
@@ -360,8 +424,29 @@ export function FlightJournal() {
                         </tr>
                       ))}
                     </tbody>
+                    {ledger ? (
+                      <tfoot>
+                        {(
+                          [
+                            ["This page", ledger.thisPage],
+                            ["Brought forward", ledger.broughtForward],
+                            ["Total to date", ledger.totalToDate],
+                          ] as const
+                        ).map(([label, t]) => (
+                          <tr key={label} className={label === "Total to date" ? "ledger-total" : undefined}>
+                            <th scope="row" colSpan={3}>{label}</th>
+                            <td className="numeric">{formatHours(t.totalTime)}</td>
+                            <td className="numeric">{formatHours(t.dualReceived)}</td>
+                            <td className="numeric">{formatHours(t.picTime)}</td>
+                            <td className="numeric">{formatHours(t.soloTime)}</td>
+                            <td className="numeric">{formatHours(t.nightTime)}</td>
+                          </tr>
+                        ))}
+                      </tfoot>
+                    ) : null}
                   </table>
                 </div>
+                </>
               )}
               <p className="flight-log-disclaimer tiny dim">
                 This is a personal training companion. Keep the instructor-endorsed logbook

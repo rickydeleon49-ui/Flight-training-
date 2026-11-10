@@ -53,6 +53,14 @@ export function formatLongDate(date: IsoDate, today: IsoDate = todayIso()): stri
   return `${weekday}, ${month} ${d.getDate()}${sameYear ? "" : `, ${d.getFullYear()}`}`;
 }
 
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** A logbook-style date: "12 Nov 2026". */
+export function formatLogbookDate(date: IsoDate): string {
+  const d = parseIsoDate(date);
+  return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 const CALENDAR_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIMESTAMP =
   /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)(Z|[+-]\d{2}:?\d{2})?$/i;
