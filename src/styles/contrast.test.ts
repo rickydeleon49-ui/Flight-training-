@@ -8,11 +8,16 @@ const css = readFileSync(join(process.cwd(), "src/styles/tokens.css"), "utf8").r
 );
 
 function block(selector: string): Map<string, string> {
-  const start = css.indexOf(selector + " {");
-  if (start < 0) throw new Error(`no block ${selector}`);
-  const body = css.slice(css.indexOf("{", start) + 1, css.indexOf("}", start));
   const out = new Map<string, string>();
-  for (const m of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) out.set(m[1]!, m[2]!.trim());
+  let found = false;
+  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    // A rule inside @media carries the at-rule text before its own selector.
+    const sel = rule[1]!.split("{").pop()!.trim();
+    if (sel !== selector) continue;
+    found = true;
+    for (const m of rule[2]!.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) out.set(m[1]!, m[2]!.trim());
+  }
+  if (!found) throw new Error(`no block ${selector}`);
   return out;
 }
 
@@ -34,6 +39,15 @@ function hex(h: string): Rgb {
   const c = h.replace("#", "");
   return [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16)) as Rgb;
 }
+// Opaque colour of a hex or rgba() value laid over a solid background.
+function flatten(v: string, over: string): string {
+  const m = v.match(/^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)(?:\s*[,/]\s*([\d.]+))?\s*\)$/);
+  if (!m) return v;
+  const a = m[4] === undefined ? 1 : Number(m[4]);
+  const bg = hex(over);
+  const mix = [m[1], m[2], m[3]].map((c, i) => Math.round(Number(c) * a + bg[i]! * (1 - a)));
+  return "#" + mix.map((n) => n.toString(16).padStart(2, "0")).join("");
+}
 function lum([r, g, b]: Rgb): number {
   const f = (v: number) => {
     const n = v / 255;
@@ -41,14 +55,23 @@ function lum([r, g, b]: Rgb): number {
   };
   return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 }
-function ratio(a: string, b: string): number {
+function ratio(a0: string, b: string): number {
+  const a = flatten(a0, b);
   const [hi, lo] = [lum(hex(a)), lum(hex(b))].sort((x, y) => y - x);
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
 const ACCENTS = ["berry", "lavender", "sky", "mint"] as const;
-// Add the dark theme here in slice 5: one more entry with its own blocks.
-const THEMES = [{ name: "light", base: [block(":root")] }];
+const DARK_ATTR = ':root[data-theme="dark"]';
+const DARK_AUTO = ':root:not([data-theme="light"])';
+const THEMES = [
+  { name: "light", base: [block(":root")], accentSel: (a: string) => `:root[data-accent="${a}"]` },
+  {
+    name: "dark",
+    base: [block(":root"), block(DARK_ATTR)],
+    accentSel: (a: string) => `${DARK_ATTR}[data-accent="${a}"]`,
+  },
+];
 
 const rows: string[] = [];
 function check(label: string, fg: string, bg: string, min: number) {
@@ -62,7 +85,11 @@ describe("colour contrast (WCAG 2.x)", () => {
     for (const accent of ACCENTS) {
       it(`${theme.name} / ${accent}`, () => {
         const blocks =
-          accent === "berry" ? theme.base : [...theme.base, block(`:root[data-accent="${accent}"]`)];
+          accent === "berry" ? theme.base : [
+                ...theme.base,
+                block(`:root[data-accent="${accent}"]`),
+                ...(theme.name === "dark" ? [block(theme.accentSel(accent))] : []),
+              ];
         const t = resolver(blocks);
         const L = `${theme.name}/${accent}`;
         const surfaces = ["--surface-page", "--surface-card", "--surface-sunken"];
@@ -77,10 +104,22 @@ describe("colour contrast (WCAG 2.x)", () => {
         check(`${L} accent on card`, t("--accent-primary"), t("--surface-card"), 4.5);
         check(`${L} white on accent`, t("--text-on-accent"), t("--accent-primary"), 4.5);
         check(`${L} border-control on card`, t("--border-control"), t("--surface-card"), 3);
+        for (const k of ["study", "flight", "complete"]) {
+          check(`${L} category-${k}-ink on fill`, t(`--category-${k}-ink`), t(`--category-${k}-fill`), 4.5);
+        }
+        check(`${L} overdue on overdue-fill`, t("--status-overdue"), t("--status-overdue-fill"), 4.5);
+        check(`${L} due-today on due-today-fill`, t("--status-due-today"), t("--status-due-today-fill"), 4.5);
         check(`${L} accent on accent-fill`, t("--accent-primary"), t("--accent-fill"), 3);
       });
     }
   }
+  it("the two dark blocks declare the same properties and values", () => {
+    const pairs: [string, string][] = [[DARK_ATTR, DARK_AUTO]];
+    for (const a of ACCENTS.slice(1)) pairs.push([`${DARK_ATTR}[data-accent="${a}"]`, `${DARK_AUTO}[data-accent="${a}"]`]);
+    for (const [x, y] of pairs) {
+      expect([...block(y)], `${y} drifted from ${x}`).toEqual([...block(x)]);
+    }
+  });
   it("prints the table", () => {
     // eslint-disable-next-line no-console
     if (process.env.CONTRAST_TABLE) console.log(rows.join("\n"));

@@ -28,6 +28,32 @@ const RAW_COLOUR_ALLOWLIST = new Map<string, string>([
 ]);
 const RAW_COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/;
 
+// Type, space, shape and layout tokens are shared by both themes.
+const SHARED = /^--(font-|text-(xs|sm|base|md|lg|xl|2xl)$|leading-|space-|radius-|sidebar-width|content-max|transition)/;
+
+describe("dark twins", () => {
+  const raw = readFileSync(join(__dirname, "tokens.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const names = (selector: string): string[] => {
+    const out: string[] = [];
+    for (const rule of raw.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (rule[1]!.split("{").pop()!.trim() !== selector) continue;
+      for (const m of rule[2]!.matchAll(/(--[\w-]+)\s*:/g)) out.push(m[1]!);
+    }
+    return out.sort();
+  };
+  const DARK = ':root[data-theme="dark"]';
+  const AUTO = ':root:not([data-theme="light"])';
+  const cases: [string, string, string][] = [["base", ":root", ""]];
+  for (const a of ["lavender", "sky", "mint"]) cases.push([a, `:root[data-accent="${a}"]`, `[data-accent="${a}"]`]);
+  for (const [label, light, suffix] of cases) {
+    it(`dark twins cover every ${label} light property, under both selectors`, () => {
+      const want = names(light).filter((n) => !SHARED.test(n));
+      expect(names(DARK + suffix)).toEqual(want);
+      expect(names(AUTO + suffix)).toEqual(want);
+    });
+  }
+});
+
 describe("css custom properties", () => {
   it("every var(--x) used in src CSS is defined somewhere", () => {
     const files = cssFiles(join(__dirname, ".."));
