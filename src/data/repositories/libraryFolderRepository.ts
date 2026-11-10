@@ -39,6 +39,26 @@ export function libraryFolderRepository(db: SqlDatabase) {
   return {
     listFolders,
 
+    /**
+     * Puts earlier placements back (the Undo for a move). One statement, so all rows
+     * return together or not at all. A folder id that no longer exists is kept as is;
+     * it reads as "Not in a folder".
+     */
+    async restorePlacements(
+      rows: Array<{ materialId: string; folderId: string | null; position: number | null }>,
+    ): Promise<void> {
+      const last = new Map(rows.map((r) => [r.materialId, r]));
+      if (last.size === 0) return;
+      const stamp = nowIso();
+      const marks = [...last.values()].map(() => "(?, ?, ?, ?)").join(", ");
+      await db.execute(
+        `INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES ${marks}
+         ON CONFLICT(material_id) DO UPDATE SET folder_id = excluded.folder_id,
+           position = excluded.position, updated_at = excluded.updated_at`,
+        [...last.values()].flatMap((r) => [r.materialId, r.folderId, r.position, stamp]),
+      );
+    },
+
     async listPlacements(): Promise<LibraryPlacement[]> {
       return db.select<LibraryPlacement>(
         `SELECT material_id AS materialId, folder_id AS folderId, position, updated_at AS updatedAt

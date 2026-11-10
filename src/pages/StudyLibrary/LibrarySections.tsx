@@ -28,6 +28,7 @@ export function LibrarySections({
   renderBook,
   gridClass = "material-grid",
   headerActions,
+  flashKey,
 }: {
   view: string;
   sections: LibrarySection[];
@@ -40,6 +41,8 @@ export function LibrarySections({
   gridClass?: string;
   /** Extra controls beside a section header, such as a folder's actions menu. */
   headerActions?: (section: LibrarySection, index: number) => ReactNode;
+  /** A section whose header is highlighted for a moment (where a move went). */
+  flashKey?: string | null;
 }) {
   return (
     <div className="library__sections">
@@ -52,7 +55,7 @@ export function LibrarySections({
         const id = sectionDomId(viewKey);
         return (
           <section key={viewKey} className="library__section" aria-labelledby={id}>
-            <div className="library__section-head">
+            <div className={`library__section-head${flashKey === viewKey ? " library__section-head--flash" : ""}`}>
             <h2 className="library__section-title">
               <button
                 type="button"

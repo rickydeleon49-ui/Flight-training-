@@ -42,6 +42,22 @@ describe("library folders", () => {
     await lf().moveMaterials([], f.id);
   });
 
+  it("restorePlacements puts earlier folders and positions back in one call", async () => {
+    const f = await lf().createFolder("Weather");
+    const g = await lf().createFolder("Regs");
+    await lf().moveMaterials(["a", "b", "c"], f.id);
+    const before = await lf().listPlacements();
+    await lf().moveMaterials(["a", "b"], g.id);
+    await lf().setOrder(f.id, ["c"]);
+    await lf().restorePlacements(
+      before.map(({ materialId, folderId, position }) => ({ materialId, folderId, position })),
+    );
+    const key = (rows: typeof before) =>
+      rows.map((p) => [p.materialId, p.folderId, p.position]).sort();
+    expect(key(await lf().listPlacements())).toEqual(key(before));
+    await lf().restorePlacements([]);
+  });
+
   it("moveFolder swaps neighbours and ignores the edges", async () => {
     const x = await lf().createFolder("X");
     const y = await lf().createFolder("Y");

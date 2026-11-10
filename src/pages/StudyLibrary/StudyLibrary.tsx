@@ -65,6 +65,9 @@ import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState"
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
 import { LibrarySections, sectionDomId } from "./LibrarySections";
 import { useLibraryFolders } from "./useLibraryFolders";
+import { ArrangeBar, ArrangeRow, MANUAL_ONLY_HINT, MoveToast } from "./ArrangeParts";
+import { MoveToDialog } from "./MoveToDialog";
+import { useArrange } from "./useArrange";
 import { FolderActionsMenu, FolderDialogs, NewFolderButton, type FolderDialogState } from "./FolderDialogs";
 import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
@@ -327,12 +330,13 @@ export function StudyLibrary() {
     return (view === "topic" ? sectionsByTopic : sectionsByType)(grouped.topLevel, sort);
   }, [sectioned, view, grouped, folders, placements, folderSort, sort]);
   // Chapters follow their book, so a placement on one is ignored (shown only when searching).
-  const chapterIds = useMemo(() => {
+  const { chapterIds, chaptersOf } = useMemo(() => {
     const ids = new Set<string>();
-    for (const parts of groupChapterParts(data.materials.filter((m) => !m.faaReference)).partsOf.values()) {
+    const partsOf = groupChapterParts(data.materials.filter((m) => !m.faaReference)).partsOf;
+    for (const parts of partsOf.values()) {
       for (const part of parts) ids.add(part.id);
     }
-    return ids;
+    return { chapterIds: ids, chaptersOf: partsOf };
   }, [data.materials]);
   const toggleSection = (viewKey: string) =>
     setClosedList(closedSections.has(viewKey) ? closedList.filter((k) => k !== viewKey) : [...closedList, viewKey]);
@@ -356,6 +360,32 @@ export function StudyLibrary() {
       closedSections.has(`${view}:${s.key}`) ? [] : s.items.slice(0, sectionLimits[`${view}:${s.key}`] ?? MATERIAL_PAGE_SIZE),
     );
   }, [sectioned, sections, closedSections, sectionLimits, view, grouped, visibleLimit]);
+  const arrange = useArrange({
+    placements,
+    reload: reloadFolders,
+    inFolderView: view === "folder",
+    expandSection: (viewKey) => {
+      if (closedSections.has(viewKey)) setClosedList(closedList.filter((k) => k !== viewKey));
+    },
+  });
+  const arranging = arrange.arranging && view === "folder";
+  // Escape leaves Arrange (the Move to… dialog and menus handle their own Escape first).
+  useEffect(() => {
+    if (!arranging) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (arrange.target || folderDialog) return;
+      if (document.querySelector("dialog[open], details[open]")) return;
+      arrange.leave();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [arranging, arrange.target, arrange.leave, folderDialog]);
+  const sectionOf = useMemo(() => {
+    const map = new Map<string, LibrarySection>();
+    for (const section of sections) for (const item of section.items) map.set(item.id, section);
+    return map;
+  }, [sections]);
   const badgeMaterials = useMemo(
     () => shownMaterials.flatMap((material) => (openBooks.has(material.id) ? [material, ...(grouped.partsOf.get(material.id) ?? [])] : [material])),
     [shownMaterials, openBooks, grouped],
@@ -391,19 +421,45 @@ export function StudyLibrary() {
       folderName={searching && !chapterIds.has(item.id) ? folderOf(item.id)?.name : undefined}
     />
   );
+  const renderArrangeRow = (item: StudyMaterial) => {
+    const chapter = chapterIds.has(item.id);
+    const section = sectionOf.get(item.id);
+    const order = section?.items ?? [];
+    const manual = folderSort === "manual";
+    const at = order.findIndex((m) => m.id === item.id);
+    return (
+      <ArrangeRow
+        key={item.id}
+        material={item}
+        chapter={chapter}
+        selected={arrange.selected.has(item.id)}
+        chapterCount={chaptersOf.get(item.id)?.length ?? 0}
+        showArrows={!searching}
+        arrowTitle={manual ? undefined : MANUAL_ONLY_HINT}
+        upDisabled={!manual || at <= 0}
+        downDisabled={!manual || at < 0 || at >= order.length - 1}
+        onToggle={() => arrange.toggle(item.id)}
+        onNudge={(direction) =>
+          void arrange.nudge(section?.folderId ?? null, order.map((m) => m.id), item.id, item.title, direction)
+        }
+        onMove={() => arrange.openMove([item.id], item.title)}
+      />
+    );
+  };
   const renderBook = (material: StudyMaterial) => {
     const parts = grouped.partsOf.get(material.id) ?? [];
     const open = openBooks.has(material.id);
-    if (parts.length === 0) return renderCard(material);
+    const card = arranging ? renderArrangeRow : renderCard;
+    if (parts.length === 0) return card(material);
     return (
       <div key={material.id} className="material-group" style={{ display: "contents" }}>
-        {renderCard(material)}
+        {card(material)}
         <div style={{ gridColumn: "1 / -1" }}>
           <Button aria-expanded={open} onClick={() => toggleBook(material.id)}>
             {open ? "Hide" : "Show"} {chapterCountLabel(parts.length)} from {material.title}
           </Button>
         </div>
-        {open ? parts.map(renderCard) : null}
+        {open ? parts.map(card) : null}
       </div>
     );
   };
@@ -676,15 +732,25 @@ export function StudyLibrary() {
               </>
             )}
           </p>
-          {sectioned && view === "folder" ? (
+          {view === "folder" && !arranging ? (
             <div className="library__folder-slot">
-              <NewFolderButton folderCount={folders.length} onClick={() => setFolderDialog({ kind: "new" })} />
-              {folders.length > 0 && noFolderCount > 0 ? (
+              {sectioned ? <NewFolderButton folderCount={folders.length} onClick={() => setFolderDialog({ kind: "new" })} /> : null}
+              <Button variant="secondary" onClick={arrange.start}>Arrange</Button>
+              {sectioned && folders.length > 0 && noFolderCount > 0 ? (
                 <button type="button" className="library__jump" onClick={jumpToNoFolder}>
                   {NOT_IN_A_FOLDER} ({noFolderCount.toLocaleString()})
                 </button>
               ) : null}
             </div>
+          ) : null}
+          {arranging ? (
+            <ArrangeBar
+              barRef={arrange.barRef}
+              count={arrange.selected.size}
+              onSelectAll={() => arrange.selectAll(shownMaterials.filter((m) => !chapterIds.has(m.id)).map((m) => m.id))}
+              onMove={() => arrange.openMove([...arrange.selected])}
+              onDone={arrange.leave}
+            />
           ) : null}
           {sectioned && view === "folder" && folders.length === 0 ? (
             <Card>
@@ -707,7 +773,8 @@ export function StudyLibrary() {
               onShowMore={(key, next) => setSectionPage({ key: filterKey, limits: { ...sectionLimits, [key]: next } })}
               hideEmpty={filtersActive}
               renderBook={renderBook}
-              gridClass={gridClass}
+              gridClass={arranging ? "material-grid material-grid--list" : gridClass}
+              flashKey={arrange.flashKey}
               headerActions={view === "folder" ? (section, index) => {
                 const folder = section.folderId ? folders.find((f) => f.id === section.folderId) : undefined;
                 if (!folder) return null;
@@ -727,7 +794,7 @@ export function StudyLibrary() {
               } : undefined}
             />
           ) : (
-            <div className={gridClass}>{shownMaterials.map(renderBook)}</div>
+            <div className={arranging ? "material-grid material-grid--list" : gridClass}>{shownMaterials.map(renderBook)}</div>
           )}
           {!sectioned && grouped.topLevel.length > visibleLimit ? (
             <div className="library__more">
@@ -738,6 +805,18 @@ export function StudyLibrary() {
           ) : null}
         </>
       )}
+
+      <MoveToDialog
+        open={arranging && arrange.target !== null}
+        onClose={arrange.closeMove}
+        materialIds={arrange.target?.ids ?? []}
+        materialTitle={arrange.target?.title}
+        folders={folders}
+        placements={placements}
+        onBeforeMove={arrange.remember}
+        onMoved={arrange.moved}
+      />
+      <MoveToast notice={arrange.notice} onUndo={() => void arrange.undo()} />
 
       <FreeStudyLinks />
 
