@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent as ReactDragEvent } from "react";
 
 import { moveWithin, type LibraryPlacement } from "@/logic/libraryFolders";
 import { isIOS, isMacOS } from "@/services/platform";
@@ -12,6 +12,10 @@ export const FLASH_MS = 2000;
 /** How long the hidden announcement keeps its words. */
 export const ANNOUNCE_MS = 5000;
 const FOCUS_WAIT_MS = 1500;
+
+export const DRAG_TYPE = "text/x-hfd-material";
+/** What a drag is hovering over: a row (insert line) or a section header. */
+export type DragOver = { kind: "row" | "head"; key: string };
 
 /** Where focus should land once the list has redrawn after a move. */
 type FocusRequest =
@@ -241,7 +245,84 @@ export function useArrange({
     announce(`${title} moved ${direction}, position ${next.indexOf(id) + 1} of ${next.length}`);
   };
 
+  // Mac drag. The ids being dragged live in a ref (the browser hides drag data until the drop).
+  const dragIds = useRef<string[]>([]);
+  const [dragging, setDragging] = useState<ReadonlySet<string>>(new Set());
+  const [over, setOver] = useState<DragOver | null>(null);
+  const endDrag = () => {
+    dragIds.current = [];
+    setDragging(new Set());
+    setOver(null);
+  };
+  useEffect(() => {
+    if (!arranging) endDrag();
+  }, [arranging]);
+  const startDrag = (id: string) => {
+    // Dragging a ticked row takes every ticked row; any other row goes alone.
+    const ids = selected.has(id) ? [...selectableIds.filter((x) => selected.has(x)), ...[...selected].filter((x) => !selectableIds.includes(x))] : [id];
+    dragIds.current = ids;
+    setDragging(new Set(ids));
+  };
+  const isOurs = (event: { dataTransfer: DataTransfer | null }) =>
+    dragIds.current.length > 0 && Array.from(event.dataTransfer?.types ?? []).includes(DRAG_TYPE);
+  const dragOver = (event: ReactDragEvent<HTMLElement>, next: DragOver) => {
+    if (!isOurs(event)) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    setOver((cur) => (cur?.kind === next.kind && cur.key === next.key ? cur : next));
+  };
+
+  /**
+   * Drop on a row (beforeId set: put them just before it) or on a header (beforeId null:
+   * at the end). One write for the whole drop; the Undo is the same as for Move to…
+   */
+  const drop = async (
+    event: ReactDragEvent<HTMLElement>,
+    dest: { folderId: string | null; folderName: string; order: string[]; beforeId: string | null; titleOf: (id: string) => string },
+  ) => {
+    if (!isOurs(event)) return;
+    event.preventDefault();
+    const ids = dragIds.current;
+    endDrag();
+    if (!repo || ids.length === 0) return;
+    if (dest.beforeId !== null && ids.includes(dest.beforeId)) return;
+    // A row drop renumbers the whole target section, so Undo must put all of it back.
+    const before = snapshotPlacements(dest.beforeId === null ? ids : [...ids, ...dest.order], placements);
+    const one = ids.length === 1 ? dest.titleOf(ids[0]!) : null;
+    let text: string;
+    let position = "";
+    try {
+      if (dest.beforeId === null) {
+        await repo.moveMaterials(ids, dest.folderId);
+        text = `Moved ${one ? `“${one}”` : ids.length.toLocaleString()} to ${dest.folderName}.`;
+      } else {
+        const rest = dest.order.filter((x) => !ids.includes(x));
+        const at = rest.indexOf(dest.beforeId);
+        const next = at < 0 ? [...rest, ...ids] : [...rest.slice(0, at), ...ids, ...rest.slice(at)];
+        await repo.restorePlacements(next.map((materialId, i) => ({ materialId, folderId: dest.folderId, position: i + 1 })));
+        const sameSection = snapshotPlacements(ids, placements).every((b) => b.folderId === dest.folderId);
+        text = one && sameSection
+          ? `Moved “${one}” before “${dest.titleOf(dest.beforeId)}”.`
+          : `Moved ${one ? `“${one}”` : ids.length.toLocaleString()} to ${dest.folderName}.`;
+        if (one && dest.folderId) position = `, position ${next.indexOf(ids[0]!) + 1} of ${next.length}`;
+      }
+    } catch {
+      return;
+    }
+    undoMove.record(text, before);
+    askFocus({ kind: "checks", ids, from: placements, at: Date.now() });
+    setSelected(new Set());
+    reload();
+    showWhere(dest.folderId);
+    if (dest.beforeId === null) {
+      void announceMove(ids, { folderId: dest.folderId, folderName: dest.folderName, count: ids.length }, one ?? undefined);
+    } else {
+      announce(`${one ?? `${ids.length.toLocaleString()} materials`} moved to ${dest.folderName}${position}`);
+    }
+  };
+
   return {
+    drag: { dragging, over, start: startDrag, end: endDrag, onOver: dragOver, drop },
     arranging,
     start: () => setArranging(true),
     leave,

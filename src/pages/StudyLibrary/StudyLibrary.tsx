@@ -1,4 +1,4 @@
-import { deviceCan } from "@/services/platform";
+import { deviceCan, isMacOS } from "@/services/platform";
 import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
 import { MixedPracticeTest } from "./MixedPracticeTest";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -433,6 +433,9 @@ export function StudyLibrary() {
       folderName={searching && !chapterIds.has(item.id) ? folderOf(item.id)?.name : undefined}
     />
   );
+  // Mac drag: only in Arrange, with no search words, and with Sort: My order.
+  const dragOn = isMacOS() && arranging && !searching && folderSort === "manual";
+  const titleOf = (id: string) => data.materials.find((m) => m.id === id)?.title ?? "material";
   const renderArrangeRow = (item: StudyMaterial) => {
     const chapter = chapterIds.has(item.id);
     const section = sectionOf.get(item.id);
@@ -455,6 +458,22 @@ export function StudyLibrary() {
           void arrange.nudge(section?.folderId ?? null, order.map((m) => m.id), item.id, item.title, direction)
         }
         onMove={() => arrange.openMove([item.id], item.title)}
+        drag={dragOn && section ? {
+          dragging: arrange.drag.dragging.has(item.id),
+          over: arrange.drag.over?.kind === "row" && arrange.drag.over.key === item.id,
+          onDragStart: () => arrange.drag.start(item.id),
+          onDragEnd: arrange.drag.end,
+          onDragOver: (e) => arrange.drag.onOver(e, { kind: "row", key: item.id }),
+          onDragLeave: () => undefined,
+          onDrop: (e) =>
+            void arrange.drag.drop(e, {
+              folderId: section.folderId ?? null,
+              folderName: section.title,
+              order: order.map((m) => m.id),
+              beforeId: item.id,
+              titleOf,
+            }),
+        } : undefined}
       />
     );
   };
@@ -790,6 +809,19 @@ export function StudyLibrary() {
               renderBook={renderBook}
               gridClass={arranging ? "material-grid material-grid--list" : gridClass}
               flashKey={arrange.flashKey}
+              headDrop={dragOn ? {
+                overKey: arrange.drag.over?.kind === "head" ? arrange.drag.over.key : null,
+                onDragOver: (e, _section, viewKey) => arrange.drag.onOver(e, { kind: "head", key: viewKey }),
+                onDragLeave: () => undefined,
+                onDrop: (e, section) =>
+                  void arrange.drag.drop(e, {
+                    folderId: section.folderId ?? null,
+                    folderName: section.title,
+                    order: section.items.map((m) => m.id),
+                    beforeId: null,
+                    titleOf,
+                  }),
+              } : undefined}
               headerActions={view === "folder" ? (section, index) => {
                 const folder = section.folderId ? folders.find((f) => f.id === section.folderId) : undefined;
                 if (!folder) return null;

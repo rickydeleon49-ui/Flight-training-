@@ -270,3 +270,83 @@ it("moving 12 items says how many, and a collapsed folder is opened and highligh
   expect(header.getAttribute("aria-expanded")).toBe("true");
   expect(header.closest(".library__section-head")!.className).toContain("library__section-head--flash");
 });
+
+const TYPE = "text/x-hfd-material";
+const grip = (title: string) => box(title).closest("label")!.querySelector(".arrange-row__grip") as HTMLElement;
+const rowOf = (title: string) => box(title).closest(".arrange-row") as HTMLElement;
+const headOf = (name: RegExp) => screen.getByRole("button", { name }).closest(".library__section-head") as HTMLElement;
+const dt = (types: string[] = [TYPE]) => ({ dataTransfer: { types, setData: vi.fn(), setDragImage: vi.fn(), effectAllowed: "", dropEffect: "" } });
+const dragTo = (title: string, target: HTMLElement) => {
+  const data = dt();
+  fireEvent.dragStart(grip(title), data);
+  fireEvent.dragOver(target, data);
+  return data;
+};
+
+it("drag a row onto a folder header moves it there, with Undo, a highlight and an announcement", async () => {
+  await arrange();
+  const head = headOf(/Regs \(0\)/);
+  const data = dragTo("Radar notes", head);
+  expect(head.className).toContain("library__section-head--drop");
+  fireEvent.drop(head, data);
+  await waitFor(() => expect(toastText()).toBe("Moved “Radar notes” to Regs. Undo"));
+  expect((await where()).m4).toEqual([regsId, 1]);
+  expect(screen.getAllByRole("status").some((n) => n.textContent === "Radar notes moved to Regs, position 1 of 1")).toBe(true);
+  expect(headOf(/Regs \(1\)/).className).toContain("library__section-head--flash");
+  expect(box("Radar notes").checked).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+  await waitFor(() => expect(toastText()).toBe("Undone"));
+  expect((await where()).m4?.[0] ?? null).toBeNull();
+});
+
+it("drag a row onto another row reorders, shows the insert line, and Cmd-Z undoes it", async () => {
+  await arrange();
+  const data = dragTo("TAF reading", rowOf("METAR basics"));
+  expect(rowOf("METAR basics").className).toContain("arrange-row--drop-before");
+  fireEvent.drop(rowOf("METAR basics"), data);
+  await waitFor(() => expect(toastText()).toBe("Moved “TAF reading” before “METAR basics”. Undo"));
+  const now = await where();
+  expect(now.m2).toEqual([weatherId, 1]);
+  expect(now.m1).toEqual([weatherId, 2]);
+  press({ key: "z", metaKey: true });
+  await waitFor(() => expect(toastText()).toBe("Undone"));
+  expect((await where()).m1).toEqual([weatherId, 1]);
+});
+
+it("dragging a ticked row moves every ticked row", async () => {
+  await arrange();
+  fireEvent.click(box("METAR basics"));
+  fireEvent.click(box("Winds aloft"));
+  const head = headOf(/Regs \(0\)/);
+  fireEvent.drop(head, dragTo("Winds aloft", head));
+  await waitFor(() => expect(toastText()).toBe("Moved 2 to Regs. Undo"));
+  const now = await where();
+  expect(now.m1?.[0]).toBe(regsId);
+  expect(now.m3?.[0]).toBe(regsId);
+  expect(now.m2?.[0]).toBe(weatherId);
+});
+
+it("ignores drops of anything else", async () => {
+  await arrange();
+  const head = headOf(/Regs \(0\)/);
+  const other = dt(["Files"]);
+  fireEvent.dragStart(grip("Radar notes"), dt());
+  expect(fireEvent.dragOver(head, other)).toBe(true);
+  expect(fireEvent.drop(head, other)).toBe(true);
+  expect((await where()).m4).toBeUndefined();
+});
+
+it("no grip on iOS, while searching, or when the sort is not My order", async () => {
+  ios = true;
+  mac = false;
+  await arrange();
+  expect(document.querySelector(".arrange-row__grip")).toBeNull();
+  cleanup();
+  ios = false;
+  mac = true;
+  await arrange();
+  expect(document.querySelector(".arrange-row__grip")).not.toBeNull();
+  fireEvent.change(screen.getByLabelText("Search your library"), { target: { value: "metar" } });
+  await waitFor(() => expect(screen.queryByText("TAF reading")).toBeNull());
+  expect(document.querySelector(".arrange-row__grip")).toBeNull();
+});

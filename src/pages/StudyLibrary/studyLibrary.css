@@ -1089,3 +1089,9 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   .library__continue-cards { flex-direction: column; }
   .library__continue-card { max-width: none; flex: 0 0 auto; }
 }
+
+/* Mac drag in Arrange */
+.arrange-row__grip { cursor: grab; color: var(--text-muted, inherit); padding: 0 var(--space-1); user-select: none; }
+.arrange-row.is-dragging { opacity: 0.5; }
+.arrange-row--drop-before { box-shadow: 0 -2px 0 0 var(--accent-primary); }
+.library__section-head--drop { background: var(--surface-raised); outline: 2px solid var(--accent-primary); border-radius: var(--radius-md); }

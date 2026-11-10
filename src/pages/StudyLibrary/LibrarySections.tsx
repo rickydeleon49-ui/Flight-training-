@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { DragEvent, ReactNode } from "react";
 
 import { Button } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
@@ -29,6 +29,7 @@ export function LibrarySections({
   gridClass = "material-grid",
   headerActions,
   flashKey,
+  headDrop,
 }: {
   view: string;
   sections: LibrarySection[];
@@ -43,6 +44,13 @@ export function LibrarySections({
   headerActions?: (section: LibrarySection, index: number) => ReactNode;
   /** A section whose header is highlighted for a moment (where a move went). */
   flashKey?: string | null;
+  /** Mac drag in Arrange: headers take drops (move to the end of that section). */
+  headDrop?: {
+    overKey: string | null;
+    onDragOver: (event: DragEvent<HTMLElement>, section: LibrarySection, viewKey: string) => void;
+    onDragLeave: (event: DragEvent<HTMLElement>) => void;
+    onDrop: (event: DragEvent<HTMLElement>, section: LibrarySection) => void;
+  };
 }) {
   return (
     <div className="library__sections">
@@ -55,7 +63,12 @@ export function LibrarySections({
         const id = sectionDomId(viewKey);
         return (
           <section key={viewKey} className="library__section" aria-labelledby={id}>
-            <div className={`library__section-head${flashKey === viewKey ? " library__section-head--flash" : ""}`}>
+            <div
+              className={`library__section-head${flashKey === viewKey ? " library__section-head--flash" : ""}${headDrop?.overKey === viewKey ? " library__section-head--drop" : ""}`}
+              onDragOver={headDrop ? (e) => headDrop.onDragOver(e, section, viewKey) : undefined}
+              onDragLeave={headDrop ? headDrop.onDragLeave : undefined}
+              onDrop={headDrop ? (e) => headDrop.onDrop(e, section) : undefined}
+            >
             <h2 className="library__section-title">
               <button
                 type="button"

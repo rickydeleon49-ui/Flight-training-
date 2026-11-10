@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { DragEventHandler, MouseEvent } from "react";
 
 import { Button } from "@/components/ui";
 import {
@@ -10,6 +10,19 @@ import {
 
 import "@/components/undo/undoBar.css";
 import type { MoveNotice } from "./useUndoMove";
+import { DRAG_TYPE } from "./useArrange";
+
+/** What one row needs to be dragged and dropped on (Mac only). */
+export interface ArrangeDrag {
+  dragging: boolean;
+  /** A drag is over this row: show the insert line above it. */
+  over: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDragOver: DragEventHandler<HTMLElement>;
+  onDragLeave: DragEventHandler<HTMLElement>;
+  onDrop: DragEventHandler<HTMLElement>;
+}
 
 export const MANUAL_ONLY_HINT = "Choose Sort: My order to arrange by hand";
 
@@ -58,6 +71,7 @@ export function ArrangeRow({
   onToggle,
   onNudge,
   onMove,
+  drag,
 }: {
   material: StudyMaterial;
   /** A chapter under its book: not selectable, it moves with the book. */
@@ -72,18 +86,45 @@ export function ArrangeRow({
   onToggle: () => void;
   onNudge: (direction: "up" | "down") => void;
   onMove: () => void;
+  /** Mac only: drag the row by its grip. Never the only way to move it. */
+  drag?: ArrangeDrag;
 }) {
   const click = (event: MouseEvent) => {
     if (chapter) return;
     if ((event.target as HTMLElement).closest("button, input, label")) return;
     onToggle();
   };
+  const target = drag && !chapter;
   return (
-    <div className={`material-row arrange-row${selected ? " is-selected" : ""}`} onClick={click}>
+    <div
+      className={`material-row arrange-row${selected ? " is-selected" : ""}${target && drag.dragging ? " is-dragging" : ""}${target && drag.over ? " arrange-row--drop-before" : ""}`}
+      onClick={click}
+      onDragOver={target ? drag.onDragOver : undefined}
+      onDragLeave={target ? drag.onDragLeave : undefined}
+      onDrop={target ? drag.onDrop : undefined}
+    >
       {chapter ? (
         <span className="material-row__title wrap-anywhere arrange-row__chapter">{material.title}</span>
       ) : (
         <label className="material-row__title wrap-anywhere arrange-row__label">
+          {drag ? (
+            <span
+              className="arrange-row__grip"
+              aria-hidden="true"
+              draggable
+              onClick={(event) => event.preventDefault()}
+              onDragStart={(event) => {
+                event.dataTransfer.setData(DRAG_TYPE, material.id);
+                event.dataTransfer.effectAllowed = "move";
+                const row = (event.currentTarget as HTMLElement).closest(".arrange-row");
+                if (row) event.dataTransfer.setDragImage?.(row, 0, 0);
+                drag.onDragStart();
+              }}
+              onDragEnd={drag.onDragEnd}
+            >
+              ⠿
+            </span>
+          ) : null}
           <input
             type="checkbox"
             aria-label={`Select ${material.title}`}
