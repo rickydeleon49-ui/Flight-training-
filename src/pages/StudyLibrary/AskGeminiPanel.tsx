@@ -368,17 +368,17 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
       style={{
         marginTop: "var(--space-2)",
         padding: "var(--space-3)",
-        border: "1px solid var(--border-subtle, #e2e8f0)",
+        border: "1px solid var(--border-subtle)",
         borderRadius: "var(--radius-md, 8px)",
-        background: "var(--bg-surface-raised, #f8fafc)",
+        background: "var(--surface-sunken)",
       }}
     >
       {/* Stays at the top while answers scroll, so Ask another never moves. */}
       <div
         className="row row--between ask-gemini-panel__header"
-        style={{ alignItems: "center", position: "sticky", top: 0, zIndex: 1, background: "var(--bg-surface-raised, #f8fafc)" }}
+        style={{ alignItems: "center", position: "sticky", top: 0, zIndex: 1, background: "var(--surface-sunken)" }}
       >
-        <span className="small bold" style={{ color: "var(--fg-default)" }}>
+        <span className="small bold" style={{ color: "var(--text-primary)" }}>
           Ask {helper}
         </span>
         <div className="row row--gap-2" style={{ alignItems: "center" }}>
@@ -427,7 +427,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
               style={{
                 padding: "var(--space-2)",
                 borderRadius: "var(--radius-sm, 4px)",
-                background: turn.role === "user" ? "var(--bg-surface-active, #e2e8f0)" : "var(--bg-surface, #fff)",
+                background: turn.role === "user" ? "var(--accent-primary-fill)" : "var(--surface-card)",
               }}
             >
               <span className="tiny dim" style={{ display: "block", marginBottom: "var(--space-1)" }}>
@@ -486,8 +486,8 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
           role="alert"
           style={{
             padding: "var(--space-2)",
-            color: "var(--fg-error, #b91c1c)",
-            background: "var(--bg-error-subtle, #fef2f2)",
+            color: "var(--status-overdue)",
+            background: "var(--status-overdue-fill)",
             borderRadius: "var(--radius-sm, 4px)",
             fontSize: "0.875rem",
           }}

@@ -13,6 +13,21 @@ function cssFiles(dir: string): string[] {
   });
 }
 
+function tsxFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) return tsxFiles(p);
+    return p.endsWith(".tsx") && !p.endsWith(".test.tsx") ? [p] : [];
+  });
+}
+
+// Files allowed to hold raw colour literals. Each needs a reason.
+const RAW_COLOUR_ALLOWLIST = new Map<string, string>([
+  ["styles/tokens.css", "the token definitions themselves"],
+  ["styles/glass.css", "rewritten in DESIGN-01 slice 27"],
+]);
+const RAW_COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/;
+
 describe("css custom properties", () => {
   it("every var(--x) used in src CSS is defined somewhere", () => {
     const files = cssFiles(join(__dirname, ".."));
@@ -25,6 +40,36 @@ describe("css custom properties", () => {
     for (const [file, text] of sources) {
       for (const m of text.matchAll(/var\(\s*(--[\w-]+)/g)) {
         if (!defined.has(m[1]!)) missing.push(`${file}: ${m[1]}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("no raw colour literals in src CSS outside the allowlist", () => {
+    const root = join(__dirname, "..");
+    const hits: string[] = [];
+    for (const f of cssFiles(root)) {
+      const rel = f.slice(root.length + 1).split("\\").join("/");
+      if (RAW_COLOUR_ALLOWLIST.has(rel)) continue;
+      readFileSync(f, "utf8").split("\n").forEach((line, i) => {
+        if (RAW_COLOUR.test(line)) hits.push(`${rel}:${i + 1}: ${line.trim()}`);
+      });
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it("every var(--x) in TSX source is defined in CSS", () => {
+    const root = join(__dirname, "..");
+    const defined = new Set<string>(RUNTIME_VARS);
+    for (const f of cssFiles(root)) {
+      for (const m of readFileSync(f, "utf8").matchAll(/(--[\w-]+)\s*:/g)) defined.add(m[1]!);
+    }
+    const missing: string[] = [];
+    for (const f of tsxFiles(root)) {
+      for (const m of readFileSync(f, "utf8").matchAll(/var\(\s*(--[\w-]+)/g)) {
+        // A name ending in "-" is a template prefix (var(--accent-swatch-${x})).
+        if (m[1]!.endsWith("-")) continue;
+        if (!defined.has(m[1]!)) missing.push(`${f}: ${m[1]}`);
       }
     }
     expect(missing).toEqual([]);

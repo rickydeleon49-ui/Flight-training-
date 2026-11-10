@@ -199,7 +199,7 @@ button[role="tab"] {
 }
 .badge--due {
   background: var(--status-due-today-fill);
-  border-color: #ecd8b6;
+  border-color: var(--border-warn);
   color: var(--status-due-today);
 }
 
@@ -365,7 +365,7 @@ button[role="tab"] {
   box-shadow: var(--shadow-lg);
 }
 
-.dialog::backdrop { background: rgba(23, 35, 60, 0.28); }
+.dialog::backdrop { background: var(--overlay); }
 
 /* WebKit before macOS 12.3 has no modal <dialog>: there the element is not
    hidden by default, has no top layer and no ::backdrop. useModalDialog marks
@@ -388,7 +388,7 @@ dialog:not([open]) { display: none; }
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(23, 35, 60, 0.28);
+  background: var(--overlay);
 }
 
 .dialog--narrow { width: min(28rem, calc(100vw - 3rem)); }

@@ -13,7 +13,7 @@
 }
 
 .quick-find::backdrop {
-  background: rgb(23 35 60 / 0.28);
+  background: var(--overlay);
 }
 
 /* Fallback without a modal <dialog> (see useModalDialog): keep it high. */

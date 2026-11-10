@@ -37,7 +37,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--text-on-tint);
 }
 
 /* ------------------------- Photo and her why ------------------------- */
