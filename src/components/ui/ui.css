@@ -628,3 +628,56 @@ dialog:not([open]) { display: none; }
   html.is-ios .dialog__header > .icon-button { flex-shrink: 0; }
   html.is-ios .row { flex-wrap: wrap; }
 }
+
+/* Choice controls (radio groups): segmented track and plain inline radios. */
+.segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  min-height: 32px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-pill);
+}
+.segmented__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+.segmented__option.is-selected {
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+.segmented__option:has(input:focus-visible) {
+  outline: 2px solid var(--focus-outline-blue);
+  outline-offset: 1px;
+}
+.segmented__option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.radio-row__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}

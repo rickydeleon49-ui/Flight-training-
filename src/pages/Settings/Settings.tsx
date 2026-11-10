@@ -37,6 +37,7 @@ import {
   getStoredAppearance,
   setStoredAppearance,
 } from "@/lib/appearance";
+import { applyTheme, getStoredTheme, setStoredTheme, type ThemeChoice } from "@/lib/theme";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
   appVersion,
@@ -118,6 +119,12 @@ import "./settings.css";
 
 /** The editable slice of the profile. */
 type ProfileDraft = Omit<Profile, "id" | "createdAt" | "updatedAt">;
+
+const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "auto", label: "Auto" },
+];
 
 const draftFrom = (profile: Profile): ProfileDraft => ({
   pilotName: profile.pilotName,
@@ -206,6 +213,7 @@ export function Settings() {
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   // Already applied at startup (main.tsx); this only reflects the saved choice.
   const [appearance, setAppearance] = useState<Appearance>(getStoredAppearance);
+  const [theme, setTheme] = useState<ThemeChoice>(getStoredTheme);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [starterNote, setStarterNote] = useState<string | null>(null);
@@ -667,6 +675,12 @@ export function Settings() {
     if (result === null) update("accentColor", previous);
   };
 
+  const chooseTheme = (choice: ThemeChoice) => {
+    setTheme(choice);
+    setStoredTheme(choice);
+    applyTheme(choice);
+  };
+
   /** The appearance changes immediately and persists in localStorage. */
   const chooseAppearance = (choice: Appearance) => {
     setAppearance(choice);
@@ -1028,24 +1042,41 @@ export function Settings() {
           <CardHeader title="Appearance" headingId="settings-appearance" eyebrow="Visual style" />
           <CardBody>
             <div className="stack stack--3">
+              {isIOS() ? (
+                <div className="row row--between">
+                  <span className="small">Theme</span>
+                  <span className="small muted">Auto · Matches your iPhone</span>
+                </div>
+              ) : (
+                <div className="stack stack--2">
+                  <span className="small" id="settings-theme-label">
+                    Theme
+                  </span>
+                  <div className="segmented" role="radiogroup" aria-labelledby="settings-theme-label">
+                    {THEME_OPTIONS.map((option) => (
+                      <label
+                        key={option.value}
+                        className={`segmented__option${theme === option.value ? " is-selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="theme"
+                          value={option.value}
+                          checked={theme === option.value}
+                          onChange={() => chooseTheme(option.value)}
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {theme === "auto" ? <p className="small muted">Matches your iPhone or Mac</p> : null}
+                </div>
+              )}
               <p className="small muted">
                 Glass gives cards a soft frosted look. Classic is the standard look.
               </p>
-              <div
-                className="row row--wrap"
-                role="radiogroup"
-                aria-label="Appearance"
-                style={{ gap: "var(--space-4)" }}
-              >
-                <label
-                  className="small"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "var(--space-2)",
-                    cursor: "pointer",
-                  }}
-                >
+              <div className="radio-row" role="radiogroup" aria-label="Appearance">
+                <label className="small radio-row__option">
                   <input
                     type="radio"
                     name="appearance"
@@ -1055,15 +1086,7 @@ export function Settings() {
                   />
                   <span>Classic</span>
                 </label>
-                <label
-                  className="small"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "var(--space-2)",
-                    cursor: "pointer",
-                  }}
-                >
+                <label className="small radio-row__option">
                   <input
                     type="radio"
                     name="appearance"

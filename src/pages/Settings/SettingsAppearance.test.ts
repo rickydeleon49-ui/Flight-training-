@@ -13,10 +13,17 @@ import {
   initAppearance,
   setStoredAppearance,
 } from "@/lib/appearance";
+import { getStoredTheme, THEME_STORAGE_KEY } from "@/lib/theme";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { expectNoA11yViolations } from "@/testing/a11y";
 import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
+
+const isIOSMock = vi.hoisted(() => vi.fn(() => false));
+vi.mock("@/services/platform", async (orig) => ({
+  ...(await orig<typeof import("@/services/platform")>()),
+  isIOS: isIOSMock,
+}));
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -155,5 +162,57 @@ describe("Appearance setting in Settings", () => {
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
     applyAppearance("classic");
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
+  });
+
+  describe("Theme control", () => {
+    afterEach(() => {
+      document.documentElement.removeAttribute("data-theme");
+    });
+
+    it("Mac: Light is selected by default", async () => {
+      await open();
+      const group = await screen.findByRole("radiogroup", { name: "Theme" });
+      expect(group).toBeTruthy();
+      expect((screen.getByRole("radio", { name: "Light" }) as HTMLInputElement).checked).toBe(true);
+      expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+    });
+
+    it("choosing Dark sets data-theme and saves; Auto removes it and saves auto", async () => {
+      await open();
+      const dark = (await screen.findByRole("radio", { name: "Dark" })) as HTMLInputElement;
+      await act(async () => {
+        fireEvent.click(dark);
+      });
+      expect(dark.checked).toBe(true);
+      expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+      expect(getStoredTheme()).toBe("dark");
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("radio", { name: "Auto" }));
+      });
+      expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(JSON.stringify("auto"));
+      expect(screen.getByText("Matches your iPhone or Mac")).toBeTruthy();
+    });
+
+    it("radios share a name so arrow keys move the choice", async () => {
+      await open();
+      const radios = (await screen.findAllByRole("radio")).filter(
+        (r) => (r as HTMLInputElement).name === "theme",
+      ) as HTMLInputElement[];
+      expect(radios.map((r) => r.value)).toEqual(["light", "dark", "auto"]);
+    });
+
+    it("iPhone: no radiogroup, plain Auto row", async () => {
+      isIOSMock.mockReturnValue(true);
+      try {
+        await open();
+        await screen.findByText("Appearance");
+        expect(screen.queryByRole("radiogroup", { name: "Theme" })).toBeNull();
+        expect(screen.getByText("Auto · Matches your iPhone")).toBeTruthy();
+      } finally {
+        isIOSMock.mockReturnValue(false);
+      }
+    });
   });
 });
