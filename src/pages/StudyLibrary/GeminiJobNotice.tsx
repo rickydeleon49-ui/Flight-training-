@@ -4,7 +4,7 @@ import { providerCompany, providerWording } from "@/services/provider";
 import { useEffect, useRef, useState } from "react";
 
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
-import { geminiModelName, SECTION_GUIDE_MESSAGES, SectionGuideError, type GeminiWorkStage } from "@/services/gemini";
+import { droppedLine, geminiModelName, SECTION_GUIDE_MESSAGES, uncheckedLine, SectionGuideError, type GeminiWorkStage } from "@/services/gemini";
 import { splitGeminiError } from "@/logic/geminiErrorText";
 import { useAppData } from "@/state/AppDataContext";
 import { EMPTY_FLASHCARDS_MESSAGE, isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
@@ -132,6 +132,7 @@ export function GeminiJobNotice({
         {onReview && reviewDisabled ? <p className="tiny muted">Finish or abandon your current practice attempt before reviewing these questions.</p> : null}
         {job.studyKitPart && !job.checkpointed ? <p className="tiny" role="alert">This draft could not be kept on this computer. Keep this window open until you save or discard it.</p> : null}
         {summary ? <p className="tiny">{summary}</p> : null}
+        {job.studyKitPart ? keptLines(job, helper).map((line) => <p key={line} className="tiny" role="status">{line}</p>) : null}
         {job.studyKitPart && job.answer ? <StudyKitPartPreview job={job} what={what} /> : null}
         <div className="row row--wrap">
           {onReview ? (
@@ -266,6 +267,19 @@ function StudyKitPartPreview({ job, what }: { job: GeminiJob; what: string }) {
       <p className="tiny muted">AI study aid. Check against current FAA material and your instructor.</p>
     </div>
   </details>;
+}
+
+/** Always-visible plain lines for a kit draft: what was dropped and what could not be matched to the page. */
+function keptLines(job: GeminiJob, helper: string): string[] {
+  const answer = job.answer;
+  if (!answer) return [];
+  const lines: Array<string | null> = [];
+  if ("questions" in answer) {
+    lines.push(droppedLine(answer.checkSummary, "question", helper), uncheckedLine(answer.questions, "question"));
+  } else if (job.kind === "flashcards" && "flashcards" in answer) {
+    lines.push(droppedLine(answer.checkSummary, "card", helper), uncheckedLine(answer.flashcards, "card"));
+  }
+  return lines.filter((line): line is string => line !== null);
 }
 
 function readySummary(job: GeminiJob): string | null {

@@ -1,4 +1,4 @@
-import { MORE_CARDS_NOTE, withoutVerificationNotes } from "@/services/gemini";
+import { MORE_CARDS_NOTE, savedCards as cardsToSave, withoutVerificationNotes } from "@/services/gemini";
 import {
   createContext,
   useCallback,
@@ -664,7 +664,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             // Extra cards are added to the end of the saved set; nothing is replaced.
             const added = await repos.documents.appendGeneratedCards(
               job.materialId,
-              withoutVerificationNotes((answer as GeneratedStudyAid).flashcards),
+              cardsToSave((answer as GeneratedStudyAid).flashcards),
             );
             if (added !== null) savedCards = added;
             return added === null ? ("superseded" as const) : ("saved" as const);
@@ -687,7 +687,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               title: aid.title,
               summary: aid.summary,
               sections: aid.sections,
-              flashcards: keptCards ?? withoutVerificationNotes(aid.flashcards),
+              flashcards: keptCards ?? cardsToSave(aid.flashcards),
               sourceNotes: aid.sourceNotes,
               model: aid.model,
             }, job.sectionGuide ? job.jobId ?? undefined : undefined, "study-aid");
@@ -700,7 +700,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               title: currentSet?.title || aid.title,
               summary: currentSet ? currentSet.summary : "",
               sections: currentSet ? currentSet.sections : [],
-              flashcards: withoutVerificationNotes(aid.flashcards),
+              flashcards: cardsToSave(aid.flashcards),
               sourceNotes: currentSet ? currentSet.sourceNotes : aid.sourceNotes,
               model: aid.model,
             }, undefined, "flashcards");

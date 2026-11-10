@@ -91,12 +91,11 @@ export function droppedLine(summary: CheckSummary | undefined, noun: "card" | "q
   if (!summary || summary.generated <= summary.kept) return null;
   const word = (n: number) => `${n} ${n === 1 ? noun : `${noun}s`}`;
   const why = [
-    summary.droppedByChoices ? "had the wrong number of choices" : "",
-    summary.droppedByQuote ? "could not be matched to the page" : "",
-    summary.droppedOther ? "were duplicates, too long or had a bad answer" : "",
-  ].filter(Boolean);
-  const gone = summary.generated - summary.kept;
-  return `${helper} made ${word(summary.generated)}; ${summary.kept} ${summary.kept === 1 ? "was" : "were"} kept (${gone} ${why.length === 1 && gone === 1 ? why[0]!.replace(/^were /, "was ").replace(/^had /, "had ").replace(/^could /, "could ") : why.join(", ")}).`;
+    summary.droppedByChoices ? `${summary.droppedByChoices} had the wrong number of choices` : "",
+    summary.droppedByQuote ? `${summary.droppedByQuote} could not be matched to the page` : "",
+    summary.droppedOther ? `${summary.droppedOther} were duplicates, too long or had a bad answer` : "",
+  ].filter(Boolean).join(", ");
+  return `${helper} made ${word(summary.generated)}; ${summary.kept} ${summary.kept === 1 ? "was" : "were"} kept${why ? ` (${why})` : ""}.`;
 }
 
 export interface GeneratedStudyAid {
@@ -113,6 +112,7 @@ export interface GeneratedPracticeTest {
   title: string;
   questions: (PracticeQuestion & DraftVerification)[];
   model: string;
+  checkSummary?: CheckSummary;
 }
 
 // Only ever seen outside the desktop shell, where Gemini cannot run at all.
