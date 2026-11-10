@@ -20,14 +20,18 @@ export function ArrangeBar({
   onSelectAll,
   onMove,
   onDone,
+  announcement,
 }: {
   barRef: React.RefObject<HTMLDivElement | null>;
   count: number;
   onSelectAll: () => void;
   onMove: () => void;
   onDone: () => void;
+  /** Said once to screen readers after a move; empty most of the time. */
+  announcement: string;
 }) {
   return (
+    <>
     <div ref={barRef} tabIndex={-1} role="group" aria-label="Arrange" className="arrange-bar">
       <span className="arrange-bar__count" aria-live="polite">{count.toLocaleString()} selected</span>
       <Button onClick={onSelectAll}>Select all shown</Button>
@@ -36,6 +40,8 @@ export function ArrangeBar({
       </Button>
       <Button className="arrange-bar__done" onClick={onDone}>Done</Button>
     </div>
+    <div role="status" aria-live="polite" className="visually-hidden">{announcement}</div>
+    </>
   );
 }
 
@@ -78,7 +84,14 @@ export function ArrangeRow({
         <span className="material-row__title wrap-anywhere arrange-row__chapter">{material.title}</span>
       ) : (
         <label className="material-row__title wrap-anywhere arrange-row__label">
-          <input type="checkbox" checked={selected} onChange={onToggle} />
+          <input
+            type="checkbox"
+            aria-label={`Select ${material.title}`}
+            data-arrange-check=""
+            data-material-id={material.id}
+            checked={selected}
+            onChange={onToggle}
+          />
           <span>{material.title}</span>
         </label>
       )}
@@ -93,6 +106,7 @@ export function ArrangeRow({
             <>
               <Button
                 aria-label={`Move ${material.title} up`}
+                data-arrange-nudge="up"
                 title={arrowTitle}
                 disabled={upDisabled}
                 onClick={() => onNudge("up")}
@@ -101,6 +115,7 @@ export function ArrangeRow({
               </Button>
               <Button
                 aria-label={`Move ${material.title} down`}
+                data-arrange-nudge="down"
                 title={arrowTitle}
                 disabled={downDisabled}
                 onClick={() => onNudge("down")}
@@ -125,7 +140,7 @@ export function ArrangeRow({
 export function MoveToast({ notice, onUndo }: { notice: MoveNotice | null; onUndo: () => void }) {
   if (!notice) return null;
   return (
-    <div className="undo-bar move-toast" role="status" aria-live="polite">
+    <div className="undo-bar move-toast" role="status" aria-live="off">
       <p className="undo-bar__text">{notice.canUndo ? `${notice.text} ` : notice.text}</p>
       {notice.canUndo ? (
         <button type="button" className="undo-bar__action" onClick={onUndo}>

@@ -363,7 +363,12 @@ export function StudyLibrary() {
       closedSections.has(`${view}:${s.key}`) ? [] : s.items.slice(0, sectionLimits[`${view}:${s.key}`] ?? MATERIAL_PAGE_SIZE),
     );
   }, [sectioned, sections, closedSections, sectionLimits, view, grouped, visibleLimit]);
+  const selectableIds = useMemo(
+    () => shownMaterials.filter((m) => !chapterIds.has(m.id)).map((m) => m.id),
+    [shownMaterials, chapterIds],
+  );
   const arrange = useArrange({
+    selectableIds,
     placements,
     reload: reloadFolders,
     inFolderView: view === "folder",
@@ -756,7 +761,8 @@ export function StudyLibrary() {
             <ArrangeBar
               barRef={arrange.barRef}
               count={arrange.selected.size}
-              onSelectAll={() => arrange.selectAll(shownMaterials.filter((m) => !chapterIds.has(m.id)).map((m) => m.id))}
+              onSelectAll={arrange.selectAll}
+              announcement={arrange.announcement}
               onMove={() => arrange.openMove([...arrange.selected])}
               onDone={arrange.leave}
             />

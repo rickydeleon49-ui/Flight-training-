@@ -76,7 +76,7 @@ const arrange = async () => {
   fireEvent.click(screen.getByRole("button", { name: "Arrange" }));
   await screen.findByRole("group", { name: "Arrange" });
 };
-const box = (title: string) => screen.getByRole("checkbox", { name: title }) as HTMLInputElement;
+const box = (title: string) => screen.getByRole("checkbox", { name: `Select ${title}` }) as HTMLInputElement;
 const toastText = () =>
   screen.getAllByRole("status").map((n) => n.textContent ?? "").find((t) => /^(Moved|Undone)/.test(t)) ?? "";
 const dialog = () => screen.getByRole("dialog");
