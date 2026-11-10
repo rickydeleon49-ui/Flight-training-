@@ -506,9 +506,9 @@ button[role="tab"] {
   padding: 0;
   width: min(42rem, calc(100vw - 3rem));
   max-height: calc(100vh - 4rem);
-  background: var(--surface-card);
+  background: var(--surface-raised);
   color: var(--text-primary);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-popover);
 }
 
 .dialog::backdrop { background: var(--overlay); }
@@ -593,6 +593,103 @@ dialog:not([open]) { display: none; }
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* iPhone: dialogs are bottom sheets. The global reduced-motion override in
+   tokens.css covers the animations, so no wrapper is used here. */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+html.is-ios .dialog {
+  position: fixed;
+  width: calc(100vw - 16px);
+  max-width: none;
+  margin: auto 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  max-height: 92vh;
+  max-height: 92dvh;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+html.is-ios .dialog[open] {
+  display: flex;
+  animation: sheet-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+html.is-ios .dialog.modal-fallback[open] {
+  top: auto;
+  left: 8px;
+  right: 8px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  transform: none;
+}
+
+/* Grabber: decorative only. */
+html.is-ios .dialog::before {
+  content: "";
+  flex: none;
+  align-self: center;
+  width: 36px;
+  height: 5px;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+html.is-ios .dialog__header { border-bottom: 0; padding-top: var(--space-3); }
+html.is-ios .dialog__title { font-size: var(--text-xl); }
+
+html.is-ios .dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+/* A medium sheet: as tall as its content. */
+html.is-ios .dialog--narrow { width: calc(100vw - 16px); }
+
+html.is-ios .dialog__footer {
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+html.is-ios .dialog__footer-main {
+  flex-direction: column;
+  align-items: stretch;
+  margin-left: 0;
+}
+html.is-ios .dialog__footer > .button,
+html.is-ios .dialog__footer-main > .button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Keyboard check (M4): WKWebView does not shrink the layout for the keyboard,
+   so a sheet with a field stays at the top and keeps its footer reachable.
+   Confirm dialogs, which have no fields, sit at the bottom. */
+html.is-ios .dialog:has(input, textarea, select) {
+  margin-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  margin-bottom: auto;
+}
+html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  bottom: auto;
+}
+
+/* Menus and popovers open from their button. */
+.quick-find[open]:not(.modal-fallback) {
+  transform-origin: top center;
+  animation: popover-in 180ms ease-out;
 }
 
 /* --------------------------- Empty state -------------------------- */
