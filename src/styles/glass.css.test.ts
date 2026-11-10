@@ -182,7 +182,7 @@ describe("Glass appearance styles (glass.css)", () => {
     const overdueHex = getHexToken("--status-overdue");
     const dueTodayHex = getHexToken("--status-due-today");
 
-    expect(ivoryHex).toBe("#faf7f4");
+    expect(ivoryHex).toBe("#f5f2f0");
 
     const ivory = parseHex(ivoryHex);
     // Worst case: the strongest palette tint (32%) behind the page, with the

@@ -6,15 +6,16 @@
  * the product spec are recorded here as the private --palette-* layer and are
  * never used directly in a component.
  *
- * The product commits to one warm light palette; there is no dark theme, so
- * every colour is defined once and stated explicitly.
+ * These are the light values (iOS-style warm grey page, white groups). The
+ * dark values arrive in slice 5; src/styles/contrast.test.ts measures every
+ * text and background pair.
  */
 
 :root {
   color-scheme: light;
 
   /* ---- Raw palette (spec section 30). Do not use these in components. -- */
-  --palette-ivory: #faf7f4;
+  --palette-ivory: #f5f2f0;
   --palette-white: #ffffff;
   --palette-navy: #17233c;
   --palette-navy-muted: #596276;
@@ -27,8 +28,9 @@
   /* ---- Surfaces ---- */
   --surface-page: var(--palette-ivory);
   --surface-card: var(--palette-white);
-  --surface-sunken: #f3eeea;
-  --surface-raised: #fffdfc;
+  --surface-sidebar: #ede9e6;
+  --surface-sunken: #ebe7e4;
+  --surface-raised: #ffffff;
   /* Tinted washes for section headers and quiet panels. */
   --surface-tint-berry: #fdf4f6;
   --surface-tint-sky: #f1f7fb;
@@ -43,7 +45,8 @@
   --text-on-accent: #ffffff;
 
   /* ---- Lines and edges ---- */
-  --border-subtle: #ece4de;
+  --border-subtle: #e3ded9;
+  --border-control: #8c8f9a;
   --border-strong: #ddd2ca;
   --border-focus: var(--palette-berry);
 
@@ -53,7 +56,8 @@
    */
   --accent-primary: var(--palette-berry);
   --accent-primary-hover: #8d3c59;
-  --accent-primary-fill: #fbeff3;
+  --accent-fill: #f7e9ee;
+  --accent-primary-fill: var(--accent-fill);
   --accent-secondary: var(--palette-rose);
   /* Channels of the active accent, for translucent effects. */
   --accent-rgb: 168 76 107;
@@ -166,7 +170,7 @@
 :root[data-accent="lavender"] {
   --accent-primary: #5b4d95;
   --accent-primary-hover: #4c4080;
-  --accent-primary-fill: #f2effb;
+  --accent-fill: #efecf9;
   --accent-secondary: var(--palette-lavender);
   --accent-rgb: 91 77 149;
 }
@@ -174,7 +178,7 @@
 :root[data-accent="sky"] {
   --accent-primary: #2b6285;
   --accent-primary-hover: #22506e;
-  --accent-primary-fill: #eaf3f9;
+  --accent-fill: #e6f1f8;
   --accent-secondary: var(--palette-sky);
   --accent-rgb: 43 98 133;
 }
@@ -182,7 +186,7 @@
 :root[data-accent="mint"] {
   --accent-primary: #2f6d59;
   --accent-primary-hover: #265948;
-  --accent-primary-fill: #e9f5f0;
+  --accent-fill: #e4f3ec;
   --accent-secondary: var(--palette-mint);
   --accent-rgb: 47 109 89;
 }
