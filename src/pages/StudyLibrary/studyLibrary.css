@@ -786,7 +786,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 }
 .material-row:hover { border-color: var(--category-study-edge); text-decoration: none; }
 .material-row__title { flex: 1 1 auto; min-width: 0; font-weight: 600; }
-.material-row__col { flex: none; font-size: var(--font-size-sm, 0.875rem); color: var(--text-secondary); }
+.material-row__col { flex: none; font-size: 0.875rem; color: var(--text-secondary); }
 @media (max-width: 600px) {
   .material-row { gap: var(--space-3); }
   .material-row__topic, .material-row__date { display: none; }
@@ -1030,7 +1030,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 .library__folder-slot { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-3); }
 .library__jump {
   appearance: none; background: none; border: 0; padding: 0; font: inherit;
-  color: var(--accent, inherit); text-decoration: underline; cursor: pointer; min-height: 44px;
+  color: inherit; text-decoration: underline; cursor: pointer; min-height: 44px;
 }
 .library__in-folder { display: block; margin-top: 2px; }
 
@@ -1048,7 +1048,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; box-sizing: border-box;
   width: min(260px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: var(--space-2);
   padding: var(--space-2); background: var(--surface-card, white); border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md); box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-popover);
 }
 .folder-actions-menu:not([open]) > .folder-actions-menu__items { display: none; }
 .folder-actions-menu__items .button { width: 100%; justify-content: flex-start; min-height: 44px; }
@@ -1091,7 +1091,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 }
 
 /* Mac drag in Arrange */
-.arrange-row__grip { cursor: grab; color: var(--text-muted, inherit); padding: 0 var(--space-1); user-select: none; }
+.arrange-row__grip { cursor: grab; color: inherit; padding: 0 var(--space-1); user-select: none; }
 .arrange-row.is-dragging { opacity: 0.5; }
 .arrange-row--drop-before { box-shadow: 0 -2px 0 0 var(--accent-primary); }
 .library__section-head--drop { background: var(--surface-raised); outline: 2px solid var(--accent-primary); border-radius: var(--radius-md); }
