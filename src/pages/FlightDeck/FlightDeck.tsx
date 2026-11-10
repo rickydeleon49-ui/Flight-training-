@@ -33,6 +33,7 @@ import {
 } from "@/domain/types";
 import { describeRelativeDate, formatLongDate, formatShortDate, formatTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { checkrideLine } from "@/logic/checkride";
 import { buildDashboard } from "@/logic/dashboard";
 import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
 import {
@@ -76,6 +77,8 @@ export function FlightDeck() {
       }),
     [data],
   );
+
+  const checkrideText = checkrideLine(data.toolkit.checkrideDate ?? null);
 
   // Start on a Flight Deck action: focus its own control where it is shown;
   // an action this page does not list (e.g. due later) opens in its editor.
@@ -150,6 +153,10 @@ export function FlightDeck() {
           </Button>
         }
       />
+
+      {checkrideText ? (
+        <p className="small strong" data-testid="checkride-countdown" role="status">{checkrideText}</p>
+      ) : null}
 
       <div className="deck">
         <div className="deck__column">

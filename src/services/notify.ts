@@ -82,3 +82,37 @@ export async function cancelDaily(): Promise<void> {
     /* nothing to cancel */
   }
 }
+
+/** Ids for the three checkride notices (the daily reminder uses 41001). */
+export const CHECKRIDE_IDS = [41101, 41102, 41103] as const;
+
+/**
+ * iPhone only: replace the checkride notices with these one-off ones (each at its own
+ * local time). Cancels the old three first; an empty list just cancels. Never asks
+ * for permission. False when nothing was scheduled.
+ */
+export async function scheduleCheckride(
+  notices: { at: Date; title: string; body: string }[],
+): Promise<boolean> {
+  try {
+    const p = await plugin();
+    if (!p || (await p.isPermissionGranted()) !== true) return false;
+    await p.cancel([...CHECKRIDE_IDS]);
+    notices.slice(0, CHECKRIDE_IDS.length).forEach((n, i) => {
+      p.sendNotification({ id: CHECKRIDE_IDS[i]!, title: n.title, body: n.body, schedule: p.Schedule.at(n.at, false, true) });
+    });
+    return notices.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Remove the checkride notices, if any. Never throws. */
+export async function cancelCheckride(): Promise<void> {
+  try {
+    const p = await plugin();
+    if (p) await p.cancel([...CHECKRIDE_IDS]);
+  } catch {
+    /* nothing to cancel */
+  }
+}

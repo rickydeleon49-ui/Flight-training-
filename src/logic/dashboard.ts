@@ -6,6 +6,7 @@
  * decides what "most important next" means.
  */
 import { daysBetween, todayIso } from "@/lib/dates";
+import { daysToCheckride } from "./checkride";
 import type {
   Goal,
   JournalEntry,
@@ -150,7 +151,8 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
     sources.actions.length === 0 &&
     sources.events.length === 0 &&
     sources.materials.length === 0 &&
-    sources.goals.length === 0;
+    sources.goals.length === 0 &&
+    daysToCheckride(sources.checkrideDate, today) === null;
 
   const focusLabel = sources.profile.currentFocus || milestone?.title || "";
 
