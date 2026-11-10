@@ -603,6 +603,7 @@ pub fn run() {
             backup::inspect_complete_backup,
             backup::stage_complete_restore,
             backup::stage_local_restore,
+            backup::stage_start_fresh,
             backup::restart_for_restore,
             backup::list_backups,
             safety_notices::upgrade_copy_failed,
