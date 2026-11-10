@@ -155,7 +155,7 @@
   --focus-outline-plum: #604778;
   --surface-faint: rgba(0, 0, 0, 0.02);
   --surface-press: rgba(0, 0, 0, 0.06);
-  --proof-stage-bg: #eee6dc;
+  --sketch-canvas-bg: #eee6dc;
 
   --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.28);
 
@@ -303,7 +303,7 @@
   --focus-outline-plum: #b79ad6;
   --surface-faint: rgba(255, 255, 255, 0.03);
   --surface-press: rgba(255, 255, 255, 0.08);
-  --proof-stage-bg: #2a2724;
+  --sketch-canvas-bg: #2a2724;
 
   --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.5);
 }
@@ -388,7 +388,7 @@
     --focus-outline-plum: #b79ad6;
     --surface-faint: rgba(255, 255, 255, 0.03);
     --surface-press: rgba(255, 255, 255, 0.08);
-    --proof-stage-bg: #2a2724;
+    --sketch-canvas-bg: #2a2724;
 
     --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.5);
   }
