@@ -4,7 +4,7 @@ import { ScannedPdfNote } from "./ScannedPdfNote";
 import { providerCompany, providerWording } from "@/services/provider";
 import { useOptionalKitQueue } from "@/state/KitQueue";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
 import { Item } from "react-stately/Item";
@@ -106,7 +106,11 @@ import { useMaterialTips } from "./materialTips";
 import { RelatedStudy } from "./RelatedStudy";
 import { jumpToMaterialHeading } from "./materialJump";
 import { MATERIAL_TABS, materialTabFrom, materialTabParams, materialTabForAnchor, type MaterialTab } from "./materialTabs";
-import { MaterialActionsMenu } from "./MaterialActionsMenu";
+import { MaterialActionsMenu, MoveToFolderItem } from "./MaterialActionsMenu";
+import { MoveToDialog } from "./MoveToDialog";
+import { MoveToast } from "./ArrangeParts";
+import { snapshotPlacements, useUndoMove, type PlacementSnapshot } from "./useUndoMove";
+import { useLibraryFolders } from "./useLibraryFolders";
 
 type MaterialTabChoice = { value: MaterialTab };
 const MATERIAL_TAB_CHOICES = MATERIAL_TABS.map((value) => ({ value }));
@@ -223,6 +227,15 @@ function MaterialDetailPage() {
 
   const { hidden: tipsHidden, setHidden: setTipsHidden } = useMaterialTips();
   const [editing, setEditing] = useState(false);
+  const [movingToFolder, setMovingToFolder] = useState(false);
+  const movedFrom = useRef<PlacementSnapshot[]>([]);
+  const libraryFolders = useLibraryFolders();
+  const restoreMove = useCallback(async (rows: PlacementSnapshot[]) => {
+    const repo = repositories?.libraryFolders;
+    if (!repo) throw new Error("Folders are not ready yet.");
+    await repo.restorePlacements(rows);
+  }, [repositories]);
+  const undoMove = useUndoMove(restoreMove, libraryFolders.reload, true);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
@@ -1054,6 +1067,7 @@ function MaterialDetailPage() {
           <span className="tag">{REVIEW_STATUS_LABELS[material.reviewStatus]}</span>
           {material.tags.map(tag => <span className="tag" key={tag}>{tag}</span>)}
           {fileMissing ? <span className="tag">File missing</span> : null}
+          {libraryFolders.folderOf(material.id) ? <span className="tiny muted material-in-folder">In: {libraryFolders.folderOf(material.id)!.name}</span> : null}
           {tab !== "study" && [studyJob, cardJob, practiceJob].some(job => draftWaiting(job?.phase)) ?
             <button className="button button--ghost" onClick={() => selectTab("study")}>Draft waiting</button> : null}
         </span>}
@@ -1073,11 +1087,30 @@ function MaterialDetailPage() {
                 <Button onClick={() => kitQueue.offer(chapterPartIds)}>Make study kits</Button>
               ) : null}
               {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
+              <MoveToFolderItem
+                isChapter={!!material.lineage?.rootMaterialId && material.lineage.rootMaterialId !== material.id && data.materials.some(m => m.id === material.lineage?.rootMaterialId)}
+                onMove={() => setMovingToFolder(true)}
+              />
               <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
             </MaterialActionsMenu>
           </div>
         }
       />
+      <MoveToDialog
+        open={movingToFolder}
+        onClose={() => setMovingToFolder(false)}
+        materialIds={[material.id]}
+        materialTitle={material.title}
+        folders={libraryFolders.folders}
+        placements={libraryFolders.placements}
+        onBeforeMove={() => { movedFrom.current = snapshotPlacements([material.id], libraryFolders.placements); }}
+        onMoved={(result) => {
+          undoMove.record(`Moved “${material.title}” to ${result.folderName}.`, movedFrom.current);
+          setMovingToFolder(false);
+          libraryFolders.reload();
+        }}
+      />
+      <MoveToast notice={undoMove.notice} onUndo={() => void undoMove.undo()} />
       {/* The File menu closes on click, so say here that chapters are being found. */}
       {splittingByChapter && !chapterOutline ? <p className="tiny muted" role="status">Finding chapters…</p> : null}
       </div>

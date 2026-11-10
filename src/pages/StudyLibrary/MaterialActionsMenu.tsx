@@ -1,5 +1,18 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { Button } from "@/components/ui";
+
+export const CHAPTER_STAYS_HINT = "Chapters stay with their book.";
+
+/** "Move to folder…" in the File menu; off for a chapter whose book is in the library. */
+export function MoveToFolderItem({ isChapter, onMove }: { isChapter: boolean; onMove: () => void }) {
+  return (
+    <Button onClick={onMove} disabled={isChapter} title={isChapter ? CHAPTER_STAYS_HINT : undefined}>
+      Move to folder…
+    </Button>
+  );
+}
+
 /** Native disclosure with ordinary tab-accessible buttons and explicit focus return. */
 export function MaterialActionsMenu({ children }: { children: ReactNode }) {
   const details = useRef<HTMLDetailsElement>(null);
