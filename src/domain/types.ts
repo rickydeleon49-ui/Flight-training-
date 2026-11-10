@@ -1394,6 +1394,12 @@ export interface QuizAttempt {
   weakTopics: Topic[];
 }
 
+export interface StudyReminder {
+  enabled: boolean;
+  /** Local time, 24-hour "HH:MM". */
+  time: string;
+}
+
 export interface ToolkitState {
   version: 1;
   readinessItems: ReadinessItem[];
@@ -1403,6 +1409,8 @@ export interface ToolkitState {
   remindersEnabled: boolean;
   /** Optional (off when missing): tell you when a study guide is ready while the app is in the background. */
   studyGuideNotice?: boolean;
+  /** Optional: a daily "time to study" notice at a local HH:MM. Off when missing. */
+  studyReminder?: StudyReminder;
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;

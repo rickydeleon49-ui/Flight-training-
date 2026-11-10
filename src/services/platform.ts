@@ -21,6 +21,9 @@ export function isMacOS(): boolean {
   return looksLikeMac() && !isIOS();
 }
 
+/** The phone keeps one repeating daily notice with the system, even when the app is closed. */
+export const schedulesDailyReminder = (): boolean => isTauri() && isIOS();
+
 /**
  * `geminiKey`: may store a key on this device. `generate`: may send files to Gemini.
  */

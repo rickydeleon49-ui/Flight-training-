@@ -11,6 +11,7 @@ import {
 import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
 import { StudyPackNotice } from "@/components/StudyPackNotice";
 import { KitQueueDialog } from "@/pages/StudyLibrary/KitQueueDialog";
+import { DailyStudyReminder } from "@/components/reminders/DailyStudyReminder";
 import { ReminderNotifications } from "@/components/reminders/ReminderNotifications";
 import { UndoBar } from "@/components/undo/UndoBar";
 import { useAppData } from "@/state/AppDataContext";
@@ -271,6 +272,7 @@ export function AppShell() {
         </div>
       </main>
       <ReminderNotifications />
+      <DailyStudyReminder />
       <QuickFind onBeforeOpen={beforeQuickFindOpen} />
       <UndoBar />
     </div>

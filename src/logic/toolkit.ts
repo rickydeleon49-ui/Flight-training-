@@ -7,6 +7,7 @@ import type {
   QuizAttempt,
   ReadinessItem,
   ScheduleEvent,
+  StudyReminder,
   ToolkitState,
   Topic,
   Transaction,
@@ -30,6 +31,15 @@ export const DEFAULT_READINESS_ITEMS: ReadinessItem[] = [
   { id: "ready-signoff", area: "administration", title: "Instructor confirms practical-test readiness", status: "not_started", notes: "" },
 ];
 
+export const DEFAULT_REMINDER_TIME = "19:00";
+
+/** Keeps a good stored daily reminder; anything else becomes off at 19:00. */
+export function normalizeStudyReminder(value: unknown): StudyReminder {
+  const v = (value && typeof value === "object" ? value : {}) as Partial<StudyReminder>;
+  const time = typeof v.time === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.time) ? v.time : DEFAULT_REMINDER_TIME;
+  return { enabled: v.enabled === true, time };
+}
+
 export const DEFAULT_TOOLKIT_STATE: ToolkitState = {
   version: 1,
   readinessItems: DEFAULT_READINESS_ITEMS,
@@ -37,6 +47,7 @@ export const DEFAULT_TOOLKIT_STATE: ToolkitState = {
   safetyChecks: [],
   quizAttempts: [],
   remindersEnabled: true,
+  studyReminder: { enabled: false, time: DEFAULT_REMINDER_TIME },
   reminderLeadDays: 7,
   estimatedHourlyCost: 220_00,
   additionalTrainingCosts: 1_500_00,
@@ -107,6 +118,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     ...DEFAULT_TOOLKIT_STATE,
     ...rest,
     ...(typeof studyGuideNotice === "boolean" ? { studyGuideNotice } : {}),
+    studyReminder: normalizeStudyReminder(input.studyReminder),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
