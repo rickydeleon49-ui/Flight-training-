@@ -55,6 +55,7 @@ export interface DashboardSources {
   questions: Question[];
   transactions: Transaction[];
   today?: IsoDate;
+  checkrideDate?: IsoDate | null;
   homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
   notes?: Note[];
   dailyPlan?: DailyPlanState | null;
@@ -211,7 +212,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
       ? { material: focusMaterial, nextAction: relatedAction("material", focusMaterial.id) }
       : null,
     needsAttention: overdue,
-    keyDates: upcomingKeyDates(sources.profile, sources.milestones, today),
+    keyDates: upcomingKeyDates(sources.profile, sources.milestones, today, 180, sources.checkrideDate ?? null),
     // Nothing appears until the student has actually put something there.
     personal:
       sources.profile.whyNote.trim() || sources.profile.photo

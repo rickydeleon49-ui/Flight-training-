@@ -72,6 +72,7 @@ export function FlightDeck() {
         transactions: data.transactions,
         notes: data.notes,
         dailyPlan: data.dailyPlan,
+        checkrideDate: data.toolkit.checkrideDate ?? null,
       }),
     [data],
   );

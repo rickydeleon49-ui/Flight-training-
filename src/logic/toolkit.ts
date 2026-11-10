@@ -40,6 +40,14 @@ export function normalizeStudyReminder(value: unknown): StudyReminder {
   return { enabled: v.enabled === true, time };
 }
 
+/** Keeps a real calendar day "YYYY-MM-DD"; anything else is no date. */
+export function normalizeCheckrideDate(value: unknown): IsoDate | null {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [y, m, d] = value.split("-").map(Number);
+  const check = new Date(y!, m! - 1, d!);
+  return check.getFullYear() === y && check.getMonth() === m! - 1 && check.getDate() === d ? value : null;
+}
+
 export const DEFAULT_TOOLKIT_STATE: ToolkitState = {
   version: 1,
   readinessItems: DEFAULT_READINESS_ITEMS,
@@ -48,6 +56,7 @@ export const DEFAULT_TOOLKIT_STATE: ToolkitState = {
   quizAttempts: [],
   remindersEnabled: true,
   studyReminder: { enabled: false, time: DEFAULT_REMINDER_TIME },
+  checkrideDate: null,
   reminderLeadDays: 7,
   estimatedHourlyCost: 220_00,
   additionalTrainingCosts: 1_500_00,
@@ -119,6 +128,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     ...rest,
     ...(typeof studyGuideNotice === "boolean" ? { studyGuideNotice } : {}),
     studyReminder: normalizeStudyReminder(input.studyReminder),
+    checkrideDate: normalizeCheckrideDate(input.checkrideDate),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
