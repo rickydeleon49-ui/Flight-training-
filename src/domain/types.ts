@@ -402,6 +402,8 @@ export interface StudyFlashcard extends StudyItemIdentity {
   front: string;
   back: string;
   sourcePage: number | null;
+  /** Set when a generated card could not be matched to its page; absent on older saved cards. */
+  unchecked?: true;
 }
 
 /**

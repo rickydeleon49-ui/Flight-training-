@@ -246,7 +246,7 @@ fn validate_cards(value: Option<&Value>, ids: &mut Vec<String>) -> Check<Value> 
         exact_keys(
             map,
             &["front", "back", "sourcePage"],
-            &["itemId", "origin", "replaces", "visualRegionId"],
+            &["itemId", "origin", "replaces", "visualRegionId", "unchecked"],
         )?;
         let source_page = match map.get("sourcePage") {
             Some(Value::Null) => Value::Null,
@@ -273,6 +273,14 @@ fn validate_cards(value: Option<&Value>, ids: &mut Vec<String>) -> Check<Value> 
                 return invalid();
             }
             stored.insert("visualRegionId".into(), id.clone());
+        }
+        // Only `true` is ever stored: the card was not matched to its page.
+        match map.get("unchecked") {
+            None => {}
+            Some(Value::Bool(true)) => {
+                stored.insert("unchecked".into(), json!(true));
+            }
+            _ => return invalid(),
         }
         stored.extend(identity(map, ids)?);
         out.push(Value::Object(stored));

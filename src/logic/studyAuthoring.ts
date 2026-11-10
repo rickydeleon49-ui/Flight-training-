@@ -23,6 +23,8 @@ export interface StudyItem {
   readonly origin?: ItemOrigin;
   readonly replaces?: string;
   readonly sourcePage?: number | null;
+  /** A generated card that was not matched to its page. */
+  readonly unchecked?: true;
 }
 export type DraftItem = Omit<StudyItem, "itemId"> & { readonly itemId?: string };
 export interface RetiredItem {
@@ -65,6 +67,7 @@ function validItem(item: StudyItem): void {
   if ((item.kind === "summary") !== (item.itemId === "summary")) invalid();
   if (item.replaces !== undefined && (!identifier(item.replaces) || item.origin === undefined)) invalid();
   if (item.visualRegionId !== undefined && (item.kind !== "card" || !/^[a-f0-9]{64}$/.test(item.visualRegionId))) invalid();
+  if (item.unchecked !== undefined && (item.kind !== "card" || item.unchecked !== true)) invalid();
   if (item.sourcePage !== undefined && (item.kind !== "card" || (item.sourcePage !== null && (!Number.isInteger(item.sourcePage) || item.sourcePage < LIMITS.pageMin || item.sourcePage > LIMITS.pageMax)))) invalid();
   const caps = item.kind === "summary" ? [LIMITS.summary] : item.kind === "section" ? [LIMITS.heading, LIMITS.body] : [LIMITS.front, LIMITS.back];
   if (item.fields.length !== caps.length) invalid();
@@ -84,6 +87,7 @@ function cloneItem(item: StudyItem): StudyItem {
     ...(item.origin ? { origin: item.origin } : {}),
     ...(item.replaces !== undefined ? { replaces: item.replaces } : {}),
     ...(item.sourcePage !== undefined ? { sourcePage: item.sourcePage } : {}),
+    ...(item.unchecked ? { unchecked: true as const } : {}),
   });
 }
 function validateItems(items: readonly StudyItem[]): void {

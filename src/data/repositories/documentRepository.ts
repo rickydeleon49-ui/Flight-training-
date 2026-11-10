@@ -483,7 +483,7 @@ export function documentRepository(db: SqlDatabase) {
         summaryOrigin: null,
         sections: input.sections.map(({ heading, body }) => ({ heading, body })),
         // A page outside the PDF range can't be opened or reviewed; it is kept as no page.
-        flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) })),
+        flashcards: input.flashcards.map(({ front, back, sourcePage, unchecked }) => ({ front, back, sourcePage: generatedPage(sourcePage), ...(unchecked ? { unchecked: true as const } : {}) })),
         sourceNotes: input.sourceNotes,
         provider: "gemini",
         model: input.model,
@@ -507,7 +507,7 @@ export function documentRepository(db: SqlDatabase) {
      */
     async appendGeneratedCards(
       sourceMaterialId: Id,
-      cards: ReadonlyArray<{ front: string; back: string; sourcePage: number | null }>,
+      cards: ReadonlyArray<{ front: string; back: string; sourcePage: number | null; unchecked?: true }>,
     ): Promise<number | null> {
       const current = await readStoredSet(sourceMaterialId);
       if (!current) return null;
@@ -519,7 +519,7 @@ export function documentRepository(db: SqlDatabase) {
         if (base.flashcards.length + added.length >= MAX_CARDS) break;
         if (known.has(key(card.front))) continue;
         known.add(key(card.front));
-        added.push({ front: card.front, back: card.back, sourcePage: generatedPage(card.sourcePage) });
+        added.push({ front: card.front, back: card.back, sourcePage: generatedPage(card.sourcePage), ...(card.unchecked ? { unchecked: true as const } : {}) });
       }
       if (added.length === 0) return 0;
       await saveStudySet({

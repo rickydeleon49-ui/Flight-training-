@@ -16,11 +16,15 @@ pub(super) const FALLBACK: &str = "Couldn't check more than half of these items 
 #[derive(Default, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct Counts {
+    /// Items the model returned, before any check.
+    pub generated: usize,
     pub kept: usize,
     pub dropped_by_quote: usize,
     pub unverified: usize,
     pub uncertain: usize,
     pub dropped_by_choices: usize,
+    /// Dropped by the later structure checks (duplicate, too long, bad answer).
+    pub dropped_other: usize,
     #[serde(skip)]
     pub majority_fallback: bool,
 }
@@ -163,6 +167,7 @@ fn check_without_pages(items: &mut Value, questions: bool) -> Counts {
     let Some(items) = items.as_array_mut() else {
         return counts;
     };
+    counts.generated = items.len();
     items.retain_mut(|item| {
         if let Some(obj) = item.as_object_mut() {
             obj.remove("quote");
@@ -192,6 +197,7 @@ pub(super) fn check_items(
     let Some(items) = items.as_array_mut() else {
         return counts;
     };
+    counts.generated = items.len();
     items.retain(|item| {
         let valid = !questions || item["options"].as_array().is_some_and(|a| a.len() == 3);
         if !valid {

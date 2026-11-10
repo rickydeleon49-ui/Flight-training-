@@ -67,6 +67,7 @@ export interface StoredCard {
   front: string;
   back: string;
   sourcePage: number | null;
+  unchecked?: true;
   itemId?: string;
   origin?: ItemOriginValue;
   replaces?: string;
@@ -189,7 +190,8 @@ function validateCards(value: Json, ids: Set<string>): StoredCard[] {
   if (!Array.isArray(value) || value.length > STUDY_SET_LIMITS.cards) return invalid();
   return value.map((card) => {
     if (!isRecord(card)) return invalid();
-    exactKeys(card, ["front", "back", "sourcePage"], ["itemId", "origin", "replaces", "visualRegionId"]);
+    exactKeys(card, ["front", "back", "sourcePage"], ["itemId", "origin", "replaces", "visualRegionId", "unchecked"]);
+    if (has(card, "unchecked") && card.unchecked !== true) invalid();
     if(has(card,"visualRegionId") && (typeof card.visualRegionId !== "string" || !HEX_64.test(card.visualRegionId))) invalid();
     const page = card.sourcePage;
     if (page !== null && !(typeof page === "number" && Number.isInteger(page) && page >= 1 && page <= STUDY_SET_LIMITS.sourcePage)) {
@@ -200,6 +202,7 @@ function validateCards(value: Json, ids: Set<string>): StoredCard[] {
       front: bounded(card.front, 1, STUDY_SET_LIMITS.front),
       back: bounded(card.back, 1, STUDY_SET_LIMITS.back),
       sourcePage: page as number | null,
+      ...(card.unchecked === true ? { unchecked: true as const } : {}),
       ...identity(card, ids),
     };
   });
