@@ -53,6 +53,7 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
         expect.objectContaining({ version: 35, description: "card_review_event_folds" }),
         expect.objectContaining({ version: 36, description: "kit_queue" }),
         expect.objectContaining({ version: 37, description: "study_pack_provenance" }),
+        expect.objectContaining({ version: 38, description: "library_folders" }),
       ]);
     } else if (table === "journal_entries") {
       expect(after[table], table).toEqual(
@@ -60,7 +61,7 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
       );
     } else expect(after[table], table).toEqual(rows);
   }
-  const added = [...HOMEWORK_TABLES, "flight_schools", "study_page_sources", "study_page_source_bindings", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "visual_card_regions", "card_item_visual_regions", "faa_reference_copies", "practice_item_acs_tasks", "material_video_links", "student_pilot_steps", "faa_downloads", "oral_answers", "local_changes", "sync_row_meta", "sync_applied", "card_review_event_folds", "card_version_pending_claims", "kit_queue", "kit_queue_item", "study_pack_imports", "study_pack_items", "study_pack_acks"].sort();
+  const added = [...HOMEWORK_TABLES, "flight_schools", "study_page_sources", "study_page_source_bindings", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "visual_card_regions", "card_item_visual_regions", "faa_reference_copies", "practice_item_acs_tasks", "material_video_links", "student_pilot_steps", "faa_downloads", "oral_answers", "local_changes", "sync_row_meta", "sync_applied", "card_review_event_folds", "card_version_pending_claims", "kit_queue", "kit_queue_item", "study_pack_imports", "study_pack_items", "study_pack_acks", "library_folders", "library_placements"].sort();
   expect(Object.keys(after).filter((t) => !(t in before)).sort()).toEqual(added);
   for (const table of added) expect(after[table]).toEqual([]);
 }

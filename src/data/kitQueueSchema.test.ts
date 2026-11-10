@@ -58,7 +58,7 @@ describe("kit queue schema 36", () => {
   it("upgrades schema 35 without touching existing materials", async () => {
     const engine = await openNodeEngine();
     try {
-      await applyMigrations((sql) => engine.exec(sql), new Set([36, 37]));
+      await applyMigrations((sql) => engine.exec(sql), new Set([36, 37, 38]));
       engine.exec("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m','Synthetic','now','now')");
       const before = engine.query("SELECT * FROM study_materials");
       await applyMigrations((sql) => engine.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 35).map((m) => m.version)));
