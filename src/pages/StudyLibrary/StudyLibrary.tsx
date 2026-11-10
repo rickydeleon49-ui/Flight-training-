@@ -65,6 +65,7 @@ import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState"
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
 import { LibrarySections, sectionDomId } from "./LibrarySections";
 import { useLibraryFolders } from "./useLibraryFolders";
+import { FolderActionsMenu, FolderDialogs, NewFolderButton, type FolderDialogState } from "./FolderDialogs";
 import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
@@ -252,7 +253,8 @@ export function StudyLibrary() {
     "library.closedSections", [], isStringList, "device",
   );
   const closedSections = useMemo(() => new Set(closedList), [closedList]);
-  const { folders, placements, folderOf } = useLibraryFolders();
+  const { folders, placements, folderOf, reload: reloadFolders } = useLibraryFolders();
+  const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(null);
   const filterKey = [status, topic, type, search, sort, view, folderSort].join("\0");
   const onMatchesChange = useCallback((found: boolean) => setContentMatch({ key: filterKey, found }), [filterKey]);
   const contentHasMatches = contentMatch?.key === filterKey && contentMatch.found;
@@ -676,7 +678,7 @@ export function StudyLibrary() {
           </p>
           {sectioned && view === "folder" ? (
             <div className="library__folder-slot">
-              {/* New folder and Arrange buttons arrive in a later slice. */}
+              <NewFolderButton folderCount={folders.length} onClick={() => setFolderDialog({ kind: "new" })} />
               {folders.length > 0 && noFolderCount > 0 ? (
                 <button type="button" className="library__jump" onClick={jumpToNoFolder}>
                   {NOT_IN_A_FOLDER} ({noFolderCount.toLocaleString()})
@@ -689,7 +691,11 @@ export function StudyLibrary() {
               <p className="small">
                 Make a folder to group your study material, such as Checkride prep. Then use Arrange to move things in.
               </p>
+              <NewFolderButton folderCount={folders.length} onClick={() => setFolderDialog({ kind: "new" })} />
             </Card>
+          ) : null}
+          {sectioned && view === "folder" ? (
+            <FolderDialogs state={folderDialog} folders={folders} onClose={() => setFolderDialog(null)} reload={reloadFolders} />
           ) : null}
           {sectioned ? (
             <LibrarySections
@@ -702,6 +708,23 @@ export function StudyLibrary() {
               hideEmpty={filtersActive}
               renderBook={renderBook}
               gridClass={gridClass}
+              headerActions={view === "folder" ? (section, index) => {
+                const folder = section.folderId ? folders.find((f) => f.id === section.folderId) : undefined;
+                if (!folder) return null;
+                return (
+                  <FolderActionsMenu
+                    folder={folder}
+                    count={section.items.length}
+                    index={index}
+                    total={folders.length}
+                    onRename={() => setFolderDialog({ kind: "rename", folder })}
+                    onDelete={(count) => setFolderDialog({ kind: "delete", folder, count })}
+                    onMove={(direction) => {
+                      void repositories?.libraryFolders.moveFolder(folder.id, direction).then(reloadFolders, reloadFolders);
+                    }}
+                  />
+                );
+              } : undefined}
             />
           ) : (
             <div className={gridClass}>{shownMaterials.map(renderBook)}</div>

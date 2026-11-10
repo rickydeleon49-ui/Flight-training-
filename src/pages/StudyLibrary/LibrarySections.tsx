@@ -27,6 +27,7 @@ export function LibrarySections({
   hideEmpty,
   renderBook,
   gridClass = "material-grid",
+  headerActions,
 }: {
   view: string;
   sections: LibrarySection[];
@@ -37,10 +38,12 @@ export function LibrarySections({
   hideEmpty: boolean;
   renderBook: (material: StudyMaterial) => ReactNode;
   gridClass?: string;
+  /** Extra controls beside a section header, such as a folder's actions menu. */
+  headerActions?: (section: LibrarySection, index: number) => ReactNode;
 }) {
   return (
     <div className="library__sections">
-      {sections.map((section) => {
+      {sections.map((section, sectionIndex) => {
         const viewKey = `${view}:${section.key}`;
         if (hideEmpty && section.items.length === 0) return null;
         const open = !closed.has(viewKey);
@@ -49,6 +52,7 @@ export function LibrarySections({
         const id = sectionDomId(viewKey);
         return (
           <section key={viewKey} className="library__section" aria-labelledby={id}>
+            <div className="library__section-head">
             <h2 className="library__section-title">
               <button
                 type="button"
@@ -61,6 +65,8 @@ export function LibrarySections({
                 {section.title} ({section.items.length.toLocaleString()})
               </button>
             </h2>
+            {headerActions?.(section, sectionIndex)}
+            </div>
             {open ? (
               section.items.length === 0 ? (
                 <p className="small muted">Empty folder</p>
