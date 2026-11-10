@@ -11,8 +11,8 @@ import { isIOS } from "@/services/platform";
 export type ThemeChoice = "light" | "light-grey" | "dark" | "auto";
 
 export const THEME_STORAGE_KEY = "her-flight-deck.theme";
-/** Mac and browser stay Light until DESIGN-01 slice 25 switches the default to "auto". */
-export const DEFAULT_THEME: ThemeChoice = isIOS() ? "auto" : "light";
+/** Every platform defaults to Auto (follow the system). */
+export const DEFAULT_THEME: ThemeChoice = "auto";
 
 function getStorage(): Storage | null {
   try {
@@ -29,7 +29,7 @@ export function isThemeChoice(value: unknown): value is ThemeChoice {
 /** Reads the saved theme. On iPhone always "auto". */
 export function getStoredTheme(): ThemeChoice {
   if (isIOS()) return "auto";
-  const fallback: ThemeChoice = "light"; // Mac/browser default until slice 25
+  const fallback: ThemeChoice = DEFAULT_THEME;
   const store = getStorage();
   if (!store) return fallback;
   try {

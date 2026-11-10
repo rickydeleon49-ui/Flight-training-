@@ -23,10 +23,10 @@ beforeEach(() => {
 });
 
 describe("theme", () => {
-  it("defaults to light on Mac/browser and sets the attribute", () => {
-    expect(getStoredTheme()).toBe("light");
+  it("defaults to auto on Mac/browser and sets no attribute", () => {
+    expect(getStoredTheme()).toBe("auto");
     initTheme();
-    expect(root().getAttribute("data-theme")).toBe("light");
+    expect(root().hasAttribute("data-theme")).toBe(false);
   });
 
   it("is auto only on iOS and ignores stored values", () => {
@@ -55,7 +55,7 @@ describe("theme", () => {
     localStorage.setItem(THEME_STORAGE_KEY, '"auto"');
     expect(getStoredTheme()).toBe("auto");
     localStorage.setItem(THEME_STORAGE_KEY, "purple");
-    expect(getStoredTheme()).toBe("light");
+    expect(getStoredTheme()).toBe("auto");
   });
 
   it("calls the native window theme on Mac in Tauri, swallowing errors", async () => {
@@ -116,8 +116,8 @@ describe("theme-boot.js", () => {
     }
   });
 
-  it("never throws and falls back to light", () => {
-    expect(run(throwing)).toBe("light");
+  it("never throws and falls back to auto (no attribute)", () => {
+    expect(run(throwing)).toBeNull();
     expect(() => new Function("localStorage", "document", "navigator", src)(undefined, undefined, undefined)).not.toThrow();
   });
 

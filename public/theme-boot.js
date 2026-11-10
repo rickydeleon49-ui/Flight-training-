@@ -4,7 +4,7 @@
     var ua = navigator.userAgent || "";
     var touch = navigator.maxTouchPoints || 0;
     if (/iPhone|iPad|iPod/.test(ua) || (ua.indexOf("Macintosh") !== -1 && touch > 1)) return;
-    var theme = "light";
+    var theme = "auto";
     try {
       var raw = localStorage.getItem("her-flight-deck.theme");
       if (raw) {

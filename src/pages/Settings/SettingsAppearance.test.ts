@@ -178,11 +178,11 @@ describe("Appearance setting in Settings", () => {
       document.documentElement.removeAttribute("data-theme");
     });
 
-    it("Mac: Light is selected by default", async () => {
+    it("Mac: Auto is selected by default", async () => {
       await open();
       const group = await screen.findByRole("radiogroup", { name: "Theme" });
       expect(group).toBeTruthy();
-      expect((screen.getByRole("radio", { name: "Light" }) as HTMLInputElement).checked).toBe(true);
+      expect((screen.getByRole("radio", { name: "Auto" }) as HTMLInputElement).checked).toBe(true);
       expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
     });
 
