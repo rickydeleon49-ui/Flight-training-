@@ -92,4 +92,17 @@ describe("ledger pages on screen", () => {
     expect(screen.queryByRole("button", { name: "Next page" })).toBeNull();
     expect(screen.getByText("12 Nov 2026")).toBeTruthy();
   });
+  it("every time cell has a data-label and the date link is the only link per row", () => {
+    show({ journalEntries: flights(5) });
+    const labels = ["Total", "Dual", "PIC", "Solo", "Night"];
+    rows().forEach((tr) => {
+      const cells = Array.from(tr.querySelectorAll("td")).slice(3);
+      expect(cells.map((c) => c.getAttribute("data-label"))).toEqual(labels);
+      expect(tr.querySelectorAll("a").length).toBe(1);
+    });
+    document.querySelectorAll(".flight-log-table tfoot tr").forEach((tr) => {
+      const cells = Array.from(tr.querySelectorAll("td"));
+      expect(cells.map((c) => c.getAttribute("data-label"))).toEqual(labels);
+    });
+  });
 });

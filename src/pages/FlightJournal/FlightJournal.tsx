@@ -416,11 +416,24 @@ export function FlightJournal() {
                           <td>
                             {[entry.aircraftType, entry.aircraftId].filter(Boolean).join(" · ") || "—"}
                           </td>
-                          <td className="numeric">{entry.totalTime?.toFixed(1) ?? "—"}</td>
-                          <td className="numeric">{entry.dualReceived?.toFixed(1) ?? "—"}</td>
-                          <td className="numeric">{entry.picTime?.toFixed(1) ?? "—"}</td>
-                          <td className="numeric">{entry.soloTime?.toFixed(1) ?? "—"}</td>
-                          <td className="numeric">{entry.nightTime?.toFixed(1) ?? "—"}</td>
+                          {(
+                            [
+                              ["Total", entry.totalTime],
+                              ["Dual", entry.dualReceived],
+                              ["PIC", entry.picTime],
+                              ["Solo", entry.soloTime],
+                              ["Night", entry.nightTime],
+                            ] as const
+                          ).map(([label, value]) => (
+                            <td
+                              key={label}
+                              className="numeric"
+                              data-label={label}
+                              data-empty={value == null ? "" : undefined}
+                            >
+                              {value?.toFixed(1) ?? "—"}
+                            </td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
@@ -435,11 +448,11 @@ export function FlightJournal() {
                         ).map(([label, t]) => (
                           <tr key={label} className={label === "Total to date" ? "ledger-total" : undefined}>
                             <th scope="row" colSpan={3}>{label}</th>
-                            <td className="numeric">{formatHours(t.totalTime)}</td>
-                            <td className="numeric">{formatHours(t.dualReceived)}</td>
-                            <td className="numeric">{formatHours(t.picTime)}</td>
-                            <td className="numeric">{formatHours(t.soloTime)}</td>
-                            <td className="numeric">{formatHours(t.nightTime)}</td>
+                            <td className="numeric" data-label="Total">{formatHours(t.totalTime)}</td>
+                            <td className="numeric" data-label="Dual">{formatHours(t.dualReceived)}</td>
+                            <td className="numeric" data-label="PIC">{formatHours(t.picTime)}</td>
+                            <td className="numeric" data-label="Solo">{formatHours(t.soloTime)}</td>
+                            <td className="numeric" data-label="Night">{formatHours(t.nightTime)}</td>
                           </tr>
                         ))}
                       </tfoot>
