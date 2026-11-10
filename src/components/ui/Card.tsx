@@ -2,13 +2,14 @@ import type { ReactNode } from "react";
 
 interface CardProps {
   children: ReactNode;
-  variant?: "default" | "quiet" | "accent";
+  variant?: "default" | "quiet" | "accent" | "grouped";
   className?: string;
+  ariaLabel?: string;
 }
 
-export function Card({ children, variant = "default", className = "" }: CardProps) {
+export function Card({ children, variant = "default", className = "", ariaLabel }: CardProps) {
   const variantClass = variant === "default" ? "" : ` card--${variant}`;
-  return <section className={`card${variantClass} ${className}`.trim()}>{children}</section>;
+  return <section aria-label={ariaLabel} className={`card${variantClass} ${className}`.trim()}>{children}</section>;
 }
 
 interface CardHeaderProps {
