@@ -59,6 +59,10 @@ import {
   stageCompleteRestore,
   stageLocalRestore,
   savePhoneWork,
+  savedPhoneWorkSentence,
+  unsavedPhoneWork,
+  unsavedPhoneWorkSentence,
+  unsavedPhoneWorkTotal,
   type BackupInfo,
   type CompleteBackupInfo,
 } from "@/services/backups";
@@ -1577,7 +1581,27 @@ export function Settings() {
       <StartFreshDialog
         open={startFreshOpen}
         onClose={() => setStartFreshOpen(false)}
-        onSaveBackupFirst={deviceCan().getStudyMaterial ? async () => { await savePhoneWork(); } : backUpNow}
+        onSaveBackupFirst={
+          deviceCan().getStudyMaterial
+            ? async () => {
+                const saved = await savePhoneWork();
+                return savedPhoneWorkSentence(saved);
+              }
+            : async () => {
+                const destination = await chooseCompleteBackupDestination();
+                if (!destination) return null;
+                const backup = await createCompleteBackup(destination);
+                return "Backup saved to " + backup.path + ".";
+              }
+        }
+        checkUnsaved={
+          deviceCan().getStudyMaterial
+            ? async () => {
+                const u = await unsavedPhoneWork();
+                return unsavedPhoneWorkTotal(u) > 0 ? unsavedPhoneWorkSentence(u) : null;
+              }
+            : undefined
+        }
       />
 
     </>

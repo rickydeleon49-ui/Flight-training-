@@ -221,7 +221,7 @@ describe("start fresh", () => {
 
     clearAppLocalStorage();
 
-    expect(localStorage.getItem("her-flight-deck.appearance")).toBeNull();
+    expect(localStorage.getItem("her-flight-deck.appearance")).toBe("glass");
     expect(localStorage.getItem("her-flight-deck.dev-database")).toBeNull();
     expect(localStorage.getItem("her-flight-deck.draft.debrief-1")).toBeNull();
     expect(localStorage.getItem("draft_backup")).toBeNull();
@@ -230,6 +230,7 @@ describe("start fresh", () => {
     expect(localStorage.getItem("unrelated_app_setting")).toBe("preserve-me");
 
     localStorage.removeItem("unrelated_app_setting");
+    localStorage.removeItem("her-flight-deck.appearance");
     vi.unstubAllGlobals();
   });
 });

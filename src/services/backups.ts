@@ -143,6 +143,7 @@ export async function stageStartFresh(): Promise<void> {
  */
 export function clearAppLocalStorage(): void {
   const isAppKey = (key: string) => {
+    if (key === "her-flight-deck.appearance") return false;
     const lower = key.toLowerCase();
     return key.startsWith("her-flight-deck") || key.startsWith("hfd:") || lower.includes("draft") || lower.includes("sqljs");
   };

@@ -94,6 +94,96 @@ describe("StartFreshDialog", () => {
     expect(onSaveBackupFirst).toHaveBeenCalledOnce();
   });
 
+  it("shows success sentence under the button after save-first succeeds", async () => {
+    const onSaveBackupFirst = vi.fn().mockResolvedValue("Backup saved to /path/to/backup.hfdbackup.");
+    render(<StartFreshDialog open={true} onClose={vi.fn()} onSaveBackupFirst={onSaveBackupFirst} />);
+    const saveButton = screen.getByRole("button", { name: "Save a backup first" });
+    fireEvent.click(saveButton);
+    await waitFor(() => {
+      expect(screen.getByText("Backup saved to /path/to/backup.hfdbackup.")).toBeDefined();
+    });
+  });
+
+  it("shows 'Backup not saved.' under the button when save-first is cancelled", async () => {
+    const onSaveBackupFirst = vi.fn().mockResolvedValue(null);
+    render(<StartFreshDialog open={true} onClose={vi.fn()} onSaveBackupFirst={onSaveBackupFirst} />);
+    const saveButton = screen.getByRole("button", { name: "Save a backup first" });
+    fireEvent.click(saveButton);
+    await waitFor(() => {
+      expect(screen.getByText("Backup not saved.")).toBeDefined();
+    });
+  });
+
+  it("shows error via backupErrorMessage under the button when save-first throws", async () => {
+    const onSaveBackupFirst = vi.fn().mockRejectedValue(new Error("Disk exploded"));
+    render(<StartFreshDialog open={true} onClose={vi.fn()} onSaveBackupFirst={onSaveBackupFirst} />);
+    const saveButton = screen.getByRole("button", { name: "Save a backup first" });
+    fireEvent.click(saveButton);
+    await waitFor(() => {
+      expect(screen.getByText("Disk exploded")).toBeDefined();
+    });
+  });
+
+  it("disables Erase button and ERASE input while save-first runs", async () => {
+    let resolveSave!: (val: string | null) => void;
+    const onSaveBackupFirst = vi.fn(() => new Promise<string | null>((resolve) => { resolveSave = resolve; }));
+    render(<StartFreshDialog open={true} onClose={vi.fn()} onSaveBackupFirst={onSaveBackupFirst} />);
+
+    const input = screen.getByLabelText("Type ERASE to confirm");
+    fireEvent.change(input, { target: { value: "ERASE" } });
+    const eraseButton = screen.getByRole("button", { name: "Erase and start fresh" });
+    expect(eraseButton.hasAttribute("disabled")).toBe(false);
+
+    const saveButton = screen.getByRole("button", { name: "Save a backup first" });
+    fireEvent.click(saveButton);
+
+    expect(screen.getByRole("button", { name: "Saving…" })).toBeDefined();
+    expect(eraseButton.hasAttribute("disabled")).toBe(true);
+    expect(input.hasAttribute("disabled")).toBe(true);
+
+    resolveSave("Backup saved to /path/to/backup.hfdbackup.");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Save a backup first" })).toBeDefined();
+    });
+    expect(eraseButton.hasAttribute("disabled")).toBe(false);
+    expect(input.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("shows unsaved-work warning above ERASE field and refreshes after successful save", async () => {
+    const warning =
+      "This phone has 2 card reviews that aren't saved anywhere else yet. Save my phone work first, then get your study material.";
+    const checkUnsaved = vi.fn()
+      .mockResolvedValueOnce(warning)
+      .mockResolvedValueOnce(null);
+    const onSaveBackupFirst = vi.fn().mockResolvedValue("Saved in Files → Your Flight Deck → My phone work.hfdbackup.");
+
+    render(
+      <StartFreshDialog
+        open={true}
+        onClose={vi.fn()}
+        checkUnsaved={checkUnsaved}
+        onSaveBackupFirst={onSaveBackupFirst}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(warning)).toBeDefined();
+    });
+    expect(checkUnsaved).toHaveBeenCalledOnce();
+
+    const saveButton = screen.getByRole("button", { name: "Save a backup first" });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Saved in Files → Your Flight Deck → My phone work.hfdbackup.")).toBeDefined();
+    });
+    expect(checkUnsaved).toHaveBeenCalledTimes(2);
+
+    await waitFor(() => {
+      expect(screen.queryByText(warning)).toBeNull();
+    });
+  });
+
   it("confirm calls stage then clearStorage then restart in order", async () => {
     const callOrder: string[] = [];
     const stage = vi.fn(async () => {
@@ -173,6 +263,103 @@ describe("StartFreshDialog", () => {
     expect(screen.getByRole("alert").textContent).toContain("Disk is write-protected.");
     expect(clearStorage).not.toHaveBeenCalled();
     expect(restart).not.toHaveBeenCalled();
+  });
+
+  it("on iOS does not call restart, shows 'Erase is set. Close Your Flight Deck and open it again to finish.', and lets her dismiss", async () => {
+    platform.isIOS.mockReturnValue(true);
+    const stage = vi.fn().mockResolvedValue(undefined);
+    const clearStorage = vi.fn();
+    const restart = vi.fn().mockResolvedValue(undefined);
+    const onClose = vi.fn();
+
+    render(
+      <StartFreshDialog
+        open={true}
+        onClose={onClose}
+        stage={stage}
+        clearStorage={clearStorage}
+        restart={restart}
+      />,
+    );
+
+    const input = screen.getByLabelText("Type ERASE to confirm");
+    fireEvent.change(input, { target: { value: "ERASE" } });
+
+    const eraseButton = screen.getByRole("button", { name: "Erase and start fresh" });
+    fireEvent.click(eraseButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Erase is set. Close Your Flight Deck and open it again to finish."),
+      ).toBeDefined();
+    });
+
+    expect(stage).toHaveBeenCalledOnce();
+    expect(clearStorage).toHaveBeenCalledOnce();
+    expect(restart).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Could not start fresh/)).toBeNull();
+
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    expect(cancelButton.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(cancelButton);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("shows 'Erase is set. Quit Your Flight Deck and open it again to finish.' when restart fails after stage, not the error", async () => {
+    platform.isIOS.mockReturnValue(false);
+    const stage = vi.fn().mockResolvedValue(undefined);
+    const clearStorage = vi.fn();
+    const restart = vi.fn().mockRejectedValue(new Error("Unable to restart binary"));
+
+    render(
+      <StartFreshDialog
+        open={true}
+        onClose={vi.fn()}
+        stage={stage}
+        clearStorage={clearStorage}
+        restart={restart}
+      />,
+    );
+
+    const input = screen.getByLabelText("Type ERASE to confirm");
+    fireEvent.change(input, { target: { value: "ERASE" } });
+
+    const eraseButton = screen.getByRole("button", { name: "Erase and start fresh" });
+    fireEvent.click(eraseButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Erase is set. Quit Your Flight Deck and open it again to finish."),
+      ).toBeDefined();
+    });
+
+    expect(stage).toHaveBeenCalledOnce();
+    expect(clearStorage).toHaveBeenCalledOnce();
+    expect(restart).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/Could not start fresh/)).toBeNull();
+    expect(screen.queryByText("Unable to restart binary")).toBeNull();
+  });
+
+  it("prevents double-clicking Erase from calling stage twice", async () => {
+    let resolveStage!: () => void;
+    const stage = vi.fn(() => new Promise<void>((resolve) => { resolveStage = resolve; }));
+    render(
+      <StartFreshDialog
+        open={true}
+        onClose={vi.fn()}
+        stage={stage}
+      />,
+    );
+
+    const input = screen.getByLabelText("Type ERASE to confirm");
+    fireEvent.change(input, { target: { value: "ERASE" } });
+
+    const eraseButton = screen.getByRole("button", { name: "Erase and start fresh" });
+    fireEvent.click(eraseButton);
+    fireEvent.click(eraseButton);
+
+    expect(stage).toHaveBeenCalledOnce();
+    resolveStage();
   });
 
   it("closes on Cancel", () => {
