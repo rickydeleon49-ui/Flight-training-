@@ -44,11 +44,26 @@ import { chapterCountLabel, groupChapterParts } from "@/logic/chapterGroups";
 import { exportableParts } from "@/logic/studyExport";
 import { isPackExportable, packFileTooLarge, packRowBlocked, packRows } from "@/logic/studyPackSelection";
 import { newId } from "@/lib/id";
-import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
+import {
+  FOLDER_SORT_OPTIONS,
+  MATERIAL_SORT_OPTIONS,
+  sortMaterials,
+  type FolderSort,
+  type MaterialSort,
+} from "@/logic/library";
+import {
+  NOT_IN_A_FOLDER,
+  sectionsByFolder,
+  sectionsByTopic,
+  sectionsByType,
+  type LibrarySection,
+} from "@/logic/libraryFolders";
 import { useAppData } from "@/state/AppDataContext";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
+import { LibrarySections, sectionDomId } from "./LibrarySections";
+import { useLibraryFolders } from "./useLibraryFolders";
 import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
@@ -112,6 +127,18 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
 const STATUS_VALUES = STATUS_FILTERS.map((filter) => filter.value);
 const SORT_VALUES = MATERIAL_SORT_OPTIONS.map((option) => option.value);
 const MATERIAL_PAGE_SIZE = 100;
+const NO_LIMITS: Record<string, number> = {};
+type LibraryView = "everything" | "folder" | "topic" | "type";
+const VIEW_OPTIONS: Array<{ value: LibraryView; label: string }> = [
+  { value: "everything", label: "Everything" },
+  { value: "folder", label: "By folder" },
+  { value: "topic", label: "By topic" },
+  { value: "type", label: "By type" },
+];
+const FOLDER_SORT_VALUES = FOLDER_SORT_OPTIONS.map((option) => option.value);
+const isStringList = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+const plural = (n: number, one: string, many: string) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
 /** Links that name the reference shelf (`/study#references`) open it. */
 export const REFERENCE_SHELF_ID = "references";
 const LIBRARY_TOOLS = [
@@ -209,9 +236,22 @@ export function StudyLibrary() {
     "library.sort", "recent", isOneOf(SORT_VALUES),
   );
   const [contentMatch, setContentMatch] = useState<{ key: string; found: boolean } | null>(null);
-  const filterKey = [status, topic, type, search, sort].join("\0");
+  const [view, setView] = useRememberedState<LibraryView>(
+    "library.view", "everything", isOneOf(VIEW_OPTIONS.map((option) => option.value)), "device",
+  );
+  const [folderSort, setFolderSort] = useRememberedState<FolderSort>(
+    "library.folderSort", "manual", isOneOf(FOLDER_SORT_VALUES), "device",
+  );
+  const [closedList, setClosedList] = useRememberedState<string[]>(
+    "library.closedSections", [], isStringList, "device",
+  );
+  const closedSections = useMemo(() => new Set(closedList), [closedList]);
+  const { folders, placements, folderOf } = useLibraryFolders();
+  const filterKey = [status, topic, type, search, sort, view, folderSort].join("\0");
   const onMatchesChange = useCallback((found: boolean) => setContentMatch({ key: filterKey, found }), [filterKey]);
   const contentHasMatches = contentMatch?.key === filterKey && contentMatch.found;
+  const [sectionPage, setSectionPage] = useState<{ key: string; limits: Record<string, number> }>({ key: filterKey, limits: {} });
+  const sectionLimits = sectionPage.key === filterKey ? sectionPage.limits : NO_LIMITS;
   const [page, setPage] = useState({ key: filterKey, limit: MATERIAL_PAGE_SIZE });
   const visibleLimit = page.key === filterKey ? page.limit : MATERIAL_PAGE_SIZE;
   useEffect(() => setPage({ key: filterKey, limit: MATERIAL_PAGE_SIZE }), [filterKey]);
@@ -270,7 +310,44 @@ export function StudyLibrary() {
       return next;
     });
   const chapterCount = visible.length - grouped.topLevel.length;
-  const shownMaterials = useMemo(() => grouped.topLevel.slice(0, visibleLimit), [grouped, visibleLimit]);
+  const searching = !!search.trim();
+  const sectioned = view !== "everything" && !searching;
+  const filtersActive = status !== "all" || !!topic || !!type;
+  const sections = useMemo<LibrarySection[]>(() => {
+    if (!sectioned) return [];
+    if (view === "folder") return sectionsByFolder(grouped.topLevel, folders, placements, folderSort);
+    return (view === "topic" ? sectionsByTopic : sectionsByType)(grouped.topLevel, sort);
+  }, [sectioned, view, grouped, folders, placements, folderSort, sort]);
+  // Chapters follow their book, so a placement on one is ignored (shown only when searching).
+  const chapterIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const parts of groupChapterParts(data.materials.filter((m) => !m.faaReference)).partsOf.values()) {
+      for (const part of parts) ids.add(part.id);
+    }
+    return ids;
+  }, [data.materials]);
+  const toggleSection = (viewKey: string) =>
+    setClosedList(closedSections.has(viewKey) ? closedList.filter((k) => k !== viewKey) : [...closedList, viewKey]);
+  const noFolderSection = view === "folder" ? sections.find((s) => s.key === "none") : undefined;
+  const noFolderCount = noFolderSection?.items.length ?? 0;
+  const [jumpTo, setJumpTo] = useState(0);
+  useEffect(() => {
+    if (!jumpTo) return;
+    const header = document.getElementById(sectionDomId("folder:none"));
+    if (!header) return;
+    header.scrollIntoView?.({ block: "start" });
+    header.focus();
+  }, [jumpTo]);
+  const jumpToNoFolder = () => {
+    if (closedSections.has("folder:none")) setClosedList(closedList.filter((k) => k !== "folder:none"));
+    setJumpTo((n) => n + 1);
+  };
+  const shownMaterials = useMemo(() => {
+    if (!sectioned) return grouped.topLevel.slice(0, visibleLimit);
+    return sections.flatMap((s) =>
+      closedSections.has(`${view}:${s.key}`) ? [] : s.items.slice(0, sectionLimits[`${view}:${s.key}`] ?? MATERIAL_PAGE_SIZE),
+    );
+  }, [sectioned, sections, closedSections, sectionLimits, view, grouped, visibleLimit]);
   const badgeMaterials = useMemo(
     () => shownMaterials.flatMap((material) => (openBooks.has(material.id) ? [material, ...(grouped.partsOf.get(material.id) ?? [])] : [material])),
     [shownMaterials, openBooks, grouped],
@@ -293,6 +370,33 @@ export function StudyLibrary() {
     if (created === null) return false;
     setDraftId(newId());
     return true;
+  };
+
+  const renderCard = (item: StudyMaterial) => (
+    <MaterialCard
+      key={item.id}
+      material={item}
+      nextActionTitle={nextActionTitles.get(item.id)}
+      offline={offlineBadges.get(item.id)}
+      review={tab === "library" ? reviewIndicator(binderStatus, item.id, materialsWithCards.has(item.id)) : null}
+      folderName={searching && !chapterIds.has(item.id) ? folderOf(item.id)?.name : undefined}
+    />
+  );
+  const renderBook = (material: StudyMaterial) => {
+    const parts = grouped.partsOf.get(material.id) ?? [];
+    const open = openBooks.has(material.id);
+    if (parts.length === 0) return renderCard(material);
+    return (
+      <div key={material.id} className="material-group" style={{ display: "contents" }}>
+        {renderCard(material)}
+        <div style={{ gridColumn: "1 / -1" }}>
+          <Button aria-expanded={open} onClick={() => toggleBook(material.id)}>
+            {open ? "Hide" : "Show"} {chapterCountLabel(parts.length)} from {material.title}
+          </Button>
+        </div>
+        {open ? parts.map(renderCard) : null}
+      </div>
+    );
   };
 
   const hasAny = data.materials.length > 0;
@@ -463,12 +567,29 @@ export function StudyLibrary() {
             style={{ width: "auto" }}
           />
           <Select
-            aria-label="Sort materials"
-            options={MATERIAL_SORT_OPTIONS}
-            value={sort}
-            onChange={(value) => setSort(value)}
+            aria-label="View"
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={(value) => setView(value)}
             style={{ width: "auto" }}
           />
+          {view === "folder" ? (
+            <Select
+              aria-label="Sort materials"
+              options={FOLDER_SORT_OPTIONS}
+              value={folderSort}
+              onChange={(value) => setFolderSort(value)}
+              style={{ width: "auto" }}
+            />
+          ) : (
+            <Select
+              aria-label="Sort materials"
+              options={MATERIAL_SORT_OPTIONS}
+              value={sort}
+              onChange={(value) => setSort(value)}
+              style={{ width: "auto" }}
+            />
+          )}
         </div>
       )}
 
@@ -528,36 +649,52 @@ export function StudyLibrary() {
       ) : (
         <>
           <p className="small muted library__result-count">
-            Showing {Math.min(visibleLimit, grouped.topLevel.length).toLocaleString()} of {grouped.topLevel.length.toLocaleString()} materials{chapterCount > 0 ? ` (${chapterCount.toLocaleString()} more are chapters inside the books)` : ""}
+            {sectioned ? (
+              <>
+                {grouped.topLevel.length.toLocaleString()} materials in{" "}
+                {view === "folder"
+                  ? plural(folders.length, "folder", "folders")
+                  : plural(sections.length, view === "topic" ? "topic" : "type", view === "topic" ? "topics" : "types")}
+                {chapterCount > 0 ? ` (${chapterCount.toLocaleString()} more are chapters inside the books)` : ""}
+              </>
+            ) : (
+              <>
+                Showing {Math.min(visibleLimit, grouped.topLevel.length).toLocaleString()} of {grouped.topLevel.length.toLocaleString()} materials{chapterCount > 0 ? ` (${chapterCount.toLocaleString()} more are chapters inside the books)` : ""}
+              </>
+            )}
           </p>
-          <div className="material-grid">
-            {shownMaterials.map((material) => {
-              const parts = grouped.partsOf.get(material.id) ?? [];
-              const open = openBooks.has(material.id);
-              const card = (item: StudyMaterial) => (
-                <MaterialCard
-                  key={item.id}
-                  material={item}
-                  nextActionTitle={nextActionTitles.get(item.id)}
-                  offline={offlineBadges.get(item.id)}
-                  review={tab === "library" ? reviewIndicator(binderStatus, item.id, materialsWithCards.has(item.id)) : null}
-                />
-              );
-              if (parts.length === 0) return card(material);
-              return (
-                <div key={material.id} className="material-group" style={{ display: "contents" }}>
-                  {card(material)}
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <Button aria-expanded={open} onClick={() => toggleBook(material.id)}>
-                      {open ? "Hide" : "Show"} {chapterCountLabel(parts.length)} from {material.title}
-                    </Button>
-                  </div>
-                  {open ? parts.map(card) : null}
-                </div>
-              );
-            })}
-          </div>
-          {grouped.topLevel.length > visibleLimit ? (
+          {sectioned && view === "folder" ? (
+            <div className="library__folder-slot">
+              {/* New folder and Arrange buttons arrive in a later slice. */}
+              {folders.length > 0 && noFolderCount > 0 ? (
+                <button type="button" className="library__jump" onClick={jumpToNoFolder}>
+                  {NOT_IN_A_FOLDER} ({noFolderCount.toLocaleString()})
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {sectioned && view === "folder" && folders.length === 0 ? (
+            <Card>
+              <p className="small">
+                Make a folder to group your study material, such as Checkride prep. Then use Arrange to move things in.
+              </p>
+            </Card>
+          ) : null}
+          {sectioned ? (
+            <LibrarySections
+              view={view}
+              sections={sections}
+              closed={closedSections}
+              onToggle={toggleSection}
+              limits={sectionLimits}
+              onShowMore={(key, next) => setSectionPage({ key: filterKey, limits: { ...sectionLimits, [key]: next } })}
+              hideEmpty={filtersActive}
+              renderBook={renderBook}
+            />
+          ) : (
+            <div className="material-grid">{shownMaterials.map(renderBook)}</div>
+          )}
+          {!sectioned && grouped.topLevel.length > visibleLimit ? (
             <div className="library__more">
               <Button onClick={() => setPage({ key: filterKey, limit: visibleLimit + MATERIAL_PAGE_SIZE })}>
                 Show 100 more materials
@@ -638,11 +775,13 @@ function MaterialCard({
   nextActionTitle,
   review,
   offline,
+  folderName,
 }: {
   material: StudyMaterial;
   nextActionTitle?: string;
   review?: string | null;
   offline?: OfflineBadge;
+  folderName?: string;
 }) {
   const statusTone =
     material.reviewStatus === "confident"
@@ -686,6 +825,7 @@ function MaterialCard({
       {nextActionTitle ? (
         <span className="material-card__next truncate">Next: {nextActionTitle}</span>
       ) : null}
+      {folderName ? <span className="tiny dim library__in-folder">In: {folderName}</span> : null}
     </Link>
   );
 }
