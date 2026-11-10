@@ -18885,7 +18885,11 @@ mod tests {
 
         let incoming_dir = root.join(INCOMING_DIR);
         std::fs::create_dir_all(&incoming_dir).unwrap();
-        std::fs::write(incoming_dir.join("latest.hfdbackup"), b"incoming backup bytes").unwrap();
+        std::fs::write(
+            incoming_dir.join("latest.hfdbackup"),
+            b"incoming backup bytes",
+        )
+        .unwrap();
         std::fs::write(incoming_dir.join("stale.tmp"), b"incoming temp bytes").unwrap();
 
         let outbox_dir = root.join(crate::sync::send::OUTBOX_DIR);
@@ -18910,22 +18914,17 @@ mod tests {
         apply_pending_restore_in(&root).unwrap();
 
         assert!(
-            !incoming_dir.exists()
-                || std::fs::read_dir(&incoming_dir)
-                    .unwrap()
-                    .next()
-                    .is_none(),
+            !incoming_dir.exists() || std::fs::read_dir(&incoming_dir).unwrap().next().is_none(),
             ".incoming directory must be empty after start fresh"
         );
         assert!(
-            !outbox_dir.exists()
-                || std::fs::read_dir(&outbox_dir)
-                    .unwrap()
-                    .next()
-                    .is_none(),
+            !outbox_dir.exists() || std::fs::read_dir(&outbox_dir).unwrap().next().is_none(),
             "outbox directory must be empty after start fresh"
         );
-        assert!(!phone_work.exists(), "phone-work.json must be gone after start fresh");
+        assert!(
+            !phone_work.exists(),
+            "phone-work.json must be gone after start fresh"
+        );
         assert!(!backups_folder.exists());
         assert!(
             !root.join(BACKUP_DIR).exists()
@@ -18957,7 +18956,11 @@ mod tests {
 
         let link_path = incoming_dir.join("linked.hfdbackup");
         std::os::unix::fs::symlink(&external_file, &link_path).unwrap();
-        std::fs::write(incoming_dir.join("normal.hfdbackup"), b"normal backup bytes").unwrap();
+        std::fs::write(
+            incoming_dir.join("normal.hfdbackup"),
+            b"normal backup bytes",
+        )
+        .unwrap();
 
         stage_start_fresh_in(&root).unwrap();
         apply_pending_restore_in(&root).unwrap();
@@ -19028,19 +19031,11 @@ mod tests {
             "Pending directory must be removed after committed recovery finishes"
         );
         assert!(
-            !incoming_dir.exists()
-                || std::fs::read_dir(&incoming_dir)
-                    .unwrap()
-                    .next()
-                    .is_none(),
+            !incoming_dir.exists() || std::fs::read_dir(&incoming_dir).unwrap().next().is_none(),
             ".incoming directory must be empty after startup recovery"
         );
         assert!(
-            !outbox_dir.exists()
-                || std::fs::read_dir(&outbox_dir)
-                    .unwrap()
-                    .next()
-                    .is_none(),
+            !outbox_dir.exists() || std::fs::read_dir(&outbox_dir).unwrap().next().is_none(),
             "outbox directory must be empty after startup recovery"
         );
         assert!(
