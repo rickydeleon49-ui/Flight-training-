@@ -6,16 +6,16 @@
  * the product spec are recorded here as the private --palette-* layer and are
  * never used directly in a component.
  *
- * These are the light values (iOS-style warm grey page, white groups). The
- * dark values follow further down; src/styles/contrast.test.ts measures every
- * text and background pair.
+ * These are the light values (the original warm ivory palette). Dark values
+ * follow below; src/styles/contrast.test.ts measures every text and background
+ * pair.
  */
 
 :root {
   color-scheme: light;
 
   /* ---- Raw palette (spec section 30). Do not use these in components. -- */
-  --palette-ivory: #f5f2f0;
+  --palette-ivory: #faf7f4;
   --palette-white: #ffffff;
   --palette-navy: #17233c;
   --palette-navy-muted: #596276;
@@ -28,9 +28,9 @@
   /* ---- Surfaces ---- */
   --surface-page: var(--palette-ivory);
   --surface-card: var(--palette-white);
-  --surface-sidebar: #ede9e6;
-  --surface-sunken: #ebe7e4;
-  --surface-raised: #ffffff;
+  --surface-sidebar: #ffffff;
+  --surface-sunken: #f3eeea;
+  --surface-raised: #fffdfc;
   /* Tinted washes for section headers and quiet panels. */
   --surface-tint-berry: #fdf4f6;
   --surface-tint-sky: #f1f7fb;
@@ -45,7 +45,7 @@
   --text-on-accent: #ffffff;
 
   /* ---- Lines and edges ---- */
-  --border-subtle: #e3ded9;
+  --border-subtle: #ece4de;
   --border-control: #8c8f9a;
   --border-strong: #ddd2ca;
   --border-focus: var(--palette-berry);
@@ -56,7 +56,7 @@
    */
   --accent-primary: var(--palette-berry);
   --accent-primary-hover: #8d3c59;
-  --accent-fill: #f7e9ee;
+  --accent-fill: #fbeff3;
   --accent-primary-fill: var(--accent-fill);
   --accent-secondary: var(--palette-rose);
   /* Channels of the active accent, for translucent effects. */
