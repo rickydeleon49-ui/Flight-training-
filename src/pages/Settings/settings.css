@@ -32,8 +32,8 @@
 }
 
 .accent-option__swatch {
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -127,3 +127,16 @@ details.material-fold > summary {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md, 8px);
 }
+
+/* Inline styles moved here (DESIGN-01 s22). */
+.settings-note { margin-bottom: var(--space-4); }
+.settings-jumps--spaced { margin-bottom: var(--space-4); }
+.settings-lead { margin-bottom: var(--space-5); }
+.settings-span-all { grid-column: 1 / -1; }
+.settings-actions { margin-top: var(--space-5); }
+.settings-actions--tight { margin-top: var(--space-4); }
+.settings-ok { color: var(--status-complete); }
+.settings-bad { color: var(--status-danger); }
+.settings-gap-3 { gap: var(--space-3); }
+.settings-stack-top { margin-top: var(--space-3); }
+.settings-focus-result { outline: none; }

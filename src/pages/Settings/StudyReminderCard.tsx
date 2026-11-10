@@ -28,7 +28,7 @@ export function StudyReminderCard() {
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Daily study reminder" eyebrow="On this device" />
       <CardBody>
         <div className="stack stack--3">

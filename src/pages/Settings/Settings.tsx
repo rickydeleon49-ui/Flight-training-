@@ -156,28 +156,28 @@ function PlatformGuidance({
 }) {
   if (isIOS() && ios) {
     return (
-      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+      <p className="tiny dim settings-note">
         {ios}
       </p>
     );
   }
   if (isMacOS()) {
     return (
-      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+      <p className="tiny dim settings-note">
         {mac}
       </p>
     );
   }
   if (isWindowsOS() && windows) {
     return (
-      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+      <p className="tiny dim settings-note">
         <strong>On Windows:</strong> {windows}
       </p>
     );
   }
   if (neutral) {
     return (
-      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+      <p className="tiny dim settings-note">
         {neutral}
       </p>
     );
@@ -188,7 +188,7 @@ function PlatformGuidance({
 function MacNote({ children }: { children: ReactNode }) {
   if (!isMacOS()) return null;
   return (
-    <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+    <p className="tiny dim settings-note">
       {children}
     </p>
   );
@@ -745,7 +745,7 @@ export function Settings() {
     <>
       <PageHeader title="Settings" subtitle="Your profile and how this application behaves." />
 
-      <nav aria-label="Jump to" className="row row--wrap small settings-jumps" style={{ marginBottom: "var(--space-4)" }}>
+      <nav aria-label="Jump to" className="row row--wrap small settings-jumps settings-jumps--spaced">
         <span className="muted">Jump to:</span>
         {JUMPS.map(([label, id]) => (
           <a key={id} className="settings-jumps__link" href={`#${id}`} onClick={(event) => jumpTo(event, id)}>{label}</a>
@@ -760,7 +760,7 @@ export function Settings() {
         {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
         {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="About you" headingId="settings-about-you" eyebrow="Greeting and focus" />
           <CardBody>
             <MacNote>Press Save profile before closing the window.</MacNote>
@@ -814,14 +814,14 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader
             title="Where you train"
             headingId="settings-where-you-train"
             eyebrow="Used to fill in new lessons"
           />
           <CardBody>
-            <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
+            <p className="small muted settings-lead">
               None of this is required. Before you have settled on a school you can
               leave it empty, or fill in only the parts that are true today.
             </p>
@@ -893,7 +893,7 @@ export function Settings() {
                 onChange={(date) => update("medicalExpiry", date || null)}
               />
               {medicalConflict ? (
-                <p className="small" role="note" style={{ gridColumn: "1 / -1" }}>
+                <p role="note" className="small settings-span-all">
                   Your saved medical record “{medicalConflict.record.title}” in the Pilot Toolkit
                   says it expires {formatLongDate(medicalConflict.record.expiresOn)}, which
                   differs from the date saved here. Check your certificate, then choose the right
@@ -902,12 +902,12 @@ export function Settings() {
               ) : null}
             </div>
 
-            <div className="row" style={{ marginTop: "var(--space-5)" }}>
+            <div className="row settings-actions">
               <Button variant="primary" onClick={saveProfile}>
                 Save profile
               </Button>
               {saved ? (
-                <span className="small" style={{ color: "var(--status-complete)" }}>
+                <span className="small settings-ok">
                   Saved.
                 </span>
               ) : null}
@@ -915,7 +915,7 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Why you started" headingId="settings-why-you-started" eyebrow="Yours alone" />
           <CardBody>
             <MacNote>
@@ -985,7 +985,7 @@ export function Settings() {
                   Save profile
                 </Button>
                 {saved ? (
-                  <span className="small" style={{ color: "var(--status-complete)" }}>
+                  <span className="small settings-ok">
                     Saved.
                   </span>
                 ) : null}
@@ -994,7 +994,7 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Look and feel" headingId="settings-look-and-feel" eyebrow="Accent colour" />
           <CardBody>
             <div className="stack stack--4">
@@ -1014,7 +1014,7 @@ export function Settings() {
                     >
                       <span
                         className="accent-option__swatch"
-                        style={{ background: `var(--accent-swatch-${accent})` }}
+                        style={{ background: `var(--accent-swatch-${accent})`, ...(selected ? { boxShadow: `0 0 0 2px var(--surface-card), 0 0 0 4px var(--accent-swatch-${accent})` } : null) }}
                         aria-hidden="true"
                       >
                         {selected ? <CheckIcon size={15} /> : null}
@@ -1028,7 +1028,7 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Airport weather" />
           <CardBody><WeatherPreference /></CardBody>
         </Card>
@@ -1039,7 +1039,7 @@ export function Settings() {
 
         <CheckrideDateCard />
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Appearance" headingId="settings-appearance" eyebrow="Visual style" />
           <CardBody>
             <div className="stack stack--3">
@@ -1102,7 +1102,7 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Career starter pack" headingId="settings-career-pack" eyebrow="Built-in guidance" />
           <CardBody>
             <PlatformGuidance
@@ -1122,7 +1122,7 @@ export function Settings() {
                   {busy ? "Working…" : "Restore missing starter items"}
                 </Button>
                 {starterNote ? (
-                  <span className="small" style={{ color: "var(--status-complete)" }}>
+                  <span className="small settings-ok">
                     {starterNote}
                   </span>
                 ) : null}
@@ -1134,7 +1134,7 @@ export function Settings() {
         <details id="settings-backups" className="card material-fold" ref={backupsFold}>
           <summary id="settings-backups-summary">Backups and data</summary>
         {!deviceCan().getStudyMaterial ? (
-        <Card>
+        <Card variant="grouped">
           <CardHeader
             title="Your data"
             eyebrow="Complete backup and restore"
@@ -1160,9 +1160,8 @@ export function Settings() {
               ) : null}
               {backupNote ? (
                 <p
-                  className="small"
+                  className={`small ${backupProblem ? "settings-bad" : "settings-ok"}`}
                   role={backupProblem ? "alert" : "status"}
-                  style={{ color: backupProblem ? "var(--status-danger)" : "var(--status-complete)" }}
                 >
                   {backupNote}
                 </p>
@@ -1209,7 +1208,7 @@ export function Settings() {
               {dataPath ? (
                 <div className="stack stack--2">
                   <p className="tiny dim"><strong>Open folder</strong> shows the app’s private files at this path.</p>
-                  <div className="row row--between" style={{ gap: "var(--space-3)" }}>
+                  <div className="row row--between settings-gap-3">
                     <code className="tiny wrap-anywhere">{dataPath}</code>
                     <Button
                       size="small"
@@ -1251,7 +1250,7 @@ export function Settings() {
                   {backups.slice(0, 6).map((backup) => (
                     <div className="row row--between" key={backup.name}>
                       <span className="small truncate">{describeBackup(backup.name)}</span>
-                      <span className="row" style={{ gap: "var(--space-3)" }}>
+                      <span className="row settings-gap-3">
                         <span className="tiny dim numeric">
                           {backupLocalDay(backup.name) ?? "Date unknown"} · {formatBytes(backup.bytes)}
                         </span>
@@ -1270,7 +1269,7 @@ export function Settings() {
                 </div>
               ) : null}
 
-              <div className="row" style={{ marginTop: "var(--space-4)" }}>
+              <div className="row settings-actions settings-actions--tight">
                 <Button
                   size="small"
                   variant="ghost"
@@ -1285,7 +1284,7 @@ export function Settings() {
         </Card>
 
         ) : (
-          <Card>
+          <Card variant="grouped">
             <CardHeader title="Start fresh" eyebrow="Reset this iPhone" />
             <CardBody>
               <div className="row">
@@ -1302,7 +1301,7 @@ export function Settings() {
           </Card>
         )}
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Check library" eyebrow="Study Library files" />
           <CardBody>
             <div className="stack stack--4">
@@ -1316,7 +1315,7 @@ export function Settings() {
               </div>
               {!canHandleFiles() ? <p className="tiny dim">Library file checks need the desktop app.</p> : null}
               {libraryNote || libraryReport ? (
-              <div ref={libraryResult} data-library-result tabIndex={-1} className="stack stack--4" style={{ outline: "none" }}>
+              <div ref={libraryResult} data-library-result tabIndex={-1} className="stack stack--4 settings-focus-result">
               {libraryNote ? (
                 <p className="small" role={libraryProblem ? "alert" : "status"}>
                   {libraryNote}
@@ -1382,7 +1381,7 @@ export function Settings() {
         <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
           <summary id="settings-advanced-summary">Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !providerConnected ? " · AI provider not set up" : ""}</summary>
         {deviceCan().geminiKey ? (
-        <Card>
+        <Card variant="grouped">
           <CardHeader
             title="AI provider"
             headingId="ai-provider"
@@ -1484,9 +1483,8 @@ export function Settings() {
 
               {geminiNote ? (
                 <p
-                  className="small"
+                  className={`small ${geminiProblem ? "settings-bad" : "settings-ok"}`}
                   role={geminiProblem ? "alert" : "status"}
-                  style={{ color: geminiProblem ? "var(--status-danger)" : "var(--status-complete)" }}
                 >
                   {geminiNote}
                 </p>
