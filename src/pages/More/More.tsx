@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { QUICK_FIND_EVENT } from "@/components/quickfind/QuickFind";
 import {
   Card,
@@ -48,7 +49,7 @@ export function More() {
 
   return (
     <div className="more stack stack--5">
-      <h1 className="more__title">More</h1>
+      <PageHeader title="More" />
 
       <Card variant="grouped" ariaLabel="Search">
         <ul className="list-group">

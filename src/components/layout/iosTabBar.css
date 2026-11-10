@@ -3,29 +3,23 @@
 
 html.is-ios .shell--tabs {
   --tabbar-h: calc(49px + env(safe-area-inset-bottom, 0px));
-  --narrow-header-height: env(safe-area-inset-top, 0px);
+  --narrow-header-height: calc(44px + env(safe-area-inset-top, 0px));
   display: block;
-}
-
-/* Keeps scrolled text from showing under the clock and notch. */
-html.is-ios .shell--tabs::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: var(--surface-card);
-  z-index: 20;
 }
 
 /* Side insets too: in landscape the phone is wider than the 700px rule, and
    the Dynamic Island would otherwise cover the left edge of the page. */
 html.is-ios .shell--tabs .content {
-  padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
+  padding-top: 0;
+  --content-pad-x: max(var(--space-4), env(safe-area-inset-left, 0px));
   padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
   padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
   padding-bottom: calc(var(--tabbar-h) + var(--space-5));
+}
+
+html.is-ios .shell--tabs .top-bar {
+  height: calc(44px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 html.is-ios .shell--tabs .back-to-top {
@@ -101,7 +95,10 @@ html.is-ios .ios-tab-bar__badge {
   text-align: center;
 }
 
+/* The More icon is three dots, so its badge sits clear of them at the top-right corner. */
 html.is-ios .ios-tab-bar__badge--quiet {
+  left: calc(50% + 10px);
+  top: 0;
   background: var(--text-secondary);
 }
 
@@ -118,7 +115,7 @@ html.is-ios .ios-back {
   min-width: 44px;
   min-height: 44px;
   max-width: 100%;
-  margin: calc(-1 * var(--space-3)) 0 var(--space-2) calc(-1 * var(--space-2));
+  margin: 0 0 0 calc(-1 * var(--space-2));
   padding: 0 var(--space-2);
   border: 0;
   background: none;

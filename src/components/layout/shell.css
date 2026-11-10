@@ -136,6 +136,47 @@
   margin: 0 auto;
 }
 
+/* Slim sticky bar inside main.content; its title shows once the page title scrolls away. */
+.content.content--top-bar {
+  --content-pad-x: var(--space-6);
+  padding-top: 0;
+}
+
+.content.content--top-bar > .content__inner { padding-top: var(--space-5); }
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr);
+  align-items: center;
+  height: 44px;
+  margin: 0 calc(-1 * var(--content-pad-x));
+  padding-left: var(--content-pad-x);
+  padding-right: var(--content-pad-x);
+  background: var(--surface-page);
+  border-bottom: 0.5px solid transparent;
+}
+
+.top-bar.is-collapsed {
+  background: var(--surface-card);
+  border-bottom-color: var(--border-subtle);
+}
+
+.top-bar__title {
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-base);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.top-bar.is-collapsed .top-bar__title { opacity: 1; }
+
 .page-header {
   display: flex;
   align-items: flex-end;
@@ -148,6 +189,7 @@
 .page-header__title {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
+  line-height: 41px;
   font-weight: 700;
   letter-spacing: -0.015em;
 }
