@@ -707,7 +707,7 @@ export function StudyLibrary() {
       ) : null}
 
       {hasAny ? (
-        <div className="filter-chips" style={{ marginBottom: "var(--space-5)" }}>
+        <div className="filter-chips scroll-x" style={{ marginBottom: "var(--space-5)" }}>
           {STATUS_FILTERS.map((filter) => (
             <button
               type="button"
