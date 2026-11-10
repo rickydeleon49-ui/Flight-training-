@@ -325,7 +325,7 @@ button[role="tab"] {
 .checkbox input:checked + .checkbox__mark {
   background: var(--category-complete-ink);
   border-color: var(--category-complete-ink);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .checkbox input:focus-visible + .checkbox__mark {

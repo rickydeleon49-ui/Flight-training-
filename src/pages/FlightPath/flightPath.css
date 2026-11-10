@@ -30,7 +30,7 @@
   border: 2px solid var(--category-flight-edge);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .waypoint--done .waypoint__marker {

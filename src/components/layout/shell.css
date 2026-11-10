@@ -35,7 +35,7 @@
   height: 2.1rem;
   border-radius: var(--radius-md);
   background: linear-gradient(150deg, var(--accent-primary), var(--accent-primary-hover));
-  color: #fff;
+  color: var(--text-on-accent);
   flex: none;
 }
 

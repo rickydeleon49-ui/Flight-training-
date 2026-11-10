@@ -847,7 +847,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 .related-study ul { list-style: none; padding: 0; margin: 0; }
 .related-study__row { display: flex; flex-direction: column; justify-content: center; gap: var(--space-1); width: 100%; min-height: 44px; padding: var(--space-3); text-align: start; font: inherit; color: var(--text-primary); background: transparent; border: 0; border-radius: var(--radius-sm); text-decoration: none; overflow-wrap: anywhere; cursor: pointer; }
 .related-study__row { position: relative; padding-inline-end: calc(var(--space-3) + 1.25rem); border: 1px solid var(--border-subtle); margin-block-end: var(--space-2); }
-.related-study__go { position: absolute; inset-inline-end: var(--space-3); top: 50%; transform: translateY(-50%); font-size: 1.25rem; color: var(--text-muted); }
+.related-study__go { position: absolute; inset-inline-end: var(--space-3); top: 50%; transform: translateY(-50%); font-size: 1.25rem; color: inherit; }
 .related-study__row:hover { background: var(--accent-primary-fill); }
 .related-study :is(summary, button, a):focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 .related-study .button { min-height: 44px; white-space: normal; }
@@ -968,7 +968,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   min-width: 2rem;
   min-height: 2rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-tertiary);
   font-size: 1.1rem;
@@ -976,7 +976,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   cursor: pointer;
 }
 .search-field__clear:hover,
-.search-field__clear:focus-visible { color: var(--text-primary); background: var(--surface-muted, rgba(0, 0, 0, 0.06)); }
+.search-field__clear:focus-visible { color: var(--text-primary); background: rgba(0, 0, 0, 0.06); }
 
 .material-fold > summary {
   min-height: 44px;

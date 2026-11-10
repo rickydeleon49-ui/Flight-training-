@@ -38,7 +38,7 @@
 .skill-evidence__menu > summary {
   cursor: pointer;
   font-size: var(--text-xs);
-  color: var(--text-muted, inherit);
+  color: inherit;
 }
 
 .skill-evidence__menu-items { margin-top: var(--space-2); flex-wrap: wrap; gap: var(--space-2); }

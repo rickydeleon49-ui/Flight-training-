@@ -163,7 +163,7 @@
 }
 
 .flight-rhythm__value span {
-  font-family: var(--font-body);
+  font-family: inherit;
   font-size: var(--text-xs);
   color: var(--text-tertiary);
 }
@@ -178,7 +178,7 @@
   height: 0.45rem;
   margin-top: var(--space-2);
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-sunken);
 }
 

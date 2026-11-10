@@ -86,9 +86,9 @@ html.is-ios .ios-tab-bar__badge {
   left: calc(50% + 6px);
   min-width: 16px;
   padding: 0 4px;
-  border-radius: 999px;
-  background: var(--danger, #c0392b);
-  color: #fff;
+  border-radius: var(--radius-pill);
+  background: #c0392b;
+  color: var(--text-on-accent);
   font-size: min(0.625rem, 12px);
   line-height: 16px;
   text-align: center;
