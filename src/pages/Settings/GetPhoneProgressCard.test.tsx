@@ -13,7 +13,7 @@ vi.mock("@/services/phoneProgress", async (original) => ({
 import { GetPhoneProgressCard } from "./GetPhoneProgressCard";
 import source from "./GetPhoneProgressCard.tsx?raw";
 
-const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
 const BUTTON = "Choose the file from my iPhone";
 
 afterEach(cleanup);

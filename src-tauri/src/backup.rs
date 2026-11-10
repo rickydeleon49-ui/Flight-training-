@@ -722,6 +722,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 37 {
         verify_schema_37_study_packs(connection)?;
     }
+    if newest_migration >= 38 {
+        verify_schema_38_library_folders(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -1022,6 +1025,47 @@ pub(crate) fn verify_schema_37_study_packs(connection: &Connection) -> Result<()
                 WHERE NOT EXISTS (SELECT 1 FROM study_pack_imports r WHERE r.operation_id = a.operation_id)")?
     {
         return Err(damaged());
+    }
+    Ok(())
+}
+
+/// LIBRARY-ORG-01: her own library folders and placements, exactly as migrated.
+pub(crate) fn verify_schema_38_library_folders(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in ["library_folders", "library_placements"] {
+        let present = card_count(
+            connection,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )?;
+        if present != 1 {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err("Damaged library folders schema.".into());
+        }
+    }
+    if check_constraints(&table_sql(connection, "library_folders")?)
+        != check_constraints(&table_sql(&reference, "library_folders")?)
+        || m3_index_shape(
+            connection,
+            "library_placements",
+            "idx_library_placements_folder",
+        )? != m3_index_shape(
+            &reference,
+            "library_placements",
+            "idx_library_placements_folder",
+        )?
+    {
+        return Err("Damaged library folders schema.".into());
     }
     Ok(())
 }
@@ -19117,6 +19161,194 @@ mod material_video_link_tests {
         assert_eq!(
             m3_count(&restored, "SELECT COUNT(*) FROM material_video_links", &[]).unwrap(),
             0
+        );
+    }
+}
+
+#[cfg(test)]
+mod library_folders_backup_tests {
+    use super::*;
+
+    #[test]
+    fn schema_38_library_folders_require_tables_index_and_check() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_38_library_folders(&connection).unwrap();
+
+        // Dropping the index is refused with a clear message
+        connection
+            .execute_batch("DROP INDEX idx_library_placements_folder")
+            .unwrap();
+        let err = verify_schema_38_library_folders(&connection).unwrap_err();
+        assert!(err.contains("Damaged library folders schema"));
+
+        // Dropping a column from library_folders is refused with a clear message
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch("ALTER TABLE library_folders DROP COLUMN position")
+            .unwrap();
+        let err = verify_schema_38_library_folders(&connection).unwrap_err();
+        assert!(err.contains("Damaged library folders schema"));
+
+        // Dropping a column from library_placements is refused with a clear message
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch("ALTER TABLE library_placements DROP COLUMN position")
+            .unwrap();
+        let err = verify_schema_38_library_folders(&connection).unwrap_err();
+        assert!(err.contains("Damaged library folders schema"));
+
+        // Dropping a table is refused with a clear message
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch("DROP TABLE library_placements")
+            .unwrap();
+        let err = verify_schema_38_library_folders(&connection).unwrap_err();
+        assert!(
+            err.contains("The database is missing required table: library_placements")
+                || err.contains("Damaged library folders schema")
+        );
+
+        // Recreating library_placements without ON DELETE CASCADE is refused with a clear message
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch(
+                "ALTER TABLE library_placements RENAME TO original_placements;
+                 CREATE TABLE library_placements (
+                   material_id TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id),
+                   folder_id TEXT,
+                   position INTEGER,
+                   updated_at TEXT NOT NULL
+                 );
+                 DROP TABLE original_placements;
+                 CREATE INDEX idx_library_placements_folder ON library_placements(folder_id);",
+            )
+            .unwrap();
+        let err = verify_schema_38_library_folders(&connection).unwrap_err();
+        assert!(err.contains("Damaged library folders schema"));
+
+        // Dropping the name CHECK constraint is refused with a clear message
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch(
+                "ALTER TABLE library_folders RENAME TO original_folders;
+                 CREATE TABLE library_folders (
+                   id TEXT PRIMARY KEY NOT NULL,
+                   name TEXT NOT NULL,
+                   position INTEGER NOT NULL,
+                   created_at TEXT NOT NULL,
+                   updated_at TEXT NOT NULL
+                 );
+                 DROP TABLE original_folders;",
+            )
+            .unwrap();
+        let err = verify_schema_38_library_folders(&connection).unwrap_err();
+        assert!(err.contains("Damaged library folders schema"));
+    }
+
+    #[test]
+    fn schema_38_folders_survive_sqlite_backup_and_follow_material_deletion() {
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch(
+                "PRAGMA foreign_keys=ON;
+                 INSERT INTO study_materials (id, title, material_type, topic, created_at, updated_at) VALUES
+                   ('m1', 'Book 1', 'study_guide', 'other', 'now', 'now'),
+                   ('m2', 'Book 2', 'study_guide', 'other', 'now', 'now'),
+                   ('m3', 'Book 3', 'study_guide', 'other', 'now', 'now');
+                 INSERT INTO library_folders (id, name, position, created_at, updated_at) VALUES
+                   ('f1', 'Weather', 1, 'now', 'now'),
+                   ('f2', 'Navigation', 2, 'now', 'now');
+                 INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES
+                   ('m1', 'f1', 1, 'now'),
+                   ('m2', 'f1', 2, 'now'),
+                   ('m3', 'f2', 1, 'now');",
+            )
+            .unwrap();
+
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(&connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+
+        verify_schema_38_library_folders(&restored).unwrap();
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM library_folders", &[]).unwrap(),
+            2
+        );
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM library_placements", &[]).unwrap(),
+            3
+        );
+
+        restored
+            .execute_batch("PRAGMA foreign_keys=ON; DELETE FROM study_materials WHERE id='m1';")
+            .unwrap();
+
+        assert_eq!(
+            m3_count(
+                &restored,
+                "SELECT COUNT(*) FROM library_placements WHERE material_id='m1'",
+                &[]
+            )
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM library_placements", &[]).unwrap(),
+            2
+        );
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM library_folders", &[]).unwrap(),
+            2
+        );
+    }
+
+    #[test]
+    fn schema_37_backup_restores_and_migrates_to_empty_folders() {
+        let connection = get_reference_schema_connection_through(37).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY);
+                 INSERT INTO schema_migrations (version) VALUES (37);
+                 PRAGMA foreign_keys=ON;
+                 INSERT INTO study_materials (id, title, material_type, topic, created_at, updated_at) VALUES
+                   ('m-old', 'Old Book', 'study_guide', 'other', 'now', 'now');",
+            )
+            .unwrap();
+
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(&connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+
+        // Restored database at schema 37 passes verification
+        verify_application_connection(&restored).unwrap();
+
+        // Migrate to schema 38
+        for m in crate::migrations().into_iter().filter(|m| m.version > 37) {
+            restored.execute_batch(m.sql).unwrap();
+            restored
+                .execute(
+                    "INSERT INTO schema_migrations (version) VALUES (?1)",
+                    [m.version],
+                )
+                .unwrap();
+        }
+
+        verify_schema_38_library_folders(&restored).unwrap();
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM library_folders", &[]).unwrap(),
+            0
+        );
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM library_placements", &[]).unwrap(),
+            0
+        );
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM study_materials", &[]).unwrap(),
+            1
         );
     }
 }

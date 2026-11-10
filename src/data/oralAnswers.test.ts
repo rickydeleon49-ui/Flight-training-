@@ -156,7 +156,7 @@ describe("oral answers verifier (schema 32)", () => {
     expect(native).toMatch(/version: 32,\s+description: "oral_answers",\s+sql: include_str!\("\.\.\/migrations\/0032_oral_answers.sql"\)/);
     const { DatabaseSync } = await import(/* @vite-ignore */ nativeSqlite);
     const handle = new DatabaseSync(":memory:");
-    await applyMigrations((sql) => handle.exec(sql), new Set([32, 33, 34, 35, 36, 37]));
+    await applyMigrations((sql) => handle.exec(sql), new Set([32, 33, 34, 35, 36, 37, 38]));
     expect(handle.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'oral_answers'").get()).toEqual({ n: 0 });
     await applyMigrations((sql) => handle.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 31).map((m) => m.version)));
     expect(handle.prepare("SELECT COUNT(*) AS n FROM oral_answers").get()).toEqual({ n: 0 });

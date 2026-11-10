@@ -8,7 +8,7 @@ vi.mock("@/data", () => ({ isTauri: () => true }));
 import { formatBackupDate } from "./backups";
 import { choosePhoneProgressFile, importPhoneProgress, phoneProgressSentence, type PhoneProgress } from "./phoneProgress";
 
-const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
 const progress = (over: Partial<PhoneProgress> = {}): PhoneProgress => ({
   outcome: "added",
   counts: { ...none, reviews: 12, tests: 1 },

@@ -314,6 +314,7 @@ fn work_with(
         materials,
         guides,
         generated_tests,
+        organization: 0,
         since: None,
     }
 }
@@ -975,6 +976,7 @@ fn single_unsaved_item_uses_the_singular_verb() {
         materials: 0,
         guides: 0,
         generated_tests: 0,
+        organization: 0,
         since: None,
     };
     assert_eq!(
@@ -1167,4 +1169,49 @@ fn copy_superseded_reads_present_absent_and_no_table() {
     )
     .unwrap();
     assert!(crate::phone_work::copy_superseded(&c));
+}
+
+const FOLDER_TABLES_SQL: &str =
+    "CREATE TABLE library_folders (id TEXT PRIMARY KEY, name TEXT, position INTEGER, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+     CREATE TABLE library_placements (material_id TEXT PRIMARY KEY, folder_id TEXT, position INTEGER, updated_at TEXT NOT NULL);";
+
+#[test]
+fn folder_only_work_is_unsaved_and_blocks_the_restore() {
+    let c = scratch();
+    let root = root_in(&c);
+    exec(&root, FOLDER_TABLES_SQL);
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    assert!(refuse_unsaved(&root, true).is_ok());
+    exec(
+        &root,
+        "INSERT INTO library_folders VALUES ('f1', 'Weather', 1, '2026-03-01T00:00:00Z', '2026-03-01T00:00:00Z');
+         INSERT INTO library_placements VALUES ('m1', 'f1', 1, '2026-03-01T00:00:00Z');
+         INSERT INTO library_folders VALUES ('f0', 'Old', 2, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!(totals(&work), [0, 0, 0, 0, 0, 0, 0]);
+    assert_eq!(work.organization, 2);
+    assert_eq!(
+        sentence(&work).as_deref(),
+        Some("This phone has 2 folder changes that aren't saved anywhere else yet. Save my phone work first, then get your study material.")
+    );
+    assert!(refuse_unsaved(&root, true).is_err());
+    assert!(refuse_unsaved(&root, false).is_ok());
+    // Once progress is sent (baseline moves past the work) the guard clears.
+    record_sent_through_in(&root, "2026-04-01T00:00:00Z").unwrap();
+    assert!(refuse_unsaved(&root, true).is_ok());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn folder_work_without_a_baseline_counts_every_row() {
+    let c = scratch();
+    let root = root_in(&c);
+    exec(&root, FOLDER_TABLES_SQL);
+    exec(
+        &root,
+        "INSERT INTO library_folders VALUES ('f1', 'Weather', 1, '2026-03-01T00:00:00Z', '2026-03-01T00:00:00Z');",
+    );
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().organization, 1);
+    std::fs::remove_dir_all(c).unwrap();
 }

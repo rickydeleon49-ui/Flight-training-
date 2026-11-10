@@ -258,6 +258,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 32) await validateOralAnswers(query, reference);
   if (newest >= 36) await validateKitQueue(query, reference);
   if (newest >= 37) await validateStudyPackState(query, reference);
+  if (newest >= 38) await validateLibraryFolders(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -2242,3 +2243,20 @@ export async function validateFaaDownloads(query: ValidationQuery, reference: Va
       !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
       (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged FAA downloads schema.");
 }
+
+export async function validateLibraryFolders(query: ValidationQuery, reference: ValidationQuery) {
+  for (const table of ["library_folders", "library_placements"]) {
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+        !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+        !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+        (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) {
+      refuse("Damaged library folders schema.");
+    }
+  }
+  if (!same(checkConstraints(await tableSql(query, "library_folders")), checkConstraints(await tableSql(reference, "library_folders"))) ||
+      (await query("SELECT 1 FROM pragma_index_list('library_placements') WHERE name='idx_library_placements_folder'", [])).length !== 1 ||
+      !same(await indexColumns(query, "idx_library_placements_folder"), await indexColumns(reference, "idx_library_placements_folder"))) {
+    refuse("Damaged library folders schema.");
+  }
+}
+

@@ -15,7 +15,7 @@ import { formatBackupDate, unsavedPhoneWorkSentence } from "@/services/backups";
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 
 const info = { path: "/app/.incoming/latest.hfdbackup", createdAt: 1793361600, bytes: 8192, fileBytes: 2048, files: 4 };
-const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
 const activity = { latestReviewAt: "2026-10-30T12:00:00Z", reviewsLast7Days: 2, attemptsLast7Days: 3 };
 
 beforeEach(() => {
@@ -191,7 +191,7 @@ describe("GetStudyMaterialCard", () => {
 
   describe("unsaved phone work", () => {
     const BLOCKED = "This phone has 12 card reviews and 1 practice test that aren't saved anywhere else yet. Save my phone work first, then get your study material.";
-    const unsaved = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+    const unsaved = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
 
     it("matches the sentence the app itself refuses with", () => {
       expect(unsavedPhoneWorkSentence(unsaved)).toBe(BLOCKED);
@@ -199,6 +199,18 @@ describe("GetStudyMaterialCard", () => {
       expect(unsavedPhoneWorkSentence({ ...unsaved, materials: 1, guides: 1, generatedTests: 1 })).toBe("This phone has 12 card reviews, 2 practice tests, 1 study guide, and 1 study material that aren't saved anywhere else yet. Save my phone work first, then get your study material.");
       expect(unsavedPhoneWorkSentence(none)).toBeNull();
       expect(unsavedPhoneWorkSentence({ ...none, reviews: 1 })).toBe("This phone has 1 card review that isn't saved anywhere else yet. Save my phone work first, then get your study material.");
+    });
+
+    it("counts folder-only phone work and blocks the restore for it", async () => {
+      const folders = { ...none, organization: 3 };
+      expect(unsavedPhoneWorkSentence(folders)).toBe("This phone has 3 folder changes that aren't saved anywhere else yet. Save my phone work first, then get your study material.");
+      expect(unsavedPhoneWorkSentence({ ...none, organization: 1 })).toContain("1 folder change that isn't saved");
+      mocks.unsavedPhoneWork.mockResolvedValue(folders);
+      render(<GetStudyMaterialCard />);
+      fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
+      await screen.findByText(/From your Mac/);
+      expect(screen.getByRole("button", { name: "Save my phone work first" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Replace what's on this phone" })).toBeNull();
     });
 
     it("on iOS blocks Replace and only offers Not now", async () => {

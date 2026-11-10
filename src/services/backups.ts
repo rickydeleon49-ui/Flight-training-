@@ -265,6 +265,8 @@ export interface UnsavedPhoneWork {
   materials: number;
   guides: number;
   generatedTests: number;
+  /** Folder and "move to folder" changes. */
+  organization: number;
   since: string | null;
 }
 
@@ -279,12 +281,12 @@ export async function recordFreshPhoneBaseline(): Promise<void> {
 }
 
 export async function unsavedPhoneWork(): Promise<UnsavedPhoneWork> {
-  if (!isTauri()) return { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+  if (!isTauri()) return { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
   return invoke<UnsavedPhoneWork>("unsaved_phone_work");
 }
 
-export function unsavedPhoneWorkTotal(work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials" | "guides" | "generatedTests">): number {
-  return work.reviews + work.tests + work.bookmarks + work.readingPositions + work.materials + work.guides + work.generatedTests;
+export function unsavedPhoneWorkTotal(work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials" | "guides" | "generatedTests" | "organization">): number {
+  return work.reviews + work.tests + work.bookmarks + work.readingPositions + work.materials + work.guides + work.generatedTests + work.organization;
 }
 
 export interface SavedPhoneWork {
@@ -307,7 +309,7 @@ export function savedPhoneWorkSentence(saved: Pick<SavedPhoneWork, "fileName" | 
 
 /** "12 card reviews and 1 practice test", or null when nothing is unsaved. */
 export function unsavedPhoneWorkCounts(
-  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials" | "guides" | "generatedTests">,
+  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials" | "guides" | "generatedTests" | "organization">,
 ): string | null {
   const part = (n: number, one: string, many: string) => (n === 0 ? null : n === 1 ? `1 ${one}` : `${n} ${many}`);
   const parts = [
@@ -317,6 +319,7 @@ export function unsavedPhoneWorkCounts(
     part(work.readingPositions, "reading position", "reading positions"),
     part(work.guides, "study guide", "study guides"),
     part(work.materials, "study material", "study materials"),
+    part(work.organization, "folder change", "folder changes"),
   ].filter((p): p is string => p !== null);
   if (parts.length === 0) return null;
   return parts.length === 1 ? parts[0]!
@@ -326,7 +329,7 @@ export function unsavedPhoneWorkCounts(
 
 /** Mirrors the sentence the app itself refuses with (src-tauri/src/phone_work.rs). */
 export function unsavedPhoneWorkSentence(
-  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials" | "guides" | "generatedTests">,
+  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials" | "guides" | "generatedTests" | "organization">,
 ): string | null {
   const list = unsavedPhoneWorkCounts(work);
   if (list === null) return null;

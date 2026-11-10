@@ -5,7 +5,7 @@ vi.mock("@tauri-apps/api/core", () => core);
 vi.mock("@/data", () => ({ isTauri: () => true }));
 import { preparePhoneProgress, sendPhoneProgress, sentPhoneProgressSentence } from "./phoneProgress";
 
-const zero = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+const zero = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
 const base = { fileName: "My phone progress.hfdprogress", sentAt: "x", nothingNew: false, counts: zero, pdfsIncluded: 0, pdfsLeft: 0, fileBytes: 1 };
 
 beforeEach(() => { core.invoke.mockReset(); });

@@ -43,7 +43,7 @@ describe("study pack provenance schema 37", () => {
   it("upgrades 36 to 37 without touching existing rows and accepts a good database", async () => {
     const engine = await openNodeEngine();
     try {
-      await applyMigrations((sql) => engine.exec(sql), new Set([37]));
+      await applyMigrations((sql) => engine.exec(sql), new Set([37, 38]));
       engine.exec(`INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m','Hers','${AT}','${AT}')`);
       const before = engine.query("SELECT * FROM study_materials");
       await applyMigrations((sql) => engine.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 36).map((m) => m.version)));

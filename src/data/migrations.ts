@@ -49,6 +49,7 @@ import syncPictureCards from "../../src-tauri/migrations/0034_sync_picture_cards
 import cardReviewEventFolds from "../../src-tauri/migrations/0035_card_review_event_folds.sql?raw";
 import kitQueue from "../../src-tauri/migrations/0036_kit_queue.sql?raw";
 import studyPackProvenance from "../../src-tauri/migrations/0037_study_pack_provenance.sql?raw";
+import libraryFolders from "../../src-tauri/migrations/0038_library_folders.sql?raw";
 
 export interface Migration {
   version: number;
@@ -94,6 +95,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 35, description: "card_review_event_folds", sql: cardReviewEventFolds },
   { version: 36, description: "kit_queue", sql: kitQueue },
   { version: 37, description: "study_pack_provenance", sql: studyPackProvenance },
+  { version: 38, description: "library_folders", sql: libraryFolders },
 ];
 
 /**

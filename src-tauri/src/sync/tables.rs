@@ -71,6 +71,9 @@ pub(crate) const SYNC_TABLES: &[SyncTable] = &[
     t("study_set_history", "id", MergeRule::Union),
     t("material_reading_state", "material_id", MergeRule::Lww),
     t("material_bookmarks", "id", MergeRule::LwwTombstone),
+    // Her own Study Library folders (0038). folder_id has no FK on purpose.
+    t("library_folders", "id", MergeRule::Lww),
+    t("library_placements", "material_id", MergeRule::Lww),
 ];
 
 pub(crate) fn table(name: &str) -> Option<&'static SyncTable> {

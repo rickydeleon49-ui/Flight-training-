@@ -370,6 +370,8 @@ fn registry_is_the_d6_set_in_order() {
             "study_set_history",
             "material_reading_state",
             "material_bookmarks",
+            "library_folders",
+            "library_placements",
         ]
     );
     assert_eq!(table("study_materials").unwrap().primary_key, "id");
@@ -889,6 +891,9 @@ mod replay_properties {
 /// Synced since migration 0034. Their ids are 64 hex characters (a suffix would break the
 /// CHECK), so they stay out of `ROWS`; `visual_sync` covers their ledger rows.
 const PICTURE_TABLES: [&str; 2] = ["visual_card_regions", "card_item_visual_regions"];
+/// Synced since migration 0038. They stay out of `ROWS` so `insert_graph` can run
+/// against schema-32 fixtures; `ledger` and `apply` cover their rows.
+const FOLDER_TABLES: [&str; 2] = ["library_folders", "library_placements"];
 
 const ROWS: &[(&str, &str, &str, &str)] = &[
     ("study_materials", "m1", "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','Mat','T','T')", "UPDATE study_materials SET title = 'Mat2'"),
@@ -1014,7 +1019,7 @@ mod ledger {
         let registry: Vec<&str> = SYNC_TABLES
             .iter()
             .map(|t| t.name)
-            .filter(|n| !PICTURE_TABLES.contains(n))
+            .filter(|n| !PICTURE_TABLES.contains(n) && !FOLDER_TABLES.contains(n))
             .collect();
         assert_eq!(names, registry);
     }
@@ -1034,7 +1039,7 @@ mod ledger {
                 assert_eq!(n, 1, "{} {op}", t.name);
             }
         }
-        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 63);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 69);
     }
 
     #[test]
@@ -1169,7 +1174,7 @@ mod ledger {
             .unwrap();
         crate::backup::verify_application_database(&path).unwrap();
         let copy = Connection::open(&path).unwrap();
-        assert_eq!(count(&copy, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 63);
+        assert_eq!(count(&copy, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 69);
         for table in ["local_changes", "sync_row_meta", "sync_applied"] {
             assert_eq!(
                 count(
@@ -1179,6 +1184,148 @@ mod ledger {
                 1
             );
         }
+    }
+
+    #[test]
+    fn library_folder_and_placement_log_insert_update_delete() {
+        let conn = migrated();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m1', 'Mat', 'T', 'T')",
+            [],
+        )
+        .unwrap();
+
+        // Folder insert/update/delete
+        conn.execute(
+            "INSERT INTO library_folders (id, name, position, created_at, updated_at) VALUES ('f1', 'Ground School', 0, 'T', 'T')",
+            [],
+        )
+        .unwrap();
+        assert_eq!(ops(&conn, "library_folders", "f1"), ["insert"]);
+        assert_eq!(deleted(&conn, "library_folders", "f1"), Some(0));
+
+        conn.execute(
+            "UPDATE library_folders SET name = 'Flight Ops', updated_at = 'T2' WHERE id = 'f1'",
+            [],
+        )
+        .unwrap();
+        assert_eq!(ops(&conn, "library_folders", "f1"), ["insert", "update"]);
+        assert_eq!(deleted(&conn, "library_folders", "f1"), Some(0));
+
+        conn.execute("DELETE FROM library_folders WHERE id = 'f1'", [])
+            .unwrap();
+        assert_eq!(
+            ops(&conn, "library_folders", "f1"),
+            ["insert", "update", "delete"]
+        );
+        assert_eq!(deleted(&conn, "library_folders", "f1"), Some(1));
+
+        // Placement insert/update/delete
+        conn.execute(
+            "INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES ('m1', 'f1', 0, 'T')",
+            [],
+        )
+        .unwrap();
+        assert_eq!(ops(&conn, "library_placements", "m1"), ["insert"]);
+        assert_eq!(deleted(&conn, "library_placements", "m1"), Some(0));
+
+        conn.execute(
+            "UPDATE library_placements SET position = 1, updated_at = 'T2' WHERE material_id = 'm1'",
+            [],
+        )
+        .unwrap();
+        assert_eq!(ops(&conn, "library_placements", "m1"), ["insert", "update"]);
+        assert_eq!(deleted(&conn, "library_placements", "m1"), Some(0));
+
+        conn.execute(
+            "DELETE FROM library_placements WHERE material_id = 'm1'",
+            [],
+        )
+        .unwrap();
+        assert_eq!(
+            ops(&conn, "library_placements", "m1"),
+            ["insert", "update", "delete"]
+        );
+        assert_eq!(deleted(&conn, "library_placements", "m1"), Some(1));
+    }
+
+    #[test]
+    fn sync_applying_silences_library_folder_and_placement_triggers() {
+        let conn = migrated();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m1', 'Mat', 'T', 'T')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+            [],
+        )
+        .unwrap();
+
+        conn.execute(
+            "INSERT INTO library_folders (id, name, position, created_at, updated_at) VALUES ('f1', 'Folder', 0, 'T', 'T')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "UPDATE library_folders SET name = 'Renamed' WHERE id = 'f1'",
+            [],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM library_folders WHERE id = 'f1'", [])
+            .unwrap();
+
+        conn.execute(
+            "INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES ('m1', 'f1', 0, 'T')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "UPDATE library_placements SET position = 2 WHERE material_id = 'm1'",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "DELETE FROM library_placements WHERE material_id = 'm1'",
+            [],
+        )
+        .unwrap();
+
+        assert_eq!(ops(&conn, "library_folders", "f1"), Vec::<String>::new());
+        assert_eq!(deleted(&conn, "library_folders", "f1"), None);
+        assert_eq!(ops(&conn, "library_placements", "m1"), Vec::<String>::new());
+        assert_eq!(deleted(&conn, "library_placements", "m1"), None);
+    }
+
+    #[test]
+    fn deleting_a_material_with_a_placement_records_the_placement_as_deleted() {
+        let conn = migrated();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m1', 'Mat', 'T', 'T')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO library_folders (id, name, position, created_at, updated_at) VALUES ('f1', 'Folder', 0, 'T', 'T')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES ('m1', 'f1', 0, 'T')",
+            [],
+        )
+        .unwrap();
+
+        assert_eq!(ops(&conn, "library_placements", "m1"), ["insert"]);
+        assert_eq!(deleted(&conn, "library_placements", "m1"), Some(0));
+
+        // Cascade delete by deleting the material
+        conn.execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+
+        assert_eq!(ops(&conn, "library_placements", "m1"), ["insert", "delete"]);
+        assert_eq!(deleted(&conn, "library_placements", "m1"), Some(1));
     }
 }
 
@@ -2010,7 +2157,7 @@ mod apply {
         assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), before);
         for t in SYNC_TABLES
             .iter()
-            .filter(|t| !PICTURE_TABLES.contains(&t.name))
+            .filter(|t| !PICTURE_TABLES.contains(&t.name) && !FOLDER_TABLES.contains(&t.name))
         {
             let n = count(&mac, &format!("SELECT COUNT(*) FROM {}", t.name));
             assert!(n >= 1, "{} is empty", t.name);
@@ -2855,6 +3002,343 @@ mod apply {
             Err(ApplyError::UnknownColumn("study_materials"))
         ));
         assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 0);
+    }
+
+    #[test]
+    fn placement_change_on_db_a_applies_on_db_b_even_with_unknown_folder() {
+        let mut a = device(MAC);
+        let mut b = device(PHONE);
+        // Both devices know about material m1.
+        take(&mut a, &material_file(MAC));
+        take(&mut b, &material_file(MAC));
+
+        // DB A places m1 into a folder id that DB B does not have (folder_id has no FK).
+        a.execute(
+            "INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES ('m1', 'f-missing-on-b', 0, ?1)",
+            [T1],
+        )
+        .unwrap();
+
+        // Round-trip: export from A, apply on B.
+        let file = ship(&mut a, MAC, 0);
+        let out = take(&mut b, &file);
+        assert_eq!(out.written, 1);
+        assert_eq!(
+            title(
+                &b,
+                "SELECT folder_id FROM library_placements WHERE material_id = 'm1'"
+            ),
+            Some("f-missing-on-b".into())
+        );
+        // DB B has no such folder row, yet placement applied with no MissingParent error.
+        assert_eq!(
+            count(
+                &b,
+                "SELECT COUNT(*) FROM library_folders WHERE id = 'f-missing-on-b'"
+            ),
+            0
+        );
+
+        // Later update on A to a real folder also round-trips and applies on B.
+        a.execute(
+            "INSERT INTO library_folders (id, name, position, created_at, updated_at) VALUES ('f1', 'IFR Prep', 0, ?1, ?1)",
+            [T2],
+        )
+        .unwrap();
+        a.execute(
+            "UPDATE library_placements SET folder_id = 'f1', position = 1, updated_at = ?1 WHERE material_id = 'm1'",
+            [T2],
+        )
+        .unwrap();
+        let file2 = ship(&mut a, MAC, 1);
+        let out2 = take(&mut b, &file2);
+        assert!(out2.written >= 2);
+        assert_eq!(
+            title(
+                &b,
+                "SELECT folder_id FROM library_placements WHERE material_id = 'm1'"
+            ),
+            Some("f1".into())
+        );
+    }
+
+    // ---- LIBRARY-ORG-01 audit MED-1: delete and concurrency paths ----
+
+    fn folder_row(id: &str, name: &str, position: i64) -> Value {
+        json!({"id": id, "name": name, "position": position, "created_at": T1, "updated_at": T1})
+    }
+
+    fn placement_row(material: &str, folder: Option<&str>, position: i64, at: &str) -> Value {
+        json!({"material_id": material, "folder_id": folder, "position": position, "updated_at": at})
+    }
+
+    /// m1 (+ m2), folders f1 and f2, and m1 placed in f1: the same file on every device.
+    fn folder_seed() -> EncodedChangeFile {
+        file_of(
+            "seed",
+            T1,
+            vec![
+                ch(
+                    1,
+                    "study_materials",
+                    "m1",
+                    Op::Insert,
+                    T1,
+                    Some(material_row("m1", "One")),
+                ),
+                ch(
+                    2,
+                    "study_materials",
+                    "m2",
+                    Op::Insert,
+                    T1,
+                    Some(material_row("m2", "Two")),
+                ),
+                ch(
+                    3,
+                    "library_folders",
+                    "f1",
+                    Op::Insert,
+                    T1,
+                    Some(folder_row("f1", "Weather", 0)),
+                ),
+                ch(
+                    4,
+                    "library_folders",
+                    "f2",
+                    Op::Insert,
+                    T1,
+                    Some(folder_row("f2", "Rules", 1)),
+                ),
+                ch(
+                    5,
+                    "library_placements",
+                    "m1",
+                    Op::Insert,
+                    T1,
+                    Some(placement_row("m1", Some("f1"), 0, T1)),
+                ),
+            ],
+        )
+    }
+
+    fn seeded(id: &str) -> Connection {
+        let mut conn = device(id);
+        take(&mut conn, &folder_seed());
+        conn
+    }
+
+    fn placement_of(conn: &Connection, material: &str) -> Option<Option<String>> {
+        conn.query_row(
+            "SELECT folder_id FROM library_placements WHERE material_id = ?1",
+            [material],
+            |r| r.get::<_, Option<String>>(0),
+        )
+        .optional()
+        .unwrap()
+    }
+
+    /// Everything the Library screen reads, in one comparable value.
+    fn folder_state(conn: &Connection) -> (i64, i64, Vec<(String, Option<String>)>) {
+        let mut stmt = conn
+            .prepare("SELECT material_id, folder_id FROM library_placements ORDER BY material_id")
+            .unwrap();
+        let placements = stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect();
+        (
+            count(conn, "SELECT COUNT(*) FROM study_materials"),
+            count(conn, "SELECT COUNT(*) FROM library_folders"),
+            placements,
+        )
+    }
+
+    #[test]
+    fn a_folder_delete_on_a_applies_on_b_and_the_material_stays() {
+        let mut a = seeded(MAC);
+        let mut b = seeded(PHONE);
+        // The app's folder delete: clear placements, then delete the folder (one transaction).
+        let tx = a.transaction().unwrap();
+        tx.execute(
+            "UPDATE library_placements SET folder_id = NULL, updated_at = ?1 WHERE folder_id = 'f1'",
+            [T2],
+        )
+        .unwrap();
+        tx.execute("DELETE FROM library_folders WHERE id = 'f1'", [])
+            .unwrap();
+        tx.commit().unwrap();
+        take(&mut b, &ship(&mut a, MAC, 0));
+        assert_eq!(
+            count(&b, "SELECT COUNT(*) FROM library_folders WHERE id = 'f1'"),
+            0
+        );
+        assert_eq!(
+            count(&b, "SELECT COUNT(*) FROM library_folders WHERE id = 'f2'"),
+            1
+        );
+        assert_eq!(count(&b, "SELECT COUNT(*) FROM study_materials"), 2);
+        // The material is still there and now reads as "not in a folder".
+        assert_eq!(placement_of(&b, "m1"), Some(None));
+        assert_eq!(meta_pair(&b, "library_folders", "f1").2, 1);
+        assert_eq!(folder_state(&a), folder_state(&b));
+    }
+
+    #[test]
+    fn a_concurrent_folder_delete_and_move_in_never_hide_or_lose_the_material() {
+        let mut a = seeded(MAC);
+        let mut b = seeded(PHONE);
+        // A deletes f2 while B moves m2 into it.
+        a.execute("DELETE FROM library_folders WHERE id = 'f2'", [])
+            .unwrap();
+        b.execute(
+            "INSERT INTO library_placements (material_id, folder_id, position, updated_at) VALUES ('m2', 'f2', 0, ?1)",
+            [T2],
+        )
+        .unwrap();
+        let from_a = ship(&mut a, MAC, 0);
+        let from_b = ship(&mut b, PHONE, 0);
+        take(&mut b, &from_a);
+        take(&mut a, &from_b);
+        assert_eq!(folder_state(&a), folder_state(&b));
+        for conn in [&a, &b] {
+            // Both materials survive; the placement may point at a folder that is gone,
+            // which the Library reads as "Not in a folder" (folder_id has no FK).
+            assert_eq!(count(conn, "SELECT COUNT(*) FROM study_materials"), 2);
+            assert_eq!(
+                count(conn, "SELECT COUNT(*) FROM library_folders WHERE id = 'f2'"),
+                0
+            );
+            assert_eq!(placement_of(conn, "m2"), Some(Some("f2".to_string())));
+        }
+    }
+
+    #[test]
+    fn concurrent_moves_of_one_material_converge_with_a_deterministic_winner() {
+        let mv = |dev: &str, folder: &str, at: &str| {
+            file_of(
+                dev,
+                at,
+                vec![ch(
+                    1,
+                    "library_placements",
+                    "m1",
+                    Op::Update,
+                    at,
+                    Some(placement_row("m1", Some(folder), 0, at)),
+                )],
+            )
+        };
+        // Same moment: the lower device id wins, in either arrival order.
+        let (to_f1, to_f2) = (mv(MAC, "f1", T2), mv(PHONE, "f2", T2));
+        let mut x = seeded("cccc-x");
+        take(&mut x, &to_f1);
+        take(&mut x, &to_f2);
+        let mut y = seeded("dddd-y");
+        take(&mut y, &to_f2);
+        take(&mut y, &to_f1);
+        assert_eq!(placement_of(&x, "m1"), Some(Some("f1".to_string())));
+        assert_eq!(folder_state(&x), folder_state(&y));
+        assert_eq!(meta_pair(&x, "library_placements", "m1").1, MAC);
+        // Different moments: the later move wins, in either arrival order.
+        let (early, late) = (mv(MAC, "f1", T2), mv(PHONE, "f2", T3));
+        let mut x = seeded("cccc-x");
+        take(&mut x, &early);
+        take(&mut x, &late);
+        let mut y = seeded("dddd-y");
+        take(&mut y, &late);
+        take(&mut y, &early);
+        assert_eq!(placement_of(&x, "m1"), Some(Some("f2".to_string())));
+        assert_eq!(folder_state(&x), folder_state(&y));
+    }
+
+    #[test]
+    fn a_placement_for_a_material_the_receiver_lacks_waits_then_applies() {
+        let mut b = device(PHONE);
+        let placement = file_of(
+            MAC,
+            T2,
+            vec![ch(
+                2,
+                "library_placements",
+                "m1",
+                Op::Insert,
+                T2,
+                Some(placement_row("m1", Some("f1"), 0, T2)),
+            )],
+        );
+        // Not tombstoned and not here: refused so the file is retried, nothing is half-applied.
+        assert!(matches!(
+            try_take(&mut b, &placement),
+            Err(ApplyError::MissingParent("library_placements"))
+        ));
+        assert_eq!(count(&b, "SELECT COUNT(*) FROM library_placements"), 0);
+        assert_eq!(guard_rows(&b), 0);
+        // The material file arrives, then the retry succeeds.
+        take(&mut b, &material_file(MAC));
+        let out = take(&mut b, &placement);
+        assert_eq!(out.written, 1);
+        assert_eq!(placement_of(&b, "m1"), Some(Some("f1".to_string())));
+    }
+
+    #[test]
+    fn a_placement_for_a_tombstoned_material_is_skipped_without_a_stall() {
+        let mut b = device(PHONE);
+        take(&mut b, &material_file(MAC));
+        take(
+            &mut b,
+            &file_of(
+                MAC,
+                T3,
+                vec![ch(2, "study_materials", "m1", Op::Delete, T3, None)],
+            ),
+        );
+        let late = file_of(
+            "cccc",
+            T2,
+            vec![ch(
+                1,
+                "library_placements",
+                "m1",
+                Op::Insert,
+                T2,
+                Some(placement_row("m1", Some("f1"), 0, T2)),
+            )],
+        );
+        let out = try_take(&mut b, &late).unwrap();
+        assert_eq!((out.written, out.ignored), (0, 1));
+        assert_eq!(count(&b, "SELECT COUNT(*) FROM library_placements"), 0);
+    }
+
+    #[test]
+    fn a_material_delete_on_a_removes_the_placement_on_b() {
+        let mut a = seeded(MAC);
+        let mut b = seeded(PHONE);
+        a.execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+        // The cascade is logged as a placement delete on A.
+        assert_eq!(
+            count(
+                &a,
+                "SELECT COUNT(*) FROM local_changes WHERE table_name = 'library_placements' AND row_id = 'm1' AND op = 'delete'"
+            ),
+            1
+        );
+        take(&mut b, &ship(&mut a, MAC, 0));
+        assert_eq!(
+            count(&b, "SELECT COUNT(*) FROM study_materials WHERE id = 'm1'"),
+            0
+        );
+        assert_eq!(placement_of(&b, "m1"), None);
+        assert_eq!(meta_pair(&b, "library_placements", "m1").2, 1);
+        // The other material and both folders are untouched.
+        assert_eq!(
+            count(&b, "SELECT COUNT(*) FROM study_materials WHERE id = 'm2'"),
+            1
+        );
+        assert_eq!(count(&b, "SELECT COUNT(*) FROM library_folders"), 2);
+        assert_eq!(folder_state(&a), folder_state(&b));
     }
 }
 
@@ -10514,7 +10998,8 @@ mod edit_carry {
             "DROP TABLE card_review_event_folds; DROP TABLE card_version_pending_claims;
              DROP TABLE kit_queue_item; DROP TABLE kit_queue;
              DROP TABLE study_pack_acks; DROP TABLE study_pack_items; DROP TABLE study_pack_imports;
-             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37);",
+             DROP TABLE library_placements; DROP TABLE library_folders;
+             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38);",
         )
         .unwrap();
         crate::backup::verify_application_connection(conn).unwrap();

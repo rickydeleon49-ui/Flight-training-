@@ -194,6 +194,7 @@ fn zero_counts() -> UnsavedPhoneWork {
         materials: 0,
         guides: 0,
         generated_tests: 0,
+        organization: 0,
         since: None,
     }
 }
@@ -418,6 +419,7 @@ fn add_kind(counts: &mut UnsavedPhoneWork, table: &str) {
         "study_materials" => counts.materials += 1,
         "ai_study_sets" => counts.guides += 1,
         "practice_tests" => counts.generated_tests += 1,
+        "library_folders" | "library_placements" => counts.organization += 1,
         _ => {}
     }
 }
