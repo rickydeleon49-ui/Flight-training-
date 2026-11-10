@@ -122,6 +122,7 @@ type ProfileDraft = Omit<Profile, "id" | "createdAt" | "updatedAt">;
 
 const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
   { value: "light", label: "Light" },
+  { value: "light-grey", label: "Light grey" },
   { value: "dark", label: "Dark" },
   { value: "auto", label: "Auto" },
 ];

@@ -41,7 +41,7 @@ describe("theme", () => {
   });
 
   it("round trips all three and removes the attribute for auto", () => {
-    for (const t of ["light", "dark", "auto"] as ThemeChoice[]) {
+    for (const t of ["light", "light-grey", "dark", "auto"] as ThemeChoice[]) {
       setStoredTheme(t);
       expect(getStoredTheme()).toBe(t);
       applyTheme(t);
@@ -64,9 +64,11 @@ describe("theme", () => {
     await vi.waitFor(() => expect(setTheme).toHaveBeenCalledTimes(1));
     applyTheme("dark");
     await vi.waitFor(() => expect(setTheme).toHaveBeenCalledTimes(2));
-    applyTheme("auto");
+    applyTheme("light-grey");
     await vi.waitFor(() => expect(setTheme).toHaveBeenCalledTimes(3));
-    expect(setTheme.mock.calls.map((c) => c[0])).toEqual(["light", "dark", null]);
+    applyTheme("auto");
+    await vi.waitFor(() => expect(setTheme).toHaveBeenCalledTimes(4));
+    expect(setTheme.mock.calls.map((c) => c[0])).toEqual(["light", "dark", "light", null]);
     setTheme.mockImplementation(() => {
       throw new Error("no");
     });
@@ -105,7 +107,7 @@ describe("theme-boot.js", () => {
   };
 
   it("matches applyTheme(getStoredTheme()) for every stored value", () => {
-    for (const v of [null, "light", "dark", "auto", '"dark"', '"auto"', "junk", "{bad"]) {
+    for (const v of [null, "light", "light-grey", "dark", "auto", '"dark"', '"auto"', "junk", "{bad"]) {
       localStorage.clear();
       if (v !== null) localStorage.setItem(THEME_STORAGE_KEY, v);
       root().removeAttribute("data-theme");

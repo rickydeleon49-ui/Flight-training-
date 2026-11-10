@@ -42,7 +42,7 @@ describe("dark twins", () => {
     return out.sort();
   };
   const DARK = ':root[data-theme="dark"]';
-  const AUTO = ':root:not([data-theme="light"])';
+  const AUTO = ':root:not([data-theme="light"]):not([data-theme="light-grey"])';
   const cases: [string, string, string][] = [["base", ":root", ""]];
   for (const a of ["lavender", "sky", "mint"]) cases.push([a, `:root[data-accent="${a}"]`, `[data-accent="${a}"]`]);
   for (const [label, light, suffix] of cases) {

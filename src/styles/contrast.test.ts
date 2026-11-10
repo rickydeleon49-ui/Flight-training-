@@ -63,9 +63,14 @@ function ratio(a0: string, b: string): number {
 
 const ACCENTS = ["berry", "lavender", "sky", "mint"] as const;
 const DARK_ATTR = ':root[data-theme="dark"]';
-const DARK_AUTO = ':root:not([data-theme="light"])';
+const DARK_AUTO = ':root:not([data-theme="light"]):not([data-theme="light-grey"])';
 const THEMES = [
   { name: "light", base: [block(":root")], accentSel: (a: string) => `:root[data-accent="${a}"]` },
+  {
+    name: "light-grey",
+    base: [block(":root"), block(':root[data-theme="light-grey"]')],
+    accentSel: (a: string) => `:root[data-theme="light-grey"][data-accent="${a}"]`,
+  },
   {
     name: "dark",
     base: [block(":root"), block(DARK_ATTR)],
@@ -88,7 +93,7 @@ describe("colour contrast (WCAG 2.x)", () => {
           accent === "berry" ? theme.base : [
                 ...theme.base,
                 block(`:root[data-accent="${accent}"]`),
-                ...(theme.name === "dark" ? [block(theme.accentSel(accent))] : []),
+                ...(theme.name !== "light" ? [block(theme.accentSel(accent))] : []),
               ];
         const t = resolver(blocks);
         const L = `${theme.name}/${accent}`;

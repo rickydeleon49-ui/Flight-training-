@@ -10,8 +10,8 @@
       if (raw) {
         var v = raw;
         try { v = JSON.parse(raw); } catch (e) {}
-        if (v !== "light" && v !== "dark" && v !== "auto") v = raw;
-        if (v === "light" || v === "dark" || v === "auto") theme = v;
+        if (v !== "light" && v !== "light-grey" && v !== "dark" && v !== "auto") v = raw;
+        if (v === "light" || v === "light-grey" || v === "dark" || v === "auto") theme = v;
       }
     } catch (e) {}
     if (theme === "auto") document.documentElement.removeAttribute("data-theme");

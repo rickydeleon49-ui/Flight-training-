@@ -192,6 +192,23 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Light grey theme (a choice in Settings): iOS-style warm grey page with
+ * white groups. The default light theme above stays the original ivory.
+ * ------------------------------------------------------------------ */
+
+:root[data-theme="light-grey"] {
+  --palette-ivory: #f5f2f0;
+  --surface-sidebar: #ede9e6;
+  --surface-sunken: #ebe7e4;
+  --surface-raised: #ffffff;
+  --border-subtle: #e3ded9;
+  --accent-fill: #f7e9ee;
+}
+:root[data-theme="light-grey"][data-accent="lavender"] { --accent-fill: #efecf9; }
+:root[data-theme="light-grey"][data-accent="sky"] { --accent-fill: #e6f1f8; }
+:root[data-theme="light-grey"][data-accent="mint"] { --accent-fill: #e4f3ec; }
+
+/* ------------------------------------------------------------------ *
  * Dark theme (DESIGN-01 slice 5).
  *
  * Every light custom property has a dark twin here, written twice with the
@@ -285,7 +302,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) {
     color-scheme: dark;
 
     --palette-ivory: #1c1c1e;
@@ -379,7 +396,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"])[data-accent="lavender"] {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"])[data-accent="lavender"] {
     --accent-primary: #a99bea;
     --accent-primary-hover: #bbb0f2;
     --accent-fill: #322d4a;
@@ -397,7 +414,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"])[data-accent="sky"] {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"])[data-accent="sky"] {
     --accent-primary: #6fb4dd;
     --accent-primary-hover: #8bc4e6;
     --accent-fill: #243746;
@@ -415,7 +432,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"])[data-accent="mint"] {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"])[data-accent="mint"] {
     --accent-primary: #62c4a0;
     --accent-primary-hover: #7bd0b2;
     --accent-fill: #213a31;

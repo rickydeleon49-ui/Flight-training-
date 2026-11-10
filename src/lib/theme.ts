@@ -8,7 +8,7 @@
 import { isTauri } from "@/data";
 import { isIOS } from "@/services/platform";
 
-export type ThemeChoice = "light" | "dark" | "auto";
+export type ThemeChoice = "light" | "light-grey" | "dark" | "auto";
 
 export const THEME_STORAGE_KEY = "her-flight-deck.theme";
 /** Mac and browser stay Light until DESIGN-01 slice 25 switches the default to "auto". */
@@ -23,7 +23,7 @@ function getStorage(): Storage | null {
 }
 
 export function isThemeChoice(value: unknown): value is ThemeChoice {
-  return value === "light" || value === "dark" || value === "auto";
+  return value === "light" || value === "light-grey" || value === "dark" || value === "auto";
 }
 
 /** Reads the saved theme. On iPhone always "auto". */
@@ -62,14 +62,14 @@ function setNativeTheme(theme: ThemeChoice): void {
   if (!isTauri() || isIOS()) return;
   try {
     void import("@tauri-apps/api/window")
-      .then(({ getCurrentWindow }) => getCurrentWindow().setTheme(theme === "auto" ? null : theme))
+      .then(({ getCurrentWindow }) => getCurrentWindow().setTheme(theme === "auto" ? null : theme === "dark" ? "dark" : "light"))
       .catch(() => {});
   } catch {
     // native title bar theme is a nicety; ignore failures
   }
 }
 
-/** Light/Dark set data-theme; Auto removes it. iPhone ignores the choice (Auto). */
+/** Light/Light grey/Dark set data-theme; Auto removes it. iPhone ignores the choice (Auto). */
 export function applyTheme(theme: ThemeChoice): void {
   if (typeof document === "undefined") return;
   const effective: ThemeChoice = isIOS() ? "auto" : theme;

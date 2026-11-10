@@ -195,12 +195,21 @@ describe("Appearance setting in Settings", () => {
       expect(screen.getByText("Matches your iPhone or Mac")).toBeTruthy();
     });
 
+    it("Light grey sets data-theme and saves", async () => {
+      await open();
+      await act(async () => {
+        fireEvent.click(await screen.findByRole("radio", { name: "Light grey" }));
+      });
+      expect(document.documentElement.getAttribute("data-theme")).toBe("light-grey");
+      expect(getStoredTheme()).toBe("light-grey");
+    });
+
     it("radios share a name so arrow keys move the choice", async () => {
       await open();
       const radios = (await screen.findAllByRole("radio")).filter(
         (r) => (r as HTMLInputElement).name === "theme",
       ) as HTMLInputElement[];
-      expect(radios.map((r) => r.value)).toEqual(["light", "dark", "auto"]);
+      expect(radios.map((r) => r.value)).toEqual(["light", "light-grey", "dark", "auto"]);
     });
 
     it("iPhone: no radiogroup, plain Auto row", async () => {
