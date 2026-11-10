@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 720" role="img" aria-labelledby="ti de"><title id="ti">Preventive maintenance, repairs and alterations: who may do what</title><desc id="de">Preventive maintenance is simple or minor preservation and replacement of small standard parts, limited to the items in 14 CFR part 43 appendix A. Certificated pilots, excluding student, sport and recreational pilots, may do it on aircraft they own or operate, and must make a maintenance record entry with a description, date and pilot name, signature, certificate number and type. Major repairs and alterations are approved on FAA Form 337 by a repair station, an A&amp;P with IA or an FAA representative; minor ones by an A&amp;P or repair station with a maintenance record entry.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Preventive maintenance, repairs and alterations: who may do what</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Maintenance is the preservation, inspection, overhaul and repair of an aircraft, including the</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">replacement of parts.</text>
+<rect x="20" y="89.0" width="337" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="106.0" style="font-size:13px">Preventive maintenance</text>
+<circle cx="31" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="131.0" style="font-size:12px">Simple or minor preservation operations and</text>
+<text class="s" x="40" y="146.5" style="font-size:12px">replacement of small standard parts, not</text>
+<text class="s" x="40" y="162.0" style="font-size:12px">involving complex assembly operations</text>
+<circle cx="31" cy="177.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="181.5" style="font-size:12px">Allowed items are listed and limited to 14 CFR</text>
+<text class="s" x="40" y="197.0" style="font-size:12px">part 43, appendix A(c)</text>
+<circle cx="31" cy="212.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="216.5" style="font-size:12px">Examples from part 43: landing gear tires and</text>
+<text class="s" x="40" y="232.0" style="font-size:12px">shock cords, and servicing shock struts with oil</text>
+<text class="s" x="40" y="247.5" style="font-size:12px">or air; replacing safety wiring and cotter keys;</text>
+<text class="s" x="40" y="263.0" style="font-size:12px">replenishing hydraulic fluid; replacing or</text>
+<text class="s" x="40" y="278.5" style="font-size:12px">cleaning spark plugs; cleaning or replacing fuel</text>
+<text class="s" x="40" y="294.0" style="font-size:12px">and oil strainers or filter elements; servicing</text>
+<text class="s" x="40" y="309.5" style="font-size:12px">batteries; replacing bulbs, reflectors and lenses</text>
+<text class="s" x="40" y="325.0" style="font-size:12px">of position and landing lights</text>
+<rect x="373" y="89.0" width="337" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="106.0" style="font-size:13px">Who may do it</text>
+<circle cx="384" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="131.0" style="font-size:12px">Certificated pilots, excluding student pilots,</text>
+<text class="s" x="393" y="146.5" style="font-size:12px">sport pilots and recreational pilots, on any</text>
+<text class="s" x="393" y="162.0" style="font-size:12px">aircraft they own or operate, if it is not used</text>
+<text class="s" x="393" y="177.5" style="font-size:12px">in air carrier service and does not qualify under</text>
+<text class="s" x="393" y="193.0" style="font-size:12px">14 CFR parts 121, 129 or 135</text>
+<circle cx="384" cy="208.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="212.5" style="font-size:12px">A sport pilot may do it on an aircraft the pilot</text>
+<text class="s" x="393" y="228.0" style="font-size:12px">owns or operates that has a special airworthiness</text>
+<text class="s" x="393" y="243.5" style="font-size:12px">certificate in the LSA category</text>
+<circle cx="384" cy="259.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="263.0" style="font-size:12px">Every pilot who does it must make an entry in the</text>
+<text class="s" x="393" y="278.5" style="font-size:12px">aircraft maintenance record</text>
+<rect class="cl" x="20" y="350.5" width="690" height="104" rx="8"/>
+<text class="t" x="32" y="372.5" style="font-size:13px">The maintenance entry has three parts</text>
+<rect x="32" y="384.5" width="214" height="60" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="48" cy="414.5" r="10" class="ah"/><text class="t m" x="48" y="418.5" style="font-size:12px;fill:#fff">1</text>
+<text class="s" x="64" y="402.5" style="font-size:11px">Description of the work, e.g.</text>
+<text class="s" x="64" y="417.0" style="font-size:11px">"changed oil (Shell Aero-50)</text>
+<text class="s" x="64" y="431.5" style="font-size:11px">at 2,345 hours"</text>
+<rect x="256" y="384.5" width="214" height="60" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="272" cy="414.5" r="10" class="ah"/><text class="t m" x="272" y="418.5" style="font-size:12px;fill:#fff">2</text>
+<text class="s" x="288" y="402.5" style="font-size:11px">Date the work was completed</text>
+<rect x="480" y="384.5" width="214" height="60" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="496" cy="414.5" r="10" class="ah"/><text class="t m" x="496" y="418.5" style="font-size:12px;fill:#fff">3</text>
+<text class="s" x="512" y="402.5" style="font-size:11px">Pilot's name, signature,</text>
+<text class="s" x="512" y="417.0" style="font-size:11px">certificate number and type of</text>
+<text class="s" x="512" y="431.5" style="font-size:11px">certificate</text>
+<text class="t" x="20" y="474.5" style="font-size:13px">Repairs and alterations are classified as major or minor (part 43, appendix A describes the major ones)</text>
+<rect x="20" y="486.5" width="337" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="503.5" style="font-size:13px">Major repair or alteration</text>
+<circle cx="31" cy="524.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="528.5" style="font-size:12px">Approved for return to service on FAA Form 337,</text>
+<text class="s" x="40" y="544.0" style="font-size:12px">Major Repair and Alteration</text>
+<circle cx="31" cy="559.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="563.5" style="font-size:12px">Approved by an appropriately rated certificated</text>
+<text class="s" x="40" y="579.0" style="font-size:12px">repair station, an A&amp;P mechanic holding an IA, or</text>
+<text class="s" x="40" y="594.5" style="font-size:12px">a representative of the Administrator</text>
+<rect x="373" y="486.5" width="337" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="503.5" style="font-size:13px">Minor repair or alteration</text>
+<circle cx="384" cy="524.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="528.5" style="font-size:12px">May be approved for return to service with a</text>
+<text class="s" x="393" y="544.0" style="font-size:12px">proper entry in the maintenance records</text>
+<circle cx="384" cy="559.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="563.5" style="font-size:12px">Approved by an FAA-certificated A&amp;P mechanic or</text>
+<text class="s" x="393" y="579.0" style="font-size:12px">an appropriately certificated repair station</text>
+<rect class="cl" x="20" y="618.0" width="690" height="88.5" rx="8"/>
+<circle cx="35" cy="640.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="644.0" style="font-size:12px">For modifications of experimental aircraft, refer to the operating limitations issued to that aircraft</text>
+<circle cx="35" cy="659.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="663.5" style="font-size:12px">Repairs or modifications and added equipment may change the weight and balance, so records must be</text>
+<text class="s" x="44" y="679.0" style="font-size:12px">updated</text>
+</svg>

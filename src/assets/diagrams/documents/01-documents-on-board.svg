@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 769" role="img" aria-labelledby="ti de"><title id="ti">Aircraft documents: what PHAK says about the paperwork</title><desc id="de">The Certificate of Aircraft Registration must be carried in the aircraft at all times. The Airworthiness Certificate must be displayed legibly to passengers and crew and stays with the aircraft. Pilots must comply with the operating limitations in the approved AFM, markings and placards. The AFM/POH Section 6 holds weight and balance information; part 91 has no specified requirement to calculate it before every flight, but the pilot in command must comply with the AFM limits, which include weight and balance. The owner must keep the documents current.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Aircraft documents: what PHAK says about the paperwork</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">The registration certificate, airworthiness certificate, operating limitations (AFM/POH) and weight</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">and balance information, each as PHAK states it.</text>
+<rect x="20" y="89.0" width="337" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="106.0" style="font-size:13px">Certificate of Aircraft Registration</text>
+<circle cx="31" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="131.0" style="font-size:12px">Before flight the aircraft must be registered</text>
+<text class="s" x="40" y="146.5" style="font-size:12px">with the FAA Aircraft Registry</text>
+<circle cx="31" cy="162.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="166.0" style="font-size:12px">The certificate is issued to the owner as</text>
+<text class="s" x="40" y="181.5" style="font-size:12px">evidence of registration and must be carried in</text>
+<text class="s" x="40" y="197.0" style="font-size:12px">the aircraft at all times</text>
+<circle cx="31" cy="212.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="216.5" style="font-size:12px">Cannot be used for operations when: registered</text>
+<text class="s" x="40" y="232.0" style="font-size:12px">under foreign law; registration canceled on</text>
+<text class="s" x="40" y="247.5" style="font-size:12px">written request; aircraft destroyed or scrapped;</text>
+<text class="s" x="40" y="263.0" style="font-size:12px">ownership transferred; holder loses U.S.</text>
+<text class="s" x="40" y="278.5" style="font-size:12px">citizenship</text>
+<circle cx="31" cy="294.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="298.0" style="font-size:12px">Pink copy of Form 8050-1: may operate an</text>
+<text class="s" x="40" y="313.5" style="font-size:12px">unregistered aircraft for no more than 90 days,</text>
+<text class="s" x="40" y="329.0" style="font-size:12px">not outside the United States</text>
+<rect x="373" y="89.0" width="337" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="106.0" style="font-size:13px">Airworthiness Certificate</text>
+<circle cx="384" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="131.0" style="font-size:12px">Issued by an FAA representative after the</text>
+<text class="s" x="393" y="146.5" style="font-size:12px">aircraft is inspected, meets 14 CFR part 21 and</text>
+<text class="s" x="393" y="162.0" style="font-size:12px">is in condition for safe operation</text>
+<circle cx="384" cy="177.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="181.5" style="font-size:12px">Must be displayed so it is legible to passengers</text>
+<text class="s" x="393" y="197.0" style="font-size:12px">and crew whenever the aircraft is operated</text>
+<circle cx="384" cy="212.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="216.5" style="font-size:12px">Must remain with the aircraft unless it is sold</text>
+<text class="s" x="393" y="232.0" style="font-size:12px">to a foreign purchaser</text>
+<circle cx="384" cy="247.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="251.5" style="font-size:12px">Standard: in effect indefinitely if the aircraft</text>
+<text class="s" x="393" y="267.0" style="font-size:12px">is maintained under parts 21, 43 and 91 and is</text>
+<text class="s" x="393" y="282.5" style="font-size:12px">registered in the U.S.</text>
+<circle cx="384" cy="298.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="302.0" style="font-size:12px">Special: for Experimental, Restricted, Limited,</text>
+<text class="s" x="393" y="317.5" style="font-size:12px">Provisional and Light-Sport Aircraft</text>
+<rect x="20" y="352.5" width="337" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="369.5" style="font-size:13px">Operating limitations and the AFM/POH</text>
+<circle cx="31" cy="390.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="394.5" style="font-size:12px">AFM: written by the manufacturer, approved by the</text>
+<text class="s" x="40" y="410.0" style="font-size:12px">FAA, specific to a make and model, usually by</text>
+<text class="s" x="40" y="425.5" style="font-size:12px">serial number</text>
+<circle cx="31" cy="441.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="445.0" style="font-size:12px">Part 91 requires the pilot to comply with the</text>
+<text class="s" x="40" y="460.5" style="font-size:12px">operating limitations in the approved flight</text>
+<text class="s" x="40" y="476.0" style="font-size:12px">manuals, markings and placards</text>
+<circle cx="31" cy="491.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="495.5" style="font-size:12px">The title page must show the serial number and</text>
+<text class="s" x="40" y="511.0" style="font-size:12px">registration; without them the manual is for</text>
+<text class="s" x="40" y="526.5" style="font-size:12px">general study only</text>
+<circle cx="31" cy="542.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="546.0" style="font-size:12px">Section 2, Limitations: airspeed, powerplant,</text>
+<text class="s" x="40" y="561.5" style="font-size:12px">weight and loading distribution, flight limits,</text>
+<text class="s" x="40" y="577.0" style="font-size:12px">placards</text>
+<circle cx="31" cy="592.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="596.5" style="font-size:12px">The owner/information manual is not FAA approved</text>
+<text class="s" x="40" y="612.0" style="font-size:12px">and cannot be substituted for the AFM/POH</text>
+<rect x="373" y="352.5" width="337" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="369.5" style="font-size:13px">Weight and balance</text>
+<circle cx="384" cy="390.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="394.5" style="font-size:12px">AFM/POH Section 6, Weight and Balance/Equipment</text>
+<text class="s" x="393" y="410.0" style="font-size:12px">List: all the information the FAA requires to</text>
+<text class="s" x="393" y="425.5" style="font-size:12px">calculate weight and balance</text>
+<circle cx="384" cy="441.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="445.0" style="font-size:12px">Section 2 gives the maximum certificated weights,</text>
+<text class="s" x="393" y="460.5" style="font-size:12px">the CG range and the datum location</text>
+<circle cx="384" cy="476.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="480.0" style="font-size:12px">Part 91 has no specified requirement to do weight</text>
+<text class="s" x="393" y="495.5" style="font-size:12px">and balance calculations before each flight, but</text>
+<text class="s" x="393" y="511.0" style="font-size:12px">section 91.9 requires the pilot in command to</text>
+<text class="s" x="393" y="526.5" style="font-size:12px">comply with the AFM operating limits, and these</text>
+<text class="s" x="393" y="542.0" style="font-size:12px">include weight and balance</text>
+<circle cx="384" cy="557.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="561.5" style="font-size:12px">Still, before any flight the pilot should</text>
+<text class="s" x="393" y="577.0" style="font-size:12px">determine the weight and balance condition</text>
+<circle cx="384" cy="592.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="596.5" style="font-size:12px">Weight changes must be noted in the weight and</text>
+<text class="s" x="393" y="612.0" style="font-size:12px">balance records and the equipment list updated,</text>
+<text class="s" x="393" y="627.5" style="font-size:12px">if appropriate</text>
+<rect class="cl" x="20" y="651.0" width="690" height="104.0" rx="8"/>
+<circle cx="35" cy="673.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="677.0" style="font-size:12px">The registered owner/operator is responsible for having a current Airworthiness Certificate and a</text>
+<text class="s" x="44" y="692.5" style="font-size:12px">Certificate of Aircraft Registration in the aircraft</text>
+<circle cx="35" cy="708.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="712.0" style="font-size:12px">A current FCC radio station license is needed if equipped with radios (including the ELT) and operated</text>
+<text class="s" x="44" y="727.5" style="font-size:12px">outside the United States</text>
+</svg>

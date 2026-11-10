@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 783" role="img" aria-labelledby="ti de"><title id="ti">Airworthiness Directives (ADs): what they are and how compliance is recorded</title><desc id="de">ADs under 14 CFR part 39 require correction of unsafe conditions likely to exist in other products of the same design. Two categories: emergency, with immediate compliance before further flight, and less urgent, with compliance within a specified period. ADs are regulatory and must be complied with unless a specific exemption is granted. No overflying of an AD hour limit unless the AD says so. Section 91.417 requires a record of method of compliance, AD number and revision date, next due date and time, and the signature, certificate type and certificate number of the person who did the work.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Airworthiness Directives (ADs): what they are and how compliance is recorded</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Under 14 CFR part 39 the FAA requires correction of unsafe conditions found in an aircraft, engine,</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">propeller or appliance.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="76.0" rx="8"/>
+<text class="s" x="32" y="113.0" style="font-size:12.5px">An unsafe condition exists and is likely to exist or develop in other products of the same design. It</text>
+<text class="s" x="32" y="129.0" style="font-size:12.5px">may come from a design defect, maintenance, or other causes. ADs notify owners and other interested</text>
+<text class="s" x="32" y="145.0" style="font-size:12.5px">persons and specify the conditions under which the product may continue to be operated.</text>
+<text class="t" x="20" y="189.0" style="font-size:13.5px">Two categories</text>
+<rect x="20" y="201.0" width="337" height="54" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="188.5" y="224.41666666666666" style="font-size:12.5px">Emergency nature</text>
+<text class="t m" x="188.5" y="239.91666666666666" style="font-size:12.5px">Requires immediate compliance prior to further flight</text>
+<rect x="373" y="201.0" width="337" height="54" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="541.5" y="224.41666666666666" style="font-size:12.5px">Less urgent nature</text>
+<text class="t m" x="541.5" y="239.91666666666666" style="font-size:12.5px">Requires compliance within a specified period of time</text>
+<rect x="20" y="271.0" width="337" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="288.0" style="font-size:13px">They are regulatory</text>
+<circle cx="31" cy="309.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="313.0" style="font-size:12px">ADs shall be complied with unless a specific</text>
+<text class="s" x="40" y="328.5" style="font-size:12px">exemption is granted</text>
+<circle cx="31" cy="344.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="348.0" style="font-size:12px">The aircraft owner or operator must ensure</text>
+<text class="s" x="40" y="363.5" style="font-size:12px">compliance with all pertinent ADs, including</text>
+<text class="s" x="40" y="379.0" style="font-size:12px">those requiring recurrent or continuing action</text>
+<circle cx="31" cy="394.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="398.5" style="font-size:12px">Example: an AD may require a repetitive</text>
+<text class="s" x="40" y="414.0" style="font-size:12px">inspection each 50 hours of operation; it shall</text>
+<text class="s" x="40" y="429.5" style="font-size:12px">be accomplished and recorded every 50 hours of</text>
+<text class="s" x="40" y="445.0" style="font-size:12px">time in service</text>
+<circle cx="31" cy="460.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="464.5" style="font-size:12px">There is no provision to overfly the maximum hour</text>
+<text class="s" x="40" y="480.0" style="font-size:12px">requirement of an AD unless it is specifically</text>
+<text class="s" x="40" y="495.5" style="font-size:12px">written into the AD</text>
+<rect x="373" y="271.0" width="337" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="288.0" style="font-size:13px">Where to find them</text>
+<circle cx="384" cy="309.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="313.0" style="font-size:12px">All ADs and the AD Biweekly are free on the</text>
+<text class="s" x="393" y="328.5" style="font-size:12px">Internet at http://rgl.faa.gov and available</text>
+<text class="s" x="393" y="344.0" style="font-size:12px">through e-mail</text>
+<circle cx="384" cy="359.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="363.5" style="font-size:12px">The Summary of Airworthiness Directives has all</text>
+<text class="s" x="393" y="379.0" style="font-size:12px">valid ADs published; small aircraft and</text>
+<text class="s" x="393" y="394.5" style="font-size:12px">helicopter books cover aircraft of 12,500 pounds</text>
+<text class="s" x="393" y="410.0" style="font-size:12px">or less</text>
+<circle cx="384" cy="425.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="429.5" style="font-size:12px">Placards may be reproduced as directed by an AD</text>
+<circle cx="384" cy="445.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="449.0" style="font-size:12px">The Handling, Service, and Maintenance section</text>
+<text class="s" x="393" y="464.5" style="font-size:12px">notes that ADs can require additional maintenance</text>
+<text class="s" x="393" y="480.0" style="font-size:12px">or inspections</text>
+<rect class="cl" x="20" y="521.0" width="690" height="250" rx="8"/>
+<text class="t" x="32" y="543.0" style="font-size:13px">Recording compliance (14 CFR part 91, section 91.417): the AD status record</text>
+<rect x="32" y="559.0" width="324" height="42" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="50" cy="580.0" r="10" class="ah"/><text class="t m" x="50" y="584.0" style="font-size:12px;fill:#fff">1</text>
+<text class="t" x="68" y="584.0" style="font-size:12px">Method of compliance</text>
+<rect x="368" y="559.0" width="324" height="42" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="386" cy="580.0" r="10" class="ah"/><text class="t m" x="386" y="584.0" style="font-size:12px;fill:#fff">2</text>
+<text class="t" x="404" y="584.0" style="font-size:12px">AD number and revision date, if recurring</text>
+<rect x="32" y="611.0" width="324" height="42" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="50" cy="632.0" r="10" class="ah"/><text class="t m" x="50" y="636.0" style="font-size:12px;fill:#fff">3</text>
+<text class="t" x="68" y="636.0" style="font-size:12px">Next due date and time</text>
+<rect x="368" y="611.0" width="324" height="42" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="386" cy="632.0" r="10" class="ah"/><text class="t m" x="386" y="636.0" style="font-size:12px;fill:#fff">4</text>
+<text class="t" x="404" y="636.0" style="font-size:12px">Signature (repair station or mechanic)</text>
+<rect x="32" y="663.0" width="324" height="42" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="50" cy="684.0" r="10" class="ah"/><text class="t m" x="50" y="688.0" style="font-size:12px;fill:#fff">5</text>
+<text class="t" x="68" y="688.0" style="font-size:12px">Type of certificate</text>
+<rect x="368" y="663.0" width="324" height="42" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="386" cy="684.0" r="10" class="ah"/><text class="t m" x="386" y="688.0" style="font-size:12px;fill:#fff">6</text>
+<text class="t" x="404" y="688.0" style="font-size:12px">Certificate number</text>
+<text class="s" x="32" y="735.0" style="font-size:11.5px">The record is made by the repair station or mechanic who performed the work. For ready reference, many owners</text>
+<text class="s" x="32" y="750.0" style="font-size:11.5px">keep a chronological list of the pertinent ADs in the back of the aircraft, engine and propeller maintenance</text>
+<text class="s" x="32" y="765.0" style="font-size:11.5px">records.</text>
+</svg>
