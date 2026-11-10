@@ -160,7 +160,7 @@ export function Notes() {
       ) : null}
 
       <div className="stack stack--5">
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Write something down" />
           <CardBody>
             <div className="stack stack--3">
@@ -202,7 +202,7 @@ export function Notes() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card variant="grouped">
           <CardHeader
             title="Your notes"
             action={
@@ -214,7 +214,7 @@ export function Notes() {
           />
           <CardBody flush>
             {data.notes.length > 0 ? (
-              <div style={{ padding: "0 var(--space-5) var(--space-4)" }}>
+              <div className="notes-search">
                 <TextInput
                   type="search"
                   value={search}
@@ -455,7 +455,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
 
   return (
     <div className="note-row note-row--editing">
-      <div className="stack stack--3" style={{ width: "100%" }}>
+      <div className="stack stack--3 notes-edit-stack">
         {conflict ? (
           <div role="status">
             <p>You have unsaved notes from earlier.</p>
@@ -464,7 +464,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
             <details>
               <summary>Saved notes</summary>
               {note.title ? <p><strong>{note.title}</strong></p> : null}
-              <p style={{ whiteSpace: "pre-wrap" }}>{note.body}</p>
+              <p className="notes-prewrap">{note.body}</p>
             </details>
           </div>
         ) : null}

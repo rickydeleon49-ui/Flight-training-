@@ -261,7 +261,7 @@ function ReadinessTool({ state, save }: ToolProps) {
       </Card>
 
       {areas.map(([area, title]) => (
-        <Card key={area}>
+        <Card key={area} variant="grouped">
           <CardHeader title={title} />
           <CardBody flush>
             {state.readinessItems
@@ -310,7 +310,7 @@ function InstructorReport() {
           Print report
         </Button>
       </div>
-      <Card>
+      <Card variant="grouped">
         <CardHeader
           title={`${data.profile.pilotName || "Student pilot"} — Training Progress`}
           eyebrow={formatLongDate(today, today)}
@@ -345,7 +345,7 @@ function InstructorReport() {
         </CardBody>
       </Card>
       <div className="toolkit-two-column">
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Current goals" />
           <CardBody>
             {activeGoals.length ? (
@@ -364,7 +364,7 @@ function InstructorReport() {
             )}
           </CardBody>
         </Card>
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Recent instructor feedback" />
           <CardBody>
             {feedback.length ? (
@@ -384,7 +384,7 @@ function InstructorReport() {
           </CardBody>
         </Card>
       </div>
-      <Card>
+      <Card variant="grouped">
         <CardHeader title="Discussion notes" />
         <CardBody>
           <div
@@ -459,7 +459,7 @@ function MedicalDateConflictCard({
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Two different medical dates" />
       <CardBody>
         <div className="stack stack--3" role="note" aria-label="Medical dates differ" aria-busy={choosing}>
@@ -556,7 +556,7 @@ function RecordsTool({
   return (
     <div className="stack stack--5">
       <MedicalDateConflictCard state={state} guard={medicalChoice} choosing={medicalChoosing} />
-      <Card>
+      <Card variant="grouped">
         <CardHeader
           title="Add a certificate or record"
           eyebrow="Private organizer"
@@ -625,10 +625,7 @@ function RecordsTool({
               />
             </Field>
           </div>
-          <div
-            className="row row--wrap"
-            style={{ marginTop: "var(--space-4)" }}
-          >
+          <div className="row row--wrap toolkit-mt-4">
             <Button variant="primary" onClick={() => void add()} disabled={addBusy}>
               {addBusy ? "Saving…" : "Add record"}
             </Button>
@@ -643,7 +640,7 @@ function RecordsTool({
           </div>
         </CardBody>
       </Card>
-      <Card>
+      <Card variant="grouped">
         <CardHeader
           title="Certificates, endorsements, and records"
           action={
@@ -792,7 +789,7 @@ function CostTool({ state, save }: ToolProps) {
           </div>
         </CardBody>
       </Card>
-      <Card>
+      <Card variant="grouped">
         <CardHeader title="Forecast assumptions" />
         <CardBody>
           <div className="form-grid">
@@ -827,7 +824,7 @@ function CostTool({ state, save }: ToolProps) {
           </div>
           <Button
             variant="primary"
-            style={{ marginTop: "var(--space-4)" }}
+            className="toolkit-mt-4"
             onClick={() => void saveAssumptions()}
           >
             Save assumptions
@@ -943,7 +940,7 @@ function SafetyTool({ state, save }: ToolProps) {
   };
   return (
     <div className="toolkit-two-column">
-      <Card>
+      <Card variant="grouped">
         <CardHeader
           title="Preflight personal check-in"
           eyebrow="IMSAFE + preparation"
@@ -998,7 +995,7 @@ function SafetyTool({ state, save }: ToolProps) {
           </div>
         </CardBody>
       </Card>
-      <Card>
+      <Card variant="grouped">
         <CardHeader title="Recent check-ins" />
         <CardBody>
           {state.safetyChecks.length ? (
@@ -1099,10 +1096,7 @@ function QuizTool({ state, save }: ToolProps) {
               Practice broad private-pilot knowledge topics and see which areas
               deserve another study session.
             </p>
-            <div
-              className="toolkit-hero-metrics"
-              style={{ marginTop: "var(--space-5)" }}
-            >
+            <div className="toolkit-hero-metrics toolkit-mt-5">
               <ReportMetric
                 label="Attempts"
                 value={String(state.quizAttempts.length)}
@@ -1114,14 +1108,14 @@ function QuizTool({ state, save }: ToolProps) {
             </div>
             <Button
               variant="primary"
-              style={{ marginTop: "var(--space-5)" }}
+              className="toolkit-mt-5"
               onClick={start}
             >
               Start quiz
             </Button>
           </CardBody>
         </Card>
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Recent results" />
           <CardBody>
             {state.quizAttempts.length ? (
@@ -1162,7 +1156,7 @@ function QuizTool({ state, save }: ToolProps) {
     );
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader
         title={`Question ${index + 1} of ${QUIZ_QUESTIONS.length}`}
         eyebrow={TOPIC_LABELS[question.topic]}
@@ -1238,7 +1232,7 @@ function ReminderTool({ state, save }: ToolProps) {
   };
   return (
     <div className="toolkit-two-column">
-      <Card>
+      <Card variant="grouped">
         <CardHeader title="Training reminders" eyebrow="On this computer" />
         <CardBody>
           <div className="stack stack--4">
@@ -1276,7 +1270,7 @@ function ReminderTool({ state, save }: ToolProps) {
           </div>
         </CardBody>
       </Card>
-      <Card>
+      <Card variant="grouped">
         <CardHeader
           title="Coming up"
           action={
@@ -1287,12 +1281,12 @@ function ReminderTool({ state, save }: ToolProps) {
           {reminders.length ? (
             <div className="stack stack--3">
               {reminders.slice(0, 10).map((item) => (
-                <div className="row row--between" key={item.id} style={{ alignItems: "center" }}>
+                <div className="row row--between toolkit-center" key={item.id}>
                   <div>
                     <p className="small">{item.title}</p>
                     <p className="tiny dim">{item.detail}</p>
                   </div>
-                  <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+                  <div className="row toolkit-center toolkit-gap-2">
                     {item.homeworkId ? (
                       <Link
                         className="button button--secondary button--small"
@@ -1366,7 +1360,7 @@ function CareerTool({ state, save }: ToolProps) {
         </CardBody>
       </Card>
       <div className="toolkit-two-column">
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Career direction" />
           <CardBody>
             <div className="stack stack--4">
@@ -1404,7 +1398,7 @@ function CareerTool({ state, save }: ToolProps) {
             </div>
           </CardBody>
         </Card>
-        <Card>
+        <Card variant="grouped">
           <CardHeader title="Training achievements" />
           <CardBody>
             <div className="stack stack--4">

@@ -94,3 +94,8 @@
   .note-row { flex-direction: column; }
   .note-row__tools { align-self: flex-end; }
 }
+
+/* Inline styles moved here (DESIGN-01 s23). */
+.notes-search { padding: 0 var(--space-5) var(--space-4); }
+.notes-edit-stack { width: 100%; }
+.notes-prewrap { white-space: pre-wrap; }
