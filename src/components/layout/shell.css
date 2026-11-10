@@ -40,7 +40,7 @@
 }
 
 .brand__name {
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: var(--text-md);
   line-height: 1.15;
   color: var(--text-primary);

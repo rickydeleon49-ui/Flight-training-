@@ -346,7 +346,7 @@ function bundledEntries(root, packages) {
   if (!commit || !sha) throw new Error("scripts/build-airport-coords.mjs lost its SOURCE_COMMIT/SOURCE_SHA256");
   const entries = [];
 
-  for (const [pkgName, family] of [["@fontsource/inter", "Inter"], ["@fontsource-variable/fraunces", "Fraunces"]]) {
+  for (const [pkgName, family] of [["@fontsource-variable/fraunces", "Fraunces"]]) {
     const p = find("npm", pkgName);
     if (!p) throw new Error(`${pkgName} is no longer a production dependency; update bundledEntries()`);
     const files = readLicenseFiles(p.dir, ["OFL-1.1"]);

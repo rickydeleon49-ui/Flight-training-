@@ -95,13 +95,15 @@
   --status-danger: var(--status-overdue);
 
   /* ---- Type ---- */
-  /* Both families are bundled with the application; the stacks behind them
-     still matter for glyphs outside the subsets we ship. */
-  --font-display: "Fraunces Variable", "Iowan Old Style", "Palatino Linotype",
-    Palatino, Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, "Helvetica Neue", sans-serif;
-  --font-numeric: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* System font (SF on Apple systems) everywhere; Fraunces only for the brand
+     name and instructor quotes via --font-brand. */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", system-ui, sans-serif;
+  --font-numeric: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", system-ui, sans-serif;
+  --font-brand: "Fraunces Variable", Georgia, serif;
 
   --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;

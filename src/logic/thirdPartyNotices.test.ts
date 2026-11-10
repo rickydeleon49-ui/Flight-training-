@@ -74,10 +74,13 @@ describe("third-party notices cover every shipped dependency", () => {
 });
 
 describe("notices for licenses with extra obligations", () => {
-  it("ships the full SIL Open Font License with the Inter and Fraunces copyright lines", () => {
+  it("ships the SIL Open Font License with the Fraunces copyright line and no Inter font", () => {
     expect(notice).toContain("SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007");
     expect(notice).toContain("5) The Font Software, modified or unmodified, in part or in whole,");
-    expect(part("PART 1 ", "PART 2 ")).toContain("Copyright 2016 The Inter Project Authors");
+    expect(notice).not.toContain("Copyright 2016 The Inter Project Authors");
+    expect(notice).not.toContain("Inter typeface");
+    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { dependencies?: Record<string, string> };
+    expect(Object.keys(pkg.dependencies ?? {}).filter((n) => n.startsWith("@fontsource/"))).toEqual([]);
     expect(part("PART 1 ", "PART 2 ")).toContain("Copyright 2020 The Fraunces Project Authors");
   });
 

@@ -103,7 +103,7 @@
 
 .feedback-note__quote {
   display: block;
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: var(--text-md);
   line-height: 1.45;
   color: var(--text-primary);
