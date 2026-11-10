@@ -6,7 +6,7 @@ import { schedulesDailyReminder } from "@/services/platform";
 import { useAppData } from "@/state/AppDataContext";
 
 export const STUDY_REMINDER_TITLE = "Your Flight Deck";
-// Generic on purpose: nothing from her study shows on a lock screen.
+// Generic on purpose: no study content shows on a lock screen.
 export const STUDY_REMINDER_BODY = "Time for a short study session.";
 const GRACE_MS = 10 * 60_000;
 const MAX_WAIT_MS = 60_000;
