@@ -134,8 +134,8 @@
   /* ---- Shape ---- */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   /* ---- Depth. Kept very soft; the design leans on spacing, not shadow. -- */

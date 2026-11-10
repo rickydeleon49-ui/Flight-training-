@@ -65,7 +65,12 @@ html.is-ios .ios-tab-bar__tab {
   text-decoration: none;
   touch-action: manipulation;
   position: relative;
+  transition: transform 100ms;
 }
+
+html.is-ios .ios-tab-bar__tab:active { transform: scale(.97); }
+
+html.is-ios a, html.is-ios button, html.is-ios [role="button"], html.is-ios label { -webkit-tap-highlight-color: transparent; }
 
 html.is-ios .ios-tab-bar__tab.is-active { color: var(--accent-primary); }
 

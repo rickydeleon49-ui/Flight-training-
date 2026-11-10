@@ -72,8 +72,10 @@
   color: var(--text-secondary);
   font-size: var(--text-base);
   text-decoration: none;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), transform 100ms;
 }
+
+.nav__link:active { transform: scale(.97); }
 
 .nav__link:hover {
   background: var(--surface-sunken);

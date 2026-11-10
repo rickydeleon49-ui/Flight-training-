@@ -63,9 +63,14 @@
   font-weight: 500;
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition),
-    color var(--transition);
+    color var(--transition), transform 100ms;
   white-space: nowrap;
 }
+
+.button:active,
+.list-row:active { transform: scale(.97); }
+
+.list-row { transition: transform 100ms; }
 
 .button:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -312,7 +317,7 @@ button[role="tab"] {
   height: 1.15rem;
   margin-top: 0.15rem;
   border: 1.5px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface-card);
   display: grid;
   place-items: center;
