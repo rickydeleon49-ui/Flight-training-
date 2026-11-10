@@ -94,7 +94,12 @@ fn an_unchecked_card_flag_is_kept_and_only_true_is_allowed() {
     let mut conn = database();
     let mut set = manual_set();
     set["flashcards"][0]["unchecked"] = json!(true);
-    save_on(&mut conn, &operation(1, "create", Value::Null, set.clone()), NOW).unwrap();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, set.clone()),
+        NOW,
+    )
+    .unwrap();
     assert!(row(&mut conn)["flashcards_json"]
         .as_str()
         .unwrap()

@@ -246,7 +246,13 @@ fn validate_cards(value: Option<&Value>, ids: &mut Vec<String>) -> Check<Value> 
         exact_keys(
             map,
             &["front", "back", "sourcePage"],
-            &["itemId", "origin", "replaces", "visualRegionId", "unchecked"],
+            &[
+                "itemId",
+                "origin",
+                "replaces",
+                "visualRegionId",
+                "unchecked",
+            ],
         )?;
         let source_page = match map.get("sourcePage") {
             Some(Value::Null) => Value::Null,
