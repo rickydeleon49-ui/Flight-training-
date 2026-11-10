@@ -78,6 +78,7 @@ html.is-ios .ios-tab-bar__icon { display: inline-flex; }
 
 html.is-ios .ios-tab-bar__label {
   font-size: min(0.625rem, 12px);
+  font-weight: 600;
   line-height: 1.1;
   max-width: 100%;
   overflow: hidden;

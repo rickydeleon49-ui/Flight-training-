@@ -237,7 +237,7 @@ button[role="tab"] {
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   font-size: var(--text-xs);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -324,9 +324,29 @@ button[role="tab"] {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   padding: 0.55rem 0.75rem;
-  font-size: var(--text-base);
+  min-height: 44px;
+  font-size: var(--text-callout);
   color: var(--text-primary);
   transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+/* Dark and high contrast: sunken fill with a visible control edge. */
+:root[data-theme="dark"] .input,
+:root[data-theme="dark"] .textarea,
+:root[data-theme="dark"] .select {
+  background-color: var(--surface-sunken);
+  border-color: var(--border-control);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .input,
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .textarea,
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .select {
+    background-color: var(--surface-sunken);
+    border-color: var(--border-control);
+  }
+}
+@media (prefers-contrast: more) {
+  .input, .textarea, .select { border-color: var(--border-control); }
 }
 
 .input::placeholder,
@@ -424,6 +444,45 @@ button[role="tab"] {
 }
 
 .checkbox__meta { display: block; }
+
+/* Optional switch look: same checkbox input (role="switch"), a 51x31 track and 27px knob. */
+.checkbox--switch { align-items: center; position: relative; }
+.checkbox--switch input {
+  width: 51px;
+  height: 31px;
+}
+.checkbox--switch .checkbox__mark {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  margin-top: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--border-control);
+  transition: background var(--transition);
+}
+.checkbox--switch .checkbox__mark svg { display: none; }
+.checkbox--switch .checkbox__mark::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition);
+}
+.checkbox--switch input:checked + .checkbox__mark {
+  background: var(--category-complete-ink);
+  border-color: transparent;
+}
+.checkbox--switch input:checked + .checkbox__mark::after { transform: translateX(20px); }
+.checkbox--switch input:focus-visible + .checkbox__mark { box-shadow: var(--focus-ring); }
+@media (prefers-reduced-motion: reduce) {
+  .checkbox--switch .checkbox__mark, .checkbox--switch .checkbox__mark::after { transition: none; }
+}
 
 /* ----------------------------- Dialog ----------------------------- */
 /* Built on the native <dialog> element, so focus trapping, Escape and
