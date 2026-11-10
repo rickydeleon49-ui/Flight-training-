@@ -26,7 +26,8 @@
 //! - `open_navigation_document`: hands the managed file to the default reader
 //!   only when its bytes, read at that moment, match the content the request
 //!   was resolved against. It does not control what the reader reads later
-//!   and cannot jump to a page; the page shown is guidance.
+//!   on desktop; its page is guidance. iOS presents a private snapshot of those
+//!   exact checked bytes in PDFKit at the requested physical page.
 //!
 //! The browser twin is `src/data/navigationTransaction.ts`; the shared cases
 //! in `fixtures/navigation/operation-cases.json` hold the two sides equal.
@@ -1131,6 +1132,16 @@ pub fn open_verified_on<O: DocumentOpener>(
     expected_hash: &str,
     opener: &O,
 ) -> Check<Value> {
+    open_verified_page_on(connection, root, material_id, expected_hash, None, opener)
+}
+
+fn verified_bytes(
+    connection: &Connection,
+    root: &Path,
+    material_id: &str,
+    expected_hash: &str,
+    physical_page: Option<i64>,
+) -> Check<(String, Vec<u8>)> {
     if !material_exists(connection, material_id)? {
         return Err(Code::NotFound);
     }
@@ -1141,14 +1152,29 @@ pub fn open_verified_on<O: DocumentOpener>(
         return Err(Code::FileChanged);
     }
     let (_, total) = identity_of_bytes(&bytes)?;
-    drop(bytes);
     if recorded.total_pages != total {
         return Err(Code::FileChanged);
     }
+    if physical_page.is_some_and(|page| page < 1 || page > total) {
+        return Err(Code::InvalidArgument);
+    }
+    Ok((relative, bytes))
+}
+
+fn open_verified_page_on<O: DocumentOpener>(
+    connection: &Connection,
+    root: &Path,
+    material_id: &str,
+    expected_hash: &str,
+    physical_page: Option<i64>,
+    opener: &O,
+) -> Check<Value> {
+    let (relative, _) =
+        verified_bytes(connection, root, material_id, expected_hash, physical_page)?;
     let path = crate::documents::contained_document_path(&root.join(DOCUMENTS_DIR), &relative)
         .map_err(|_| Code::FileMissing)?;
     opener.open_path(&path).map_err(|_| Code::OpenFailed)?;
-    Ok(json!({ "materialId": material_id, "contentSha256": expected_hash }))
+    Ok(opened_wire(material_id, expected_hash, physical_page))
 }
 
 /* ------------------------------------------------------------------ */
@@ -1197,11 +1223,60 @@ pub fn open_navigation_document_at<O: DocumentOpener>(
     input: &Value,
     opener: &O,
 ) -> Result<Value, NavigationErrorWire> {
-    let m = exact(input, &["materialId", "expectedContentSha256"]).map_err(Code::error)?;
-    let material_id = id_field(m, "materialId").map_err(Code::error)?;
-    let expected = hash_field(m, "expectedContentSha256").map_err(Code::error)?;
+    let (material_id, expected, page) = decode_open(input).map_err(Code::error)?;
     let connection = open_ready(root).map_err(Code::error)?;
-    open_verified_on(&connection, root, &material_id, &expected, opener).map_err(Code::error)
+    if page.is_none() {
+        open_verified_on(&connection, root, &material_id, &expected, opener).map_err(Code::error)
+    } else {
+        open_verified_page_on(&connection, root, &material_id, &expected, page, opener)
+            .map_err(Code::error)
+    }
+}
+
+fn decode_open(input: &Value) -> Check<(String, String, Option<i64>)> {
+    let fields = if input.get("physicalPage").is_some() {
+        vec!["materialId", "expectedContentSha256", "physicalPage"]
+    } else {
+        vec!["materialId", "expectedContentSha256"]
+    };
+    let m = exact(input, &fields)?;
+    let page = if m.contains_key("physicalPage") {
+        Some(positive_field(m, "physicalPage")?)
+    } else {
+        None
+    };
+    Ok((
+        id_field(m, "materialId")?,
+        hash_field(m, "expectedContentSha256")?,
+        page,
+    ))
+}
+
+fn opened_wire(material_id: &str, hash: &str, page: Option<i64>) -> Value {
+    let mut wire = json!({ "materialId": material_id, "contentSha256": hash });
+    if let Some(page) = page {
+        wire["physicalPage"] = json!(page);
+    }
+    wire
+}
+
+#[cfg(any(target_os = "ios", all(test, unix)))]
+fn prepare_verified_pdf(
+    root: &Path,
+    input: &Value,
+) -> Check<(String, crate::ios_pdf::Snapshot, Value)> {
+    let (material_id, hash, page) = decode_open(input)?;
+    let connection = open_ready(root)?;
+    let (_, bytes) = verified_bytes(&connection, root, &material_id, &hash, page)?;
+    let title: String = connection
+        .query_row(
+            "SELECT title FROM study_materials WHERE id = ?1",
+            [&material_id],
+            |row| row.get(0),
+        )
+        .map_err(storage)?;
+    let snapshot = crate::ios_pdf::snapshot_bytes(&bytes).map_err(|_| Code::OpenFailed)?;
+    Ok((title, snapshot, opened_wire(&material_id, &hash, page)))
 }
 
 pub fn inspect_navigation_identity_at(
@@ -1242,11 +1317,41 @@ pub async fn open_navigation_document(
     input: Value,
 ) -> Result<Value, NavigationErrorWire> {
     let root = app_root(&app).map_err(|_| Code::StorageFailure.error())?;
-    tauri::async_runtime::spawn_blocking(move || {
-        open_navigation_document_at(&root, &input, &SystemDocumentOpener)
-    })
-    .await
-    .map_err(|_| Code::StorageFailure.error())?
+    #[cfg(not(target_os = "ios"))]
+    {
+        tauri::async_runtime::spawn_blocking(move || {
+            open_navigation_document_at(&root, &input, &SystemDocumentOpener)
+        })
+        .await
+        .map_err(|_| Code::StorageFailure.error())?
+    }
+    #[cfg(target_os = "ios")]
+    {
+        use tauri::Manager;
+        let (title, snapshot, wire) =
+            tauri::async_runtime::spawn_blocking(move || prepare_verified_pdf(&root, &input))
+                .await
+                .map_err(|_| Code::StorageFailure.error())?
+                .map_err(Code::error)?;
+        let page = wire
+            .get("physicalPage")
+            .and_then(Value::as_u64)
+            .unwrap_or(1);
+        let page = u32::try_from(page).map_err(|_| Code::InvalidArgument.error())?;
+        let path = snapshot
+            .path
+            .to_str()
+            .ok_or_else(|| Code::OpenFailed.error())?;
+        app.state::<tauri_plugin_hfd_pdf::PdfViewer<tauri::Wry>>()
+            .open(tauri_plugin_hfd_pdf::OpenPdf {
+                path,
+                title: &title,
+                physical_page: page,
+            })
+            .await
+            .map_err(|_| Code::OpenFailed.error())?;
+        Ok(wire)
+    }
 }
 
 #[cfg(test)]

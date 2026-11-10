@@ -65,11 +65,11 @@ describe("loadImage", () => {
     expect(seen[0]?.startsWith("data:image/png;base64,")).toBe(true);
   });
 
-  it("matches the CSP: images may come from 'self' and data: only", () => {
+  it("matches the CSP: images may come from 'self', data: and blob: (IOS-TF-01)", () => {
     const conf = JSON.parse(readFileSync(resolve(__dirname, "../../src-tauri/tauri.conf.json"), "utf8"));
     const csp: string = conf.app.security.csp;
     const imgSrc = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("img-src"));
-    expect(imgSrc).toBe("img-src 'self' data:");
+    expect(imgSrc).toBe("img-src 'self' data: blob:");
     const scriptSrc = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src"));
     expect(scriptSrc).toBe("script-src 'self'");
   });

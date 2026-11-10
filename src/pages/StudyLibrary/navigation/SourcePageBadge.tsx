@@ -4,9 +4,10 @@
  * Page numbers in generated study aids have unknown provenance: a study aid
  * may cite the printed page ("p. 3-12") rather than the PDF's own page count.
  * Under the approved OD-6 default such a number never resolves to a saved
- * position. The badge opens the material's file in the default reader, after
- * the desktop app has checked it, and tells the student where to look; nothing is
- * saved. Without a file or outside the desktop app it stays a plain label.
+ * position. The native app checks the file before opening it with guidance.
+ * Verified page sources jump to their physical page on iOS; desktop keeps
+ * reader guidance. Nothing is saved by this badge. Without a file or outside
+ * the native app it stays a plain label.
  *
  * Leaving the view (unmount or a route change) retires a request this badge
  * started and is still checking, so its file is never opened afterwards
@@ -100,6 +101,7 @@ export function SourcePageBadge({ page, materialId, materialTitle, source }: Sou
             source
               ? { materialId, contentSha256: source.contentSha256, physicalPage: source.physicalPage, pageLabel: source.printedLabel }
               : undefined,
+            source ? undefined : Number(String(page).trim()),
           );
           // The new request's epoch is published synchronously as it starts.
           const request = { controller, epoch: controller.status().epoch };

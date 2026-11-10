@@ -39,6 +39,7 @@ targets:
     info:
       path: her-flight-deck_iOS/Info.plist
       properties:
+        ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
         LSSupportsOpeningDocumentsInPlace: true
         UIFileSharingEnabled: true
@@ -50,13 +51,8 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        UISupportedInterfaceOrientations~ipad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.6.6
-        CFBundleVersion: "0.6.6"
+        CFBundleShortVersionString: 0.6.7
+        CFBundleVersion: "21"
     entitlements:
       path: her-flight-deck_iOS/her-flight-deck_iOS.entitlements
     scheme:
@@ -72,6 +68,9 @@ targets:
         LIBRARY_SEARCH_PATHS[arch=arm64]: $(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
         EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
+        TARGETED_DEVICE_FAMILY: "1"
+        DEVELOPMENT_TEAM: U7B45SUWS2
+        CODE_SIGN_STYLE: Automatic
       groups: [app]
     dependencies:
       - framework: libapp.a

@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { exit } from "node:process";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,25 @@ import { validateReleaseVersion } from "./check-release-version.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
+
+// Increase the integer iOS build number (CFBundleVersion) in project.yml and Info.plist.
+// Never touches the marketing version. `atLeast` lets the caller skip past a recorded upload.
+export function bumpIosBuildNumber(rootDir = ROOT, atLeast = 0) {
+  const iosYml = join(rootDir, "src-tauri/gen/apple/project.yml");
+  const iosPlist = join(rootDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist");
+  const plist = readFileSync(iosPlist, "utf8");
+  const match = plist.match(/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/);
+  if (!match || !/^\d+$/.test(match[1])) {
+    throw new Error(`iOS CFBundleVersion must be an integer, found ${match ? match[1] : "none"}`);
+  }
+  const next = Math.max(Number(match[1]), Number(atLeast) || 0) + 1;
+  writeFileSync(iosPlist, plist.replace(match[0], match[0].replace(`<string>${match[1]}</string>`, `<string>${next}</string>`)));
+  if (existsSync(iosYml)) {
+    const yml = readFileSync(iosYml, "utf8");
+    writeFileSync(iosYml, yml.replace(/^(\s*CFBundleVersion:\s*)"?\d+"?/m, `$1"${next}"`));
+  }
+  return next;
+}
 
 export function bumpVersions(version, rootDir = ROOT, options = {}) {
   const validation = validateReleaseVersion(version);
@@ -66,6 +85,22 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
     }
   }
 
+  // 4b. iOS project (tracked, generated once by `tauri ios init`): keep the marketing
+  // version in step. CFBundleVersion (build number) is left alone; it is bumped per upload.
+  const iosYml = join(rootDir, "src-tauri/gen/apple/project.yml");
+  if (existsSync(iosYml)) {
+    const yml = readFileSync(iosYml, "utf8");
+    writeFileSync(iosYml, yml.replace(/^(\s*CFBundleShortVersionString:\s*)\S+/m, `$1${version}`));
+  }
+  const iosPlist = join(rootDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist");
+  if (existsSync(iosPlist)) {
+    const plist = readFileSync(iosPlist, "utf8");
+    writeFileSync(
+      iosPlist,
+      plist.replace(/(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]*(<\/string>)/, `$1${version}$2`),
+    );
+  }
+
   // 5. Verification: check all 5 sources strictly match
   const verifiedPkg = JSON.parse(readFileSync(pkgPath, "utf8")).version;
   const verifiedTauri = JSON.parse(readFileSync(tauriPath, "utf8")).version;
@@ -94,8 +129,19 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
     );
   }
 
+  let iosShortVersion;
+  if (existsSync(iosPlist)) {
+    iosShortVersion = readFileSync(iosPlist, "utf8").match(
+      /<key>CFBundleShortVersionString<\/key>\s*<string>([^<]*)<\/string>/,
+    )?.[1];
+    if (iosShortVersion !== version) {
+      throw new Error(`iOS Info.plist CFBundleShortVersionString=${iosShortVersion} expected=${version}`);
+    }
+  }
+
   return {
     version,
+    iosShortVersion,
     packageJson: verifiedPkg,
     packageLock: verifiedLockVer,
     tauriConf: verifiedTauri,
@@ -106,8 +152,17 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const version = process.argv[2];
+  if (version === "--build") {
+    try {
+      console.log(bumpIosBuildNumber(ROOT, process.argv[3]));
+    } catch (err) {
+      console.error(`::error::${err.message}`);
+      exit(1);
+    }
+    exit(0);
+  }
   if (!version) {
-    console.error("Usage: node scripts/bump-version.mjs <version>");
+    console.error("Usage: node scripts/bump-version.mjs <version> | --build [atLeast]");
     exit(1);
   }
   try {

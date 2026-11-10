@@ -6,7 +6,10 @@
  * ports, never sleeps. Production tests for the prototype's M4-R11, R13, R23,
  * R24, R28–R30 and R37 controller behaviours.
  */
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const platform = vi.hoisted(() => ({ ios: false }));
+vi.mock("@/services/platform", () => ({ isIOS: () => platform.ios }));
 
 import type { InspectedNavigationIdentity, NavigationOperation } from "@/domain/types";
 import { navigationRepository } from "@/data/repositories/navigationRepository";
@@ -48,6 +51,7 @@ interface Rig {
   controller: NavigationController;
   /** Calls the ports received, in order. */
   calls: string[];
+  pages: Array<number | undefined>;
   content: Map<string, { hash: string; pages: number }>;
   hold: { inspect?: ReturnType<typeof gate<void>>; open?: ReturnType<typeof gate<void>>; commit?: ReturnType<typeof gate<void>>; begin?: ReturnType<typeof gate<void>> };
   fail: { inspect?: unknown; begin?: unknown; open?: unknown; commit?: unknown };
@@ -66,6 +70,7 @@ async function rig(): Promise<Rig> {
   await db.execute("INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m1', 'One', 'x', 'x'), ('m2', 'Two', 'x', 'x')");
   const repo = navigationRepository(db);
   const calls: string[] = [];
+  const pages: Array<number | undefined> = [];
   const content = new Map([
     ["m1", { hash: A, pages: 50 }],
     ["m2", { hash: B, pages: 30 }],
@@ -103,7 +108,8 @@ async function rig(): Promise<Rig> {
       if (op.kind === "commit") await take("commit");
       return repo.operation(op as NavigationOperation) as never;
     },
-    async open(materialId, hash) {
+    async open(materialId, hash, page) {
+      pages.push(page);
       calls.push(`open:${materialId}`);
       await take("open");
       if (content.get(materialId)!.hash !== hash) throw new NavigationError("FILE_CHANGED", NAVIGATION_ERROR_MESSAGES.FILE_CHANGED);
@@ -113,6 +119,7 @@ async function rig(): Promise<Rig> {
   return {
     db,
     controller: new NavigationController(ports),
+    pages,
     calls,
     content,
     hold,
@@ -467,4 +474,39 @@ it("opens a saved card source only on its original hash and bounds, without navi
     expect((await c.openForGuidance("m","Go to PDF page 3.",{materialId:"m",contentSha256:hash,physicalPage:page,pageLabel:"iv"}))?.kind).toBe(expected);
     expect(opens).toEqual(expected==="guidance"?[A]:[]);
   }
+});
+
+it("passes a physical page for bookmarks and verified sources; unknown citations pass none", async () => {
+  const r = await rig();
+  await r.controller.openSaved({ materialId: "m1", contentSha256: A, physicalPage: 3, pageLabel: "iv" });
+  await r.controller.openForGuidance("m1", "Look for page 9");
+  await r.controller.openForGuidance("m1", "Go to page 5", { materialId: "m1", contentSha256: A, physicalPage: 5, pageLabel: null });
+  expect(r.pages).toEqual([3, undefined, 5]);
+});
+
+it("on iOS an unverified cited page opens that PDF page with short wording; elsewhere it passes none", async () => {
+  const r = await rig();
+  platform.ios = true;
+  try {
+    expect(await r.controller.openForGuidance("m1", "Look for page 2.", undefined, 2)).toMatchObject({ kind: "guidance", message: "Opened at PDF page 2." });
+    expect(await r.controller.openForGuidance("m1", "Look for page 99.", undefined, 99)).toMatchObject({ message: "Look for page 99." });
+  } finally {
+    platform.ios = false;
+  }
+  expect(await r.controller.openForGuidance("m1", "Look for page 2.", undefined, 2)).toMatchObject({ message: "Look for page 2." });
+  expect(r.pages).toEqual([2, undefined, undefined]);
+});
+
+it("does not save a native page open that finishes after cancellation", async () => {
+  const r = await rig();
+  const opening = gate();
+  r.hold.open = opening;
+  const request = r.controller.openSaved({ materialId: "m1", contentSha256: A, physicalPage: 50, pageLabel: null });
+  await reached(r.calls, "open:m1");
+  expect(r.pages).toEqual([50]);
+  expect(r.calls.some(c => c.startsWith("commit:"))).toBe(false);
+  r.controller.abort();
+  opening.resolve();
+  expect(await request).toBeNull();
+  expect(r.calls.some(c => c.startsWith("commit:"))).toBe(false);
 });

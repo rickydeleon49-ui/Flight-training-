@@ -3,6 +3,7 @@ import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import * as platform from "@/services/platform";
 import { makeMaterial } from "@/testing/factories";
 import { FAA_REFERENCES, faaReferenceDraft } from "@/logic/faaReferences";
 
@@ -524,4 +525,21 @@ it("reports how many study-size parts were made", async () => {
   const props = mocks.split.mock.lastCall![0] as { onCreated: (ids: string[]) => void };
   act(() => props.onCreated(["part-1", "part-2"]));
   expect(screen.getByText("Made 2 parts. Find them in your Study Library.")).toBeTruthy();
+});
+
+it.each([false, true])("iOS saved references pass their material ID and explain native failures (failure=%s)", async (failure) => {
+  const capabilities = platform.deviceCan();
+  const device = vi.spyOn(platform, "deviceCan").mockReturnValue({ ...capabilities, revealFiles: false });
+  try {
+    const copy = material();
+    mocks.materials = [copy];
+    if (failure) mocks.open.mockRejectedValue(new Error("synthetic native failure"));
+    mount();
+    await screen.findByText("Saved on this Mac");
+    fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
+    await screen.findByText(failure ? "That PDF could not be opened. Check your saved file and PDF reader, then try again." : "Opened in Your Flight Deck.");
+    expect(mocks.open).toHaveBeenCalledWith("synthetic.pdf", copy.title, copy.id);
+  } finally {
+    device.mockRestore();
+  }
 });

@@ -364,29 +364,33 @@ describe("generated document cleanup", () => {
 });
 
 
-it("opens an iOS PDF through raw bytes without the system opener", async () => {
+it("opens an iOS PDF by material ID without bytes, blob URLs or the system opener", async () => {
   mocks.isTauri.mockReturnValue(true);
   mocks.isIOS.mockReturnValue(true);
-  const create = vi.fn((_blob: Blob) => "blob:synthetic");
-  const revoke = vi.fn();
-  vi.stubGlobal("URL", { createObjectURL: create, revokeObjectURL: revoke });
-  mocks.invoke.mockResolvedValueOnce(new ArrayBuffer(3));
-  try {
-    await openDocument("phone.pdf", "Synthetic PDF");
-    expect(mocks.invoke).toHaveBeenCalledWith("document_bytes", { relativePath: "phone.pdf" });
-    expect(mocks.openPath).not.toHaveBeenCalled();
-    expect(create.mock.calls[0]?.[0]).toMatchObject({ type: "application/pdf" });
-    const { closePdfViewer } = await import("./pdfViewer");
-    closePdfViewer();
-    expect(revoke).toHaveBeenCalledWith("blob:synthetic");
-    await openDocument("phone.pdf", "Synthetic PDF");
-    expect(mocks.invoke).toHaveBeenCalledTimes(1);
-    expect(create).toHaveBeenCalledTimes(2);
-    closePdfViewer();
-  } finally {
-    mocks.isIOS.mockReturnValue(false);
-    vi.unstubAllGlobals();
-  }
+  mocks.invoke.mockResolvedValue(undefined);
+  await openDocument("phone.pdf", "Synthetic PDF", "synthetic-material");
+  expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith("open_ios_pdf", { materialId: "synthetic-material" });
+  expect(mocks.openPath).not.toHaveBeenCalled();
+  mocks.isIOS.mockReturnValue(false);
+});
+
+it("does not send a picture to the PDF viewer on iOS", async () => {
+  mocks.isTauri.mockReturnValue(true);
+  mocks.isIOS.mockReturnValue(true);
+  await expect(openDocument("photo.PNG", "Picture", "synthetic-material")).rejects.toThrow("This picture could not be opened.");
+  expect(mocks.invoke).not.toHaveBeenCalled();
+  mocks.isIOS.mockReturnValue(false);
+});
+
+it("reports native failure in plain words without leaking native paths", async () => {
+  mocks.isTauri.mockReturnValue(true);
+  mocks.isIOS.mockReturnValue(true);
+  mocks.invoke.mockRejectedValue("private synthetic path");
+  await expect(openDocument("phone.pdf", "PDF", "m")).rejects.toThrow("That PDF could not be opened. Please try again or import another copy.");
+  mocks.invoke.mockClear();
+  await expect(openDocument("phone.pdf")).rejects.toThrow("reopen it from your library");
+  expect(mocks.invoke).not.toHaveBeenCalled();
+  mocks.isIOS.mockReturnValue(false);
 });
 
 it("on the phone the picker is PDF-only and the app is told so", async () => {

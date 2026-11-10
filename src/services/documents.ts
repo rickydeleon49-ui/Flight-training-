@@ -15,7 +15,7 @@ import { openPath, revealItemInDir } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
 import { isIOS } from "./platform";
-import { openInAppViewer } from "./pdfViewer";
+import { openNativePdf } from "./pdfViewer";
 
 export interface ImportedDocument {
   relativePath: string;
@@ -116,28 +116,14 @@ export async function documentExists(relativePath: string): Promise<boolean> {
   return invoke<boolean>("document_exists", { relativePath });
 }
 
-// Keep only the most recent PDF's bytes (handbooks reach 100 MB; phone memory is
-// limited), but create/revoke a fresh URL for each dialog. Reopening the same
-// handbook does not repeat the IPC copy.
-const sessionPdfs = new Map<string, Blob>();
-
-/** Make a viewer-owned URL for a stored PDF. */
-export async function documentBlobUrl(relativePath: string): Promise<string> {
-  if (!isTauri()) throw new DesktopOnlyError();
-  let blob = sessionPdfs.get(relativePath);
-  if (!blob) {
-    const bytes = await invoke<ArrayBuffer>("document_bytes", { relativePath });
-    blob = new Blob([bytes], { type: "application/pdf" });
-    sessionPdfs.clear();
-    sessionPdfs.set(relativePath, blob);
-  }
-  return URL.createObjectURL(blob);
-}
-
 /** Open in the phone viewer or the desktop system viewer. */
-export async function openDocument(relativePath: string, title = "PDF"): Promise<void> {
+export async function openDocument(relativePath: string, _title = "PDF", materialId?: string): Promise<void> {
   if (!isTauri()) throw new DesktopOnlyError();
-  if (isIOS()) return openInAppViewer(title, () => documentBlobUrl(relativePath));
+  if (isIOS()) {
+    // The native viewer shows PDFs only; a picture gets its own plain message.
+    if (/\.(png|jpe?g|gif|heic|heif|webp|bmp|tiff?)$/i.test(relativePath)) throw new Error("This picture could not be opened.");
+    return openNativePdf(materialId);
+  }
   const absolute = await invoke<string>("document_path", { relativePath });
   await openPath(absolute);
 }

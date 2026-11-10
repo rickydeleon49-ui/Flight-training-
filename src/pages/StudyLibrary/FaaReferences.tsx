@@ -1,6 +1,5 @@
 import { deviceCan, isIOS } from "@/services/platform";
 import { faaPdfPrompt } from "@/services/phoneCopy";
-import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -69,7 +68,6 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
     <section className="faa-shelf" aria-labelledby="faa-shelf-title">
       <h2 id="faa-shelf-title" className="section-title">FAA references</h2>
       <p className="small muted">Optional books for offline study. Add a PDF or get a handbook from faa.gov.</p>
-      <PdfViewerDialog />
       {!canHandleFiles() ? <p className="small muted">Adding, checking and opening PDFs needs the desktop application. Your saved reference notes are still available here.</p> : null}
       {canHandleFiles() ? <p className="small muted">Needs internet once; works offline afterwards.</p> : null}
       {entry(FAA_REFERENCES[0])}
@@ -355,7 +353,7 @@ function SavedReference({ material, note, reference, downloaded = false }: {
       setState({ key, availability: checked });
       if (checked !== "present") return;
       if (deviceCan().revealFiles) await openDocument(material.filePath);
-      else await openDocument(material.filePath, material.title);
+      else await openDocument(material.filePath, material.title, material.id);
       if (live.current && currentKey.current === key) setMessage(deviceCan().revealFiles ? "Opened in your PDF reader." : "Opened in Your Flight Deck.");
     } catch {
       if (live.current && currentKey.current === key) setMessage("That PDF could not be opened. Check your saved file and PDF reader, then try again.");

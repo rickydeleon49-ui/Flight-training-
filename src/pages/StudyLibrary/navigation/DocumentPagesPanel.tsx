@@ -1,14 +1,10 @@
 /**
  * A material's pages (M4 Slice 1): the page count, a page check, and bookmarks.
  *
- * "Open at page" was removed (owner, 22 October): macOS gives no reliable way
- * to hand the reader a specific page, so the panel no longer offers it or the
- * reading marks tied to it. A bookmark's own page number stays shown next to
- * it so the student knows where to go once the file opens. The controller, repository
- * and any saved reading data remain in place, unused by this panel.
+ * iOS opens verified physical pages in the native PDF viewer. Desktop bookmarks
+ * keep their page shown beside the row as guidance for the system reader.
+ * Only the requested page is saved; the viewer does not track reading position.
  *
- * - Opening a bookmark hands the file to the default system reader; the
- *   bookmark's page is guidance only (OD-2).
  * - Saved places made for an earlier version of the file say so (OD-8).
  * - If a bookmark opened but its page could not be saved, "Try saving again"
  *   resends the save without opening the file a second time.
@@ -19,6 +15,7 @@
  *   material it started on; one that finishes after they changed says
  *   nothing over the new ones (NAV-UI-01).
  */
+import { openedPageMessage } from "@/services/pdfViewer";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { Button, Card, CardBody, CardHeader, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
@@ -83,12 +80,12 @@ function statusText(status: NavigationStatus): { text: string; error: boolean } 
   switch (status.kind) {
     case "working":
       return { text: WORKING[status.step] ?? "Working…", error: false };
-    case "saved":
-      // Opening a bookmark's own page needs no notice: the bookmark row
-      // already shows the page to go to, and the file has opened.
-      return null;
+    case "saved": {
+      const text = openedPageMessage(status.destination.physicalPage, "");
+      return text ? { text, error: false } : null;
+    }
     case "opened_unsaved":
-      return { text: `${status.message} Go to ${pageWords(status.destination.physicalPage, status.destination.pageLabel)} in your reader.`, error: true };
+      return { text: `${status.message} ${openedPageMessage(status.destination.physicalPage, `Go to ${pageWords(status.destination.physicalPage, status.destination.pageLabel)} in your reader.`)}`, error: true };
     case "guidance":
       return { text: status.message, error: false };
     case "refused":

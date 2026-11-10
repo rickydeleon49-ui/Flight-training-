@@ -160,6 +160,9 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
   expect(Boolean(screen.queryByRole("button", { name: "Take out a chapter" }))).toBe(!phone);
   fireEvent.click(screen.getByRole("button", { name: "Open" }));
   await screen.findByText("Synthetic open failure");
+  expect(documents.openDocument).toHaveBeenCalledWith(
+    ...phone ? ["documents/synthetic.pdf", "Synthetic PDF", "tips"] : ["documents/synthetic.pdf"],
+  );
   expect(Boolean(screen.queryByRole("button", { name: "Show in Finder or File Explorer" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("button", { name: "Ask about this PDF" }))).toBe(!phone);
   fireEvent.click(screen.getByRole("tab", { name: "Study" }));

@@ -1,3 +1,4 @@
+import { openedPageMessage } from "@/services/pdfViewer";
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isTauri } from "@/data";
@@ -794,7 +795,7 @@ export function PdfKitPageLink({ materialId, hash, page }: { materialId: string;
               started.current = null;
               setNote(
                 outcome?.kind === "saved"
-                  ? `Opened in your PDF reader. Go to PDF page ${page} there.`
+                  ? openedPageMessage(page, `Opened in your PDF reader. Go to PDF page ${page} there.`)
                   : outcome && "message" in outcome
                     ? outcome.message
                     : "This page couldn’t be opened. Try again.",

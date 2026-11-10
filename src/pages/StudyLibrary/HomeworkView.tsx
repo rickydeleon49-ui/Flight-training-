@@ -1,3 +1,4 @@
+import { openedPageMessage } from "@/services/pdfViewer";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertIcon, Button, Card, CardBody, ConfirmDialog } from "@/components/ui";
@@ -463,7 +464,7 @@ export function HomeworkView() {
         </li>;
             })}
       </ol>
-      {status.kind === 'failed' || status.kind === 'refused' || status.kind === 'opened_unsaved' || status.kind === 'guidance' ? <p role="status">{status.message}</p> : status.kind === 'saved' ? <p role="status">Opened in your PDF reader. Go to PDF page {status.destination.physicalPage} there; your reader may not jump to it by itself. Mark reading complete when you're finished.</p> : null}
+      {status.kind === 'failed' || status.kind === 'refused' || status.kind === 'opened_unsaved' || status.kind === 'guidance' ? <p role="status">{status.message}</p> : status.kind === 'saved' ? <p role="status">{openedPageMessage(status.destination.physicalPage, `Opened in your PDF reader. Go to PDF page ${status.destination.physicalPage} there; your reader may not jump to it by itself. Mark reading complete when you're finished.`)}</p> : null}
       <section><h2>History</h2><ol>{history.map((h,index) => <li key={h.revision}>{homeworkHistoryLabel(h,history[index-1])} · {formatDateTime(h.recorded_at ?? h.created_at)}</li>)}</ol></section>
     </> : <>
       <div className="row row--wrap" aria-label="Homework filters">{Object.entries(filters).map(([key, label]) => <Button key={key} variant={filter === key ? "primary" : "secondary"} aria-pressed={filter === key} onClick={() => setFilter(key as keyof typeof filters)}>{label}</Button>)}</div>

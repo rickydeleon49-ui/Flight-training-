@@ -770,7 +770,7 @@ pub fn document_bytes(
 /// so every handbook the FAA shelf can save also opens on the phone.
 const VIEW_MAX_BYTES: u64 = 100 * 1024 * 1024;
 
-fn read_document_bytes(root: &Path, relative_path: &str) -> Result<Vec<u8>, String> {
+pub(crate) fn read_document_bytes(root: &Path, relative_path: &str) -> Result<Vec<u8>, String> {
     use std::io::Read;
     let safe = safe_relative_path(relative_path)?;
     let root = root
@@ -783,14 +783,16 @@ fn read_document_bytes(root: &Path, relative_path: &str) -> Result<Vec<u8>, Stri
     if !path.starts_with(&root) {
         return Err("Invalid document path.".into());
     }
+    if !path.is_file() {
+        return Err("That PDF is not a regular file.".into());
+    }
     let file = std::fs::File::open(path).map_err(|_| "That PDF could not be opened.")?;
     let limit = VIEW_MAX_BYTES;
-    if file
-        .metadata()
-        .map_err(|_| "That PDF could not be read.")?
-        .len()
-        > limit
-    {
+    let metadata = file.metadata().map_err(|_| "That PDF could not be read.")?;
+    if !metadata.is_file() {
+        return Err("That PDF is not a regular file.".into());
+    }
+    if metadata.len() > limit {
         return Err("That PDF is too large to open on this device (100 MB maximum).".into());
     }
     let mut bytes = Vec::new();

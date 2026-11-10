@@ -148,6 +148,12 @@ describe("native transport", () => {
     await expect(invokeOpenNavigationDocument("mat", A, good)).resolves.toEqual({ materialId: "mat", contentSha256: A });
     expect(good).toHaveBeenCalledWith("open_navigation_document", { input: { materialId: "mat", expectedContentSha256: A } });
     await expect(invokeOpenNavigationDocument("mat", A, vi.fn().mockResolvedValue({ materialId: "mat", contentSha256: B }))).rejects.toBeInstanceOf(NavigationError);
+    const pageOpen = vi.fn().mockResolvedValue({ materialId: "mat", contentSha256: A, physicalPage: 3 });
+    await expect(invokeOpenNavigationDocument("mat", A, pageOpen, 3)).resolves.toMatchObject({ physicalPage: 3 });
+    expect(pageOpen).toHaveBeenCalledWith("open_navigation_document", { input: { materialId: "mat", expectedContentSha256: A, physicalPage: 3 } });
+    for (const physicalPage of [undefined, 0, 2, 3.5]) {
+      await expect(invokeOpenNavigationDocument("mat", A, vi.fn().mockResolvedValue({ materialId: "mat", contentSha256: A, physicalPage }), 3)).rejects.toBeInstanceOf(NavigationError);
+    }
     const identity = { materialId: "mat", contentSha256: A, totalPages: 3, verifiedAt: "x", changed: false };
     await expect(invokeInspectNavigationIdentity("mat", vi.fn().mockResolvedValue(identity))).resolves.toEqual(identity);
     await expect(invokeInspectNavigationIdentity("mat", vi.fn().mockResolvedValue({ ...identity, totalPages: 0 }))).rejects.toMatchObject({ code: "STORAGE_FAILURE" });

@@ -1697,3 +1697,53 @@ fn opening_refuses_a_recorded_count_the_bytes_do_not_have() {
     assert!(open_verified_on(&conn, dir.path(), MAT, &hash, &seen).is_ok());
     assert_eq!(seen.opened.borrow().len(), 1);
 }
+
+#[test]
+fn verified_page_wire_and_ios_snapshot_keep_checked_bytes() {
+    let dir = TempDir::new("ios-verified-pages");
+    let (connection, hash) = seeded(dir.path());
+    drop(connection);
+    mark_root_ready(dir.path());
+    let quiet = opener(|| {}, false);
+    let input = json!({ "materialId": MAT, "expectedContentSha256": hash, "physicalPage": 3 });
+    assert_eq!(
+        open_navigation_document_at(dir.path(), &input, &quiet).unwrap()["physicalPage"],
+        3
+    );
+    for page in [
+        json!(0),
+        json!(-1),
+        json!(1.5),
+        json!(null),
+        json!("3"),
+        json!(999),
+        json!(4294967296_u64),
+    ] {
+        let mut invalid = input.clone();
+        invalid["physicalPage"] = page;
+        assert_eq!(
+            open_navigation_document_at(dir.path(), &invalid, &quiet),
+            Err(Code::InvalidArgument.error())
+        );
+    }
+    #[cfg(unix)]
+    {
+        let (_, snapshot, wire) = prepare_verified_pdf(dir.path(), &input).unwrap();
+        assert_eq!(wire["physicalPage"], 3);
+        let original = std::fs::read(&snapshot.path).unwrap();
+        std::fs::write(
+            dir.path().join(DOCUMENTS_DIR).join("ifh.pdf"),
+            b"synthetic replacement",
+        )
+        .unwrap();
+        assert_eq!(std::fs::read(&snapshot.path).unwrap(), original);
+        assert!(matches!(
+            prepare_verified_pdf(dir.path(), &input),
+            Err(Code::FileChanged)
+        ));
+        let snapshot_path = snapshot.path.clone();
+        drop(snapshot);
+        assert!(!snapshot_path.exists());
+    }
+    unmark_root_ready(dir.path());
+}

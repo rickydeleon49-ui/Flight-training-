@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import * as platform from "@/services/platform";
 import { createElement as h, type ReactElement } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -133,6 +134,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 async function typed() {
@@ -249,6 +251,23 @@ describe("Searching inside documents", () => {
     await waitFor(() => expect(nav.request).toHaveBeenCalledWith({ materialId: "m1", reference: 58, provenance: "physical_index" }));
     expect(service.verify).toHaveBeenLastCalledWith("m1", sha);
     expect(await screen.findByText(/Go to PDF page 58 there/)).toBeTruthy();
+  });
+
+  it("iOS search reports the page jump only after a verified successful open", async () => {
+    vi.spyOn(platform, "isIOS").mockReturnValue(true);
+    service.search.mockResolvedValue(response());
+    service.verify.mockResolvedValueOnce("changed").mockResolvedValue("ok");
+    nav.request.mockResolvedValue({ kind: "saved", epoch: 1, materialId: "m1", destination: {}, readingState: {} });
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    const result = await screen.findByRole("button", { name: /Pilot's Handbook, PDF page 58/ });
+    fireEvent.click(result);
+    expect(await screen.findByText(/changed since you searched/)).toBeTruthy();
+    expect(nav.request).not.toHaveBeenCalled();
+    fireEvent.click(result);
+    await waitFor(() => expect(nav.request).toHaveBeenCalledWith({ materialId: "m1", reference: 58, provenance: "physical_index" }));
+    expect(service.verify).toHaveBeenLastCalledWith("m1", sha);
+    expect(await screen.findByText("Opened at PDF page 58.")).toBeTruthy();
   });
 
   it("pages through more matches and moves between results with the arrow keys", async () => {
