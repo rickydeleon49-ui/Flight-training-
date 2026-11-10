@@ -45,8 +45,12 @@ body {
 h1, h2, h3, h4 {
   margin: 0;
   font-weight: 500;
-  line-height: var(--leading-tight);
+  line-height: var(--leading-ui);
 }
+h1 { font-size: var(--text-2xl); font-weight: 700; line-height: 1.2059; } /* Large Title 34/41 */
+h2 { font-size: var(--text-lg); font-weight: 700; }
+h3 { font-size: var(--text-title3); font-weight: 600; }
+h4 { font-size: var(--text-md); font-weight: 600; }
 
 p { margin: 0; }
 
