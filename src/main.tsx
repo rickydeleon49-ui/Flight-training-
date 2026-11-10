@@ -19,9 +19,11 @@ import "./styles/glass.css";
 
 import { initIOSText } from "./lib/iosText";
 import { initAppearance } from "./lib/appearance";
+import { initTheme } from "./lib/theme";
 
 // Apply appearance before initial render so restored theme appears without flash.
 initAppearance();
+initTheme();
 initIOSText();
 
 const container = document.getElementById("root");
