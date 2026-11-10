@@ -13,8 +13,9 @@
   flex-direction: column;
   gap: var(--space-5);
   padding: var(--space-5) var(--space-4);
-  background: var(--surface-card);
-  border-right: 1px solid var(--border-subtle);
+  background: var(--surface-sidebar);
+  border-right: 0.5px solid var(--border-subtle);
+  box-shadow: none;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -34,7 +35,7 @@
   width: 2.1rem;
   height: 2.1rem;
   border-radius: var(--radius-md);
-  background: linear-gradient(150deg, var(--accent-primary), var(--accent-primary-hover));
+  background: var(--accent-primary);
   color: var(--text-on-accent);
   flex: none;
 }
@@ -67,9 +68,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 0.55rem 0.7rem;
+  min-height: 32px;
+  padding: 0.35rem 0.7rem;
   border-radius: var(--radius-md);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-size: var(--text-base);
   text-decoration: none;
   transition: background var(--transition), color var(--transition), transform 100ms;
@@ -77,21 +79,21 @@
 
 .nav__link:active { transform: scale(.97); }
 
-.nav__link:hover {
-  background: var(--surface-sunken);
-  color: var(--text-primary);
-  text-decoration: none;
+.nav__link:hover { text-decoration: none; }
+
+@media (hover: hover) {
+  .nav__link:hover { background: var(--surface-sunken); }
 }
 
 .nav__link.is-active {
-  background: var(--accent-primary-fill);
-  color: var(--accent-primary);
-  font-weight: 500;
+  background: var(--accent-fill);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
-.nav__icon { flex: none; display: grid; place-items: center; }
+.nav__icon { flex: none; display: grid; place-items: center; color: var(--accent-primary); }
 
-/* Count of things wanting attention, e.g. overdue work. */
+/* Count of things wanting attention: quiet text, or an alert capsule. */
 .nav__count {
   margin-left: auto;
   min-width: 1.35rem;
@@ -100,17 +102,17 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
-  background: var(--status-overdue-fill);
-  border: 1px solid var(--status-overdue-edge);
-  color: var(--status-overdue);
+  background: var(--badge-alert);
+  color: var(--text-on-accent);
   font-size: var(--text-xs);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .nav__count--quiet {
-  background: var(--surface-sunken);
-  border-color: var(--border-subtle);
+  background: none;
   color: var(--text-secondary);
+  font-weight: 400;
 }
 
 .sidebar__footer { margin-top: auto; }
@@ -118,8 +120,8 @@
 .sidebar__note {
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--surface-tint-sky);
-  color: var(--category-flight-ink);
+  background: var(--surface-card);
+  color: var(--text-secondary);
   font-size: var(--text-xs);
   line-height: 1.45;
 }
@@ -261,9 +263,9 @@
   width: 100%;
   margin-bottom: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
   color: var(--text-tertiary);
   font: inherit;
   font-size: var(--text-sm);
@@ -271,9 +273,8 @@
   cursor: pointer;
 }
 
-.nav__search:hover {
-  border-color: var(--border-strong);
-  color: var(--text-secondary);
+@media (hover: hover) {
+  .nav__search:hover { color: var(--text-secondary); }
 }
 
 .nav__shortcut {
