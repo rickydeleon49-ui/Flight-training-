@@ -53,6 +53,7 @@ export function authoringStateOf(set: Pick<AiStudySet, "summary" | "summaryOrigi
       kind: "card",
       fields: [card.front, card.back],
       sourcePage: card.sourcePage,
+      ...(card.unchecked ? { unchecked: true as const } : {}),
       ...(card.visualRegionId ? {visualRegionId: card.visualRegionId} : {}),
       ...(card.itemId !== undefined ? { itemId: card.itemId } : {}),
       ...(card.origin !== undefined ? { origin: card.origin } : {}),
@@ -80,7 +81,7 @@ export function nextSetOf(frame: SetFrame, state: AuthoringState): NextStudySet 
       .map((item) => ({ heading: item.fields[0]!, body: item.fields[1]!, ...identity(item) })),
     flashcards: state.items
       .filter((item) => item.kind === "card")
-      .map((item) => ({ front: item.fields[0]!, back: item.fields[1]!, sourcePage: item.sourcePage ?? null, ...identity(item) })),
+      .map((item) => ({ front: item.fields[0]!, back: item.fields[1]!, sourcePage: item.sourcePage ?? null, ...(item.unchecked ? { unchecked: true as const } : {}), ...identity(item) })),
     sourceNotes: frame.sourceNotes,
     provider: frame.provider,
     model: frame.model,

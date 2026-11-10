@@ -90,6 +90,27 @@ fn a_set_she_writes_herself_is_saved_without_history() {
 }
 
 #[test]
+fn an_unchecked_card_flag_is_kept_and_only_true_is_allowed() {
+    let mut conn = database();
+    let mut set = manual_set();
+    set["flashcards"][0]["unchecked"] = json!(true);
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, set.clone()),
+        NOW,
+    )
+    .unwrap();
+    assert!(row(&mut conn)["flashcards_json"]
+        .as_str()
+        .unwrap()
+        .contains("\"unchecked\":true"));
+    set["flashcards"][0]["unchecked"] = json!(false);
+    assert!(validate_next(&set).is_err());
+    // Old saved cards without the flag still load.
+    assert!(validate_next(&manual_set()).is_ok());
+}
+
+#[test]
 fn an_edit_keeps_the_whole_previous_set_first() {
     let mut conn = database();
     save_on(

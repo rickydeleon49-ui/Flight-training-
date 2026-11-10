@@ -214,11 +214,11 @@ fn validate_checked(
     // Share missing-page results too, so an extraction failure is not retried.
     let mut cache = std::collections::HashMap::new();
     let mut read = |p| cache.entry(p).or_insert_with(|| read_page(p)).clone();
-    let cards = value
+    let mut cards = value
         .get_mut("cards")
         .map(|items| kit_evidence::check_items(items, pages, false, &mut read))
         .unwrap_or_default();
-    let questions = value
+    let mut questions = value
         .get_mut("questions")
         .map(|items| kit_evidence::check_items(items, pages, true, &mut read))
         .unwrap_or_default();
@@ -240,6 +240,23 @@ fn validate_checked(
             {
                 first["verificationNote"] = json!(kit_evidence::FALLBACK);
             }
+        }
+    }
+    // The structure checks in `validate` can drop more: count what is left so
+    // the review can say plainly how many were made and how many were kept.
+    for (part, field, counts) in [
+        ("cards", "flashcards", &mut cards),
+        ("questions", "questions", &mut questions),
+    ] {
+        let answer = result
+            .get_mut("parts")
+            .and_then(|v| v.get_mut(part))
+            .and_then(|v| v.get_mut("answer"));
+        if let Some(answer) = answer {
+            let left = answer[field].as_array().map_or(0, Vec::len);
+            counts.dropped_other = counts.kept.saturating_sub(left);
+            counts.kept = left;
+            answer["checkSummary"] = json!(counts);
         }
     }
     result["quoteCounts"] = json!({"cards":cards,"questions":questions});

@@ -469,7 +469,7 @@ export function StudySetEditor({
     <>
           {studySet.flashcards.map((card, index) => (
             <div className="row row--between row--wrap" key={`card-${index}`}>
-              <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}</p>
+              <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}{card.unchecked ? <span className="tiny muted"> Not checked against the page</span> : null}</p>
               {card.visualRegionId ? (
                 <Button size="small" onClick={() => { setPictureSaved(false); setVisualIndex(index); }}>
                   Move or resize cover

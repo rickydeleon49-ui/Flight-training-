@@ -434,10 +434,28 @@ fn checked_kit_keeps_unavailable_pages_marked_and_drops_non_three_choices() {
     );
     assert_eq!(checked["quoteCounts"]["questions"]["droppedByChoices"], 1);
     assert_eq!(checked["quoteCounts"]["cards"]["unverified"], 1);
+    // The review is told how many were made, kept and why the rest went.
+    let summary = &checked["parts"]["questions"]["answer"]["checkSummary"];
+    assert_eq!(summary["generated"], 2);
+    assert_eq!(summary["kept"], 1);
+    assert_eq!(summary["droppedByChoices"], 1);
+    assert_eq!(summary["droppedOther"], 0);
     assert_eq!(
         checked["parts"]["cards"]["answer"]["flashcards"][0]["verificationNote"],
         "Couldn't check this against the page"
     );
+}
+
+#[test]
+fn check_summary_counts_structural_drops_as_other() {
+    let mut value = valid();
+    let first = value["cards"][0].clone();
+    value["cards"] = json!([first.clone(), first]);
+    let checked = validate_checked(value, 2, MODEL, None, |_| None);
+    let summary = &checked["parts"]["cards"]["answer"]["checkSummary"];
+    assert_eq!(summary["generated"], 2);
+    assert_eq!(summary["kept"], 1);
+    assert_eq!(summary["droppedOther"], 1);
 }
 
 #[test]

@@ -328,10 +328,43 @@ it("shows unverified notes only in the draft and omits them from saved cards and
   fireEvent.click(screen.getByRole("button", { name: "Save the new flashcards" }));
   await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1));
   expect((await repos.documents.listAiStudySets())[0]!.flashcards[0]).not.toHaveProperty("verificationNote");
+  expect((await repos.documents.listAiStudySets())[0]!.flashcards[0]!.unchecked).toBe(true);
   fireEvent.click(screen.getByRole("button", { name: "Save the new practice test" }));
   await waitFor(async () => expect(await repos.documents.listPracticeTests()).toHaveLength(1));
   expect((await repos.documents.listPracticeTests())[0]!.questions[0]).not.toHaveProperty("verificationNote");
   expect(screen.queryByText("Couldn't check this against the page")).toBeNull();
+});
+
+it("keeps one visible line about unmatched items, and a dropped-count line, without opening the preview", async () => {
+  records = parts();
+  const cards = records[1]!.result as service.GeneratedStudyAid;
+  const questions = records[2]!.result as service.GeneratedPracticeTest;
+  cards.flashcards[0]!.verificationNote = "Couldn't check this against the page";
+  cards.checkSummary = { generated: 3, kept: 1, droppedByChoices: 0, droppedByQuote: 1, droppedOther: 1 };
+  questions.checkSummary = { generated: 10, kept: 6, droppedByChoices: 4, droppedByQuote: 0, droppedOther: 0 };
+  await open();
+  expect(await screen.findByText("1 card couldn't be matched to the page. Check it before you rely on it.")).toBeTruthy();
+  expect(screen.getByText(/made 10 questions; 6 were kept \(4 had the wrong number of choices\)\./)).toBeTruthy();
+  expect(screen.getByText(/made 3 cards; 1 was kept \(1 could not be matched to the page, 1 were duplicates/)).toBeTruthy();
+});
+it("shows no unmatched or dropped line when nothing is uncertain", async () => {
+  records = parts(); await open();
+  await screen.findByRole("button", {name:"Save the new flashcards"});
+  expect(screen.queryByText(/couldn't be matched to the page/)).toBeNull();
+  expect(screen.queryByText(/were kept/)).toBeNull();
+});
+it("saves a kit card's unchecked flag and shows the note in review; old cards without it still load", async () => {
+  records = parts();
+  (records[1]!.result as service.GeneratedStudyAid).flashcards[0]!.verificationNote = "x";
+  await open();
+  fireEvent.click(await screen.findByRole("button", { name: "Save the new flashcards" }));
+  await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1));
+  const set = (await repos.documents.listAiStudySets())[0]!;
+  expect(set.flashcards[0]!.unchecked).toBe(true);
+  const { savedCards, uncheckedLine, droppedLine } = service;
+  expect(savedCards([{ front: "a", back: "b", sourcePage: 1 }])[0]).not.toHaveProperty("unchecked");
+  expect(uncheckedLine([{}, {}], "question")).toBeNull();
+  expect(droppedLine({ generated: 2, kept: 2, droppedByChoices: 0, droppedByQuote: 0, droppedOther: 0 }, "card", "Gemini")).toBeNull();
 });
 
 it("confirms each kit draft discard and lets her cancel", async () => {

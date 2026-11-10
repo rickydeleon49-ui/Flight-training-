@@ -67,6 +67,37 @@ export function withoutVerificationNotes<T extends DraftVerification>(items: T[]
   return items.map(({ verificationNote: _note, ...item }) => item);
 }
 
+/** Cards or questions a draft could not match to its page, as one plain line; null when none. */
+export function uncheckedLine(items: readonly DraftVerification[], noun: "card" | "question"): string | null {
+  const n = items.filter((item) => item.verificationNote).length;
+  if (n === 0) return null;
+  return `${n} ${n === 1 ? noun : `${noun}s`} couldn't be matched to the page. Check ${n === 1 ? "it" : "them"} before you rely on ${n === 1 ? "it" : "them"}.`;
+}
+
+/** Saved cards keep a small flag instead of the draft note, so review can still say they were not checked. */
+export function savedCards<T extends StudyFlashcard & DraftVerification>(items: T[]): (Omit<T, "verificationNote"> & { unchecked?: true })[] {
+  return items.map(({ verificationNote, ...card }) => (verificationNote ? { ...card, unchecked: true as const } : card));
+}
+
+/** What the kit kept, from the checks that ran before the draft: generated vs kept and why. */
+export interface CheckSummary {
+  generated: number;
+  kept: number;
+  droppedByChoices: number;
+  droppedByQuote: number;
+  droppedOther: number;
+}
+export function droppedLine(summary: CheckSummary | undefined, noun: "card" | "question", helper: string): string | null {
+  if (!summary || summary.generated <= summary.kept) return null;
+  const word = (n: number) => `${n} ${n === 1 ? noun : `${noun}s`}`;
+  const why = [
+    summary.droppedByChoices ? `${summary.droppedByChoices} had the wrong number of choices` : "",
+    summary.droppedByQuote ? `${summary.droppedByQuote} could not be matched to the page` : "",
+    summary.droppedOther ? `${summary.droppedOther} were duplicates, too long or had a bad answer` : "",
+  ].filter(Boolean).join(", ");
+  return `${helper} made ${word(summary.generated)}; ${summary.kept} ${summary.kept === 1 ? "was" : "were"} kept${why ? ` (${why})` : ""}.`;
+}
+
 export interface GeneratedStudyAid {
   title: string;
   summary: string;
@@ -74,12 +105,14 @@ export interface GeneratedStudyAid {
   flashcards: (StudyFlashcard & DraftVerification)[];
   sourceNotes: string;
   model: string;
+  checkSummary?: CheckSummary;
 }
 
 export interface GeneratedPracticeTest {
   title: string;
   questions: (PracticeQuestion & DraftVerification)[];
   model: string;
+  checkSummary?: CheckSummary;
 }
 
 // Only ever seen outside the desktop shell, where Gemini cannot run at all.
