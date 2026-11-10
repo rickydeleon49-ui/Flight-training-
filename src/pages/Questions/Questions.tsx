@@ -237,8 +237,7 @@ export function Questions() {
               {/* Locked while it saves, so nothing the student types then is cleared with it. */}
               <fieldset
                 disabled={addBusy}
-                className="stack stack--3"
-                style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+                className="stack stack--3 questions__fieldset"
               >
                 <TextArea
                   rows={2}
@@ -273,13 +272,13 @@ export function Questions() {
             </CardBody>
           </Card>
 
-          <Card>
+          <Card variant="grouped">
             <CardHeader
               title="Your questions"
               action={<span className="tiny dim">{data.questions.length} total</span>}
             />
             <CardBody flush>
-              <div className="filter-chips" style={{ padding: "0 var(--space-5) var(--space-4)" }}>
+              <div className="filter-chips questions__filters">
                 {FILTERS.map((option) => (
                   <button
                     type="button"
@@ -294,7 +293,7 @@ export function Questions() {
               </div>
 
               {missing ? (
-                <p className="small muted" role="status" style={{ padding: "0 var(--space-5) var(--space-3)" }}>
+                <p className="small muted questions__note" role="status">
                   That item isn't here any more.
                 </p>
               ) : null}
@@ -315,7 +314,7 @@ export function Questions() {
               ) : (
                 <>
                   {visible.length > QUESTION_PAGE_SIZE ? (
-                    <p className="small muted" style={{ padding: "0 var(--space-5) var(--space-3)" }}>
+                    <p className="small muted questions__note">
                       Showing {Math.min(visibleLimit, visible.length).toLocaleString()} of{" "}
                       {visible.length.toLocaleString()} questions
                     </p>
@@ -335,7 +334,7 @@ export function Questions() {
                     />
                   ))}
                   {visible.length > visibleLimit ? (
-                    <div style={{ padding: "var(--space-4) var(--space-5)" }}>
+                    <div className="questions__more">
                       <Button onClick={() => setVisibleLimit(visibleLimit + QUESTION_PAGE_SIZE)}>
                         Show {Math.min(QUESTION_PAGE_SIZE, visible.length - visibleLimit)} more questions
                       </Button>
@@ -481,7 +480,7 @@ function QuestionRow({
         ) : null}
 
         {editingAnswer ? (
-          <div className="stack stack--2" style={{ marginTop: "var(--space-3)" }}>
+          <div className="stack stack--2 question-row__editor">
             <TextArea
               rows={2}
               value={answer}
