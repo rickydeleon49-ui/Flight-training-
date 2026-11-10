@@ -10,6 +10,7 @@ import {
   APPEARANCE_STORAGE_KEY,
   applyAppearance,
   getStoredAppearance,
+  GLASS_BARS_RESET_KEY,
   initAppearance,
   setStoredAppearance,
 } from "@/lib/appearance";
@@ -74,13 +75,11 @@ describe("Appearance setting in Settings", () => {
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
     expect(document.documentElement.getAttribute("data-appearance")).toBeNull();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
-    expect(classic.checked).toBe(true);
     expect(glass.checked).toBe(false);
     expect(
-      screen.getByText("Glass gives cards a soft frosted look. Classic is the standard look."),
+      screen.getByText("Frosted tab bar and top bar. Off until it's tested on your iPhone."),
     ).toBeTruthy();
   await expectNoA11yViolations(document.body);
   });
@@ -88,8 +87,7 @@ describe("Appearance setting in Settings", () => {
   it("choosing Glass sets the data-appearance attribute and saves it", async () => {
     await open();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
 
@@ -98,7 +96,6 @@ describe("Appearance setting in Settings", () => {
     });
 
     expect(glass.checked).toBe(true);
-    expect(classic.checked).toBe(false);
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
     expect(getStoredAppearance()).toBe("glass");
     expect(localStorage.getItem(APPEARANCE_STORAGE_KEY)).toBe(JSON.stringify("glass"));
@@ -107,8 +104,7 @@ describe("Appearance setting in Settings", () => {
   it("choosing Classic removes the data-appearance attribute and saves Classic", async () => {
     await open();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
     await act(async () => {
       fireEvent.click(glass);
@@ -116,10 +112,9 @@ describe("Appearance setting in Settings", () => {
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
 
     await act(async () => {
-      fireEvent.click(classic);
+      fireEvent.click(glass);
     });
 
-    expect(classic.checked).toBe(true);
     expect(glass.checked).toBe(false);
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
     expect(document.documentElement.getAttribute("data-appearance")).toBeNull();
@@ -127,6 +122,7 @@ describe("Appearance setting in Settings", () => {
   });
 
   it("saved Glass is applied at start before render", async () => {
+    localStorage.setItem(GLASS_BARS_RESET_KEY, "1");
     setStoredAppearance("glass");
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
 
@@ -137,15 +133,28 @@ describe("Appearance setting in Settings", () => {
 
     await open();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
     expect(glass.checked).toBe(true);
-    expect(classic.checked).toBe(false);
+    expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
+  });
+
+  it("resets stored Glass to Classic once, then leaves later choices alone", () => {
+    setStoredAppearance("glass");
+    expect(localStorage.getItem(GLASS_BARS_RESET_KEY)).toBeNull();
+    expect(initAppearance()).toBe("classic");
+    expect(getStoredAppearance()).toBe("classic");
+    expect(localStorage.getItem(GLASS_BARS_RESET_KEY)).not.toBeNull();
+    expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
+
+    setStoredAppearance("glass");
+    expect(initAppearance()).toBe("glass");
+    expect(getStoredAppearance()).toBe("glass");
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
   });
 
   it("handles unquoted raw strings and invalid values safely", () => {
+    localStorage.setItem(GLASS_BARS_RESET_KEY, "1");
     localStorage.setItem(APPEARANCE_STORAGE_KEY, "glass");
     expect(getStoredAppearance()).toBe("glass");
     initAppearance();

@@ -15,6 +15,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Checkbox,
   CheckIcon,
   ConfirmDialog,
   Field,
@@ -1073,31 +1074,14 @@ export function Settings() {
                   {theme === "auto" ? <p className="small muted">Matches your iPhone or Mac</p> : null}
                 </div>
               )}
-              <p className="small muted">
-                Glass gives cards a soft frosted look. Classic is the standard look.
-              </p>
-              <div className="radio-row" role="radiogroup" aria-label="Appearance">
-                <label className="small radio-row__option">
-                  <input
-                    type="radio"
-                    name="appearance"
-                    value="classic"
-                    checked={appearance === "classic"}
-                    onChange={() => chooseAppearance("classic")}
-                  />
-                  <span>Classic</span>
-                </label>
-                <label className="small radio-row__option">
-                  <input
-                    type="radio"
-                    name="appearance"
-                    value="glass"
-                    checked={appearance === "glass"}
-                    onChange={() => chooseAppearance("glass")}
-                  />
-                  <span>Glass</span>
-                </label>
-              </div>
+              <Checkbox
+                appearance="switch"
+                strikethrough={false}
+                label="Glass bars"
+                meta="Frosted tab bar and top bar. Off until it's tested on your iPhone."
+                checked={appearance === "glass"}
+                onChange={(on) => chooseAppearance(on ? "glass" : "classic")}
+              />
             </div>
           </CardBody>
         </Card>

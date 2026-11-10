@@ -1,5 +1,5 @@
 /**
- * Visual appearance preference: Classic (standard) or Glass (frosted cards).
+ * Visual appearance preference: Classic (standard) or Glass (frosted tab bar and top bar only).
  *
  * Persisted in localStorage so the choice survives an app restart without
  * requiring a database schema migration.
@@ -66,11 +66,31 @@ export function applyAppearance(appearance: Appearance): void {
   }
 }
 
+export const GLASS_BARS_RESET_KEY = "her-flight-deck.glass-bars-reset";
+
+/**
+ * Glass now only frosts the tab bar and top bar and stays off until the
+ * iPhone speed test passes. Once, switch anyone who chose Glass before back
+ * to Classic, then leave their later choices alone.
+ */
+function resetGlassOnce(): void {
+  const store = getStorage();
+  if (!store) return;
+  try {
+    if (store.getItem(GLASS_BARS_RESET_KEY)) return;
+    setStoredAppearance("classic");
+    store.setItem(GLASS_BARS_RESET_KEY, "1");
+  } catch {
+    // Storage blocked; nothing to reset.
+  }
+}
+
 /**
  * Reads the saved appearance and applies it immediately to the root document.
  * Called at app startup before rendering to prevent visual flashing.
  */
 export function initAppearance(): Appearance {
+  resetGlassOnce();
   const appearance = getStoredAppearance();
   applyAppearance(appearance);
   return appearance;
