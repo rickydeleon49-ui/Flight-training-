@@ -17,6 +17,34 @@ function storage(scope: RememberFor = "session"): Storage | null {
   }
 }
 
+/** Reads a remembered value without a hook; bad or missing data gives `initial`. */
+export function readRemembered<T>(
+  key: string,
+  initial: T,
+  isValid: (value: unknown) => value is T,
+  scope: RememberFor = "session",
+): T {
+  const store = storage(scope);
+  if (!store) return initial;
+  try {
+    const raw = store.getItem(PREFIX + key);
+    if (raw === null) return initial;
+    const parsed: unknown = JSON.parse(raw);
+    return isValid(parsed) ? parsed : initial;
+  } catch {
+    return initial;
+  }
+}
+
+/** Writes a remembered value without a hook; a failed write is ignored. */
+export function writeRemembered<T>(key: string, next: T, scope: RememberFor = "session"): void {
+  try {
+    storage(scope)?.setItem(PREFIX + key, JSON.stringify(next));
+  } catch {
+    // Out of space or unavailable; the value still applies this visit.
+  }
+}
+
 /**
  * State that survives leaving the screen and coming back.
  *
@@ -31,28 +59,12 @@ export function useRememberedState<T>(
   isValid: (value: unknown) => value is T,
   scope: RememberFor = "session",
 ): [T, (value: T) => void] {
-  const [value, setValue] = useState<T>(() => {
-    const store = storage(scope);
-    if (!store) return initial;
-    try {
-      const raw = store.getItem(PREFIX + key);
-      if (raw === null) return initial;
-      const parsed: unknown = JSON.parse(raw);
-      return isValid(parsed) ? parsed : initial;
-    } catch {
-      return initial;
-    }
-  });
+  const [value, setValue] = useState<T>(() => readRemembered(key, initial, isValid, scope));
 
   const remember = useCallback(
     (next: T) => {
       setValue(next);
-      const store = storage(scope);
-      try {
-        store?.setItem(PREFIX + key, JSON.stringify(next));
-      } catch {
-        // Out of space or unavailable; the filter still applies this visit.
-      }
+      writeRemembered(key, next, scope);
     },
     [key, scope],
   );

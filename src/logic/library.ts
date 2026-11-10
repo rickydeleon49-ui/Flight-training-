@@ -35,6 +35,8 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 export function sortMaterials(
   materials: StudyMaterial[],
   order: MaterialSort,
+  /** Ids she opened lately, newest first; used by "Recently studied". */
+  opened: readonly string[] = [],
 ): StudyMaterial[] {
   const sorted = [...materials];
 
@@ -48,9 +50,15 @@ export function sortMaterials(
           PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] ||
           b.createdAt.localeCompare(a.createdAt),
       );
-    case "studied":
-      // Never studied goes last; ties fall back to the newest added.
+    case "studied": {
+      // Lately opened first (newest first), then the rest by last review or newest added.
+      const rank = new Map(opened.map((id, index) => [id, index]));
       return sorted.sort((a, b) => {
+        const ra = rank.get(a.id);
+        const rb = rank.get(b.id);
+        if (ra !== undefined && rb !== undefined) return ra - rb;
+        if (ra !== undefined) return -1;
+        if (rb !== undefined) return 1;
         if (a.lastReviewedAt && b.lastReviewedAt) {
           return (
             b.lastReviewedAt.localeCompare(a.lastReviewedAt) ||
@@ -61,6 +69,7 @@ export function sortMaterials(
         if (b.lastReviewedAt) return 1;
         return b.createdAt.localeCompare(a.createdAt);
       });
+    }
     case "recent":
     default:
       return sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

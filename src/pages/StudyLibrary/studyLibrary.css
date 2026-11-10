@@ -1075,3 +1075,17 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 .move-to { display: flex; flex-direction: column; gap: var(--space-3); }
 .move-to .button { width: 100%; justify-content: flex-start; min-height: 44px; }
 .move-to__divider { width: 100%; border: 0; border-top: 1px solid var(--border-strong); margin: var(--space-2) 0; }
+
+.library__continue { margin-bottom: var(--space-4); }
+.library__continue-title { font-size: var(--text-base, 1rem); margin: 0 0 var(--space-2); }
+.library__continue-cards { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.library__continue-card {
+  display: flex; flex-direction: column; min-width: 0; flex: 1 1 12rem; max-width: 22rem;
+  padding: var(--space-2) var(--space-3); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px); text-decoration: none; color: inherit;
+}
+.library__continue-name, .library__continue-topic { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) {
+  .library__continue-cards { flex-direction: column; }
+  .library__continue-card { max-width: none; flex: 0 0 auto; }
+}

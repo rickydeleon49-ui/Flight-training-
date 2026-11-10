@@ -68,6 +68,8 @@ import { useLibraryFolders } from "./useLibraryFolders";
 import { ArrangeBar, ArrangeRow, MANUAL_ONLY_HINT, MoveToast } from "./ArrangeParts";
 import { MoveToDialog } from "./MoveToDialog";
 import { useArrange } from "./useArrange";
+import { ContinueStudying } from "./ContinueStudying";
+import { RECENT_SHOWN, resolveRecent, useRecentlyOpened } from "./recentlyOpened";
 import { FolderActionsMenu, FolderDialogs, NewFolderButton, type FolderDialogState } from "./FolderDialogs";
 import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
@@ -256,6 +258,7 @@ export function StudyLibrary() {
     "library.closedSections", [], isStringList, "device",
   );
   const closedSections = useMemo(() => new Set(closedList), [closedList]);
+  const recentIds = useRecentlyOpened();
   const { folders, placements, folderOf, reload: reloadFolders } = useLibraryFolders();
   const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(null);
   const filterKey = [status, topic, type, search, sort, view, folderSort].join("\0");
@@ -301,8 +304,8 @@ export function StudyLibrary() {
       }
       return true;
     });
-    return sortMaterials(matching, sort);
-  }, [filtered, search, sort]);
+    return sortMaterials(matching, sort, recentIds);
+  }, [filtered, search, sort, recentIds]);
 
   const titleMatchesSearch = !!search.trim() && visible.some((material) =>
     searchText(material.title).includes(searchText(search.trim())),
@@ -326,9 +329,9 @@ export function StudyLibrary() {
   const filtersActive = status !== "all" || !!topic || !!type;
   const sections = useMemo<LibrarySection[]>(() => {
     if (!sectioned) return [];
-    if (view === "folder") return sectionsByFolder(grouped.topLevel, folders, placements, folderSort);
-    return (view === "topic" ? sectionsByTopic : sectionsByType)(grouped.topLevel, sort);
-  }, [sectioned, view, grouped, folders, placements, folderSort, sort]);
+    if (view === "folder") return sectionsByFolder(grouped.topLevel, folders, placements, folderSort, recentIds);
+    return (view === "topic" ? sectionsByTopic : sectionsByType)(grouped.topLevel, sort, recentIds);
+  }, [sectioned, view, grouped, folders, placements, folderSort, sort, recentIds]);
   // Chapters follow their book, so a placement on one is ignored (shown only when searching).
   const { chapterIds, chaptersOf } = useMemo(() => {
     const ids = new Set<string>();
@@ -369,6 +372,10 @@ export function StudyLibrary() {
     },
   });
   const arranging = arrange.arranging && view === "folder";
+  const continueItems = useMemo(
+    () => resolveRecent(recentIds, data.materials.filter((m) => !m.faaReference)).slice(0, RECENT_SHOWN),
+    [recentIds, data.materials],
+  );
   // Escape leaves Arrange (the Move to… dialog and menus handle their own Escape first).
   useEffect(() => {
     if (!arranging) return;
@@ -661,6 +668,8 @@ export function StudyLibrary() {
           </div>
         </div>
       )}
+
+      {hasAny && !searching && !arranging ? <ContinueStudying materials={continueItems} /> : null}
 
       {!titleMatchesSearch ? (
       <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />

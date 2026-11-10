@@ -90,6 +90,7 @@ export function sectionsByFolder(
   folders: LibraryFolder[],
   placements: LibraryPlacement[],
   sort: FolderSort,
+  opened: readonly string[] = [],
 ): LibrarySection[] {
   const folderIds = new Set(folders.map((f) => f.id));
   const placementOf = new Map<string, LibraryPlacement>();
@@ -106,7 +107,7 @@ export function sectionsByFolder(
   }
 
   const arrange = (items: StudyMaterial[]): StudyMaterial[] => {
-    if (sort !== "manual") return sortMaterials(items, sort);
+    if (sort !== "manual") return sortMaterials(items, sort, opened);
     const positioned: StudyMaterial[] = [];
     const rest: StudyMaterial[] = [];
     for (const m of items) {
@@ -146,6 +147,7 @@ export function sectionsByFolder(
 function sectionsByLabel<T extends string>(
   topLevel: StudyMaterial[],
   sort: FolderSort,
+  opened: readonly string[],
   opts: ReadonlyArray<{ value: T; label: string }>,
   pick: (m: StudyMaterial) => T,
 ): LibrarySection[] {
@@ -158,7 +160,7 @@ function sectionsByLabel<T extends string>(
       key: `${o.value}`,
       title: o.label,
       folderId: null,
-      items: sortMaterials(items, effective),
+      items: sortMaterials(items, effective, opened),
     });
   }
   return out;
@@ -167,17 +169,20 @@ function sectionsByLabel<T extends string>(
 export function sectionsByTopic(
   topLevel: StudyMaterial[],
   sort: FolderSort,
+  opened: readonly string[] = [],
 ): LibrarySection[] {
-  return sectionsByLabel(topLevel, sort, TOPIC_OPTIONS, (m) => m.topic);
+  return sectionsByLabel(topLevel, sort, opened, TOPIC_OPTIONS, (m) => m.topic);
 }
 
 export function sectionsByType(
   topLevel: StudyMaterial[],
   sort: FolderSort,
+  opened: readonly string[] = [],
 ): LibrarySection[] {
   return sectionsByLabel(
     topLevel,
     sort,
+    opened,
     MATERIAL_TYPE_OPTIONS,
     (m) => m.materialType,
   );

@@ -11,6 +11,7 @@ import { Item } from "react-stately/Item";
 import { mergeProps } from "react-aria";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
+import { recordOpened } from "./recentlyOpened";
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { deviceCan } from "@/services/platform";
@@ -367,6 +368,10 @@ function MaterialDetailPage() {
   const isMountedRef = useRef(true);
 
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
+  const openedId = material?.id ?? null;
+  useEffect(() => {
+    if (openedId) recordOpened(openedId);
+  }, [openedId]);
   useEffect(() => {
     if (!pendingJump) return;
     const destination = tabForAnchor(pendingJump);
