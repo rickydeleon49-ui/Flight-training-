@@ -7929,6 +7929,230 @@ pub(crate) fn stage_complete_restore_in(
     result.map(|()| info)
 }
 
+/// Stage a complete restore of an empty app so the next startup starts fresh.
+#[tauri::command]
+pub async fn stage_start_fresh(app: AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        crate::library_lock::with_library_lock(
+            &root,
+            crate::library_lock::owned(&app),
+            crate::study_pack::reconcile::Mode::Restore,
+            |_| stage_start_fresh_in(&root),
+        )
+    })
+    .await
+    .map_err(|error| format!("Could not finish preparing to start fresh: {error}"))?
+}
+
+/// Stage an empty SQLite database with a Complete restore plan, against a plain directory.
+pub(crate) fn stage_start_fresh_in(root: &Path) -> Result<(), String> {
+    let (staging, pending) = fresh_staging(root)?;
+
+    let result = (|| {
+        let db_path = staging.join(DB_FILES[0]);
+        let conn = Connection::open(&db_path)
+            .map_err(|e| format!("Could not create empty database: {e}"))?;
+        conn.execute_batch("VACUUM;")
+            .map_err(|e| format!("Could not initialize empty database: {e}"))?;
+        drop(conn);
+        verify_sqlite_file(&db_path)?;
+        write_restore_plan(&staging, RestoreKind::Complete, "start-fresh")?;
+        std::fs::rename(&staging, &pending)
+            .map_err(|e| format!("Could not stage the restore: {e}"))?;
+        Ok::<(), String>(())
+    })();
+
+    if result.is_err() {
+        let _ = std::fs::remove_dir_all(&staging);
+    }
+    result
+}
+
+/// Remove everything stored inside `backups/` after a committed start-fresh install.
+///
+/// Safety copies are kept inside application data, so their removal stays strictly
+/// inside `backups/` without following symlinks.
+fn delete_backups_contents(root: &Path) -> Result<(), String> {
+    let backups_dir = root.join(BACKUP_DIR);
+    match inspect_storage_root(&backups_dir, "Backups directory")? {
+        Some(_) => {}
+        None => return Ok(()),
+    }
+
+    let entries = std::fs::read_dir(&backups_dir)
+        .map_err(|e| format!("Could not read backups directory for start-fresh cleanup: {e}"))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Could not inspect backup entry: {e}"))?;
+        let path = entry.path();
+        if !path.starts_with(&backups_dir) {
+            return Err("Backup path climbs outside backups directory".into());
+        }
+        let meta = std::fs::symlink_metadata(&path).map_err(|e| {
+            format!(
+                "Could not read metadata for backup entry {:?}: {e}",
+                entry.file_name()
+            )
+        })?;
+        if is_symlink_or_reparse(&meta) {
+            return Err(format!(
+                "Backup entry {:?} is an unsafe symlink or reparse point",
+                entry.file_name()
+            ));
+        }
+        if meta.is_dir() {
+            std::fs::remove_dir_all(&path).map_err(|e| {
+                format!(
+                    "Could not remove backup folder {:?}: {e}",
+                    entry.file_name()
+                )
+            })?;
+        } else {
+            std::fs::remove_file(&path).map_err(|e| {
+                format!("Could not remove backup file {:?}: {e}", entry.file_name())
+            })?;
+        }
+    }
+    Ok(())
+}
+
+/// Remove everything stored inside `.incoming/` after a committed start-fresh install.
+fn delete_incoming_contents(root: &Path) -> Result<(), String> {
+    let incoming_dir = root.join(INCOMING_DIR);
+    match inspect_storage_root(&incoming_dir, "Incoming directory")? {
+        Some(_) => {}
+        None => return Ok(()),
+    }
+
+    let entries = std::fs::read_dir(&incoming_dir)
+        .map_err(|e| format!("Could not read incoming directory for start-fresh cleanup: {e}"))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Could not inspect incoming entry: {e}"))?;
+        let path = entry.path();
+        if !path.starts_with(&incoming_dir) {
+            return Err("Incoming path climbs outside incoming directory".into());
+        }
+        let meta = std::fs::symlink_metadata(&path).map_err(|e| {
+            format!(
+                "Could not read metadata for incoming entry {:?}: {e}",
+                entry.file_name()
+            )
+        })?;
+        if is_symlink_or_reparse(&meta) {
+            return Err(format!(
+                "Incoming entry {:?} is an unsafe symlink or reparse point",
+                entry.file_name()
+            ));
+        }
+        if meta.is_dir() {
+            std::fs::remove_dir_all(&path).map_err(|e| {
+                format!(
+                    "Could not remove incoming folder {:?}: {e}",
+                    entry.file_name()
+                )
+            })?;
+        } else {
+            std::fs::remove_file(&path).map_err(|e| {
+                format!(
+                    "Could not remove incoming file {:?}: {e}",
+                    entry.file_name()
+                )
+            })?;
+        }
+    }
+    Ok(())
+}
+
+/// Remove the phone outbox folder and all its contents after a committed start-fresh install.
+fn delete_phone_outbox(root: &Path) -> Result<(), String> {
+    let outbox_dir = root.join(crate::sync::send::OUTBOX_DIR);
+    match inspect_storage_root(&outbox_dir, "Phone outbox directory")? {
+        Some(_) => {}
+        None => return Ok(()),
+    }
+
+    let entries = std::fs::read_dir(&outbox_dir)
+        .map_err(|e| format!("Could not read outbox directory for start-fresh cleanup: {e}"))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Could not inspect outbox entry: {e}"))?;
+        let path = entry.path();
+        if !path.starts_with(&outbox_dir) {
+            return Err("Outbox path climbs outside outbox directory".into());
+        }
+        let meta = std::fs::symlink_metadata(&path).map_err(|e| {
+            format!(
+                "Could not read metadata for outbox entry {:?}: {e}",
+                entry.file_name()
+            )
+        })?;
+        if is_symlink_or_reparse(&meta) {
+            return Err(format!(
+                "Outbox entry {:?} is an unsafe symlink or reparse point",
+                entry.file_name()
+            ));
+        }
+        if meta.is_dir() {
+            std::fs::remove_dir_all(&path).map_err(|e| {
+                format!(
+                    "Could not remove outbox folder {:?}: {e}",
+                    entry.file_name()
+                )
+            })?;
+        } else {
+            std::fs::remove_file(&path).map_err(|e| {
+                format!("Could not remove outbox file {:?}: {e}", entry.file_name())
+            })?;
+        }
+    }
+    std::fs::remove_dir(&outbox_dir)
+        .map_err(|e| format!("Could not remove phone outbox directory: {e}"))?;
+    Ok(())
+}
+
+/// Remove the phone baseline file (`phone-work.json`) after a committed start-fresh install.
+fn delete_phone_work_file(root: &Path) -> Result<(), String> {
+    let path = root.join(crate::phone_work::PHONE_WORK_FILE);
+    if !path.starts_with(root) {
+        return Err("Phone work file path climbs outside root".into());
+    }
+    let meta = match std::fs::symlink_metadata(&path) {
+        Ok(m) => m,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => return Err(format!("Could not inspect phone work file: {e}")),
+    };
+    if is_symlink_or_reparse(&meta) {
+        return Err("Phone work file is an unsafe symlink or reparse point".into());
+    }
+    if meta.is_dir() {
+        return Err("Phone work file path is unexpectedly a directory".into());
+    }
+    std::fs::remove_file(&path).map_err(|e| format!("Could not remove phone work file: {e}"))
+}
+
+/// Remove leftover state from a previous library after a committed start-fresh install:
+/// safety copies in `backups/`, `.incoming/` contents, the phone `outbox/` folder,
+/// and `phone-work.json`.
+///
+/// Refuses symlinks/reparse points, stays within application root, and logs warnings
+/// without failing the restore.
+fn delete_start_fresh_leftovers(root: &Path) {
+    if let Err(e) = delete_backups_contents(root) {
+        log::warn!("Could not clean up backups after start fresh: {e}");
+    }
+    if let Err(e) = delete_incoming_contents(root) {
+        log::warn!("Could not clean up incoming directory after start fresh: {e}");
+    }
+    if let Err(e) = delete_phone_outbox(root) {
+        log::warn!("Could not clean up phone outbox after start fresh: {e}");
+    }
+    if let Err(e) = delete_phone_work_file(root) {
+        log::warn!("Could not clean up phone work file after start fresh: {e}");
+    }
+}
+
 /// Stage one of the automatic safety copies for installation on next launch.
 ///
 /// These copies hold the database only, so uploaded documents are deliberately
@@ -8839,6 +9063,7 @@ where
             true,
         ),
     };
+    let is_start_fresh = plan.source == "start-fresh";
 
     let rollback = unique_backup_path(&backup_dir(root)?, "before-restore");
     std::fs::create_dir_all(&rollback)
@@ -9082,6 +9307,10 @@ where
     journal.phase = RestorePhase::Committed;
     write_journal(root, &journal)?;
 
+    if is_start_fresh {
+        delete_start_fresh_leftovers(root);
+    }
+
     let mut cleanup_succeeded = true;
     match inspect_storage_root(&pending, "Pending restore directory") {
         Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
@@ -9106,7 +9335,10 @@ where
             cleanup_succeeded = false;
         }
     }
-    let _ = prune(root);
+    if !is_start_fresh {
+        let _ = prune(root);
+        record_phone_baseline_best_effort(root);
+    }
 
     // GEN-REL-02: nothing Gemini produced for the replaced library may be saved
     // into the restored one. This is part of the committed restore: until it
@@ -9158,10 +9390,7 @@ where
 {
     match apply_pending_restore_in_internal(root, before_install) {
         Ok(RestoreApplicationResult::NoPending) => Ok(()),
-        Ok(RestoreApplicationResult::Installed) => {
-            record_phone_baseline_best_effort(root);
-            Ok(())
-        }
+        Ok(RestoreApplicationResult::Installed) => Ok(()),
         Ok(RestoreApplicationResult::RefusedUnchanged(msg)) => Err(msg),
         Ok(RestoreApplicationResult::Recovered(msg)) => Err(msg),
         Ok(RestoreApplicationResult::Unresolved { reason, .. }) => Err(reason),
@@ -9204,7 +9433,6 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
             }
             Ok(RestoreApplicationResult::Installed) => {
                 reset_sync_identity_best_effort(root);
-                record_phone_baseline_best_effort(root);
                 return Ok(StartupRestoreDecision::RestoreCompleted);
             }
             Ok(RestoreApplicationResult::RefusedUnchanged(reason)) => {
@@ -9246,6 +9474,10 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
     match journal.phase {
         RestorePhase::Committed => {
             let pending = root.join(RESTORE_PENDING_DIR);
+            let is_start_fresh = read_restore_plan_for_ownership(&pending)
+                .ok()
+                .flatten()
+                .is_some_and(|p| p.source == "start-fresh");
             let mut cleanup_succeeded = true;
             match inspect_storage_root(&pending, "Pending restore directory") {
                 Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
@@ -9285,9 +9517,13 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 }
             }
             if cleanup_succeeded {
+                if is_start_fresh {
+                    delete_start_fresh_leftovers(root);
+                } else {
+                    record_phone_baseline_best_effort(root);
+                    let _ = prune(root);
+                }
                 reset_sync_identity_best_effort(root);
-                record_phone_baseline_best_effort(root);
-                let _ = prune(root);
                 // A restore interrupted after it committed: finish forgetting
                 // the replaced library's Gemini jobs before the journal goes.
                 if forget_gemini_jobs(root) {
@@ -18514,6 +18750,310 @@ mod tests {
         let sneaky = format!("{}/../other.hfdbackup", dir.display());
         assert!(reveal_iphone_backup_with(&dir, &sneaky, &opener).is_err());
         assert_eq!(opener.calls.lock().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn start_fresh_replaces_db_with_empty_sqlite_and_removes_documents_and_backups() {
+        let root = scratch("start-fresh-success");
+        let db = root.join(DB_FILES[0]);
+        write_database(&db, "active student training record");
+        write_document(&root, "handbook.pdf", "sample chapter");
+        write_document(&root, "notes/logbook.txt", "solo flight hours");
+        let backups_folder = root.join(BACKUP_DIR).join("pre-upgrade-safety-copy");
+        std::fs::create_dir_all(&backups_folder).unwrap();
+        write_database(&backups_folder.join(DB_FILES[0]), "backup safety record");
+
+        assert!(db.is_file());
+        assert!(root.join(DOCUMENTS_DIR).join("handbook.pdf").is_file());
+        assert!(backups_folder.join(DB_FILES[0]).is_file());
+
+        stage_start_fresh_in(&root).unwrap();
+
+        // Staging alone must not touch active data
+        assert_eq!(database_contents(&db), "active student training record");
+        assert!(root.join(DOCUMENTS_DIR).join("handbook.pdf").is_file());
+        assert!(backups_folder.join(DB_FILES[0]).is_file());
+        assert!(root.join(RESTORE_PENDING_DIR).join(DB_FILES[0]).is_file());
+
+        apply_pending_restore_in(&root).unwrap();
+
+        // 1. DB replaced by an empty valid SQLite file (not a 0-byte file, passes verify_sqlite_file)
+        assert!(db.is_file());
+        verify_sqlite_file(&db).unwrap();
+        let conn = Connection::open(&db).unwrap();
+        let table_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name != 'sqlite_sequence'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(table_count, 0);
+
+        // 2. Documents gone
+        assert!(
+            !root.join(DOCUMENTS_DIR).exists()
+                || std::fs::read_dir(root.join(DOCUMENTS_DIR))
+                    .unwrap()
+                    .next()
+                    .is_none()
+        );
+
+        // 3. Backups gone
+        assert!(!backups_folder.exists());
+        assert!(
+            !root.join(BACKUP_DIR).exists()
+                || std::fs::read_dir(root.join(BACKUP_DIR))
+                    .unwrap()
+                    .next()
+                    .is_none()
+        );
+        assert!(list_backups_in(&root).unwrap().is_empty());
+
+        // 4. No .restore-* dirs left
+        assert!(!root.join(RESTORE_STAGING_DIR).exists());
+        assert!(!root.join(RESTORE_PENDING_DIR).exists());
+        assert!(!root.join(RESTORE_JOURNAL_FILE).exists());
+
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn start_fresh_install_failure_preserves_original_db_documents_and_backups() {
+        let root = scratch("start-fresh-failure");
+        let db = root.join(DB_FILES[0]);
+        write_database(&db, "precious training record");
+        write_document(&root, "handbook.pdf", "important study notes");
+        let backups_folder = root.join(BACKUP_DIR).join("pre-upgrade-safety-copy");
+        std::fs::create_dir_all(&backups_folder).unwrap();
+        write_database(&backups_folder.join(DB_FILES[0]), "backup safety record");
+
+        stage_start_fresh_in(&root).unwrap();
+
+        let err =
+            apply_pending_restore_in_with(&root, || Err("injected install failure".to_string()))
+                .unwrap_err();
+        assert!(err.contains("injected install failure"));
+
+        // Original DB, documents AND backups must still be there
+        assert_eq!(database_contents(&db), "precious training record");
+        assert_eq!(
+            document_contents(&root, "handbook.pdf").as_deref(),
+            Some("important study notes")
+        );
+        assert!(backups_folder.join(DB_FILES[0]).is_file());
+        assert_eq!(
+            database_contents(&backups_folder.join(DB_FILES[0])),
+            "backup safety record"
+        );
+
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn start_fresh_staging_refuses_while_unreadable_restore_journal_exists() {
+        let root = scratch("start-fresh-unreadable-journal");
+        write_database(&root.join(DB_FILES[0]), "normal record");
+
+        // Plant an unreadable/corrupted journal
+        std::fs::write(root.join(RESTORE_JOURNAL_FILE), b"corrupted { not json").unwrap();
+
+        let err = stage_start_fresh_in(&root).unwrap_err();
+        assert!(
+            err.contains("unreadable restore journal") || err.contains("invalid or unreadable"),
+            "Error was: {err}"
+        );
+
+        // Staging directory must not have been left behind
+        assert!(!root.join(RESTORE_STAGING_DIR).exists());
+        assert!(!root.join(RESTORE_PENDING_DIR).exists());
+
+        std::fs::remove_file(root.join(RESTORE_JOURNAL_FILE)).unwrap();
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn start_fresh_apply_cleans_incoming_outbox_and_phone_work() {
+        let root = scratch("start-fresh-cleanup-all");
+        let db = root.join(DB_FILES[0]);
+        write_database(&db, "precious training record");
+        write_document(&root, "handbook.pdf", "important study notes");
+
+        let backups_folder = root.join(BACKUP_DIR).join("pre-upgrade-safety-copy");
+        std::fs::create_dir_all(&backups_folder).unwrap();
+        write_database(&backups_folder.join(DB_FILES[0]), "backup safety record");
+
+        let incoming_dir = root.join(INCOMING_DIR);
+        std::fs::create_dir_all(&incoming_dir).unwrap();
+        std::fs::write(
+            incoming_dir.join("latest.hfdbackup"),
+            b"incoming backup bytes",
+        )
+        .unwrap();
+        std::fs::write(incoming_dir.join("stale.tmp"), b"incoming temp bytes").unwrap();
+
+        let outbox_dir = root.join(crate::sync::send::OUTBOX_DIR);
+        let outbox_changes = outbox_dir.join("changes").join("phone-device-1");
+        std::fs::create_dir_all(&outbox_changes).unwrap();
+        std::fs::write(outbox_changes.join("0-1-abcdef.json.gz"), b"change bytes").unwrap();
+
+        let phone_work = root.join(crate::phone_work::PHONE_WORK_FILE);
+        std::fs::write(&phone_work, b"{\"baselineAt\":\"2026-10-01T00:00:00Z\"}").unwrap();
+
+        assert!(incoming_dir.join("latest.hfdbackup").is_file());
+        assert!(outbox_changes.join("0-1-abcdef.json.gz").is_file());
+        assert!(phone_work.is_file());
+        assert!(backups_folder.join(DB_FILES[0]).is_file());
+
+        stage_start_fresh_in(&root).unwrap();
+
+        assert!(incoming_dir.join("latest.hfdbackup").is_file());
+        assert!(outbox_changes.join("0-1-abcdef.json.gz").is_file());
+        assert!(phone_work.is_file());
+
+        apply_pending_restore_in(&root).unwrap();
+
+        assert!(
+            !incoming_dir.exists() || std::fs::read_dir(&incoming_dir).unwrap().next().is_none(),
+            ".incoming directory must be empty after start fresh"
+        );
+        assert!(
+            !outbox_dir.exists() || std::fs::read_dir(&outbox_dir).unwrap().next().is_none(),
+            "outbox directory must be empty after start fresh"
+        );
+        assert!(
+            !phone_work.exists(),
+            "phone-work.json must be gone after start fresh"
+        );
+        assert!(!backups_folder.exists());
+        assert!(
+            !root.join(BACKUP_DIR).exists()
+                || std::fs::read_dir(root.join(BACKUP_DIR))
+                    .unwrap()
+                    .next()
+                    .is_none()
+        );
+        assert!(db.is_file());
+        verify_sqlite_file(&db).unwrap();
+
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn start_fresh_incoming_symlink_pointing_outside_root_is_not_followed_unix() {
+        let root = scratch("start-fresh-symlink-root");
+        let outside = scratch("start-fresh-symlink-outside");
+
+        let external_file = outside.join("vital-external-document.pdf");
+        std::fs::write(&external_file, b"vital external data").unwrap();
+
+        let db = root.join(DB_FILES[0]);
+        write_database(&db, "active student training record");
+
+        let incoming_dir = root.join(INCOMING_DIR);
+        std::fs::create_dir_all(&incoming_dir).unwrap();
+
+        let link_path = incoming_dir.join("linked.hfdbackup");
+        std::os::unix::fs::symlink(&external_file, &link_path).unwrap();
+        std::fs::write(
+            incoming_dir.join("normal.hfdbackup"),
+            b"normal backup bytes",
+        )
+        .unwrap();
+
+        stage_start_fresh_in(&root).unwrap();
+        apply_pending_restore_in(&root).unwrap();
+
+        assert!(
+            external_file.is_file(),
+            "External symlink target outside root must not be deleted"
+        );
+        assert_eq!(
+            std::fs::read(&external_file).unwrap(),
+            b"vital external data"
+        );
+        assert!(db.is_file());
+        verify_sqlite_file(&db).unwrap();
+
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&outside).unwrap();
+    }
+
+    #[test]
+    fn start_fresh_crash_after_committed_finishes_cleanup_on_startup() {
+        let root = scratch("start-fresh-crash-committed");
+        let db = root.join(DB_FILES[0]);
+        write_database(&db, "pre-reset training record");
+        write_document(&root, "handbook.pdf", "study notes");
+
+        let backups_folder = root.join(BACKUP_DIR).join("old-safety-copy");
+        std::fs::create_dir_all(&backups_folder).unwrap();
+        write_database(&backups_folder.join(DB_FILES[0]), "backup record");
+
+        let incoming_dir = root.join(INCOMING_DIR);
+        std::fs::create_dir_all(&incoming_dir).unwrap();
+        std::fs::write(incoming_dir.join("latest.hfdbackup"), b"incoming bytes").unwrap();
+
+        let outbox_dir = root.join(crate::sync::send::OUTBOX_DIR);
+        let outbox_changes = outbox_dir.join("changes").join("phone-device-2");
+        std::fs::create_dir_all(&outbox_changes).unwrap();
+        std::fs::write(outbox_changes.join("1-2-xyz.json.gz"), b"change data").unwrap();
+
+        let phone_work = root.join(crate::phone_work::PHONE_WORK_FILE);
+        std::fs::write(&phone_work, b"{\"baselineAt\":\"2026-10-15T00:00:00Z\"}").unwrap();
+
+        stage_start_fresh_in(&root).unwrap();
+
+        let pending = root.join(RESTORE_PENDING_DIR);
+        let plan: RestorePlan =
+            serde_json::from_str(&std::fs::read_to_string(pending.join(RESTORE_PLAN)).unwrap())
+                .unwrap();
+
+        // Simulate crash right after journal is Committed and database installed:
+        std::fs::rename(pending.join(DB_FILES[0]), root.join(DB_FILES[0])).unwrap();
+        let _ = std::fs::remove_dir_all(root.join(DOCUMENTS_DIR));
+
+        let mut journal = RestoreJournal::new("backups/before-restore-crash".into(), true);
+        journal.operation_id = plan.operation_id.clone();
+        journal.phase = RestorePhase::Committed;
+        write_journal(&root, &journal).unwrap();
+
+        let decision = handle_startup_restore_in(&root).unwrap();
+        assert_eq!(decision, StartupRestoreDecision::RestoreCompleted);
+
+        assert!(
+            !root.join(RESTORE_JOURNAL_FILE).exists(),
+            "Restore journal must be cleared after committed recovery finishes"
+        );
+        assert!(
+            !pending.exists(),
+            "Pending directory must be removed after committed recovery finishes"
+        );
+        assert!(
+            !incoming_dir.exists() || std::fs::read_dir(&incoming_dir).unwrap().next().is_none(),
+            ".incoming directory must be empty after startup recovery"
+        );
+        assert!(
+            !outbox_dir.exists() || std::fs::read_dir(&outbox_dir).unwrap().next().is_none(),
+            "outbox directory must be empty after startup recovery"
+        );
+        assert!(
+            !phone_work.exists(),
+            "phone-work.json must be gone after startup recovery"
+        );
+        assert!(!backups_folder.exists());
+        assert!(
+            !root.join(BACKUP_DIR).exists()
+                || std::fs::read_dir(root.join(BACKUP_DIR))
+                    .unwrap()
+                    .next()
+                    .is_none()
+        );
+        assert!(db.is_file());
+        verify_sqlite_file(&db).unwrap();
+
+        std::fs::remove_dir_all(&root).unwrap();
     }
 }
 

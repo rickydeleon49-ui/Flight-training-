@@ -58,6 +58,11 @@ import {
   openDataFolder,
   stageCompleteRestore,
   stageLocalRestore,
+  savePhoneWork,
+  savedPhoneWorkSentence,
+  unsavedPhoneWork,
+  unsavedPhoneWorkSentence,
+  unsavedPhoneWorkTotal,
   type BackupInfo,
   type CompleteBackupInfo,
 } from "@/services/backups";
@@ -106,6 +111,7 @@ import { GetPhoneProgressCard } from "./GetPhoneProgressCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
 import { SendChangesToIphoneCard } from "./SendChangesToIphoneCard";
 import { GetMacChangesCard } from "./GetMacChangesCard";
+import { StartFreshDialog } from "./StartFreshDialog";
 import { deviceCan, IPHONE_SEND_ENABLED, isIOS } from "@/services/platform";
 
 import "./settings.css";
@@ -217,6 +223,7 @@ export function Settings() {
   const [completeBackupBusy, setCompleteBackupBusy] = useState(false);
   const [restoreCandidate, setRestoreCandidate] = useState<CompleteBackupInfo | null>(null);
   const [localRestoreCandidate, setLocalRestoreCandidate] = useState<BackupInfo | null>(null);
+  const [startFreshOpen, setStartFreshOpen] = useState(false);
   const [version, setVersion] = useState("");
   const [lastBackup, setLastBackup] = useState<LastCompleteBackup | null>(null);
   const [providerConnection, setProviderConnection] = useState<ProviderStatus | null>(null);
@@ -1238,11 +1245,38 @@ export function Settings() {
                   ))}
                 </div>
               ) : null}
+
+              <div className="row" style={{ marginTop: "var(--space-4)" }}>
+                <Button
+                  size="small"
+                  variant="ghost"
+                  onClick={() => setStartFreshOpen(true)}
+                  disabled={backupBusy}
+                >
+                  Start fresh…
+                </Button>
+              </div>
             </div>
           </CardBody>
         </Card>
 
-        ) : null}
+        ) : (
+          <Card>
+            <CardHeader title="Start fresh" eyebrow="Reset this iPhone" />
+            <CardBody>
+              <div className="row">
+                <Button
+                  size="small"
+                  variant="ghost"
+                  onClick={() => setStartFreshOpen(true)}
+                  disabled={backupBusy}
+                >
+                  Start fresh…
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+        )}
 
         <Card>
           <CardHeader title="Check library" eyebrow="Study Library files" />
@@ -1542,6 +1576,32 @@ export function Settings() {
         destructive
         onConfirm={restoreLocalCopy}
         onCancel={() => setLocalRestoreCandidate(null)}
+      />
+
+      <StartFreshDialog
+        open={startFreshOpen}
+        onClose={() => setStartFreshOpen(false)}
+        onSaveBackupFirst={
+          deviceCan().getStudyMaterial
+            ? async () => {
+                const saved = await savePhoneWork();
+                return savedPhoneWorkSentence(saved);
+              }
+            : async () => {
+                const destination = await chooseCompleteBackupDestination();
+                if (!destination) return null;
+                const backup = await createCompleteBackup(destination);
+                return "Backup saved to " + backup.path + ".";
+              }
+        }
+        checkUnsaved={
+          deviceCan().getStudyMaterial
+            ? async () => {
+                const u = await unsavedPhoneWork();
+                return unsavedPhoneWorkTotal(u) > 0 ? unsavedPhoneWorkSentence(u) : null;
+              }
+            : undefined
+        }
       />
 
     </>

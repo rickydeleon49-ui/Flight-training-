@@ -127,6 +127,42 @@ export async function stageLocalRestore(name: string): Promise<BackupInfo> {
   return invoke<BackupInfo>("stage_local_restore", { name });
 }
 
+/**
+ * Stage a complete restore of an empty app so the next startup starts fresh.
+ */
+export async function stageStartFresh(): Promise<void> {
+  if (!isTauri()) throw new Error("Restore needs the desktop application.");
+  airportWeather.clear();
+  await invoke<void>("stage_start_fresh");
+}
+
+/**
+ * Remove this app's localStorage keys before a Start Fresh restart.
+ *
+ * Clears keys with the her-flight-deck and hfd: prefixes, scratch drafts, and sqlJsDb dev database keys.
+ */
+export function clearAppLocalStorage(): void {
+  const isAppKey = (key: string) => {
+    if (key === "her-flight-deck.appearance") return false;
+    const lower = key.toLowerCase();
+    return key.startsWith("her-flight-deck") || key.startsWith("hfd:") || lower.includes("draft") || lower.includes("sqljs");
+  };
+  for (const name of ["localStorage", "sessionStorage"] as const) {
+    try {
+      const storage = (globalThis as { localStorage?: Storage; sessionStorage?: Storage })[name];
+      if (!storage) continue;
+      const keys: string[] = [];
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key && isAppKey(key)) keys.push(key);
+      }
+      for (const key of keys) storage.removeItem(key);
+    } catch {
+      // Storage access can fail in restricted environments; never throw.
+    }
+  }
+}
+
 export async function restartForRestore(): Promise<void> {
   if (!isTauri()) throw new Error("Restore needs the desktop application.");
   await invoke("restart_for_restore");
