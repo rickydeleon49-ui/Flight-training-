@@ -6,14 +6,16 @@ import {
   addStudyPack,
   chooseStudyPack,
   isDefiniteRefusal,
+  onStudyPackProgress,
   inspectStudyPack,
   studyPackErrorMessage,
   studyPackResult,
   type StudyPackPreview,
+  type StudyPackProgress,
   type StudyPackResult,
 } from "@/data/studyPack";
 import { newId } from "@/lib/id";
-import { ALREADY_TITLE, namedItemLines, WAIT_LINE, packAlreadyHaveLine, packContentsLine, resultLines } from "@/logic/studyPackText";
+import { ALREADY_TITLE, namedItemLines, WAIT_LINE, packAlreadyHaveLine, packContentsLine, progressLine, resultLines } from "@/logic/studyPackText";
 import { useAppData } from "@/state/AppDataContext";
 import { DISCLAIMER_LINE } from "@/logic/legal";
 
@@ -44,6 +46,7 @@ interface Props {
 export function AddStudyPackDialog({ open, onClose }: Props) {
   const { refresh } = useAppData();
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+  const [progress, setProgress] = useState<StudyPackProgress | null>(null);
   const addingRef = useRef(false);
   const sessionRef = useRef(0);
 
@@ -111,6 +114,8 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
     addingRef.current = true;
     const session = sessionRef.current;
     setPhase({ ...current, kind: "adding" });
+    setProgress(null);
+    const listening = onStudyPackProgress((p) => { if (sessionRef.current === session) setProgress(p); });
     try {
       let result: StudyPackResult | null = null;
       let failure: unknown = null;
@@ -137,6 +142,7 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
         setPhase({ ...current, kind: "failed", message: definite ? studyPackErrorMessage(failure, CANT_ADD) : UNKNOWN });
       }
     } finally {
+      void listening.then((stop) => stop());
       addingRef.current = false;
     }
   };
@@ -191,7 +197,12 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
               {previewNamed.map((line, i) => <li key={i}>{line}</li>)}
             </ul>
           ) : null}
-          {adding ? <p className="small" role="status">{WAIT_LINE}</p> : null}
+          {adding ? (
+            <div className="stack stack--1" role="status">
+              {progressLine(progress) ? <p className="small"><strong>{progressLine(progress)}</strong></p> : null}
+              <p className="small">{WAIT_LINE}</p>
+            </div>
+          ) : null}
           <p className="tiny dim">Your own work won't be changed.</p>
           <p className="tiny dim">{DISCLAIMER_LINE}</p>
           {phase.kind === "failed" ? <p className="field__error" role="alert">{phase.message}</p> : null}

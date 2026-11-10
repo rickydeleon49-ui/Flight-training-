@@ -7,7 +7,7 @@ import {
   unsavedPhoneWork, unsavedPhoneWorkSentence, unsavedPhoneWorkTotal,
   type ActivitySummary, type CompleteBackupInfo, type UnsavedPhoneWork,
 } from "@/services/backups";
-
+import { fileCount } from "@/logic/dataSafety";
 import { isIOS } from "@/services/platform";
 
 function activitySentence(activity: ActivitySummary): string {
@@ -136,7 +136,7 @@ export function GetStudyMaterialCard() {
         </>}
       >
         {preview ? <>
-          <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {preview.info.files} files</p>
+          <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {fileCount(preview.info.files)}</p>
           {savedLine ? <p role="status">{savedLine}</p> : null}
           {blocked
             ? (blockedSentence ? <p>{blockedSentence}</p> : null)

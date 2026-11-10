@@ -46,6 +46,27 @@ export interface StudyPackResult {
   skippedItems: StudyPackNamedItem[];
   /** Items added next to your own with a label; told once like skippedItems. */
   labelledItems: StudyPackNamedItem[];
+  /** Flashcards and practice questions that went in; absent when read back from a receipt. */
+  addedCards?: number;
+  addedQuestions?: number;
+}
+
+/** One step of an add in progress. `total` is 0 when there is no count. */
+export interface StudyPackProgress {
+  stage: "copying" | "adding" | "checking" | "saving";
+  done: number;
+  total: number;
+}
+
+/** Listen for progress while a pack is being added. Returns a function that stops listening. */
+export async function onStudyPackProgress(handler: (p: StudyPackProgress) => void): Promise<() => void> {
+  if (!isTauri()) return () => {};
+  try {
+    const { listen } = await import("@tauri-apps/api/event");
+    return await listen<StudyPackProgress>("study-pack-progress", (event) => handler(event.payload));
+  } catch {
+    return () => {};
+  }
 }
 
 export interface StudyPackExportSummary {

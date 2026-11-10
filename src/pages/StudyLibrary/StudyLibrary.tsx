@@ -269,6 +269,7 @@ export function StudyLibrary() {
       if (!next.delete(id)) next.add(id);
       return next;
     });
+  const chapterCount = visible.length - grouped.topLevel.length;
   const shownMaterials = useMemo(() => grouped.topLevel.slice(0, visibleLimit), [grouped, visibleLimit]);
   const badgeMaterials = useMemo(
     () => shownMaterials.flatMap((material) => (openBooks.has(material.id) ? [material, ...(grouped.partsOf.get(material.id) ?? [])] : [material])),
@@ -527,7 +528,7 @@ export function StudyLibrary() {
       ) : (
         <>
           <p className="small muted library__result-count">
-            Showing {Math.min(visibleLimit, grouped.topLevel.length).toLocaleString()} of {grouped.topLevel.length.toLocaleString()} materials
+            Showing {Math.min(visibleLimit, grouped.topLevel.length).toLocaleString()} of {grouped.topLevel.length.toLocaleString()} materials{chapterCount > 0 ? ` (${chapterCount.toLocaleString()} more are chapters inside the books)` : ""}
           </p>
           <div className="material-grid">
             {shownMaterials.map((material) => {

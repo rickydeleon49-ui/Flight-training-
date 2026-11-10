@@ -178,6 +178,28 @@ impl Plan {
         out
     }
 
+    /// Flashcards and practice questions in the items that were added.
+    pub fn added_cards_and_questions(&self, pack: &ValidatedPack) -> (u64, u64) {
+        let (mut cards, mut questions) = (0u64, 0u64);
+        for (plan, item) in self.items.iter().zip(&pack.items) {
+            if plan.decision != Decision::Add {
+                continue;
+            }
+            if let Some(g) = &item.json.guide {
+                let kept = g
+                    .flashcards
+                    .iter()
+                    .filter(|c| !plan.dropped_cards.contains(&c.item_id))
+                    .count();
+                cards += kept as u64;
+            }
+            if let Some(p) = &item.json.practice {
+                questions += p.questions.len() as u64;
+            }
+        }
+        (cards, questions)
+    }
+
     /// Every skipped item and everything left out, by title, with a reason.
     pub fn named(&self, pack: &ValidatedPack) -> Vec<SkippedItem> {
         let added: BTreeSet<&str> = self
@@ -520,7 +542,10 @@ fn same_content(item: &PackItem, fresh: &Fresh) -> bool {
     let mut mine = mine.clone();
     let unlabel = |stored: &mut String, wanted: &str| {
         let n = titles::normalize(stored);
-        if n == wanted || titles::without_label(&n) == Some(wanted) {
+        if n == wanted
+            || titles::without_label(&n) == Some(wanted)
+            || titles::without_label(&n).is_some_and(|cut| titles::is_cut_of(cut, wanted))
+        {
             *stored = wanted.to_string();
         }
     };

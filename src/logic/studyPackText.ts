@@ -4,7 +4,7 @@
  * names, no ids. Nothing here says "newer": a pack's age cannot be proved from
  * its contents.
  */
-import type { StudyPackExportSummary, StudyPackNamedItem, StudyPackPreview, StudyPackResult } from "@/data/studyPack";
+import type { StudyPackExportSummary, StudyPackProgress, StudyPackNamedItem, StudyPackPreview, StudyPackResult } from "@/data/studyPack";
 
 const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -33,17 +33,33 @@ export function namedItemLines(items: readonly StudyPackNamedItem[] | undefined)
 }
 
 /** Shown while a big pack is being read or added. */
-export const WAIT_LINE = "This can take a minute or two. Keep the app open.";
+export const WAIT_LINE = "Large packs can take several minutes. Keep the app open.";
 
-/** "Added 11 guides and 3 PDFs." from the guide and PDF counts only. */
+/** "Copying PDFs… 3 of 14" while a pack is being added. */
+export function progressLine(p: StudyPackProgress | null): string | null {
+  if (!p) return null;
+  const count = p.total > 0 && p.stage !== "saving" ? ` ${Math.min(p.done + 1, p.total)} of ${p.total}` : "";
+  switch (p.stage) {
+    case "copying": return `Copying PDFs…${count}`;
+    case "adding": return "Adding PDFs to your library…";
+    case "checking": return `Checking PDFs…${count}`;
+    case "saving": return "Adding guides, flashcards and questions…";
+    default: return null;
+  }
+}
+
+/** "Added 11 guides, 3 PDFs, 200 flashcards and 30 practice questions."; zero parts dropped. */
 export function addedLine(r: StudyPackResult): string {
   const parts = [
     r.addedGuides ? n(r.addedGuides, "guide", "guides") : null,
     r.addedDocuments ? n(r.addedDocuments, "PDF", "PDFs") : null,
+    r.addedCards ? n(r.addedCards, "flashcard", "flashcards") : null,
+    r.addedQuestions ? n(r.addedQuestions, "practice question", "practice questions") : null,
   ].filter((part): part is string => part !== null);
   if (parts.length === 0 && r.added > 0) return "Your study pack was added. Your own work wasn't changed.";
   if (parts.length === 0) return "Everything in this study pack was already in your library. Nothing was changed.";
-  return `Added ${parts.join(" and ")}. Your own work wasn't changed.`;
+  const listed = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+  return `Added ${listed}. Your own work wasn't changed.`;
 }
 
 /** The summary shown after adding: the "Added" line, then only the lines that apply. */

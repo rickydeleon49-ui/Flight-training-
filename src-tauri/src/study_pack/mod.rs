@@ -87,11 +87,15 @@ pub async fn add_study_pack(
     crate::picked_paths::require_picked(&app, &source_path).map_err(mark_add_error)?;
     tauri::async_runtime::spawn_blocking(move || {
         let root = crate::storage::app_root(&app).map_err(mark_add_error)?;
-        install::add_study_pack_in(
+        let report = |p: install::Progress| {
+            let _ = tauri::Emitter::emit(&app, "study-pack-progress", p);
+        };
+        install::add_study_pack_reporting(
             &root,
             crate::library_lock::owned(&app),
             std::path::Path::new(&source_path),
             &op_id,
+            &report,
         )
         .map_err(mark_add_error)
     })

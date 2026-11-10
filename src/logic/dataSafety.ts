@@ -12,6 +12,11 @@
 import { daysBetween, todayIso } from "@/lib/dates";
 
 /** After this long without a complete backup, the app says so. */
+/** "1 file" / "5 files". */
+export function fileCount(n: number): string {
+  return `${n.toLocaleString()} ${n === 1 ? "file" : "files"}`;
+}
+
 export const BACKUP_REMINDER_DAYS = 14;
 
 /**
@@ -290,7 +295,7 @@ export function formatCompleteBackupSuccessNote(
   formatBytesFn: (bytes: number) => string,
   materials?: MaterialTitleRef[],
 ): { message: string; hasWarnings: boolean } {
-  const base = `Complete backup saved — ${backup.files} files, ${formatBytesFn(backup.bytes)} protected.`;
+  const base = `Complete backup saved — ${fileCount(backup.files)}, ${formatBytesFn(backup.bytes)} protected.`;
   const extraParts = formatBackupDocumentWarnings(backup, materials);
 
   if (extraParts.length === 0) {

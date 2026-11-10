@@ -31,6 +31,20 @@ const NOT_ADDED: &str = "That study pack couldn't be added.";
 const NO_SPACE: &str = "There isn't enough free space to add this study pack.";
 const SPARE_BYTES: u64 = 256 * 1024 * 1024;
 
+/// One step of an add, for the progress line. `total` is 0 when there is no count.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub struct Progress {
+    pub stage: &'static str,
+    pub done: u64,
+    pub total: u64,
+}
+
+/// Where progress goes. Tests and plain callers pass a no-op.
+pub type Report<'a> = &'a (dyn Fn(Progress) + Sync);
+
+#[cfg(test)]
+fn no_report(_: Progress) {}
+
 /// Why an import stopped.
 enum Stop {
     /// The process "died": leave everything exactly as it is.
@@ -122,6 +136,7 @@ fn sha256_of_file(path: &Path) -> Result<String, String> {
     }
 }
 
+#[cfg(test)]
 /// Add a study pack. Takes the library lock once; busy gives one sentence.
 pub fn add_study_pack_in(
     root: &Path,
@@ -129,8 +144,19 @@ pub fn add_study_pack_in(
     pack_path: &Path,
     op_id: &str,
 ) -> Result<PackResult, String> {
+    add_study_pack_reporting(root, owned, pack_path, op_id, &no_report)
+}
+
+/// Same as `add_study_pack_in`, telling `report` how far along it is.
+pub fn add_study_pack_reporting(
+    root: &Path,
+    owned: bool,
+    pack_path: &Path,
+    op_id: &str,
+    report: Report<'_>,
+) -> Result<PackResult, String> {
     let guard = try_acquire(root, Holder::Pack)?;
-    add_locked(&guard, root, owned, pack_path, op_id)
+    add_locked(&guard, root, owned, pack_path, op_id, report)
 }
 
 pub fn add_locked(
@@ -139,6 +165,7 @@ pub fn add_locked(
     owned: bool,
     pack_path: &Path,
     op_id: &str,
+    report: Report<'_>,
 ) -> Result<PackResult, String> {
     debug_assert!(guard.covers(root));
     if !owned {
@@ -163,7 +190,7 @@ pub fn add_locked(
     let pack = validate_pack(pack_path)?;
     let pack_sha = sha256_of_file(pack_path)?;
     let op = journal::op_dir(root, op_id);
-    let outcome = run(root, pack_path, op_id, &pack, &pack_sha, &op);
+    let outcome = run(root, pack_path, op_id, &pack, &pack_sha, &op, report);
     match outcome {
         Ok(result) => Ok(result),
         Err(Stop::Crash) => Err(CRASH.to_string()),
@@ -187,6 +214,7 @@ fn run(
     pack: &ValidatedPack,
     pack_sha: &str,
     op: &Path,
+    report: Report<'_>,
 ) -> Result<PackResult, Stop> {
     journal::create_staging(root, op_id)?;
     check_storage(root, op)?;
@@ -221,11 +249,16 @@ fn run(
             .any(|p| p.decision == Decision::Add && p.material.as_deref() == Some(material))
     });
 
-    stage_files(root, pack_path, pack, &plan, op, &mut journal)?;
+    stage_files(root, pack_path, pack, &plan, op, &mut journal, report)?;
     journal.state = State::Staged;
     journal::write(op, &journal)?;
     fault::hit("staged")?;
 
+    report(Progress {
+        stage: "adding",
+        done: 0,
+        total: journal.files.len() as u64,
+    });
     journal.state = State::Installing;
     journal::write(op, &journal)?;
     fault::hit("installing")?;
@@ -239,7 +272,17 @@ fn run(
     journal::write(op, &journal)?;
     fault::hit("installed")?;
     fault::hit("verify")?;
-    verify_installed(root, &journal)?;
+    report(Progress {
+        stage: "checking",
+        done: 0,
+        total: journal.files.len() as u64,
+    });
+    verify_installed(root, &journal, report)?;
+    report(Progress {
+        stage: "saving",
+        done: 0,
+        total: 0,
+    });
 
     let input = CommitInput {
         root,
@@ -282,6 +325,7 @@ fn run(
     })?;
     result.skipped_items = plan.named(pack);
     result.labelled_items = plan.labelled(pack);
+    (result.added_cards, result.added_questions) = plan.added_cards_and_questions(pack);
     journal.state = State::Committed;
     if let Err(message) = journal::write(op, &journal) {
         if message == CRASH {
@@ -304,6 +348,7 @@ fn stage_files(
     plan: &Plan,
     op: &Path,
     journal: &mut Journal,
+    report: Report<'_>,
 ) -> Result<(), String> {
     let wanted: Vec<_> = pack
         .items
@@ -329,6 +374,11 @@ fn stage_files(
     for (index, (item, p)) in wanted.iter().enumerate() {
         let manifest_file = item.manifest.file.as_ref().ok_or(NOT_ADDED)?;
         let n = index as u32 + 1;
+        report(Progress {
+            stage: "copying",
+            done: index as u64,
+            total: wanted.len() as u64,
+        });
         let limit = if item.manifest.kind == "document" {
             MAX_PDF_BYTES
         } else {
@@ -359,10 +409,7 @@ fn stage_files(
         journal.files.push(JournalFile {
             n,
             item_ref: item.manifest.item_ref.clone(),
-            dest: format!(
-                "{material}-{}",
-                crate::documents::sanitize_file_name(&manifest_file.original_file_name)
-            ),
+            dest: capped_dest(material, &manifest_file.original_file_name),
             sha256: sha,
             bytes,
             dev,
@@ -370,6 +417,26 @@ fn stage_files(
         });
     }
     journal::sync(&op.join(FILES_DIR), "fsync:files")
+}
+
+/// "<material id>-<clean name>", cut so the whole name fits the 255-byte file
+/// name limit. The stem is shortened; the extension is kept.
+pub(crate) fn capped_dest(material: &str, original: &str) -> String {
+    const LIMIT: usize = 255;
+    let prefix = format!("{material}-");
+    let name = crate::documents::sanitize_file_name(original);
+    let room = LIMIT.saturating_sub(prefix.len());
+    if name.len() <= room {
+        return format!("{prefix}{name}");
+    }
+    // The cleaned name is ASCII, so byte cuts are safe.
+    let (stem, ext) = match name.rfind('.') {
+        Some(dot) if name.len() - dot <= 16 && dot > 0 => (&name[..dot], &name[dot..]),
+        _ => (name.as_str(), ""),
+    };
+    let keep = room.saturating_sub(ext.len());
+    let stem = stem[..keep.min(stem.len())].trim_end();
+    format!("{prefix}{stem}{ext}")
 }
 
 fn install_files(root: &Path, op: &Path, journal: &Journal) -> Result<(), String> {
@@ -391,9 +458,14 @@ fn install_files(root: &Path, op: &Path, journal: &Journal) -> Result<(), String
 
 /// Re-read every installed file in full: same hash, same size, and the very
 /// inode that was staged.
-fn verify_installed(root: &Path, journal: &Journal) -> Result<(), String> {
+fn verify_installed(root: &Path, journal: &Journal, report: Report<'_>) -> Result<(), String> {
     let docs = root.join(crate::documents::DOCUMENTS_DIR);
-    for f in &journal.files {
+    for (index, f) in journal.files.iter().enumerate() {
+        report(Progress {
+            stage: "checking",
+            done: index as u64,
+            total: journal.files.len() as u64,
+        });
         let path: PathBuf = crate::documents::contained_document_path(&docs, &f.dest)?;
         let meta = std::fs::symlink_metadata(&path).map_err(|_| NOT_ADDED.to_string())?;
         let ok = meta.is_file()
@@ -405,4 +477,32 @@ fn verify_installed(root: &Path, journal: &Journal) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod dest_tests {
+    use super::capped_dest;
+
+    const ID: &str = "123e4567-e89b-42d3-a456-426614174000";
+
+    #[test]
+    fn short_names_are_unchanged() {
+        assert_eq!(
+            capped_dest(ID, "Handbook.pdf"),
+            format!("{ID}-Handbook.pdf")
+        );
+    }
+
+    #[test]
+    fn long_names_are_cut_to_255_and_keep_the_extension() {
+        for len in [200usize, 218, 219, 230, 255, 300] {
+            let name = format!("{}.pdf", "a".repeat(len));
+            let dest = capped_dest(ID, &name);
+            assert!(dest.len() <= 255, "{len}: {}", dest.len());
+            assert!(dest.starts_with(ID));
+            assert!(dest.ends_with(".pdf"), "{len}");
+        }
+        let no_ext = capped_dest(ID, &"b".repeat(400));
+        assert_eq!(no_ext.len(), 255);
+    }
 }

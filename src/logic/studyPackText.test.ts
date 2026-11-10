@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { StudyPackPreview, StudyPackResult } from "@/data/studyPack";
-import { ALREADY_TITLE, addedLine, namedItemLines, packAlreadyHaveLine, packContentsLine, packSavedSentence, resultLines } from "./studyPackText";
+import { ALREADY_TITLE, addedLine, namedItemLines, packAlreadyHaveLine, packContentsLine, packSavedSentence, progressLine, resultLines, WAIT_LINE } from "./studyPackText";
 
 const base: StudyPackResult = {
   operationId: "op", packId: "p", added: 0, addedGuides: 0, addedDocuments: 0, addedPictures: 0, addedPractice: 0,
@@ -99,5 +99,25 @@ describe("packSavedSentence", () => {
   });
   it("handles an empty pack", () => {
     expect(packSavedSentence({ ...base, documents: 0, guides: 0, cards: 0, questions: 0, videos: 0 })).toBe("Your study pack is saved.");
+  });
+});
+
+describe("study pack add: result and progress wording", () => {
+  it("lists flashcards and practice questions, only when non-zero", () => {
+    expect(addedLine(result({ added: 5, addedGuides: 2, addedDocuments: 1, addedCards: 40, addedQuestions: 12 })))
+      .toBe("Added 2 guides, 1 PDF, 40 flashcards and 12 practice questions. Your own work wasn't changed.");
+    expect(addedLine(result({ added: 1, addedGuides: 1, addedCards: 1, addedQuestions: 0 })))
+      .toBe("Added 1 guide and 1 flashcard. Your own work wasn't changed.");
+  });
+
+  it("tells the truth about how long a big pack takes", () => {
+    expect(WAIT_LINE).toBe("Large packs can take several minutes. Keep the app open.");
+  });
+
+  it("shows the stage and the count while adding", () => {
+    expect(progressLine(null)).toBeNull();
+    expect(progressLine({ stage: "copying", done: 2, total: 14 })).toBe("Copying PDFs… 3 of 14");
+    expect(progressLine({ stage: "checking", done: 13, total: 14 })).toBe("Checking PDFs… 14 of 14");
+    expect(progressLine({ stage: "saving", done: 0, total: 0 })).toBe("Adding guides, flashcards and questions…");
   });
 });
