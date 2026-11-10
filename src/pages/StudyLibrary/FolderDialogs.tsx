@@ -242,3 +242,87 @@ export function FolderDialogs({
     </Dialog>
   );
 }
+
+export interface StarterFolder {
+  name: string;
+  materialIds: string[];
+}
+
+/**
+ * "Make folders from my topics": one tap, then a plain confirm. One folder per
+ * topic, one move write per folder. Names that already exist are skipped.
+ */
+export function StarterFoldersDialog({
+  open,
+  starters,
+  folders,
+  onClose,
+  reload,
+}: {
+  open: boolean;
+  starters: StarterFolder[];
+  folders: LibraryFolder[];
+  onClose: () => void;
+  reload: () => void;
+}) {
+  const { repositories } = useAppData();
+  const repo = repositories?.libraryFolders;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [seenOpen, setSeenOpen] = useState(open);
+  if (seenOpen !== open) {
+    setSeenOpen(open);
+    setBusy(false);
+    setError(null);
+  }
+  const taken = new Set(folders.map((f) => f.name.trim().toLowerCase()));
+  const todo = starters
+    .filter((s) => !taken.has(s.name.trim().toLowerCase()))
+    .slice(0, Math.max(0, MAX_FOLDERS - folders.length));
+
+  const run = async () => {
+    if (busy) return;
+    if (!repo) {
+      setError("Folders are not ready yet. Please try again.");
+      return;
+    }
+    setBusy(true);
+    try {
+      for (const starter of todo) {
+        const folder = await repo.createFolder(starter.name);
+        await repo.moveMaterials(starter.materialIds, folder.id);
+      }
+      setBusy(false);
+      reload();
+      onClose();
+    } catch (e) {
+      setBusy(false);
+      reload();
+      setError(plainError(e));
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      narrow
+      onClose={onClose}
+      title="Make folders from my topics"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="primary" onClick={run} disabled={busy || todo.length === 0}>
+            Make folders
+          </Button>
+        </>
+      }
+    >
+      <p>
+        Make {todo.length.toLocaleString()} {todo.length === 1 ? "folder" : "folders"}, one for
+        each topic, and put each material in its topic's folder? You can rename, move or delete
+        them later. Nothing is deleted.
+      </p>
+      {error ? <p role="alert" className="small field__error">{error}</p> : null}
+    </Dialog>
+  );
+}

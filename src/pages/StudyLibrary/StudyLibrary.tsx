@@ -70,7 +70,7 @@ import { MoveToDialog } from "./MoveToDialog";
 import { useArrange } from "./useArrange";
 import { ContinueStudying } from "./ContinueStudying";
 import { RECENT_SHOWN, resolveRecent, useRecentlyOpened } from "./recentlyOpened";
-import { FolderActionsMenu, FolderDialogs, NewFolderButton, type FolderDialogState } from "./FolderDialogs";
+import { FolderActionsMenu, FolderDialogs, NewFolderButton, StarterFoldersDialog, type FolderDialogState } from "./FolderDialogs";
 import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
@@ -261,6 +261,7 @@ export function StudyLibrary() {
   const recentIds = useRecentlyOpened();
   const { folders, placements, folderOf, reload: reloadFolders } = useLibraryFolders();
   const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(null);
+  const [starterOpen, setStarterOpen] = useState(false);
   const filterKey = [status, topic, type, search, sort, view, folderSort].join("\0");
   const onMatchesChange = useCallback((found: boolean) => setContentMatch({ key: filterKey, found }), [filterKey]);
   const contentHasMatches = contentMatch?.key === filterKey && contentMatch.found;
@@ -341,6 +342,12 @@ export function StudyLibrary() {
     }
     return { chapterIds: ids, chaptersOf: partsOf };
   }, [data.materials]);
+  // One starter folder per topic with a top-level material (chapters stay with their books).
+  const starterFolders = useMemo(() => {
+    if (view !== "folder" || folders.length > 0) return [];
+    const top = groupChapterParts(data.materials.filter((m) => !m.faaReference)).topLevel;
+    return sectionsByTopic(top, "manual").map((s) => ({ name: s.title, materialIds: s.items.map((m) => m.id) }));
+  }, [view, folders.length, data.materials]);
   const toggleSection = (viewKey: string) =>
     setClosedList(closedSections.has(viewKey) ? closedList.filter((k) => k !== viewKey) : [...closedList, viewKey]);
   const noFolderSection = view === "folder" ? sections.find((s) => s.key === "none") : undefined;
@@ -789,9 +796,21 @@ export function StudyLibrary() {
           {sectioned && view === "folder" && folders.length === 0 ? (
             <Card>
               <p className="small">
-                Make a folder to group your study material, such as Checkride prep. Then use Arrange to move things in.
+                Make a folder to group your study material, for example Checkride prep. Then use Arrange to move things in.
               </p>
-              <NewFolderButton folderCount={folders.length} onClick={() => setFolderDialog({ kind: "new" })} />
+              <div className="library__folder-slot">
+                <NewFolderButton folderCount={folders.length} onClick={() => setFolderDialog({ kind: "new" })} />
+                {starterFolders.length > 0 ? (
+                  <Button variant="secondary" onClick={() => setStarterOpen(true)}>Make folders from my topics</Button>
+                ) : null}
+              </div>
+              <StarterFoldersDialog
+                open={starterOpen}
+                starters={starterFolders}
+                folders={folders}
+                onClose={() => setStarterOpen(false)}
+                reload={reloadFolders}
+              />
             </Card>
           ) : null}
           {sectioned && view === "folder" ? (
