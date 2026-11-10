@@ -4,7 +4,7 @@ import type { LibraryFolder, LibraryPlacement } from "@/logic/libraryFolders";
 import { useAppData } from "@/state/AppDataContext";
 
 /**
- * Her folders and where each material sits. Reloads when the app data
+ * Your folders and where each material sits. Reloads when the app data
  * changes (a move, a sync). A folder id that no longer exists counts as
  * "Not in a folder", so folderOf never hands back a deleted folder.
  */

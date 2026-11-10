@@ -19,7 +19,7 @@ export const MATERIAL_SORT_OPTIONS: Array<{
   { value: "studied", label: "Recently studied" },
 ];
 
-/** Inside a folder she can also keep her own order. */
+/** Inside a folder you can also keep your own order. */
 export type FolderSort = MaterialSort | "manual";
 
 export const FOLDER_SORT_OPTIONS: Array<{ value: FolderSort; label: string }> =
@@ -35,7 +35,7 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 export function sortMaterials(
   materials: StudyMaterial[],
   order: MaterialSort,
-  /** Ids she opened lately, newest first; used by "Recently studied". */
+  /** Ids opened lately, newest first; used by "Recently studied". */
   opened: readonly string[] = [],
 ): StudyMaterial[] {
   const sorted = [...materials];

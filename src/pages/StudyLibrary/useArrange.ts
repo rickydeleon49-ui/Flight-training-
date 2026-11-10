@@ -45,7 +45,7 @@ export function useArrange({
   placements: LibraryPlacement[];
   reload: () => void;
   inFolderView: boolean;
-  /** Opens a section that she had collapsed. */
+  /** Opens a section that you had collapsed. */
   expandSection: (viewKey: string) => void;
   /** What "Select all shown" (and Cmd-A or Ctrl-A) selects. */
   selectableIds: string[];
@@ -133,7 +133,7 @@ export function useArrange({
     if (focusBar) barRef.current?.focus();
   }, [focusBar]);
 
-  // Cmd-A (Mac) or Ctrl-A selects everything shown, unless she is typing in a field.
+  // Cmd-A (Mac) or Ctrl-A selects everything shown, unless you are typing in a field.
   const selectAllKey = useRef<(event: KeyboardEvent) => void>(() => {});
   selectAllKey.current = (event) => {
     if (event.key.toLowerCase() !== "a" || event.shiftKey || event.altKey || isIOS()) return;

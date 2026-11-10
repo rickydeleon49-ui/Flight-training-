@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import type { StudyMaterial } from "@/domain/types";
 import { TOPIC_LABELS } from "@/domain/types";
 
-/** The last few things she opened, one tap to go back (hidden when there are none). */
+/** The last few things you opened, one tap to go back (hidden when there are none). */
 export function ContinueStudying({ materials }: { materials: StudyMaterial[] }) {
   if (materials.length === 0) return null;
   return (

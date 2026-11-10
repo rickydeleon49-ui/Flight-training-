@@ -291,8 +291,12 @@ it("drag a row onto a folder header moves it there, with Undo, a highlight and a
   fireEvent.drop(head, data);
   await waitFor(() => expect(toastText()).toBe("Moved “Radar notes” to Regs. Undo"));
   expect((await where()).m4).toEqual([regsId, 1]);
-  expect(screen.getAllByRole("status").some((n) => n.textContent === "Radar notes moved to Regs, position 1 of 1")).toBe(true);
-  expect(headOf(/Regs \(1\)/).className).toContain("library__section-head--flash");
+  // The announcement and the header count land after the async folder reload.
+  await waitFor(() =>
+    expect(screen.getAllByRole("status").some((n) => n.textContent === "Radar notes moved to Regs, position 1 of 1")).toBe(true),
+  );
+  const moved = await screen.findByRole("button", { name: /Regs \(1\)/ });
+  expect(moved.closest(".library__section-head")!.className).toContain("library__section-head--flash");
   expect(box("Radar notes").checked).toBe(false);
   fireEvent.click(screen.getByRole("button", { name: "Undo" }));
   await waitFor(() => expect(toastText()).toBe("Undone"));

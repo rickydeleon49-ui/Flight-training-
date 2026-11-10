@@ -1,11 +1,11 @@
 /**
- * Her own folders in the Study Library: pure logic, no database.
+ * Your own folders in the Study Library: pure logic, no database.
  *
  * Sections are always built from the materials list, never from placements,
  * so every top-level material shows up exactly once. A missing placement, a
  * null folder or an unknown folder all mean "Not in a folder". Sync can hand
  * us duplicate names, duplicate positions and dangling placements, so nothing
- * here throws on them. The limits apply only when she creates or renames.
+ * here throws on them. The limits apply only on create or rename.
  */
 import {
   MATERIAL_TYPE_OPTIONS,

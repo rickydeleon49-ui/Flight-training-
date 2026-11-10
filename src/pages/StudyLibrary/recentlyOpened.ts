@@ -1,7 +1,7 @@
 import { useRememberedState, readRemembered, writeRemembered } from "@/state/useRememberedState";
 import type { StudyMaterial } from "@/domain/types";
 
-/** Device-local list of material ids she opened, newest first (not synced). */
+/** Device-local list of material ids you opened, newest first (not synced). */
 export const RECENT_KEY = "library.recentlyOpened";
 export const RECENT_KEEP = 50;
 export const RECENT_SHOWN = 3;

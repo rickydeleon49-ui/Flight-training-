@@ -193,7 +193,8 @@ function selectByLabel(label: string) {
 
 /** The view the page is showing, read from its controls. */
 function currentView(): LibraryView {
-  const pressed = screen.getAllByRole("button", { pressed: true })[0];
+  // Only the status chips: the Cards/List layout toggle is also a pressed button.
+  const pressed = screen.getAllByRole("button", { pressed: true }).find((button) => button.closest(".filter-chips"));
   return {
     query: searchInput().value,
     topic: selectByLabel("Filter by topic").value as LibraryView["topic"],
