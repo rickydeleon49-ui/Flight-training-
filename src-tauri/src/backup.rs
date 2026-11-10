@@ -9339,7 +9339,6 @@ where
         let _ = prune(root);
         record_phone_baseline_best_effort(root);
     }
-    reset_sync_identity_best_effort(root);
 
     // GEN-REL-02: nothing Gemini produced for the replaced library may be saved
     // into the restored one. This is part of the committed restore: until it
@@ -9433,6 +9432,7 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 return Ok(StartupRestoreDecision::ProceedNormally)
             }
             Ok(RestoreApplicationResult::Installed) => {
+                reset_sync_identity_best_effort(root);
                 return Ok(StartupRestoreDecision::RestoreCompleted);
             }
             Ok(RestoreApplicationResult::RefusedUnchanged(reason)) => {
