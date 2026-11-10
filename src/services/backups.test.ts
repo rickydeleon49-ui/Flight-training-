@@ -28,7 +28,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
 
 vi.mock("./platform", () => ({ isIOS: mocks.isIOS }));
 
-import { chooseCompleteBackup, chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary, unsavedPhoneWork, savePhoneWork } from "./backups";
+import { chooseCompleteBackup, chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary, unsavedPhoneWork, savePhoneWork, stageStartFresh, clearAppLocalStorage } from "./backups";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(false);
@@ -183,5 +183,53 @@ describe("saved phone work sentence", () => {
     for (const word of ["sync", "ledger", "baseline", "database", "archive", "manifest", "restore"]) {
       expect(kept.toLowerCase()).not.toContain(word);
     }
+  });
+});
+
+describe("start fresh", () => {
+  it("refuses to stage start fresh outside the desktop shell", async () => {
+    mocks.isTauri.mockReturnValue(false);
+    await expect(stageStartFresh()).rejects.toThrow("Restore needs the desktop application.");
+    expect(mocks.invoke).not.toHaveBeenCalledWith("stage_start_fresh");
+  });
+
+  it("invokes stage_start_fresh inside the desktop shell", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    mocks.invoke.mockResolvedValueOnce(undefined);
+    await stageStartFresh();
+    expect(mocks.invoke).toHaveBeenCalledWith("stage_start_fresh");
+  });
+
+  it("clears app-specific localStorage keys and keeps unrelated ones", () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      get length() { return store.size; },
+      key: (i: number) => [...store.keys()][i] ?? null,
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => { store.set(k, String(v)); },
+      removeItem: (k: string) => { store.delete(k); },
+      clear: () => store.clear(),
+    });
+    vi.stubGlobal("sessionStorage", localStorage);
+    localStorage.setItem("hfd:last-view", "x");
+    localStorage.setItem("her-flight-deck.appearance", "glass");
+    localStorage.setItem("her-flight-deck.dev-database", "bytes");
+    localStorage.setItem("her-flight-deck.draft.debrief-1", "typing");
+    localStorage.setItem("draft_backup", "draft-text");
+    localStorage.setItem("sqljs_test", "123");
+    localStorage.setItem("unrelated_app_setting", "preserve-me");
+
+    clearAppLocalStorage();
+
+    expect(localStorage.getItem("her-flight-deck.appearance")).toBeNull();
+    expect(localStorage.getItem("her-flight-deck.dev-database")).toBeNull();
+    expect(localStorage.getItem("her-flight-deck.draft.debrief-1")).toBeNull();
+    expect(localStorage.getItem("draft_backup")).toBeNull();
+    expect(localStorage.getItem("sqljs_test")).toBeNull();
+    expect(localStorage.getItem("hfd:last-view")).toBeNull();
+    expect(localStorage.getItem("unrelated_app_setting")).toBe("preserve-me");
+
+    localStorage.removeItem("unrelated_app_setting");
+    vi.unstubAllGlobals();
   });
 });

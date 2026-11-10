@@ -32,6 +32,7 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   (document.getElementById("settings-backups") as HTMLDetailsElement).open = true;
   (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
   expect(Boolean(screen.queryByRole("heading", { name: "Your data" }))).toBe(!phone);
+  expect(Boolean(screen.queryByRole("heading", { name: "Start fresh" }))).toBe(phone);
   expect(screen.queryByRole("heading", { name: "AI provider" })).toBeTruthy();
   const card = document.getElementById("ai-provider")?.closest(".card")?.textContent ?? "";
   if (phone) {
