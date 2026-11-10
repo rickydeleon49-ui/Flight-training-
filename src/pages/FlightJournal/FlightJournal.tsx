@@ -393,27 +393,27 @@ export function FlightJournal() {
                   </div>
                 ) : null}
                 <div className="flight-log-table-wrap">
-                  <table className="flight-log-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Route</th>
-                        <th>Aircraft</th>
-                        <th>Total</th>
-                        <th>Dual</th>
-                        <th>PIC</th>
-                        <th>Solo</th>
-                        <th>Night</th>
+                  <table className="flight-log-table" role="table">
+                    <thead role="rowgroup">
+                      <tr role="row">
+                        <th role="columnheader">Date</th>
+                        <th role="columnheader">Route</th>
+                        <th role="columnheader">Aircraft</th>
+                        <th role="columnheader">Total</th>
+                        <th role="columnheader">Dual</th>
+                        <th role="columnheader">PIC</th>
+                        <th role="columnheader">Solo</th>
+                        <th role="columnheader">Night</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                       {(ledger?.entries ?? []).map((entry) => (
-                        <tr key={entry.id}>
-                          <td>
+                        <tr key={entry.id} role="row">
+                          <td role="cell">
                             <Link to={`/journal/${entry.id}`}>{formatLogbookDate(entry.date)}</Link>
                           </td>
-                          <td>{flightRoute(entry)}</td>
-                          <td>
+                          <td role="cell">{flightRoute(entry)}</td>
+                          <td role="cell">
                             {[entry.aircraftType, entry.aircraftId].filter(Boolean).join(" · ") || "—"}
                           </td>
                           {(
@@ -427,6 +427,7 @@ export function FlightJournal() {
                           ).map(([label, value]) => (
                             <td
                               key={label}
+                              role="cell"
                               className="numeric"
                               data-label={label}
                               data-empty={value == null ? "" : undefined}
@@ -438,7 +439,7 @@ export function FlightJournal() {
                       ))}
                     </tbody>
                     {ledger ? (
-                      <tfoot>
+                      <tfoot role="rowgroup">
                         {(
                           [
                             ["This page", ledger.thisPage],
@@ -446,13 +447,13 @@ export function FlightJournal() {
                             ["Total to date", ledger.totalToDate],
                           ] as const
                         ).map(([label, t]) => (
-                          <tr key={label} className={label === "Total to date" ? "ledger-total" : undefined}>
-                            <th scope="row" colSpan={3}>{label}</th>
-                            <td className="numeric" data-label="Total">{formatHours(t.totalTime)}</td>
-                            <td className="numeric" data-label="Dual">{formatHours(t.dualReceived)}</td>
-                            <td className="numeric" data-label="PIC">{formatHours(t.picTime)}</td>
-                            <td className="numeric" data-label="Solo">{formatHours(t.soloTime)}</td>
-                            <td className="numeric" data-label="Night">{formatHours(t.nightTime)}</td>
+                          <tr key={label} className={label === "Total to date" ? "ledger-total" : undefined} role="row">
+                            <th scope="row" colSpan={3} role="rowheader">{label}</th>
+                            <td role="cell" className="numeric" data-label="Total">{formatHours(t.totalTime)}</td>
+                            <td role="cell" className="numeric" data-label="Dual">{formatHours(t.dualReceived)}</td>
+                            <td role="cell" className="numeric" data-label="PIC">{formatHours(t.picTime)}</td>
+                            <td role="cell" className="numeric" data-label="Solo">{formatHours(t.soloTime)}</td>
+                            <td role="cell" className="numeric" data-label="Night">{formatHours(t.nightTime)}</td>
                           </tr>
                         ))}
                       </tfoot>

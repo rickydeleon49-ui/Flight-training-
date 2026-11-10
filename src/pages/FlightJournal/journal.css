@@ -485,7 +485,7 @@
     color: var(--text-primary);
   }
   html.is-ios .flight-log-table td[data-empty] { display: none; }
-  html.is-ios .flight-log-table tbody td:nth-child(n+5) { order: 6; margin-right: var(--space-2); }
+  html.is-ios .flight-log-table tbody td:nth-child(n+5) { order: 6; }
   html.is-ios .flight-log-table tbody td[data-label]:nth-child(n+5)::before { content: attr(data-label) " "; }
   html.is-ios .flight-log-table tbody td[data-label]:nth-child(n+5):not([data-empty]) ~ td[data-label]:not([data-empty])::before {
     content: "· " attr(data-label) " ";
@@ -514,7 +514,6 @@
   }
   html.is-ios .flight-log-table tfoot td:nth-child(n+3) {
     order: 6;
-    margin-right: var(--space-2);
     font-size: var(--text-sm);
     color: var(--text-secondary);
   }
