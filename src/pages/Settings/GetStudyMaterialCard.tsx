@@ -110,11 +110,10 @@ export function GetStudyMaterialCard() {
       <Card variant="grouped">
         <CardHeader title={staged ? "All set" : "Get my study material"} eyebrow="Study on the go" />
         <CardBody>
-          {staged ? (
-            <p role="status">{ios
-              ? "Close Your Flight Deck (swipe it away) and open it again to see your study material."
-              : "All set. Your Flight Deck will close now; open it again and your study material is there."}</p>
-          ) : (
+          <p role="status" className="live-region">{staged ? (ios
+            ? "Close Your Flight Deck (swipe it away) and open it again to see your study material."
+            : "All set. Your Flight Deck will close now; open it again and your study material is there.") : null}</p>
+          {staged ? null : (
             <Button variant="primary" disabled={busy || preview !== null} onClick={pick}>
               {busy ? "Opening…" : "Get my study material"}
             </Button>
@@ -137,7 +136,7 @@ export function GetStudyMaterialCard() {
       >
         {preview ? <>
           <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {fileCount(preview.info.files)}</p>
-          {savedLine ? <p role="status">{savedLine}</p> : null}
+          <p role="status" className="live-region">{savedLine}</p>
           {blocked
             ? (blockedSentence ? <p>{blockedSentence}</p> : null)
             : <p>{activitySentence(preview.activity)}</p>}

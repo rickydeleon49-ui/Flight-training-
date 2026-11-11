@@ -975,3 +975,25 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   /* Real box height, not an overlay, so stacked rows never steal each other's taps. */
   .checkbox, .radio-row__option { min-height: 44px; }
 }
+
+/* Live regions stay mounted so screen readers announce text added later. While
+   empty they take no room (absolute, so no flex or grid gap either); with text
+   they are ordinary in-flow elements. */
+.live-region:empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+}
+
+/* For a region whose content is itself fixed-position (the undo bar). */
+.live-region--detached {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}

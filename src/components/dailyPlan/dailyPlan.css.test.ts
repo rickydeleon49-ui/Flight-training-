@@ -13,7 +13,8 @@ it("budget control wraps and stays inside its card at large text", () => {
 it("budget options fill a wrapped row and keep their labels whole", () => {
   const btn = rule(".daily-plan-budget-btn");
   expect(btn).toContain("flex: 1 1 auto");
-  expect(btn).toContain("white-space: nowrap");
+  expect(btn).toContain("white-space: normal");
+  expect(btn).toContain("overflow-wrap: break-word");
 });
 
 it("budget options reach 44px only when iPhone text is larger than default", () => {

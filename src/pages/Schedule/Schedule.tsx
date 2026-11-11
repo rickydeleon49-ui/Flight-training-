@@ -79,7 +79,7 @@ export function Schedule() {
         }
       />
 
-      <div role="status" style={{ display: "contents" }}>
+      <div role="status" className="live-region">
         {saved ? (
           <div className="row gap--3 schedule__saved">
             <p className="small">Added “{saved.title}” to your schedule.</p>

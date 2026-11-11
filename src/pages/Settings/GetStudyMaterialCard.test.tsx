@@ -41,6 +41,11 @@ async function pick() {
 }
 function confirm() { fireEvent.click(screen.getByRole("button", { name: "Replace what's on this phone" })); }
 
+// Live regions stay mounted (empty) so the one with text is the current message.
+function filledStatus() {
+  return screen.queryAllByRole("status").find((el) => (el.textContent ?? "") !== "");
+}
+
 describe("GetStudyMaterialCard", () => {
   it("does nothing after a cancelled picker", async () => {
     mocks.chooseCompleteBackup.mockResolvedValue(null);
@@ -97,7 +102,7 @@ describe("GetStudyMaterialCard", () => {
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     expect(screen.queryByText(/All set/)).toBeNull();
     await act(async () => { resolve(info); });
-    expect(screen.getByRole("status").textContent).toContain("All set. Your Flight Deck will close now; open it again and your study material is there.");
+    expect(filledStatus()?.textContent).toContain("All set. Your Flight Deck will close now; open it again and your study material is there.");
     await act(async () => { await vi.advanceTimersByTimeAsync(1499); });
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
@@ -113,13 +118,13 @@ describe("GetStudyMaterialCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
     await act(async () => {});
     expect(mocks.importPickedBackup).toHaveBeenCalledOnce();
-    expect(screen.getByRole("status").textContent).toBe("Opening your file…");
+    expect(filledStatus()?.textContent).toBe("Opening your file…");
     expect(screen.getByRole("button", { name: "Opening…" }).hasAttribute("disabled")).toBe(true);
     await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
-    expect(screen.getByRole("status").textContent).toBe("Opening your file… · 25 s");
+    expect(filledStatus()?.textContent).toBe("Opening your file… · 25 s");
     await act(async () => { resolve(info); });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(filledStatus()).toBeUndefined();
   });
 
   it("on iOS shows copying seconds until Ok, then All set with no buttons or exit", async () => {
@@ -128,17 +133,17 @@ describe("GetStudyMaterialCard", () => {
     await pick();
     vi.useFakeTimers();
     confirm();
-    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute.");
+    expect(filledStatus()?.textContent).toBe("Copying your study material… this can take a minute.");
     expect(screen.getByRole("button", { name: "Not now" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("button", { name: "Replace what's on this phone" }).hasAttribute("disabled")).toBe(true);
     confirm();
     expect(mocks.stageCompleteRestore).toHaveBeenCalledExactlyOnceWith(info.path);
     await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
-    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute. · 25 s");
+    expect(filledStatus()?.textContent).toBe("Copying your study material… this can take a minute. · 25 s");
     expect(screen.queryByRole("heading", { name: "All set" })).toBeNull();
     await act(async () => { resolve(info); });
     expect(screen.getByRole("heading", { name: "All set" })).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toBe("Close Your Flight Deck (swipe it away) and open it again to see your study material.");
+    expect(filledStatus()?.textContent).toBe("Close Your Flight Deck (swipe it away) and open it again to see your study material.");
     expect(screen.queryByRole("button")).toBeNull();
     await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
@@ -163,7 +168,7 @@ describe("GetStudyMaterialCard", () => {
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     expect(screen.queryByText(/All set/)).toBeNull();
     expect(screen.getByRole("button", { name: "Not now" }).hasAttribute("disabled")).toBe(false);
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(filledStatus()).toBeUndefined();
     fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     await waitFor(() => expect(screen.queryByText(/From your Mac/)).toBeNull());
     expect(mocks.discardIncomingBackup).toHaveBeenCalledOnce();
@@ -244,7 +249,7 @@ describe("GetStudyMaterialCard", () => {
       fireEvent.click(screen.getByRole("button", { name: "Save my phone work first" }));
       await screen.findByRole("button", { name: "Replace what's on this phone" });
       expect(mocks.savePhoneWork).toHaveBeenCalledOnce();
-      expect(screen.getByRole("status").textContent).toBe("Saved in Files \u2192 Your Flight Deck \u2192 My phone work.hfdbackup. Then on your Mac: Settings \u2192 Get progress from my iPhone.");
+      expect(filledStatus()?.textContent).toBe("Saved in Files \u2192 Your Flight Deck \u2192 My phone work.hfdbackup. Then on your Mac: Settings \u2192 Get progress from my iPhone.");
       expect(mocks.stageCompleteRestore).not.toHaveBeenCalled();
     });
 
@@ -294,4 +299,11 @@ describe("GetStudyMaterialCard", () => {
       }
     });
   });
+});
+
+it("keeps the card's status region mounted before it has text", () => {
+  render(<GetStudyMaterialCard />);
+  const regions = screen.getAllByRole("status");
+  expect(regions.length).toBeGreaterThan(0);
+  expect(regions.every((el) => el.textContent === "")).toBe(true);
 });

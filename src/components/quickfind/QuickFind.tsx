@@ -194,13 +194,9 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
           {isIOS() ? null : <kbd className="quick-find__hint">esc</kbd>}
         </div>
 
-        <div role="status" style={{ display: "contents" }}>
-          {results.length === 0 && !pdfRow ? (
-            <p className="quick-find__empty small muted">
-              Nothing matches &ldquo;{query.trim()}&rdquo; yet.
-            </p>
-          ) : null}
-        </div>
+        <p role="status" className="live-region quick-find__empty small muted">
+          {results.length === 0 && !pdfRow ? <>Nothing matches &ldquo;{query.trim()}&rdquo; yet.</> : null}
+        </p>
         {rows.length > 0 ? (
           <ul className="quick-find__results" id={listId} role="listbox" aria-label="Search results">
             {rows.map((result, index) => (

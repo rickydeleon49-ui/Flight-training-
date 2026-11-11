@@ -180,7 +180,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      {notice ? <p className="small strong" role="status">{notice}</p> : null}
+      <p className="live-region small strong" role="status">{notice}</p>
       <p className="muted">{message}</p>
       {details ? (
         <details className="tiny dim">
@@ -189,11 +189,9 @@ export function ConfirmDialog({
         </details>
       ) : null}
       {children}
-      {pending ? (
-        <p className="tiny muted" role="status">
-          Waiting for the result. This stays open until the outcome is known.
-        </p>
-      ) : null}
+      <p className="live-region tiny muted" role="status">
+        {pending ? "Waiting for the result. This stays open until the outcome is known." : null}
+      </p>
     </Dialog>
   );
 }

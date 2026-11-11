@@ -25,7 +25,7 @@ export function UndoBar() {
   const remaining = Math.max(0, 1 - elapsed / UNDO_WINDOW_MS);
 
   return (
-    <div role="status" aria-live="polite" style={{ display: "contents" }}>
+    <div role="status" aria-live="polite" className="live-region live-region--detached">
       {pendingDelete ? (
     <div className="undo-bar">
       <span className="undo-bar__progress" style={{ transform: `scaleX(${remaining})` }} />
