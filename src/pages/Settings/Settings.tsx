@@ -217,6 +217,7 @@ export function Settings() {
   const [appearance, setAppearance] = useState<Appearance>(getStoredAppearance);
   const [theme, setTheme] = useState<ThemeChoice>(getStoredTheme);
   const [saved, setSaved] = useState(false);
+  const [confirmGeminiDisconnect, setConfirmGeminiDisconnect] = useState(false);
   const [busy, setBusy] = useState(false);
   const [starterNote, setStarterNote] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -1500,7 +1501,7 @@ export function Settings() {
 
               {gemini?.configured ? (
                 <div>
-                  <Button variant="danger" size="small" disabled={geminiBusy} onClick={() => void removeGemini()}>
+                  <Button variant="danger" size="small" disabled={geminiBusy} onClick={() => setConfirmGeminiDisconnect(true)}>
                     Disconnect Gemini
                   </Button>
                 </div>
@@ -1545,6 +1546,16 @@ export function Settings() {
           </CardBody>
         </details>
       </div>
+
+      <ConfirmDialog
+        open={confirmGeminiDisconnect}
+        title="Disconnect Gemini?"
+        message={`Your saved key will be removed from this ${isIOS() ? "phone" : "computer"}. Your study guides, flashcards and tests are kept. To use Gemini again, you'll paste your key back in.`}
+        confirmLabel="Disconnect"
+        destructive
+        onConfirm={() => { setConfirmGeminiDisconnect(false); void removeGemini(); }}
+        onCancel={() => setConfirmGeminiDisconnect(false)}
+      />
 
       <ConfirmDialog
         open={libraryTrashCandidate !== null}
