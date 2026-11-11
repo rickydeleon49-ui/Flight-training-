@@ -116,7 +116,7 @@ describe("shared filter chip", () => {
   const body = ruleBodies(ui.replace(/\/\*[\s\S]*?\*\//g, ""), ".filter-chip").join("\n");
   it("wraps long labels instead of clipping", () => {
     expect(body).toMatch(/white-space:\s*normal/);
-    expect(body).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(body).toMatch(/overflow-wrap:\s*break-word/);
     expect(body).toMatch(/max-width:\s*100%/);
     expect(body).not.toMatch(/nowrap/);
   });
@@ -132,7 +132,7 @@ describe("large text does not clip", () => {
   it("buttons wrap long labels", () => {
     const body = ruleBodies(strip(ui), ".button").join("\n");
     expect(body).toMatch(/white-space:\s*normal/);
-    expect(body).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(body).toMatch(/overflow-wrap:\s*break-word/);
     expect(body).not.toMatch(/nowrap/);
   });
   it("daily plan budget buttons wrap long labels", () => {

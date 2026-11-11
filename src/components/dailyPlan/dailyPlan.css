@@ -46,7 +46,7 @@
   align-items: center;
   justify-content: center;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-align: center;
   /* Fills its row when the group wraps; a single row keeps natural widths. */
   flex: 1 1 auto;

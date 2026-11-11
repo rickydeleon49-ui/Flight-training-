@@ -100,7 +100,7 @@
     color var(--transition), transform 100ms;
   /* Long labels wrap at large text sizes instead of running off the screen. */
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-align: center;
 }
 
