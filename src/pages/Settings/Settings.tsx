@@ -196,13 +196,13 @@ function MacNote({ children }: { children: ReactNode }) {
 }
 
 const JUMPS: Array<[string, string]> = [
+  ["AI helper", "ai-provider"],
   ["About you", "settings-about-you"],
   ["Where you train", "settings-where-you-train"],
   ["Why you started", "settings-why-you-started"],
   ["Look and feel", "settings-look-and-feel"],
   ["Career starter pack", "settings-career-pack"],
   ["Backups and data", "settings-backups-summary"],
-  ["Advanced", "settings-advanced-summary"],
   ["About & legal", "settings-about-summary"],
 ];
 
@@ -210,7 +210,6 @@ export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
   const { hash, key } = useLocation();
   const backupsFold = useRef<HTMLDetailsElement>(null);
-  const advancedFold = useRef<HTMLDetailsElement>(null);
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   // Already applied at startup (main.tsx); this only reflects the saved choice.
@@ -258,12 +257,11 @@ export function Settings() {
   const [libraryVisible, setLibraryVisible] = useState(50);
 
   const showBackupResult = Boolean(backupNote || upgradeFailed || folderOpenError || libraryNote || libraryReport || restoreCandidate || localRestoreCandidate);
-  const forceOpen = useRef({ backups: false, advanced: false });
-  forceOpen.current = { backups: showBackupResult, advanced: geminiProblem };
+  const forceOpen = useRef({ backups: false });
+  forceOpen.current = { backups: showBackupResult };
   useEffect(() => {
     // A result or problem inside a fold must never be hidden by a navigation (force-open rule).
     if (backupsFold.current) backupsFold.current.open = hash === "#settings-backups" || forceOpen.current.backups;
-    if (advancedFold.current) advancedFold.current.open = hash === "#ai-provider" || forceOpen.current.advanced;
     if (["#settings-backups", "#send-to-iphone", "#get-phone-progress", "#phone-progress", "#ai-provider"].includes(hash)) {
       document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: "start" });
     }
@@ -273,14 +271,10 @@ export function Settings() {
     if (showBackupResult && backupsFold.current) backupsFold.current.open = true;
   }, [showBackupResult, backupNote, folderOpenError, libraryNote]);
 
-  useEffect(() => {
-    if (geminiProblem && advancedFold.current) advancedFold.current.open = true;
-  }, [geminiProblem]);
-
   // Cards inside both folds also report errors asynchronously (some in their own disclosure):
   // an alert must never stay hidden behind a closed fold.
   useEffect(() => {
-    const folds = [backupsFold.current, advancedFold.current].filter((f): f is HTMLDetailsElement => Boolean(f));
+    const folds = [backupsFold.current].filter((f): f is HTMLDetailsElement => Boolean(f));
     const observers = folds.map((fold) => {
       const revealAlerts = () => {
         fold.querySelectorAll('[role="alert"]').forEach((alert) => {
@@ -749,7 +743,7 @@ export function Settings() {
 
       <nav aria-label="Jump to" className="row row--wrap small settings-jumps settings-jumps--spaced">
         <span className="muted">Jump to:</span>
-        {JUMPS.map(([label, id]) => (
+        {JUMPS.filter(([, id]) => id !== "ai-provider" || deviceCan().geminiKey).map(([label, id]) => (
           <a key={id} className="settings-jumps__link" href={`#${id}`} onClick={(event) => jumpTo(event, id)}>{label}</a>
         ))}
       </nav>
@@ -761,6 +755,153 @@ export function Settings() {
         {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
         {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
         {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
+
+        {deviceCan().geminiKey ? (
+        <Card variant="grouped">
+          <CardHeader
+            title="AI helper"
+            headingId="ai-provider"
+            eyebrow={selectedKeyUnreadable ? "Saved AI key unavailable" : providerConnected ? "Connected" : "Optional online AI"}
+          />
+          <CardBody>
+            <ProviderControls onStatus={setProviderConnection} reloadToken={providerReload} onRetried={refreshGemini}>
+            <div className="stack stack--4">
+              <PlatformGuidance
+                mac="Google AI Studio opens in the default browser. The key is kept in this Mac’s Keychain and is not included in backups."
+                windows="Google AI Studio opens in the default browser. The key is kept in Windows Credential Manager and is not included in backups."
+                neutral="Google AI Studio opens in the default browser. The API key stays in your local application data folder and is not included in backups or SQLite."
+                ios="Google AI Studio opens in Safari. The key is kept in this iPhone's Keychain and is not included in backups."
+              />
+              <p className="small muted">
+                Gemini can turn a selected Study Library document into a study guide and
+                flashcards. Only files you deliberately analyze are sent to Google. Personal
+                notes, flight logs, profile details, and other library files are never sent.
+              </p>
+
+              {gemini?.keyUnreadable ? (
+                <>
+                  <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>
+                  <div><Button onClick={retryKeyRead}>Try again</Button></div>
+                </>
+              ) : gemini?.configured ? (
+                <div className="gemini-connected">
+                  <span className="gemini-connected__mark" aria-hidden="true">
+                    <CheckIcon size={16} />
+                  </span>
+                  <div>
+                    <p className="small strong">Ready to use</p>
+                    <p className="tiny dim">
+                      {geminiModelName(gemini.model)} · key saved on this {isIOS() ? "phone" : "computer"}
+                    </p>
+                  </div>
+                </div>
+              ) : geminiAvailable() ? (
+                <div className="stack stack--3">
+                  <div className="setup-steps small">
+                    <p><strong>1.</strong> Open Google AI Studio and sign in with your Google account.</p>
+                    <p><strong>2.</strong> Choose <em>Create API key</em>, then copy the key.</p>
+                    <p><strong>3.</strong> Paste it below. The complete key is never shown again.</p>
+                  </div>
+                  <div className="row row--wrap">
+                    <Button onClick={() => void openGeminiKeyPage()}>
+                      Sign in with Google
+                    </Button>
+                    <TextInput
+                      className="gemini-key-input"
+                      type="password"
+                      autoComplete="off"
+                      aria-label="Gemini API key"
+                      value={geminiKey}
+                      placeholder="Paste Gemini API key"
+                      onChange={(event) => setGeminiKey(event.target.value)}
+                    />
+                    <Button
+                      variant="primary"
+                      disabled={geminiBusy || geminiKey.trim().length < 20}
+                      onClick={() => void connectGemini()}
+                    >
+                      {geminiBusy ? "Connecting…" : "Connect Gemini"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="tiny dim">Gemini setup is available in the desktop application.</p>
+              )}
+
+              {gemini?.configured ? (
+                <fieldset className="gemini-model-choice stack stack--2">
+                  <legend className="field__label">Model for new study aids</legend>
+                  {gemini.choice === "most-capable" ? (
+                    <p className="tiny dim">Gemini 3.8 Flash is the default for new study aids.</p>
+                  ) : null}
+                  {(["standard", "most-capable"] as const).map((choice) => (
+                    <label key={choice} className="small">
+                      <input
+                        type="radio"
+                        name="gemini-model-choice"
+                        checked={gemini.choice === choice}
+                        disabled={geminiBusy}
+                        onChange={() => void chooseGeminiModel(choice)}
+                      />{" "}
+                      <span className="strong">{GEMINI_MODEL_CHOICES[choice].label}</span>
+                      <span className="tiny dim"> — {GEMINI_MODEL_CHOICES[choice].detail}</span>
+                    </label>
+                  ))}
+                  {gemini.choice === "most-capable" ? (
+                    <p className="tiny dim">
+                      If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key,
+                      Your Flight Deck tries Gemini 3.5 Flash instead and shows which model made each
+                      study aid. If the request is still refused, check this key's access in Google AI Studio.
+                    </p>
+                  ) : null}
+                </fieldset>
+              ) : null}
+
+              {geminiNote ? (
+                <p
+                  className={`small ${geminiProblem ? "settings-bad" : "settings-ok"}`}
+                  role={geminiProblem ? "alert" : "status"}
+                >
+                  {geminiNote}
+                </p>
+              ) : null}
+
+              <p className="tiny dim">
+                {PROVIDER_TERMS.gemini.setupFreeTier} (as of {PROVIDER_TERMS.gemini.asOf}; see <a
+                  href={PROVIDER_TERMS.gemini.termsUrl} target="_blank" rel="noopener noreferrer"
+                  onClick={(event) => {
+                    if (isTauri()) {
+                      event.preventDefault();
+                      void openUrl(PROVIDER_TERMS.gemini.termsUrl).catch(() => {
+                        setGeminiProblem(true); setGeminiNote("Could not open Google's terms. Try again.");
+                      });
+                    }
+                  }}
+                >Google's terms</a>) Do not analyze medical records, certificates, addresses, or documents containing
+                sensitive personal information. AI study material must be checked against the
+                current source, FAA publications, aircraft documents, and your instructor.
+              </p>
+
+              {gemini?.configured ? (
+                <p className="tiny dim">
+                  <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
+                  message means Google is overloaded, not that your key is wrong. Your Flight Deck
+                  already waits and retries; if it keeps happening, try again later or switch to Standard.
+                </p>
+              ) : null}
+
+              {gemini?.configured ? (
+                <div>
+                  <Button variant="danger" size="small" disabled={geminiBusy} onClick={() => setConfirmGeminiDisconnect(true)}>
+                    Disconnect Gemini
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+            </ProviderControls>
+          </CardBody>
+        </Card>
+        ) : null}
 
         <Card variant="grouped">
           <CardHeader title="About you" headingId="settings-about-you" eyebrow="Greeting and focus" />
@@ -1363,156 +1504,6 @@ export function Settings() {
 
         </details>
 
-        <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
-          <summary id="settings-advanced-summary">Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !providerConnected ? " · AI provider not set up" : ""}</summary>
-        {deviceCan().geminiKey ? (
-        <Card variant="grouped">
-          <CardHeader
-            title="AI provider"
-            headingId="ai-provider"
-            eyebrow={providerConnected ? "Connected" : "Optional online AI"}
-          />
-          <CardBody>
-            <ProviderControls onStatus={setProviderConnection} reloadToken={providerReload} onRetried={refreshGemini}>
-            <div className="stack stack--4">
-              <PlatformGuidance
-                mac="Google AI Studio opens in the default browser. The key is kept in this Mac’s Keychain and is not included in backups."
-                windows="Google AI Studio opens in the default browser. The key is kept in Windows Credential Manager and is not included in backups."
-                neutral="Google AI Studio opens in the default browser. The API key stays in your local application data folder and is not included in backups or SQLite."
-                ios="Google AI Studio opens in Safari. The key is kept in this iPhone's Keychain and is not included in backups."
-              />
-              <p className="small muted">
-                Gemini can turn a selected Study Library document into a study guide and
-                flashcards. Only files you deliberately analyze are sent to Google. Personal
-                notes, flight logs, profile details, and other library files are never sent.
-              </p>
-
-              {gemini?.keyUnreadable ? (
-                <>
-                  <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>
-                  <div><Button onClick={retryKeyRead}>Try again</Button></div>
-                </>
-              ) : gemini?.configured ? (
-                <div className="gemini-connected">
-                  <span className="gemini-connected__mark" aria-hidden="true">
-                    <CheckIcon size={16} />
-                  </span>
-                  <div>
-                    <p className="small strong">Ready to use</p>
-                    <p className="tiny dim">
-                      {geminiModelName(gemini.model)} · key saved on this {isIOS() ? "phone" : "computer"}
-                    </p>
-                  </div>
-                </div>
-              ) : geminiAvailable() ? (
-                <div className="stack stack--3">
-                  <div className="setup-steps small">
-                    <p><strong>1.</strong> Open Google AI Studio and sign in with your Google account.</p>
-                    <p><strong>2.</strong> Choose <em>Create API key</em>, then copy the key.</p>
-                    <p><strong>3.</strong> Paste it below. The complete key is never shown again.</p>
-                  </div>
-                  <div className="row row--wrap">
-                    <Button onClick={() => void openGeminiKeyPage()}>
-                      Sign in with Google
-                    </Button>
-                    <TextInput
-                      className="gemini-key-input"
-                      type="password"
-                      autoComplete="off"
-                      aria-label="Gemini API key"
-                      value={geminiKey}
-                      placeholder="Paste Gemini API key"
-                      onChange={(event) => setGeminiKey(event.target.value)}
-                    />
-                    <Button
-                      variant="primary"
-                      disabled={geminiBusy || geminiKey.trim().length < 20}
-                      onClick={() => void connectGemini()}
-                    >
-                      {geminiBusy ? "Connecting…" : "Connect Gemini"}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <p className="tiny dim">Gemini setup is available in the desktop application.</p>
-              )}
-
-              {gemini?.configured ? (
-                <fieldset className="gemini-model-choice stack stack--2">
-                  <legend className="field__label">Model for new study aids</legend>
-                  {gemini.choice === "most-capable" ? (
-                    <p className="tiny dim">Gemini 3.8 Flash is the default for new study aids.</p>
-                  ) : null}
-                  {(["standard", "most-capable"] as const).map((choice) => (
-                    <label key={choice} className="small">
-                      <input
-                        type="radio"
-                        name="gemini-model-choice"
-                        checked={gemini.choice === choice}
-                        disabled={geminiBusy}
-                        onChange={() => void chooseGeminiModel(choice)}
-                      />{" "}
-                      <span className="strong">{GEMINI_MODEL_CHOICES[choice].label}</span>
-                      <span className="tiny dim"> — {GEMINI_MODEL_CHOICES[choice].detail}</span>
-                    </label>
-                  ))}
-                  {gemini.choice === "most-capable" ? (
-                    <p className="tiny dim">
-                      If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key,
-                      Your Flight Deck tries Gemini 3.5 Flash instead and shows which model made each
-                      study aid. If the request is still refused, check this key's access in Google AI Studio.
-                    </p>
-                  ) : null}
-                </fieldset>
-              ) : null}
-
-              {geminiNote ? (
-                <p
-                  className={`small ${geminiProblem ? "settings-bad" : "settings-ok"}`}
-                  role={geminiProblem ? "alert" : "status"}
-                >
-                  {geminiNote}
-                </p>
-              ) : null}
-
-              <p className="tiny dim">
-                {PROVIDER_TERMS.gemini.setupFreeTier} (as of {PROVIDER_TERMS.gemini.asOf}; see <a
-                  href={PROVIDER_TERMS.gemini.termsUrl} target="_blank" rel="noopener noreferrer"
-                  onClick={(event) => {
-                    if (isTauri()) {
-                      event.preventDefault();
-                      void openUrl(PROVIDER_TERMS.gemini.termsUrl).catch(() => {
-                        setGeminiProblem(true); setGeminiNote("Could not open Google's terms. Try again.");
-                      });
-                    }
-                  }}
-                >Google's terms</a>) Do not analyze medical records, certificates, addresses, or documents containing
-                sensitive personal information. AI study material must be checked against the
-                current source, FAA publications, aircraft documents, and your instructor.
-              </p>
-
-              {gemini?.configured ? (
-                <p className="tiny dim">
-                  <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
-                  message means Google is overloaded, not that your key is wrong. Your Flight Deck
-                  already waits and retries; if it keeps happening, try again later or switch to Standard.
-                </p>
-              ) : null}
-
-              {gemini?.configured ? (
-                <div>
-                  <Button variant="danger" size="small" disabled={geminiBusy} onClick={() => setConfirmGeminiDisconnect(true)}>
-                    Disconnect Gemini
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-            </ProviderControls>
-          </CardBody>
-        </Card>
-        ) : null}
-
-        </details>
 
         <details id="settings-about" className="card material-fold">
           <summary id="settings-about-summary">About &amp; legal</summary>

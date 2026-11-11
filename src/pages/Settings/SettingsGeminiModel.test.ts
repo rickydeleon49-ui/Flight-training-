@@ -41,7 +41,6 @@ function Ready() {
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/settings"] }, h(Probe), h(Ready))));
   await waitForReadyAfterEffects();
-  (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
 }
 
 const STANDARD: geminiService.GeminiStatus = { configured: true, model: "gemini-3.5-flash", choice: "standard" };
@@ -76,13 +75,13 @@ describe("Gemini model choice in Settings", () => {
     await open();
     await screen.findByRole("radio", { name: /Standard — Claude Haiku 5.5/ });
     expect(screen.getByText(/Claude Haiku 5.5 · Ready to use/)).toBeTruthy();
-    const header = screen.getByRole("heading",{name:"AI provider"}).closest("header")!;
+    const header = screen.getByRole("heading",{name:"AI helper"}).closest("header")!;
     const card = header.closest(".card")!;
     const disclosure = card.querySelector("details")!;
     expect(disclosure.open).toBe(false);
-    expect(screen.getByRole("button", { name: "Disconnect Claude" }).closest("details")?.id).toBe("settings-advanced");
+    expect(screen.getByRole("button", { name: "Disconnect Claude" }).closest("details")).toBeNull();
     expect(disclosure.textContent).toContain("Gemini can turn a selected Study Library document");
-    expect(screen.getByRole("radio", { name: /Standard — Claude Haiku 5.5/ }).closest("details")?.id).toBe("settings-advanced");
+    expect(screen.getByRole("radio", { name: /Standard — Claude Haiku 5.5/ }).closest("details")).toBeNull();
     expect(screen.getByRole("radio", { name: /Most capable — Claude Sonnet 5.5/ })).toBeTruthy();
     if (configured) expect(within(disclosure).getByRole("radio", { name: /Standard —/ })).toBeTruthy();
     else expect(screen.getByLabelText("Gemini API key").closest("details")).toBe(disclosure);
@@ -123,7 +122,7 @@ describe("Gemini model choice in Settings", () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();
     await screen.findByText(providerService.SAVED_KEY_UNREADABLE);
-    await waitFor(() => expect(document.getElementById("settings-advanced")!.querySelector("summary")!.textContent).toContain("Saved AI key unavailable"));
+    await waitFor(() => expect(document.getElementById("ai-provider")!.closest(".card")!.textContent).toContain("Saved AI key unavailable"));
   });
 
   it("shows the unreadable saved Gemini key message instead of setup", async () => {
@@ -132,13 +131,13 @@ describe("Gemini model choice in Settings", () => {
     await screen.findByText(providerService.SAVED_KEY_UNREADABLE);
     expect(screen.queryByLabelText("Gemini API key")).toBeNull();
     expect(screen.queryByText(/Open Google AI Studio and sign in/)).toBeNull();
-    await waitFor(() => expect(document.getElementById("settings-advanced")!.querySelector("summary")!.textContent).toContain("Saved AI key unavailable"));
+    await waitFor(() => expect(document.getElementById("ai-provider")!.closest(".card")!.textContent).toContain("Saved AI key unavailable"));
   });
 
   it("shows the choice only once Gemini is connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();
-    await screen.findByText("AI provider");
+    await screen.findByRole("heading", { name: "AI helper" });
     expect(screen.queryByText("Model for new study aids")).toBeNull();
   });
 
@@ -225,7 +224,7 @@ it.each([STANDARD, { ...STANDARD, configured: false }])("keeps the Gemini-defaul
   try {
     await open();
     await screen.findByText(status.configured ? /Gemini 3.5 Flash · key saved/ : "Gemini setup is available in the desktop application.");
-    const card = screen.getByRole("heading", { name: "AI provider" }).closest(".card")!;
+    const card = screen.getByRole("heading", { name: "AI helper" }).closest(".card")!;
     expect(visibleCardText(card)).toMatchSnapshot();
     expect(screen.getByRole("link", { name: "Google's terms" }).getAttribute("href"))
       .toBe("https://ai.google.dev/gemini-api/terms");

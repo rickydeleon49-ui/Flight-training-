@@ -29,19 +29,19 @@ async function open(hash = "") {
 const fold = (name: string) => document.getElementById(`settings-${name}`) as HTMLDetailsElement;
 beforeEach(async () => { localStorage.clear(); db = await createNodeSqliteDatabase(); });
 afterEach(() => { cleanup(); db.close(); localStorage.clear(); vi.restoreAllMocks(); });
-it("Backups and data and Advanced start closed", async () => {
+it("Backups and data starts closed and AI helper is a visible section", async () => {
   await open();
   expect(fold("backups").open).toBe(false);
-  expect(fold("advanced").open).toBe(false);
-  expect(screen.getByText("Advanced · AI provider not set up")).toBeTruthy();
+  expect(document.getElementById("settings-advanced")).toBeNull();
+  expect(screen.getByRole("heading", { name: "AI helper" }).closest("details")).toBeNull();
+  expect(screen.getByText("Optional online AI")).toBeTruthy();
 });
-it("Advanced has no 'not set up' note when Claude is the connected provider", async () => {
+it("AI helper shows Connected when Claude is the connected provider", async () => {
   vi.spyOn(backups, "backupsAvailable").mockReturnValue(false);
   vi.spyOn(appData, "isTauri").mockReturnValue(true);
   vi.spyOn(provider, "providerStatus").mockResolvedValue({ selected: "claude", providers: [{ id: "gemini", connected: false }, { id: "claude", connected: true }] });
   await open();
-  await waitFor(() => expect(document.getElementById("settings-advanced-summary")!.textContent).toBe("Advanced"));
-  expect(screen.getByText("Connected")).toBeTruthy();
+  expect(await screen.findByText("Connected")).toBeTruthy();
 });
 it.each(["backup", "restore"])("a %s result opens Backups and data; she can close it after seeing it", async (operation) => {
   vi.spyOn(backups, "backupsAvailable").mockReturnValue(true);
@@ -68,7 +68,6 @@ it.each(["#settings-backups", "#send-to-iphone", "#ai-provider"])("opens only th
   const scroll = vi.fn(function (this: HTMLElement) {
     // The fold must be open before scrolling, so its heading is visible.
     expect(fold("backups").open).toBe(hash === "#settings-backups");
-    expect(fold("advanced").open).toBe(hash === "#ai-provider");
     scrolled.push(this.id);
   });
   const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
@@ -86,46 +85,41 @@ it("hash navigation switches folds and a menu visit closes both", async () => {
   await open("#ai-provider");
   fireEvent.click(screen.getByRole("link", { name: "Backup settings" }));
   await waitFor(() => expect(fold("backups").open).toBe(true));
-  expect(fold("advanced").open).toBe(false);
   fireEvent.click(screen.getByRole("link", { name: "iPhone settings" }));
   await waitFor(() => expect(fold("backups").open).toBe(false));
-  expect(fold("advanced").open).toBe(false);
   fireEvent.click(screen.getByRole("link", { name: "Provider settings" }));
-  await waitFor(() => expect(fold("advanced").open).toBe(true));
   fireEvent.click(screen.getByRole("link", { name: "Settings menu" }));
-  await waitFor(() => expect(fold("advanced").open).toBe(false));
+  await waitFor(() => expect(fold("backups").open).toBe(false));
   expect(fold("backups").open).toBe(false);
 });
-it("#ai-provider opens Advanced after navigation and the material page links there", async () => {
+it("#ai-provider is visible without opening a fold and the material page links there", async () => {
   await open();
   fireEvent.click(screen.getByRole("link", { name: "Provider settings" }));
-  await waitFor(() => expect(fold("advanced").open).toBe(true));
-  expect(document.getElementById("ai-provider")).toBeTruthy();
+  expect(document.getElementById("ai-provider")?.closest("details")).toBeNull();
   const material = readFileSync(`${process.cwd()}/src/pages/StudyLibrary/MaterialDetail.tsx`, "utf8");
   expect(material).toContain('to="/settings#ai-provider">Open Settings</Link>');
 });
-it("an asynchronous provider error opens Advanced", async () => {
+it("an asynchronous provider error shows in the AI helper section", async () => {
   vi.spyOn(backups, "backupsAvailable").mockReturnValue(false);
   vi.spyOn(appData, "isTauri").mockReturnValue(true);
   vi.spyOn(provider, "providerStatus").mockRejectedValue("Synthetic connection failure");
   await open();
   await screen.findByRole("alert");
-  await waitFor(() => expect(fold("advanced").open).toBe(true));
 });
 
 it("POLISH-088: a Jump to row moves focus to the section heading and opens a fold", async () => {
   await open();
   const nav = screen.getByRole("navigation", { name: "Jump to" });
   const links = Array.from(nav.querySelectorAll("a")).map((a) => a.textContent);
-  expect(links).toEqual(expect.arrayContaining(["About you", "Where you train", "Backups and data", "Advanced", "About & legal"]));
+  expect(links).toEqual(expect.arrayContaining(["About you", "Where you train", "AI helper", "Backups and data", "About & legal"]));
   fireEvent.click(screen.getByRole("link", { name: "Where you train" }));
   expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Where you train" }));
   expect(fold("backups").open).toBe(false);
   fireEvent.click(screen.getByRole("link", { name: "Backups and data" }));
   expect(fold("backups").open).toBe(true);
   expect(document.activeElement?.textContent).toBe("Backups and data");
-  fireEvent.click(screen.getByRole("link", { name: "Advanced" }));
-  expect(fold("advanced").open).toBe(true);
+  fireEvent.click(screen.getByRole("link", { name: "AI helper" }));
+  expect(document.activeElement).toBe(screen.getByRole("heading", { name: "AI helper" }));
 });
 
 it("POLISH-089: Jump to links are button-sized targets with space between them", async () => {
