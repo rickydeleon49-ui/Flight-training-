@@ -56,7 +56,7 @@ export function MaterialActionsMenu({ children }: { children: ReactNode }) {
         if (details.current) details.current.open = !details.current.open;
       }
     }}>File ▾</summary>
-    <div ref={items} className="material-actions-menu__items" onClickCapture={event => {
+    <div ref={items} role="group" aria-label="File actions" className="material-actions-menu__items" onClickCapture={event => {
       if ((event.target as HTMLElement).closest("button")) close();
     }}>{children}</div>
   </details>;
