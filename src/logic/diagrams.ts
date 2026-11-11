@@ -167,7 +167,7 @@ export const DIAGRAMS: readonly Diagram[] = [
   d("emergency", "02-get-ready.svg", "Get ready before anything happens", "emergency_procedures", "PHAK ch. 9"),
   d("emergency", "04-systems-malfunctions.svg", "Systems that act up: electrical, pitot-static, vacuum, exhaust", "emergency_procedures", "PHAK ch. 8"),
   d("emergency-2", "01-engine-failure-after-takeoff.svg", "Engine failure after takeoff: land ahead", "emergency_procedures", "Airplane Flying Handbook ch. 18"),
-  d("emergency-2", "02-engine-out-first-moves.svg", "Engine out: fly, choose, check, call", "emergency_procedures", "Airplane Flying Handbook ch. 9"),
+  d("emergency-2", "02-engine-out-first-moves.svg", "Engine out: fly, choose, check, call", "emergency_procedures", "Airplane Flying Handbook ch. 18"),
   d("emergency-2", "03-forced-landing-field.svg", "Choosing a forced-landing field", "emergency_procedures", "Airplane Flying Handbook ch. 18"),
   d("emergency-2", "04-squawk-codes.svg", "Emergency squawk codes", "emergency_procedures", "Aeronautical Information Manual ch. 6"),
   d("communications", "01-towered-or-nontowered.svg", "Towered or not: how you use the radio", "communications", "PHAK ch. 14"),
