@@ -126,12 +126,12 @@ describe("AppShell navigation disclosure", () => {
     (entry === "button" ? search : screen.getByRole("link", { name: "Notes" })).focus();
     if (entry === "button") fireEvent.click(search);
     else fireEvent.keyDown(window, { key: "k", ctrlKey: entry === "Control shortcut", metaKey: entry === "Command shortcut" });
-    const box = screen.getByRole("textbox", { name: "Search everything" });
+    const box = screen.getByRole("combobox", { name: "Search everything" });
     expect(document.getElementById("app-navigation")?.hidden).toBe(true);
     expect(menuButton.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(box);
     fireEvent.keyDown(box, { key: "Escape" });
-    expect(screen.queryByRole("textbox", { name: "Search everything" })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "Search everything" })).toBeNull();
     expect(document.activeElement).toBe(menu());
     expect(screen.queryByRole("link")).toBeNull();
   });
@@ -143,7 +143,7 @@ describe("AppShell navigation disclosure", () => {
     (document.activeElement as HTMLElement | null)?.blur();
     expect(document.activeElement).toBe(document.body);
     fireEvent.click(screen.getByRole("button", { name: /^Search/ }));
-    const box = screen.getByRole("textbox", { name: "Search everything" });
+    const box = screen.getByRole("combobox", { name: "Search everything" });
     expect(menuButton.getAttribute("aria-expanded")).toBe("false");
     fireEvent.keyDown(box, { key: "Escape" });
     expect(document.activeElement).toBe(menu());
@@ -155,7 +155,7 @@ describe("AppShell navigation disclosure", () => {
     search.focus();
     fireEvent.click(search);
     expect(document.getElementById("app-navigation")?.hidden).toBe(false);
-    const box = screen.getByRole("textbox", { name: "Search everything" });
+    const box = screen.getByRole("combobox", { name: "Search everything" });
     expect(document.activeElement).toBe(box);
     fireEvent.keyDown(box, { key: "Escape" });
     expect(document.activeElement).toBe(search);
@@ -168,8 +168,8 @@ describe("AppShell navigation disclosure", () => {
     const search = screen.getByRole("button", { name: /^Search/ });
     search.focus();
     fireEvent.click(search);
-    fireEvent.click(screen.getByRole("button", { name: /^Study LibraryMaterials/ }));
-    expect(screen.queryByRole("textbox", { name: "Search everything" })).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: /^Study LibraryMaterials/ }));
+    expect(screen.queryByRole("combobox", { name: "Search everything" })).toBeNull();
     expect(menu().getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(menu());
   });

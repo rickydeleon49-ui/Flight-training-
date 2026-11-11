@@ -26,6 +26,10 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   gap: 2px;
+  /* Large text: wrap onto a second row instead of running past the card edge. */
+  flex-wrap: wrap;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .daily-plan-budget-btn {
@@ -41,7 +45,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-align: center;
+  /* Fills its row when the group wraps; a single row keeps natural widths. */
+  flex: 1 1 auto;
+}
+
+/* Larger iPhone text: every option reaches the 44 pt target. At the default size
+   (17px) this is 0, so the control looks as before. */
+html.is-ios .daily-plan-budget-btn {
+  min-height: clamp(0px, calc((var(--ios-system-font-size, 17px) - 17px) * 44), 44px);
 }
 
 .daily-plan-budget-btn:hover {

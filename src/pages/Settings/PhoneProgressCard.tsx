@@ -63,7 +63,7 @@ export function PhoneProgressCard() {
         <Button variant="primary" disabled={busy !== null} onClick={send}>
           {busy === "send" ? "Sending…" : "Send my progress to the Mac"}
         </Button>
-        {statusLine ? <p role="status">{statusLine}</p> : null}
+        <p role="status" className="live-region">{statusLine}</p>
         {problem ? <p role="alert">{problem}</p> : null}
         <Button disabled={busy !== null} onClick={saveCopy}>{busy === "save" ? "Saving…" : "Save a full copy instead"}</Button>
         <p>Everything on this phone, for safekeeping.</p>

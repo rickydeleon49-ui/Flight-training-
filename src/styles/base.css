@@ -154,3 +154,46 @@ textarea {
     min-height: 44px;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Increase Contrast and forced colors (slice 41). Forced colors removes
+ * box-shadow and background colour, so state needs a border, outline or
+ * underline, and focus needs a real outline.
+ * ------------------------------------------------------------------ */
+@media (prefers-contrast: more) {
+  .filter-chip.is-active,
+  .segmented__option.is-selected,
+  .nav__link.is-active {
+    outline: 2px solid var(--text-primary);
+    outline-offset: -2px;
+  }
+
+  html.is-ios .ios-tab-bar__tab.is-active .ios-tab-bar__label {
+    text-decoration: underline;
+  }
+}
+
+@media (forced-colors: active) {
+  .input:focus,
+  .textarea:focus,
+  .select:focus {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
+
+  .filter-chip.is-active,
+  .segmented__option.is-selected,
+  .nav__link.is-active {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  html.is-ios .ios-tab-bar__tab.is-active .ios-tab-bar__label {
+    text-decoration: underline;
+  }
+
+  .card-review__session:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

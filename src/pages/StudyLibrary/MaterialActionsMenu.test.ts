@@ -38,3 +38,13 @@ it("shows Move to folder and disables it for a chapter with a hint", () => {
   expect(item.disabled).toBe(true);
   expect(item.title).toBe("Chapters stay with their book.");
 });
+it("groups its buttons under a name and returns focus to the summary on Escape", () => {
+  render(h(MaterialActionsMenu, null, h("button", { className: "button" }, "Edit")));
+  expect(screen.getByRole("group", { name: "File actions" })).toBeTruthy();
+  const summary = screen.getByText("File ▾");
+  const details = summary.closest("details")!;
+  details.open = true;
+  fireEvent.keyDown(screen.getByText("Edit"), { key: "Escape" });
+  expect(details.open).toBe(false);
+  expect(document.activeElement).toBe(summary);
+});

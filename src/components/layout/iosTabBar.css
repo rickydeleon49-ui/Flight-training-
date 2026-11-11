@@ -145,6 +145,8 @@ html.is-ios .ios-back {
   touch-action: manipulation;
 }
 
+html.is-ios .ios-back:active { opacity: .5; }
+
 html.is-ios .ios-back__chevron {
   font-size: 1.75rem;
   line-height: 1;

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui";
 
 import { useScrollDirection } from "./useScrollDirection";
+import { scrollBehavior } from "../../lib/motion";
 
 import "./iosTabBar.css";
 
@@ -61,7 +62,7 @@ export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
   const scrollIfCurrent = (root: string) => (event: MouseEvent) => {
     if (pathname === root) {
       event.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: scrollBehavior() });
     }
   };
 

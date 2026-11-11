@@ -39,7 +39,7 @@ export function MaterialVideoLinks({ materialId }: { materialId: string }) {
   // A small closed dropdown: optional extra next to the section's own study material.
   return <Card>
     <details>
-    <summary className="card__header" style={{ cursor: "pointer" }}>
+    <summary className="card__header video-links__summary">
       <h2 className="card__title" style={{ display: "inline" }}>Videos for this section</h2>{" "}
       <span className="small muted">{links.length ? `${links.length} saved` : "optional"}</span>
     </summary>

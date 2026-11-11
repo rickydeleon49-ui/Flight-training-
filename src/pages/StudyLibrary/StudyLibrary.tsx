@@ -1089,25 +1089,23 @@ function BinderReviewStatus({
     );
   }, [onStatus, state.rows, state.issues, state.isComplete, state.pagesLoaded]);
   useEffect(() => () => onStatus(null), [onStatus]);
-  if (state.error) {
-    return (
-      <p className="tiny muted library__review-status" role="status">
-        Card review status couldn&rsquo;t be checked just now.{" "}
-        <button type="button" className="link-button" onClick={() => void stream.retryRead()}>
-          Retry
-        </button>
-      </p>
-    );
-  }
-  if (state.pagesLoaded > 0 && !state.isComplete) {
-    return (
-      <p className="tiny muted library__review-status" role="status">
-        Card review status is shown for the materials checked so far.{" "}
-        <button type="button" className="link-button" onClick={() => void stream.loadNextPage()} disabled={state.loading !== null}>
-          Check more
-        </button>
-      </p>
-    );
-  }
-  return null;
+  return (
+    <p className="live-region tiny muted library__review-status" role="status">
+      {state.error ? (
+        <>
+          Card review status couldn&rsquo;t be checked just now.{" "}
+          <button type="button" className="link-button" onClick={() => void stream.retryRead()}>
+            Retry
+          </button>
+        </>
+      ) : state.pagesLoaded > 0 && !state.isComplete ? (
+        <>
+          Card review status is shown for the materials checked so far.{" "}
+          <button type="button" className="link-button" onClick={() => void stream.loadNextPage()} disabled={state.loading !== null}>
+            Check more
+          </button>
+        </>
+      ) : null}
+    </p>
+  );
 }

@@ -114,7 +114,7 @@ export function StudyLibraryReviewDue({
             Review due
           </h2>
           <p className="small muted">Flashcards ready now, most urgent first. Open one material to review its cards.</p>
-          {state.rows.length > 0 ? <p className="small strong" role="status">{dueLine(state.rows, state.isComplete)}</p> : null}
+          <p className="live-region small strong" role="status">{state.rows.length > 0 ? dueLine(state.rows, state.isComplete) : null}</p>
         </div>
         <Button size="small" onClick={refresh} disabled={state.loading !== null}>
           Check again
@@ -225,7 +225,7 @@ export function StudyLibraryReviewDue({
               </Button>
             </div>
           ) : null}
-          {extraNote ? <p className="small muted" role="status">{extraNote}</p> : null}
+          <p className="live-region small muted" role="status">{extraNote}</p>
         </Card>
       ) : null}
 

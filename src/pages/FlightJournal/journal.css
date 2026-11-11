@@ -132,9 +132,9 @@
    so the visible segment is 32px while each button keeps its 44px target. */
 .view-tabs.filter-chips {
   display: inline-flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap; /* largest text size: options wrap instead of clipping */
   align-items: center;
-  gap: 2px;
+  gap: 12px 2px; /* row gap keeps wrapped 44px targets from overlapping */
   padding: 6px 2px;
   max-width: 100%;
   background: var(--surface-sunken);

@@ -26,7 +26,7 @@ function show(result: ReturnType<typeof makeEvent> | null) {
 
 it("confirms a saved lesson and links directly to its existing preparation section", async () => {
   const create = show(makeEvent({ id: "new-synthetic", title: "Fictional pattern work" }));
-  expect((await screen.findByRole("status")).textContent).toBe("Added “Fictional pattern work” to your schedule.");
+  await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Added “Fictional pattern work” to your schedule."));
   expect(create).toHaveBeenCalledWith(expect.objectContaining({ title: "Fictional pattern work" }));
   const link = screen.getByRole("link", { name: "Add preparation" });
   expect(link.getAttribute("href")).toBe("/schedule/new-synthetic#lesson-preparation");

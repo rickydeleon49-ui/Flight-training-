@@ -656,6 +656,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   cursor: pointer;
   white-space: nowrap;
 }
+.library-tab:active { background: var(--surface-press); }
 .library-tab.is-active {
   border-bottom-color: currentColor;
   color: var(--text-primary);
@@ -985,6 +986,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   line-height: 1;
   cursor: pointer;
 }
+.search-field__clear:active { background: var(--surface-press); }
 .search-field__clear:hover,
 .search-field__clear:focus-visible { color: var(--text-primary); background: var(--surface-press); }
 
@@ -1159,3 +1161,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   font-size: 0.875rem;
 }
 .ask-gemini__input { flex: 1; }
+
+/* Closed "Videos for this section" disclosure: .card__header has no bottom padding, so the closed row looked cut off. */
+.video-links__summary { cursor: pointer; align-items: center; padding-bottom: var(--space-5); }
+details[open] > .video-links__summary { padding-bottom: 0; }

@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { type ContextType } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -28,6 +30,12 @@ beforeEach(async () => {
 });
 afterEach(() => { cleanup(); db.close(); vi.restoreAllMocks(); });
 describe("videos card", () => {
+  it("gives the closed heading row its own padding so it is not cut off", async () => {
+    show(); await screen.findByText(/Found a helpful video/);
+    expect(document.querySelector("details > summary")!.classList.contains("video-links__summary")).toBe(true);
+    const css = readFileSync(resolve(__dirname, "studyLibrary.css"), "utf8");
+    expect(css).toMatch(/\.video-links__summary\s*\{[^}]*padding-bottom:\s*var\(--space-5\)/);
+  });
   it("is a closed dropdown that shows how many links are saved", async () => {
     show(); await screen.findByText(/Found a helpful video/);
     const details = document.querySelector("details")!;

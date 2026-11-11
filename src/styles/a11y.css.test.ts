@@ -111,3 +111,91 @@ describe("touch targets", () => {
     });
   }
 });
+
+describe("shared filter chip", () => {
+  const body = ruleBodies(ui.replace(/\/\*[\s\S]*?\*\//g, ""), ".filter-chip").join("\n");
+  it("wraps long labels instead of clipping", () => {
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/overflow-wrap:\s*(?:break-word|anywhere)/);
+    expect(body).toMatch(/max-width:\s*100%/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+  it("active chip has a non-colour cue (bold)", () => {
+    const active = ruleBodies(ui.replace(/\/\*[\s\S]*?\*\//g, ""), ".filter-chip.is-active").join("\n");
+    expect(active).toMatch(/font-weight:\s*600/);
+  });
+});
+
+describe("large text does not clip", () => {
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "");
+  const daily = strip(read("src/components/dailyPlan/dailyPlan.css"));
+  it("buttons wrap long labels", () => {
+    const body = ruleBodies(strip(ui), ".button").join("\n");
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/overflow-wrap:\s*break-word/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+  it("daily plan budget buttons wrap long labels", () => {
+    const body = ruleBodies(daily, ".daily-plan-budget-btn").join("\n");
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+  it("list row chevron is sized in rem, not px", () => {
+    const body = ruleBodies(strip(ui), ".list-row__chevron").join("\n");
+    expect(body).toMatch(/font-size:\s*0\.875rem/);
+  });
+  it("root font scales with system text size", () => {
+    expect(base).not.toMatch(/text-size-adjust:\s*none/);
+    expect(base).toMatch(/-apple-system-body/);
+  });
+});
+
+describe("reduced motion and reduced transparency (DESIGN-01 s40)", () => {
+  it("one global reduced-motion rule shortens every animation and transition", () => {
+    const block = mediaBlock(tokens.replace(/\/\*[\s\S]*?\*\//g, ""), "prefers-reduced-motion: reduce")!;
+    expect(block).toContain("--transition: 0ms");
+    expect(block).toMatch(/animation-duration:\s*0\.001ms !important/);
+    expect(block).toMatch(/transition-duration:\s*0\.001ms !important/);
+  });
+  it("no stylesheet turns on smooth scrolling", () => {
+    expect(allCss).not.toMatch(/scroll-behavior:\s*smooth/);
+  });
+  it("glass bars turn solid with no blur under reduced transparency", () => {
+    const glass = read("src/styles/glass.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    const block = mediaBlock(glass, "prefers-reduced-transparency: reduce")!;
+    expect(block).toMatch(/background:\s*var\(--surface-card\)/);
+    expect(block).toMatch(/backdrop-filter:\s*none/);
+    expect(block).toContain(".ios-tab-bar");
+    expect(block).toContain(".top-bar.is-collapsed");
+  });
+  it("JS smooth scrolls go through scrollBehavior()", () => {
+    for (const f of ["src/components/layout/IosTabBar.tsx", "src/components/ui/BackToTop.tsx", "src/components/dailyPlan/startAction.ts"]) {
+      const src = read(f);
+      expect(src).not.toContain('"smooth"');
+      expect(src).toContain("scrollBehavior()");
+    }
+  });
+});
+
+describe("increase contrast and forced colors (DESIGN-01 s41)", () => {
+  const css = base.replace(/\/\*[\s\S]*?\*\//g, "");
+  const forced = mediaBlock(css, "forced-colors: active")!;
+  const more = css.slice(css.indexOf("@media (prefers-contrast: more)", css.indexOf("slice 41") > 0 ? 0 : 0));
+  it("input focus keeps a real outline in forced colors (box-shadow is removed)", () => {
+    expect(forced).toMatch(/\.input:focus[\s\S]*?outline:\s*2px solid Highlight/);
+  });
+  it("selected chip, segment and nav link get an outline, not colour alone", () => {
+    for (const sel of [".filter-chip.is-active", ".segmented__option.is-selected", ".nav__link.is-active"]) {
+      expect(forced).toContain(sel);
+      expect(more).toContain(sel);
+    }
+    expect(forced).toMatch(/outline:\s*2px solid Highlight/);
+  });
+  it("active iOS tab gets an underline cue in both modes", () => {
+    expect(forced).toMatch(/ios-tab-bar__tab\.is-active[^{]*\{[^}]*text-decoration:\s*underline/);
+    expect(more).toMatch(/ios-tab-bar__tab\.is-active[^{]*\{[^}]*text-decoration:\s*underline/);
+  });
+  it("card review session keeps a focus outline in forced colors", () => {
+    expect(forced).toMatch(/\.card-review__session:focus-visible/);
+  });
+});

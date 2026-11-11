@@ -195,9 +195,7 @@ export function StartFreshDialog({
             disabled={busy || saving || !!doneMessage}
           />
         </Field>
-        {doneMessage ? (
-          <p role="status">{doneMessage}</p>
-        ) : null}
+        <p role="status" className="live-region">{doneMessage}</p>
         {error ? (
           <p className="field__error" role="alert">
             {error}
