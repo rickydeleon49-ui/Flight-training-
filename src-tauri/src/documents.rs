@@ -2638,9 +2638,15 @@ mod tests {
         std::fs::write(documents.join("abc-uuid.pdf"), b"synthetic").unwrap();
         let cache = root.join("cache");
         let copy = view_copy_in(&documents, &cache, "abc-uuid.pdf", "Airspace: Ch/3?").unwrap();
-        assert_eq!(copy.file_name().unwrap().to_str().unwrap(), "Airspace- Ch-3-.pdf");
+        assert_eq!(
+            copy.file_name().unwrap().to_str().unwrap(),
+            "Airspace- Ch-3-.pdf"
+        );
         assert_eq!(std::fs::read(&copy).unwrap(), b"synthetic");
-        assert_eq!(std::fs::read(documents.join("abc-uuid.pdf")).unwrap(), b"synthetic");
+        assert_eq!(
+            std::fs::read(documents.join("abc-uuid.pdf")).unwrap(),
+            b"synthetic"
+        );
         // Opening again overwrites the same copy; a title cannot escape the cache.
         let again = view_copy_in(&documents, &cache, "abc-uuid.pdf", "Airspace: Ch/3?").unwrap();
         assert_eq!(again, copy);

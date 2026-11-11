@@ -99,7 +99,7 @@ it("replaces the Start here panel on a PDF page with one link line to How to", a
   expect(screen.queryByRole("list", { name: "PDF study steps" })).toBeNull();
   expect(screen.queryByText(/one step at a time/i)).toBeNull();
   const line = document.getElementById("material-start-here")!;
-  expect(line.textContent).toBe("New to this? See How to in Study Library.");
+  expect(line.textContent).toBe("New to this? See How to in Study Library. Read this PDF's text");
   const link = within(line).getByRole("link", { name: "How to in Study Library" });
   expect(link.getAttribute("href")).toBe("/study?tab=howto");
   // Existing anchors on the page still exist.
