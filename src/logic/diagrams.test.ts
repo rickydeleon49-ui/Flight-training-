@@ -50,7 +50,7 @@ describe("diagram manifest", () => {
 describe("AI-made pictures", () => {
   const photos = DIAGRAMS.filter((d) => d.kind === "photo");
   it("are flagged, labelled in the alt text (not repeated in the source line), and small", () => {
-    expect(photos.map((d) => d.id)).toEqual(["photos/windsock"]);
+    expect(photos.map((d) => d.id).sort()).toEqual(["photos/pitot-tube", "photos/windsock", "photos/wing-frost"]);
     for (const p of photos) {
       expect(p.aiIllustration).toBe(true);
       expect(diagramPhotoAlt(p)).toContain(AI_ILLUSTRATION_LABEL);

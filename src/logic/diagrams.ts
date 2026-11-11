@@ -152,6 +152,8 @@ export const DIAGRAMS: readonly Diagram[] = [
   d("airport-2", "04-runway-incursion-avoidance.svg", "Avoiding a runway incursion", "airports", "PHAK ch. 14"),
   d("airport-2", "05-runway-and-hold-line-lights.svg", "Lights on the runway and at the hold line", "airports", "PHAK ch. 14"),
   photo("photos", "windsock.jpg", "Wind sock at an airfield", "airports"),
+  photo("photos", "pitot-tube.jpg", "Pitot tube under the wing", "aircraft_systems"),
+  photo("photos", "wing-frost.jpg", "Frost on a wing before flight", "weather"),
   d("takeoff-landing", "01-runway-surface-slope.svg", "The runway changes the numbers: slope and surface", "landings", "PHAK ch. 11"),
   d("takeoff-landing", "02-dynamic-hydroplaning.svg", "Hydroplaning: tires riding on water", "landings", "PHAK ch. 11"),
   d("takeoff-landing", "03-book-speeds.svg", "Fly the book speed", "landings", "PHAK ch. 11"),
