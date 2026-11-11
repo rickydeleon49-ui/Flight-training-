@@ -352,7 +352,7 @@ function SavedReference({ material, note, reference, downloaded = false }: {
       if (!live.current || currentKey.current !== key) return;
       setState({ key, availability: checked });
       if (checked !== "present") return;
-      if (deviceCan().revealFiles) await openDocument(material.filePath);
+      if (deviceCan().revealFiles) await openDocument(material.filePath, material.title);
       else await openDocument(material.filePath, material.title, material.id);
       if (live.current && currentKey.current === key) setMessage(deviceCan().revealFiles ? "Opened in your PDF reader." : "Opened in Your Flight Deck.");
     } catch {

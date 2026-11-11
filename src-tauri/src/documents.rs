@@ -756,6 +756,71 @@ pub fn document_path(app: AppHandle, relative_path: String) -> Result<String, St
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Copy a stored document to a cache folder under a readable name and return
+/// that path, so the system viewer's window shows the title instead of the
+/// stored file name. The stored original is only read. Each document gets its
+/// own small folder (named from its stored path), so the same title on two
+/// materials never collides and re-opening just overwrites the copy.
+pub(crate) fn view_copy_in(
+    documents_dir: &Path,
+    cache_dir: &Path,
+    relative_path: &str,
+    title: &str,
+) -> Result<PathBuf, String> {
+    use std::hash::{Hash, Hasher};
+    let source = contained_document_path(documents_dir, relative_path)?;
+    if !source.is_file() {
+        return Err("This file could not be found.".to_string());
+    }
+    let extension = source
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(sanitize_file_name)
+        .unwrap_or_else(|| "pdf".to_string());
+    let mut name = sanitize_file_name(title);
+    name.truncate(80);
+    let name = name.trim().to_string();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    relative_path.hash(&mut hasher);
+    let folder = cache_dir.join(format!("{:016x}", hasher.finish()));
+    std::fs::create_dir_all(&folder).map_err(|_| "This file could not be opened.".to_string())?;
+    // Only copies we made live here; drop folders untouched for a week.
+    if let Ok(entries) = std::fs::read_dir(cache_dir) {
+        let week = Duration::from_secs(7 * 24 * 3600);
+        for entry in entries.flatten() {
+            let old = entry
+                .metadata()
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.elapsed().ok())
+                .is_some_and(|age| age > week);
+            if old && entry.path() != folder && entry.path().is_dir() {
+                let _ = std::fs::remove_dir_all(entry.path());
+            }
+        }
+    }
+    let target = folder.join(format!("{name}.{extension}"));
+    std::fs::copy(&source, &target).map_err(|_| "This file could not be opened.".to_string())?;
+    Ok(target)
+}
+
+/// Path to open in the system viewer: a copy named after the material title.
+#[tauri::command]
+pub fn document_view_path(
+    app: AppHandle,
+    relative_path: String,
+    title: String,
+) -> Result<String, String> {
+    use tauri::Manager;
+    let cache = app
+        .path()
+        .app_cache_dir()
+        .map_err(|_| "This file could not be opened.".to_string())?
+        .join("open-copies");
+    let path = view_copy_in(&documents_root(&app)?, &cache, &relative_path, &title)?;
+    Ok(path.to_string_lossy().to_string())
+}
+
 /// Read a bounded PDF through raw IPC, using the same relative-path guard as document_path.
 #[tauri::command]
 pub fn document_bytes(
@@ -2564,6 +2629,26 @@ pub(crate) fn import_tests_write_pdf(path: &Path, pages: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn view_copy_is_named_after_the_title_and_leaves_the_original_alone() {
+        let root = split_test_root();
+        let documents = root.join(DOCUMENTS_DIR);
+        std::fs::create_dir_all(&documents).unwrap();
+        std::fs::write(documents.join("abc-uuid.pdf"), b"synthetic").unwrap();
+        let cache = root.join("cache");
+        let copy = view_copy_in(&documents, &cache, "abc-uuid.pdf", "Airspace: Ch/3?").unwrap();
+        assert_eq!(copy.file_name().unwrap().to_str().unwrap(), "Airspace- Ch-3-.pdf");
+        assert_eq!(std::fs::read(&copy).unwrap(), b"synthetic");
+        assert_eq!(std::fs::read(documents.join("abc-uuid.pdf")).unwrap(), b"synthetic");
+        // Opening again overwrites the same copy; a title cannot escape the cache.
+        let again = view_copy_in(&documents, &cache, "abc-uuid.pdf", "Airspace: Ch/3?").unwrap();
+        assert_eq!(again, copy);
+        let hostile = view_copy_in(&documents, &cache, "abc-uuid.pdf", "../../x").unwrap();
+        assert!(hostile.starts_with(&cache));
+        assert!(view_copy_in(&documents, &cache, "../outside.pdf", "x").is_err());
+        assert!(view_copy_in(&documents, &cache, "missing.pdf", "x").is_err());
+    }
 
     #[test]
     fn document_bytes_refuses_paths_outside_documents() {

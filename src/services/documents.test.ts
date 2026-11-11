@@ -163,6 +163,20 @@ describe("document open and reveal path lifecycle", () => {
     expect(mocks.openPath).toHaveBeenCalledWith("C:\\AppData\\documents\\mat-1.pdf");
   });
 
+  it("opens a copy named after the material title, falling back to the stored file", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    mocks.openPath.mockClear();
+    mocks.invoke.mockImplementation((command: string) =>
+      command === "document_view_path" ? Promise.resolve("/cache/Airspace.pdf") : Promise.resolve("/docs/mat-1.pdf"));
+    await openDocument("mat-1.pdf", "Airspace");
+    expect(mocks.invoke).toHaveBeenCalledWith("document_view_path", { relativePath: "mat-1.pdf", title: "Airspace" });
+    expect(mocks.openPath).toHaveBeenLastCalledWith("/cache/Airspace.pdf");
+    mocks.invoke.mockImplementation((command: string) =>
+      command === "document_view_path" ? Promise.reject(new Error("no")) : Promise.resolve("/docs/mat-1.pdf"));
+    await openDocument("mat-1.pdf", "Airspace");
+    expect(mocks.openPath).toHaveBeenLastCalledWith("/docs/mat-1.pdf");
+  });
+
   it("resolves the document path and passes the exact absolute path to revealItemInDir", async () => {
     mocks.isTauri.mockReturnValue(true);
     mocks.invoke.mockImplementation((command: string, args: Record<string, unknown>) => {

@@ -816,7 +816,7 @@ function MaterialDetailPage() {
     if (!material.filePath) return;
     setOpenError(null);
     try {
-      if (deviceCan().revealFiles) await openDocument(material.filePath);
+      if (deviceCan().revealFiles) await openDocument(material.filePath, material.title);
       else await openDocument(material.filePath, material.title, material.id);
     } catch (error) {
       setOpenError(documentErrorMessage(error, "That file could not be opened."));

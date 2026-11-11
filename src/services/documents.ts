@@ -117,12 +117,20 @@ export async function documentExists(relativePath: string): Promise<boolean> {
 }
 
 /** Open in the phone viewer or the desktop system viewer. */
-export async function openDocument(relativePath: string, _title = "PDF", materialId?: string): Promise<void> {
+export async function openDocument(relativePath: string, title?: string, materialId?: string): Promise<void> {
   if (!isTauri()) throw new DesktopOnlyError();
   if (isIOS()) {
     // The native viewer shows PDFs only; a picture gets its own plain message.
     if (/\.(png|jpe?g|gif|heic|heif|webp|bmp|tiff?)$/i.test(relativePath)) throw new Error("This picture could not be opened.");
     return openNativePdf(materialId);
+  }
+  // With a title, open a copy named after it so the viewer window is readable;
+  // the stored original is never renamed. If the copy fails, open the original.
+  if (title) {
+    try {
+      await openPath(await invoke<string>("document_view_path", { relativePath, title }));
+      return;
+    } catch { /* fall back to the stored file */ }
   }
   const absolute = await invoke<string>("document_path", { relativePath });
   await openPath(absolute);
