@@ -323,14 +323,19 @@ export function diagramSourceLine(diagram: Diagram): string {
 export function scopeDiagramSvg(svg: string, prefix: string): { markup: string; css: string } {
   const scope = prefix.replace(/-$/, "");
   let css = "";
-  const markup = svg
-    .replace(/<\?xml[^>]*\?>\s*/, "")
-    // The <style> element is lifted out: an injected one is blocked by the app's CSP.
-    .replace(/<style[^>]*>([\s\S]*?)<\/style>/g, (_all, body: string) => {
+  // The <style> element is lifted out: an injected one is blocked by the app's CSP.
+  // Repeat until none is left, so a nested "<sty<style>…</style>le>" cannot survive.
+  let lifted = svg.replace(/<\?xml[^>]*\?>\s*/, "");
+  for (let before = ""; before !== lifted; ) {
+    before = lifted;
+    lifted = lifted.replace(/<style[^>]*>([\s\S]*?)<\/style\s*>/gi, (_all, body: string) => {
       css += body.replace(/([^{}]+)\{/g, (_rule, selectors: string) =>
         selectors.split(",").map((s) => `.${scope} ${s.trim()}`).join(",") + "{");
       return "";
-    })
+    });
+  }
+  lifted = lifted.replace(/<\/?style\b[^>]*>?/gi, "");
+  const markup = lifted
     .replace(/\bid="([^"]+)"/g, (_m, id: string) => `id="${prefix}${id}"`)
     .replace(/\baria-(labelledby|describedby)="([^"]+)"/g, (_m, name: string, ids: string) =>
       `aria-${name}="${ids.split(/\s+/).map((id) => prefix + id).join(" ")}"`)

@@ -140,4 +140,10 @@ describe("scopeDiagramSvg", () => {
     expect(css).toContain(".dgx2 .t{fill:red}");
     expect(css).toContain(".dgx2 .a,.dgx2 .b{x:1}");
   });
+
+  it("leaves no <style> behind, even when nested", () => {
+    const { markup } = scopeDiagramSvg('<svg><sty<style>.a{}</style>le>.b{}</style><STYLE>.c{}</STYLE></svg>', "dgx3-");
+    expect(markup.toLowerCase()).not.toContain("<style");
+    expect(markup.toLowerCase()).not.toContain("</style");
+  });
 });
