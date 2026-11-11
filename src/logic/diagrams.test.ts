@@ -24,7 +24,7 @@ describe("diagram manifest", () => {
     for (const diagram of DIAGRAMS) {
       expect(Object.keys(TOPIC_LABELS), diagram.id).toContain(diagram.topic);
       expect(diagram.title.length, diagram.id).toBeGreaterThan(3);
-      expect(diagram.source, diagram.id).toMatch(/^(PHAK ch\. \d+|AI-made illustration|[A-Z][\w' ]+|[A-Z][\w' ]+ ch\. \d+)$/);
+      expect(diagram.source, diagram.id).toMatch(/^(PHAK ch\. \d+|14 CFR \d+\.\d+|AI-made illustration|[A-Z][\w' ]+|[A-Z][\w' ]+ ch\. \d+)$/);
     }
   });
 
