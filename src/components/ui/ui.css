@@ -968,3 +968,16 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   color: var(--accent-primary);
   font-weight: 600;
 }
+
+/* Phone hit areas: 44 pt tappable box, visible art unchanged. */
+@media (pointer: coarse), (max-width: 700px) {
+  .button--small { min-height: 44px; }
+  .checkbox, .radio-row__option { position: relative; }
+  .checkbox::before,
+  .radio-row__option::before {
+    content: "";
+    position: absolute;
+    inset: -12px 0;
+  }
+  .radio-row__option { min-height: 44px; }
+}
