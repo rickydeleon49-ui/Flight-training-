@@ -150,6 +150,7 @@ export const DIAGRAMS: readonly Diagram[] = [
   d("airport", "04-airport-signs.svg", "Airport signs", "airports", "PHAK ch. 14"),
   d("airport", "05-vasi.svg", "Two-bar VASI", "airports", "PHAK ch. 14"),
   d("airport-2", "01-radio-failure-and-light-signals.svg", "When the radio fails: watch the tower for light signals", "airports", "PHAK ch. 14"),
+  d("airport-2", "02-atc-light-signals.svg", "ATC light gun signals: what each color means", "airports", "PHAK ch. 14"),
   d("airport-2", "02-airport-lighting.svg", "Airport lighting at night", "airports", "PHAK ch. 14"),
   d("airport-2", "03-wind-direction-indicators.svg", "Wind direction indicators", "airports", "PHAK ch. 14"),
   d("airport-2", "04-runway-incursion-avoidance.svg", "Avoiding a runway incursion", "airports", "PHAK ch. 14"),
