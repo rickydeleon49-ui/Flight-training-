@@ -228,15 +228,27 @@ export function useModalDialog(
   latest.current = options;
 
   // Native path: the platform's top layer, focus trap and backdrop.
+  const nativeOpener = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (fallback) return;
     const element = ref.current as HTMLDialogElement | null;
     if (!element) return;
     if (open && !element.open) {
+      nativeOpener.current = document.activeElement as HTMLElement | null;
       element.showModal();
       latest.current.initialFocus?.()?.focus();
     }
-    if (!open && element.open) element.close();
+    if (!open && element.open) {
+      element.close();
+      // Engines return focus to the opener on close; make sure of it where one
+      // does not, but only if focus was not moved somewhere deliberate.
+      const opener = nativeOpener.current;
+      nativeOpener.current = null;
+      const active = document.activeElement;
+      if (opener && opener.isConnected && (active === null || active === document.body || element.contains(active))) {
+        opener.focus();
+      }
+    }
   }, [fallback, open, ref]);
 
   // Fallback path.
