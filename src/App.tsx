@@ -9,6 +9,33 @@ import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 // Keep the first screen small; each section loads when it is first opened.
+
+// Start fetching the opened route's chunk now, in parallel with the database
+// opening, instead of after it. The browser caches the module, so the lazy()
+// imports above resolve at once when the route renders.
+const routePreloads: Array<[RegExp, () => Promise<unknown>]> = [
+  [/^flight-path\/skills\//, () => import("@/pages/FlightPath/skills/SkillPage")],
+  [/^flight-path/, () => import("@/pages/FlightPath/FlightPath")],
+  [/^study\/homework/, () => import("@/pages/StudyLibrary/HomeworkView")],
+  [/^study\/history/, () => import("@/pages/StudyLibrary/PracticeHistory")],
+  [/^study\/[^/]+/, () => import("@/pages/StudyLibrary/MaterialDetail")],
+  [/^study/, () => import("@/pages/StudyLibrary/StudyLibrary")],
+  [/^schedule\/[^/]+/, () => import("@/pages/Schedule/EventDetail")],
+  [/^schedule/, () => import("@/pages/Schedule/Schedule")],
+  [/^journal\/new|^journal\/[^/]+\/edit/, () => import("@/pages/FlightJournal/JournalForm")],
+  [/^journal\/[^/]+/, () => import("@/pages/FlightJournal/JournalEntryDetail")],
+  [/^journal/, () => import("@/pages/FlightJournal/FlightJournal")],
+  [/^questions/, () => import("@/pages/Questions/Questions")],
+  [/^notes/, () => import("@/pages/Notes/Notes")],
+  [/^finances/, () => import("@/pages/Finances/Finances")],
+  [/^toolkit/, () => import("@/pages/PilotToolkit/PilotToolkit")],
+  [/^settings/, () => import("@/pages/Settings/Settings")],
+  [/^more/, () => import("@/pages/More/More")],
+];
+if (typeof window !== "undefined") {
+  const path = window.location.hash.replace(/^#\/?/, "").split(/[?#]/, 1)[0] ?? "";
+  routePreloads.find((entry) => entry[0].test(path))?.[1]().catch(() => undefined);
+}
 const HomeworkView = lazy(() => import("@/pages/StudyLibrary/HomeworkView").then((m) => ({ default: m.HomeworkView })));
 const Finances = lazy(() => import("@/pages/Finances/Finances").then((m) => ({ default: m.Finances })));
 const FlightJournal = lazy(() => import("@/pages/FlightJournal/FlightJournal").then((m) => ({ default: m.FlightJournal })));
