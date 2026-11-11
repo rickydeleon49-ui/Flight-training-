@@ -312,6 +312,35 @@ describe("card reviews in MaterialDetail", () => {
     expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
   });
 
+  it("keeps the card at its tallest height when flipping and resets on the next card", async () => {
+    await seed();
+    let tall = 100;
+    const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get() {
+        return Math.max(this.classList.contains("flashcard") ? tall : 0, parseFloat(this.style.minHeight || "0"));
+      },
+    });
+    try {
+      renderDetail();
+      await reviewHeading();
+      await openSession();
+      const face = () => document.querySelector<HTMLElement>(".card-review__session .flashcard")!;
+      expect(face().style.minHeight).toBe("100px");
+      tall = 180;
+      fireEvent.click(button("Show answer"));
+      expect(face().style.minHeight).toBe("180px");
+      tall = 100;
+      fireEvent.click(button(/^Good: again in/));
+      await screen.findByText(/^Card 2 of 3 · new/);
+      expect(face().style.minHeight).toBe("100px");
+    } finally {
+      if (desc) Object.defineProperty(HTMLElement.prototype, "offsetHeight", desc);
+      else delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetHeight;
+    }
+  });
+
   it("keeps pointer-down focus from scrolling Show answer before its single click", async () => {
     await seed();
     renderDetail();

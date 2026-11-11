@@ -126,6 +126,30 @@ for (const [key, expectedRating] of ratingKeyCases) {
   });
 }
 
+it("keeps the flashcard at its tallest height when revealed", async () => {
+  let tall = 100;
+  const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
+  Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+    configurable: true,
+    get() {
+      return Math.max(this.classList.contains("flashcard") ? tall : 0, parseFloat(this.style.minHeight || "0"));
+    },
+  });
+  try {
+    await setup("card_partial");
+    await screen.findByText("Two");
+    const face = () => document.querySelector<HTMLElement>(".flashcard")!;
+    expect(face().style.minHeight).toBe("100px");
+    tall = 180;
+    fireEvent.keyDown(screen.getByLabelText(/Card review session/i), { key: "Enter" });
+    await screen.findByText("Second");
+    expect(face().style.minHeight).toBe("180px");
+  } finally {
+    if (desc) Object.defineProperty(HTMLElement.prototype, "offsetHeight", desc);
+    else delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetHeight;
+  }
+});
+
 it("ignores digit keys 1-4 before card is revealed", async () => {
   const { saveAction } = await setup("card_partial");
   await screen.findByText("Two");

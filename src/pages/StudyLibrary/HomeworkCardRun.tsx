@@ -10,6 +10,7 @@ import type { Entry } from "./homeworkUi";
 import "./studyLibrary.css";
 import "./homework.css";
 import { useSavedVisual } from "./useSavedVisual";
+import { useStickyCardHeight } from "./useStickyCardHeight";
 import { VisualPicture } from "./VisualPicture";
 
 const RATING_LABELS: Record<CardRating, string> = {
@@ -105,6 +106,8 @@ export function HomeworkCardRun({
   const visual = useSavedVisual(cards?.materialId ?? "", item?.visualRegionId);
   const visualReady = !item?.visualRegionId || Boolean(visual.loaded);
   const [whole, setWhole] = useState<string | null>(null);
+  const cardFace = useRef<HTMLDivElement>(null);
+  useStickyCardHeight(cardFace, item?.itemId ?? "", revealed);
 
   // Preserve focus across confirmed next card without stealing focus during editing or normal Tab
   useEffect(() => {
@@ -371,7 +374,7 @@ export function HomeworkCardRun({
                       </div>
                     )
                   ) : (
-                    <div className={`flashcard${revealed ? " is-revealed" : ""}`} aria-live="polite">
+                    <div ref={cardFace} className={`flashcard${revealed ? " is-revealed" : ""}`} aria-live="polite">
                       <span className="tiny dim">{revealed ? "Answer" : "Question"}</span>
                       <span>{item.front}</span>
                       {revealed ? <span className="card-review__answer">{item.back}</span> : null}
