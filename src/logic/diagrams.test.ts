@@ -31,7 +31,7 @@ describe("diagram manifest", () => {
   it("looks diagrams up by topic, in the app's topic order", () => {
     expect(diagramsForTopic("weather").every((d) => d.topic === "weather")).toBe(true);
     expect(diagramsForTopic("weather").length).toBeGreaterThan(0);
-    expect(diagramsForTopic("landings").length).toBe(4);
+    expect(diagramsForTopic("landings").length).toBe(5);
     const groups = diagramsByTopic();
     expect(groups.reduce((n, g) => n + g.diagrams.length, 0)).toBe(DIAGRAMS.length);
     const order = Object.keys(TOPIC_LABELS);
@@ -50,7 +50,7 @@ describe("diagram manifest", () => {
 describe("AI-made pictures", () => {
   const photos = DIAGRAMS.filter((d) => d.kind === "photo");
   it("are flagged, labelled in the alt text (not repeated in the source line), and small", () => {
-    expect(photos.map((d) => d.id).sort()).toEqual(["photos/pitot-tube", "photos/windsock", "photos/wing-frost"]);
+    expect(photos.map((d) => d.id).sort()).toEqual(["photos/aileron", "photos/airport-beacon", "photos/fuel-sump", "photos/main-wheel", "photos/oil-dipstick", "photos/pitot-tube", "photos/propeller", "photos/stall-warning", "photos/static-port", "photos/tie-down", "photos/windsock", "photos/wing-frost"]);
     for (const p of photos) {
       expect(p.aiIllustration).toBe(true);
       expect(diagramPhotoAlt(p)).toContain(AI_ILLUSTRATION_LABEL);
