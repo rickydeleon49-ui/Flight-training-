@@ -92,10 +92,10 @@ afterEach(() => {
   nav = null;
 });
 
-const input = () => screen.getByRole("textbox", { name: "Search everything" }) as HTMLInputElement;
+const input = () => screen.getByRole("combobox", { name: "Search everything" }) as HTMLInputElement;
 const location = () => screen.getByLabelText("Location", { selector: "output" }).textContent;
 const resultRows = () =>
-  screen.getAllByRole("button").filter((button) => button.classList.contains("quick-find__result"));
+  screen.getAllByRole("option");
 
 function openWithShortcut() {
   const opener = screen.getByRole("button", { name: "Sidebar search" });
@@ -118,7 +118,7 @@ describe("Quick Find without native modal support", () => {
     expect(document.querySelector("main")!.closest("[aria-hidden='true'][inert]")).not.toBeNull();
 
     fireEvent.change(input(), { target: { value: "air" } });
-    const results = screen.getAllByRole("button").filter((b) => b.classList.contains("quick-find__result"));
+    const results = screen.getAllByRole("option");
     expect(results.length).toBeGreaterThanOrEqual(2);
     expect(results[0]!.classList.contains("is-highlighted")).toBe(true);
     fireEvent.keyDown(input(), { key: "ArrowDown" });
@@ -237,7 +237,7 @@ describe("Quick Find hands the words inside a PDF to the Study Library", () => {
 
     // "crankshaft" matches no title: the row is the way to the page text.
     fireEvent.change(input(), { target: { value: "crankshaft" } });
-    const row = screen.getByRole("button", { name: /Search PDFs and homework for “crankshaft”/ });
+    const row = screen.getByRole("option", { name: /Search PDFs and homework for “crankshaft”/ });
     expect(screen.queryByText(/Nothing matches/)).toBeNull();
     expect(resultRows()).toHaveLength(1);
     expect(row.classList.contains("is-highlighted")).toBe(true);
@@ -302,7 +302,7 @@ describe("content search findability", () => {
     await mountLibrary();
     openWithShortcut();
     fireEvent.change(input(), { target: { value: "rudder" } });
-    const row = screen.getByRole("button", { name: /Search your library for “rudder”/ });
+    const row = screen.getByRole("option", { name: /Search your library for “rudder”/ });
     expect(row.textContent).not.toMatch(/PDF|homework/i);
     fireEvent.click(row);
     const box = await screen.findByRole("textbox", { name: "Search your library" });
@@ -349,5 +349,50 @@ describe("Quick Find keyboard hint", () => {
     openWithShortcut();
     expect(screen.getByRole("dialog", { name: "Quick find" })).toBeTruthy();
     expect(document.querySelector(".quick-find__hint")).toBeNull();
+  });
+});
+
+describe("Quick Find screen reader pattern", () => {
+  it("exposes a combobox and listbox whose active option follows the arrow keys", async () => {
+    await mount();
+    openWithShortcut();
+    fireEvent.change(input(), { target: { value: "air" } });
+    const listbox = screen.getByRole("listbox", { name: "Search results" });
+    expect(input().getAttribute("aria-expanded")).toBe("true");
+    expect(input().getAttribute("aria-controls")).toBe(listbox.id);
+    expect(input().getAttribute("aria-autocomplete")).toBe("list");
+    const options = screen.getAllByRole("option");
+    expect(options.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(options.map((o) => o.id)).size).toBe(options.length);
+    expect(input().getAttribute("aria-activedescendant")).toBe(options[0]!.id);
+    expect(options[0]!.getAttribute("aria-selected")).toBe("true");
+    expect(options[1]!.getAttribute("aria-selected")).toBe("false");
+
+    fireEvent.keyDown(input(), { key: "ArrowDown" });
+    expect(input().getAttribute("aria-activedescendant")).toBe(options[1]!.id);
+    expect(options[1]!.getAttribute("aria-selected")).toBe("true");
+    expect(options[0]!.getAttribute("aria-selected")).toBe("false");
+    fireEvent.keyDown(input(), { key: "ArrowUp" });
+    expect(input().getAttribute("aria-activedescendant")).toBe(options[0]!.id);
+    expect(document.activeElement).toBe(input());
+  });
+
+  it("opens a row on Enter and on click, and announces an empty result", async () => {
+    await mount();
+    openWithShortcut();
+    fireEvent.change(input(), { target: { value: "air" } });
+    fireEvent.keyDown(input(), { key: "Enter" });
+    expect(location()).toMatch(/^\/study\/m-air/);
+
+    act(() => { window.dispatchEvent(new Event(QUICK_FIND_EVENT)); });
+    fireEvent.change(input(), { target: { value: "airport" } });
+    fireEvent.click(screen.getAllByRole("option")[0]!);
+    expect(location()).toBe("/study/m-airport");
+
+    act(() => { window.dispatchEvent(new Event(QUICK_FIND_EVENT)); });
+    fireEvent.change(input(), { target: { value: "x" } });
+    expect(screen.getByRole("status").textContent).toContain("Nothing matches");
+    expect(input().getAttribute("aria-expanded")).toBe("false");
+    expect(input().hasAttribute("aria-activedescendant")).toBe(false);
   });
 });

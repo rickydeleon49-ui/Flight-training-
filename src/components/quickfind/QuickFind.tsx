@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -67,6 +67,7 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const previousLocation = useRef(location);
+  const listId = useId();
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -123,6 +124,9 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
     setHighlighted((current) => (current < rows.length ? current : 0));
   }, [rows.length]);
 
+  const optionId = (index: number) => `${listId}-option-${index}`;
+  const hasRows = rows.length > 0;
+
   const choose = (index: number) => {
     const result = rows[index];
     if (!result) return;
@@ -159,6 +163,11 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
             ref={inputRef}
             className="quick-find__input"
             type="text"
+            role="combobox"
+            aria-expanded={hasRows}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={hasRows && highlighted < rows.length ? optionId(highlighted) : undefined}
             value={query}
             placeholder="Search everything — materials, lessons, flights, questions"
             aria-label="Search everything"
@@ -186,16 +195,20 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
         </div>
 
         {results.length === 0 && !pdfRow ? (
-          <p className="quick-find__empty small muted">
+          <p className="quick-find__empty small muted" role="status">
             Nothing matches &ldquo;{query.trim()}&rdquo; yet.
           </p>
         ) : null}
         {rows.length > 0 ? (
-          <ul className="quick-find__results">
+          <ul className="quick-find__results" id={listId} role="listbox" aria-label="Search results">
             {rows.map((result, index) => (
-              <li key={result.key}>
+              <li key={result.key} role="presentation">
                 <button
                   type="button"
+                  id={optionId(index)}
+                  role="option"
+                  aria-selected={index === highlighted}
+                  tabIndex={-1}
                   className={`quick-find__result${index === highlighted ? " is-highlighted" : ""}${result.key === PDF_ROW_KEY ? " quick-find__result--pdf" : ""}`}
                   onMouseEnter={() => setHighlighted(index)}
                   onClick={() => choose(index)}
