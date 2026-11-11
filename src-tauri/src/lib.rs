@@ -531,6 +531,7 @@ pub fn run() {
             documents::import_document,
             documents::save_pasted_text,
             documents::document_path,
+            documents::document_view_path,
             documents::document_bytes,
             ios_pdf::open_ios_pdf,
             documents::document_exists,

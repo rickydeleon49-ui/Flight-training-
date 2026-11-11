@@ -4,6 +4,7 @@ import { ScannedPdfNote } from "./ScannedPdfNote";
 import { providerCompany, providerWording } from "@/services/provider";
 import { useOptionalKitQueue } from "@/state/KitQueue";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
+import { useStickyCardHeight } from "./useStickyCardHeight";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
@@ -271,6 +272,8 @@ function MaterialDetailPage() {
   const [cardRevealed, setCardRevealed] = useState(false);
   const [kitCardIndex, setKitCardIndex] = useState(0);
   const [kitCardRevealed, setKitCardRevealed] = useState(false);
+  const guideCardFace = useRef<HTMLButtonElement>(null);
+  const kitCardFace = useRef<HTMLButtonElement>(null);
   const [practiceJustSaved, setPracticeJustSaved] = useState(false);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
   const [editingSet, setEditingSet] = useState(false);
@@ -457,7 +460,9 @@ function MaterialDetailPage() {
   );
   const hasKitItems = kitSections.length > 0 || kitFlashcards.length > 0;
   const safeCardIndex = Math.min(cardIndex, Math.max(0, guideFlashcards.length - 1));
+  useStickyCardHeight(guideCardFace, safeCardIndex, cardRevealed);
   const safeKitCardIndex = Math.min(kitCardIndex, Math.max(0, kitFlashcards.length - 1));
+  useStickyCardHeight(kitCardFace, safeKitCardIndex, kitCardRevealed);
   // "Make a card" on the Flashcards panel goes through the page-notes editor. Afterwards the
   // student is back on the tab they started from, at their cards, with the new card showing.
   const [resetSlot, setResetSlot] = useState<HTMLElement | null>(null);
@@ -816,7 +821,7 @@ function MaterialDetailPage() {
     if (!material.filePath) return;
     setOpenError(null);
     try {
-      if (deviceCan().revealFiles) await openDocument(material.filePath);
+      if (deviceCan().revealFiles) await openDocument(material.filePath, material.title);
       else await openDocument(material.filePath, material.title, material.id);
     } catch (error) {
       setOpenError(documentErrorMessage(error, "That file could not be opened."));
@@ -1144,7 +1149,7 @@ function MaterialDetailPage() {
       <div className="material-detail stack stack--4">
         <div className="detail__column row row--between">
           {isPdf && !tipsHidden ? (
-            <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
+            <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.{deviceCan().pdfKit && material.filePath && !fileMissing ? <>{" "}<button type="button" className="link-button" onClick={() => jumpTo("read-pdf-text")}>Read this PDF's text</button></> : null}</p>
           ) : <span />}
           <Button size="small" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
         </div>
@@ -1628,6 +1633,7 @@ function MaterialDetailPage() {
                             </div>
                           </div>
                           <button
+                            ref={guideCardFace}
                             className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
                             type="button"
                             onClick={() => setCardRevealed((current) => !current)}
@@ -2215,6 +2221,7 @@ function MaterialDetailPage() {
                                   </div>
                                 </div>
                                 <button
+                                  ref={kitCardFace}
                                   className={`flashcard${kitCardRevealed ? " is-revealed" : ""}`}
                                   type="button"
                                   onClick={() => setKitCardRevealed((current) => !current)}

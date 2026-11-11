@@ -137,7 +137,7 @@ it("opens a matching copy in the existing external reader with honest M4 fallbac
   await screen.findByText("Saved on this Mac");
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
   await screen.findByText("Opened in your PDF reader.");
-  expect(mocks.open).toHaveBeenCalledWith("synthetic.pdf");
+  expect(mocks.open).toHaveBeenCalledWith("synthetic.pdf", expect.any(String));
   expect(mocks.preview).toHaveBeenCalledTimes(2);
 });
 
@@ -307,7 +307,7 @@ it("reloads provenance, shows the edition/date/hash, opens the saved copy offlin
   await screen.findByText("Saved on this Mac");
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
   await screen.findByText("Opened in your PDF reader.");
-  expect(mocks.open).toHaveBeenCalledWith(imported.relativePath);
+  expect(mocks.open).toHaveBeenCalledWith(imported.relativePath, expect.any(String));
   fireEvent.click(screen.getByRole("link", { name: "Check the current FAA version" }));
   expect(mocks.openUrl).toHaveBeenCalledWith("https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook");
 });
@@ -501,7 +501,7 @@ it("opens a verified PHAK without parsing it, including after split refresh", as
   view.rerender(h(MemoryRouter, null, h(FaaReferences)));
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
   await screen.findByText("Opened in your PDF reader.");
-  expect(mocks.open).toHaveBeenCalledWith(imported.relativePath);
+  expect(mocks.open).toHaveBeenCalledWith(imported.relativePath, expect.any(String));
   expect(mocks.exists).toHaveBeenCalledTimes(2);
   expect(mocks.preview).not.toHaveBeenCalled();
 });

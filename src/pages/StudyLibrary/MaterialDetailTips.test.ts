@@ -103,10 +103,17 @@ it("uses tabs instead of Jump chips and keeps related destinations in More witho
   expect(writes).not.toHaveBeenCalled(); expect(outbound).not.toHaveBeenCalled();
 });
 
+it("reaches Read this PDF's text from the top of the page", async () => {
+  await openPage();
+  const common = document.getElementById("material-start-here")!.closest(".detail__column")!;
+  fireEvent.click(within(common as HTMLElement).getByRole("button", { name: "Read this PDF's text" }));
+  expect(await screen.findByRole("tab", { name: "More", selected: true })).toBeTruthy();
+});
+
 it("orders the PDF workflow inside its tab homes with both backup panels together", async () => {
   await openPage();
   const common = document.getElementById("material-start-here")!.closest(".detail__column")!;
-  expect(common.firstElementChild?.textContent).toBe("New to this? See How to in Study Library.");
+  expect(common.firstElementChild?.textContent).toBe("New to this? See How to in Study Library. Read this PDF's text");
   expect(common.children).toHaveLength(2);
   expect(screen.getByRole("button", { name: "Ask about this PDF" }).closest("header")).toBeTruthy();
   const study = screen.getByRole("tabpanel", { name: "Study" });
