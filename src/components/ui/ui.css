@@ -98,7 +98,10 @@
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition),
     color var(--transition), transform 100ms;
-  white-space: nowrap;
+  /* Long labels wrap at large text sizes instead of running off the screen. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .button:active,
@@ -146,7 +149,7 @@ a.list-row, button.list-row { cursor: pointer; }
 html.is-ios .list-row__title { font-size: var(--text-md); }
 .list-row__subtitle { font-size: var(--text-sm); color: var(--text-secondary); overflow-wrap: anywhere; }
 .list-row__value { color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
-.list-row__chevron { flex: none; color: var(--text-tertiary); font-size: 14px; }
+.list-row__chevron { flex: none; color: var(--text-tertiary); font-size: 0.875rem; }
 
 /* Inset separator: starts at the text column. */
 .list-row + .list-row .list-row__main,

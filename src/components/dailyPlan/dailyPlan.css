@@ -45,7 +45,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
   /* Fills its row when the group wraps; a single row keeps natural widths. */
   flex: 1 1 auto;
 }

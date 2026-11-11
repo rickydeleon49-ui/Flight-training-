@@ -125,3 +125,27 @@ describe("shared filter chip", () => {
     expect(active).toMatch(/font-weight:\s*600/);
   });
 });
+
+describe("large text does not clip", () => {
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "");
+  const daily = strip(read("src/components/dailyPlan/dailyPlan.css"));
+  it("buttons wrap long labels", () => {
+    const body = ruleBodies(strip(ui), ".button").join("\n");
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+  it("daily plan budget buttons wrap long labels", () => {
+    const body = ruleBodies(daily, ".daily-plan-budget-btn").join("\n");
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+  it("list row chevron is sized in rem, not px", () => {
+    const body = ruleBodies(strip(ui), ".list-row__chevron").join("\n");
+    expect(body).toMatch(/font-size:\s*0\.875rem/);
+  });
+  it("root font scales with system text size", () => {
+    expect(base).not.toMatch(/text-size-adjust:\s*none/);
+    expect(base).toMatch(/-apple-system-body/);
+  });
+});
