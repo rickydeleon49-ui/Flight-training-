@@ -133,6 +133,6 @@ describe("index.html", () => {
     expect(html.indexOf('src="/theme-boot.js"')).toBeGreaterThan(-1);
     expect(html.indexOf("/theme-boot.js")).toBeLessThan(html.indexOf("/src/main.tsx"));
     expect(html.indexOf("/theme-boot.js")).toBeLessThan(html.indexOf("<link"));
-    for (const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)) expect((m[1] ?? "").trim()).toBe("");
+    for (const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script[^>]*>/gi)) expect((m[1] ?? "").trim()).toBe("");
   });
 });
