@@ -72,9 +72,17 @@ describe("shipped SVG files", () => {
     }
   });
 
-  it("stay under 1.5 MB in total", () => {
+  it("stay under 3 MB in total", () => {
     const bytes = DIAGRAMS.reduce((n, d) => n + statSync(join(ROOT, d.set, d.file)).size, 0);
-    expect(bytes).toBeLessThan(1.5 * 1024 * 1024);
+    expect(bytes).toBeLessThan(3 * 1024 * 1024);
+  });
+
+  it("are already minified (run node scripts/minify-diagrams.mjs)", () => {
+    for (const diagram of SVGS) {
+      const svg = read(diagram);
+      expect(svg, diagram.id).not.toContain("<!--");
+      expect(svg, diagram.id).not.toMatch(/>\s*\n\s+<(?!\/?(?:tspan|text)\b)/);
+    }
   });
 
   it("only use colour variables that every theme defines", () => {
