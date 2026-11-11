@@ -118,7 +118,11 @@ jobs:
           ')
           echo "releasing=$VERSION package.json=$PKG package-lock.json=$LOCK tauri.conf.json=$CONF Cargo.toml=$CARGO Cargo.lock=$CARGO_LOCK"
 
-          if [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$LOCK" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ] || [ "$VERSION" != "$CARGO_LOCK" ]; then
+          # Also checks the iOS marketing version (project.yml + Info.plist).
+          IOS_OK=true
+          node scripts/check-release-version.mjs "$VERSION" --agree || IOS_OK=false
+
+          if [ "$IOS_OK" != "true" ] || [ "$VERSION" != "$PKG" ] || [ "$VERSION" != "$LOCK" ] || [ "$VERSION" != "$CONF" ] || [ "$VERSION" != "$CARGO" ] || [ "$VERSION" != "$CARGO_LOCK" ]; then
             echo "::error::The repository is at $PKG but you asked for $VERSION. Bump it first with node scripts/bump-version.mjs $VERSION, or release $PKG."
             exit 1
           fi
