@@ -107,7 +107,7 @@ it("orders the PDF workflow inside its tab homes with both backup panels togethe
   await openPage();
   const common = document.getElementById("material-start-here")!.closest(".detail__column")!;
   expect(common.firstElementChild?.textContent).toBe("New to this? See How to in Study Library.");
-  expect(common.children).toHaveLength(1);
+  expect(common.children).toHaveLength(2);
   expect(screen.getByRole("button", { name: "Ask about this PDF" }).closest("header")).toBeTruthy();
   const study = screen.getByRole("tabpanel", { name: "Study" });
   expect(within(study).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Study", "Study guide", "Flashcards", "Practice test", "Videos for this section"]);
@@ -148,7 +148,9 @@ it("shows a short muted tip under every section header and Hide section tips hid
   expect(screen.getByRole("button", { name: "Hide section tips" }).closest("#material-file-actions")).toBeNull();
   const toggle = screen.getByRole("button", { name: "Hide section tips" });
   const page = toggle.closest(".material-detail")!;
-  expect(page.lastElementChild).toBe(toggle.parentElement);
+  // The toggle sits above the tabs, on the same row as the tips line it hides.
+  expect(page.firstElementChild).toBe(toggle.parentElement);
+  expect(toggle.parentElement!.nextElementSibling).toBe(screen.getByRole("tablist"));
   fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   for (const text of tips) expect(screen.queryByText(text, { exact: true })).toBeNull();
   expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();
