@@ -31,7 +31,7 @@ describe("diagram manifest", () => {
   it("looks diagrams up by topic, in the app's topic order", () => {
     expect(diagramsForTopic("weather").every((d) => d.topic === "weather")).toBe(true);
     expect(diagramsForTopic("weather").length).toBeGreaterThan(0);
-    expect(diagramsForTopic("landings")).toEqual([]);
+    expect(diagramsForTopic("landings").length).toBe(4);
     const groups = diagramsByTopic();
     expect(groups.reduce((n, g) => n + g.diagrams.length, 0)).toBe(DIAGRAMS.length);
     const order = Object.keys(TOPIC_LABELS);

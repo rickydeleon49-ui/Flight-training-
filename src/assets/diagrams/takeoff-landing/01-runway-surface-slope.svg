@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 586" role="img" aria-labelledby="ti de"><title id="ti">Runway slope and surface</title><desc id="de">Three panels show what a 3 percent gradient means and how upslope and downslope change takeoff and landing distance, then cards on surface, braking and checking the runway.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">The runway changes the numbers: slope and surface</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Performance charts assume a paved, level, smooth, dry runway. No two runways are alike, so check how</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">the one you are using differs.</text>
+<rect class="cl" x="20.0" y="93.0" width="221" height="216" rx="8"/>
+<rect class="cl" x="254.5" y="93.0" width="221" height="216" rx="8"/>
+<rect class="cl" x="489.0" y="93.0" width="221" height="216" rx="8"/>
+<text class="t" x="30" y="115.0" style="font-size:13px">What a gradient is</text>
+<path d="M42 197.0L192 197.0L192 167.0Z" class="sky" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<text class="s m" x="117" y="213.0" style="font-size:11px">100 ft of runway length</text>
+<text class="s" x="200" y="187.0" style="font-size:11px">3 ft</text>
+<text class="t m" x="117" y="165.0" style="font-size:12px">3 percent gradient</text>
+<text class="s" x="30" y="237.0" style="font-size:11.5px">The gradient is the change in</text>
+<text class="s" x="30" y="252.0" style="font-size:11.5px">runway height over the length of</text>
+<text class="s" x="30" y="267.0" style="font-size:11.5px">the runway. A positive gradient</text>
+<text class="s" x="30" y="282.0" style="font-size:11.5px">means the height increases; a</text>
+<text class="s" x="30" y="297.0" style="font-size:11.5px">negative one means it decreases.</text>
+<text class="t" x="264.5" y="115.0" style="font-size:13px">Upslope</text>
+<path d="M266.5 191.0L463.5 153.0L463.5 197.0L266.5 197.0Z" class="mint" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<g transform="translate(364.5 161.0) rotate(-11) scale(1.0)"><ellipse cx="0" cy="0" rx="24" ry="5.5" class="sky" style="stroke:currentColor;stroke-width:1.4"/><path d="M-20 -2L-29 -13L-22 -13L-12 -3Z" class="sky" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/><path d="M0 2L8 2L-4 11L-9 11Z" class="cl" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/></g>
+<circle cx="267.5" cy="215.0" r="2.2" class="ah"/>
+<text class="s" x="276.5" y="219.0" style="font-size:11.5px">Takeoff: acceleration is</text>
+<text class="s" x="276.5" y="234.0" style="font-size:11.5px">impeded, so the ground run is</text>
+<text class="s" x="276.5" y="249.0" style="font-size:11.5px">longer.</text>
+<circle cx="267.5" cy="264.0" r="2.2" class="ah"/>
+<text class="s" x="276.5" y="268.0" style="font-size:11.5px">Landing: the landing roll is</text>
+<text class="s" x="276.5" y="283.0" style="font-size:11.5px">typically shorter.</text>
+<text class="t" x="499.0" y="115.0" style="font-size:13px">Downslope</text>
+<path d="M501.0 153.0L698.0 191.0L698.0 197.0L501.0 197.0Z" class="rose" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<g transform="translate(599.0 161.0) rotate(11) scale(1.0)"><ellipse cx="0" cy="0" rx="24" ry="5.5" class="sky" style="stroke:currentColor;stroke-width:1.4"/><path d="M-20 -2L-29 -13L-22 -13L-12 -3Z" class="sky" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/><path d="M0 2L8 2L-4 11L-9 11Z" class="cl" style="stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/></g>
+<circle cx="502.0" cy="215.0" r="2.2" class="ah"/>
+<text class="s" x="511.0" y="219.0" style="font-size:11.5px">Takeoff: acceleration is aided,</text>
+<text class="s" x="511.0" y="234.0" style="font-size:11.5px">so the takeoff distance is</text>
+<text class="s" x="511.0" y="249.0" style="font-size:11.5px">shorter.</text>
+<circle cx="502.0" cy="264.0" r="2.2" class="ah"/>
+<text class="s" x="511.0" y="268.0" style="font-size:11.5px">Landing: the landing distance</text>
+<text class="s" x="511.0" y="283.0" style="font-size:11.5px">is longer.</text>
+<rect class="cl" x="20.0" y="323.0" width="220.66666666666666" height="245.0" rx="8"/>
+<rect x="20.0" y="323.0" width="220.66666666666666" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="341.0" style="font-size:13px">Surface</text>
+<circle cx="33.0" cy="359.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="363.0" style="font-size:11.5px">Concrete, asphalt, gravel, dirt</text>
+<text class="s" x="42.0" y="378.0" style="font-size:11.5px">or grass: the Chart Supplement</text>
+<text class="s" x="42.0" y="393.0" style="font-size:11.5px">U.S. lists the surface for each</text>
+<text class="s" x="42.0" y="408.0" style="font-size:11.5px">airport.</text>
+<circle cx="33.0" cy="422.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="426.0" style="font-size:11.5px">A surface that is not hard and</text>
+<text class="s" x="42.0" y="441.0" style="font-size:11.5px">smooth lengthens the takeoff</text>
+<text class="s" x="42.0" y="456.0" style="font-size:11.5px">ground roll.</text>
+<circle cx="33.0" cy="470.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="474.0" style="font-size:11.5px">Tires can sink into soft,</text>
+<text class="s" x="42.0" y="489.0" style="font-size:11.5px">grassy or muddy runways;</text>
+<text class="s" x="42.0" y="504.0" style="font-size:11.5px">potholes and ruts spoil tire</text>
+<text class="s" x="42.0" y="519.0" style="font-size:11.5px">roll.</text>
+<circle cx="33.0" cy="533.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="537.0" style="font-size:11.5px">Mud, snow or standing water</text>
+<text class="s" x="42.0" y="552.0" style="font-size:11.5px">reduces acceleration.</text>
+<rect class="cl" x="254.66666666666666" y="323.0" width="220.66666666666666" height="245.0" rx="8"/>
+<rect x="254.66666666666666" y="323.0" width="220.66666666666666" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="264.66666666666663" y="341.0" style="font-size:13px">Braking</text>
+<circle cx="267.66666666666663" cy="359.0" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="363.0" style="font-size:11.5px">Braking effectiveness is the</text>
+<text class="s" x="276.66666666666663" y="378.0" style="font-size:11.5px">amount of power applied to the</text>
+<text class="s" x="276.66666666666663" y="393.0" style="font-size:11.5px">brakes without skidding the</text>
+<text class="s" x="276.66666666666663" y="408.0" style="font-size:11.5px">tires.</text>
+<circle cx="267.66666666666663" cy="422.0" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="426.0" style="font-size:11.5px">The condition of the surface</text>
+<text class="s" x="276.66666666666663" y="441.0" style="font-size:11.5px">affects braking ability.</text>
+<circle cx="267.66666666666663" cy="455.0" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="459.0" style="font-size:11.5px">Muddy and wet surfaces can</text>
+<text class="s" x="276.66666666666663" y="474.0" style="font-size:11.5px">reduce friction between the</text>
+<text class="s" x="276.66666666666663" y="489.0" style="font-size:11.5px">runway and the tires.</text>
+<rect class="cl" x="489.3333333333333" y="323.0" width="220.66666666666666" height="245.0" rx="8"/>
+<rect x="489.3333333333333" y="323.0" width="220.66666666666666" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="499.3333333333333" y="341.0" style="font-size:13px">Before you go</text>
+<circle cx="502.3333333333333" cy="359.0" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="363.0" style="font-size:11.5px">Runway slope is also listed in</text>
+<text class="s" x="511.3333333333333" y="378.0" style="font-size:11.5px">the Chart Supplement U.S.</text>
+<circle cx="502.3333333333333" cy="392.0" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="396.0" style="font-size:11.5px">When conditions are reported</text>
+<text class="s" x="511.3333333333333" y="411.0" style="font-size:11.5px">less than ideal, make sure the</text>
+<text class="s" x="511.3333333333333" y="426.0" style="font-size:11.5px">runway is long enough for</text>
+<text class="s" x="511.3333333333333" y="441.0" style="font-size:11.5px">takeoff acceleration and</text>
+<text class="s" x="511.3333333333333" y="456.0" style="font-size:11.5px">landing deceleration.</text>
+</svg>

@@ -20,10 +20,7 @@ it("shows the strip for a topic with diagrams and opens one large", async () => 
   expect(dialog.textContent).toContain("Drawn from the FAA Pilot's Handbook (PHAK)");
 });
 
-it("shows nothing for a topic without diagrams, and for General", () => {
-  const none = inRouter(<DiagramsStrip topic="landings" />);
-  expect(none.container.textContent).toBe("");
-  cleanup();
+it("shows nothing for General, which has no diagrams", () => {
   const general = inRouter(<DiagramsStrip topic="general" />);
   expect(general.container.textContent).toBe("");
 });
