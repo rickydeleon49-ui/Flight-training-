@@ -109,3 +109,48 @@ textarea {
   border-radius: var(--radius-pill);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ------------------------------------------------------------------ *
+ * Increase Contrast (slice 26). Only inside this query, so every theme keeps
+ * its normal colours otherwise. The :root:root:root selector outranks the
+ * theme blocks in tokens.css whatever their order.
+ * ------------------------------------------------------------------ */
+@media (prefers-contrast: more) {
+  :root:root:root {
+    --border-subtle: var(--border-control);
+    --border-strong: var(--border-control);
+    --text-secondary: var(--text-primary);
+    --text-tertiary: var(--text-primary);
+    --focus-ring: 0 0 0 3px var(--accent-primary);
+  }
+
+  .top-bar,
+  .top-bar.is-collapsed {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-control);
+  }
+
+  html.is-ios .ios-tab-bar {
+    background: var(--surface-card);
+    border-top: 1px solid var(--border-control);
+  }
+
+  .input,
+  .textarea,
+  .select {
+    border: 1px solid var(--border-control);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Touch screens: icon-only controls reach the 44 pt target (Mac keeps 2rem). */
+@media (pointer: coarse) {
+  .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

@@ -876,6 +876,8 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
 .segmented {
   display: inline-flex;
   align-self: flex-start;
+  flex-wrap: wrap; /* at the largest text size the options wrap instead of clipping */
+  max-width: 100%;
   align-items: center;
   gap: 2px;
   padding: 2px;

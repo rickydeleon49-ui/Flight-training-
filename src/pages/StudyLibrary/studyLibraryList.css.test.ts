@@ -10,11 +10,11 @@ it("keeps the a.material-card rules for the library list", () => {
   expect(readFileSync(new URL("./StudyLibrary.tsx", import.meta.url), "utf8")).toContain('className="material-card"');
 });
 
-it("puts no box-shadow on material cards outside glass.css", () => {
+it("puts no box-shadow on material cards, and glass leaves them alone", () => {
   const rules = [...css.matchAll(/([^{}]*\.material-card[^{}]*)\{([^}]*)\}/g)];
   expect(rules.length).toBeGreaterThan(0);
   for (const [, , body] of rules) expect(body).not.toMatch(/box-shadow/);
-  expect(glass).toMatch(/\.material-card/);
+  expect(glass).not.toMatch(/\.material-card/);
 });
 
 it("scrolls the filter chips sideways on one line on the phone", () => {
