@@ -7,6 +7,7 @@
  * wrapped in `#attention-<id>`). Future-dated actions are not rendered at all,
  * so this reports whether focus actually landed and lets the caller fall back.
  */
+import { scrollBehavior } from "../../lib/motion";
 export function focusRenderedAction(actionId: string, doc: Document = document): boolean {
   for (const id of [`action-${actionId}`, `attention-${actionId}`]) {
     const container = doc.getElementById(id);
@@ -14,7 +15,7 @@ export function focusRenderedAction(actionId: string, doc: Document = document):
       "input:not([disabled]), button:not([disabled])",
     );
     if (container && control) {
-      container.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      container.scrollIntoView?.({ behavior: scrollBehavior(), block: "center" });
       control.focus();
       if (doc.activeElement === control) return true;
     }

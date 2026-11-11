@@ -149,3 +149,30 @@ describe("large text does not clip", () => {
     expect(base).toMatch(/-apple-system-body/);
   });
 });
+
+describe("reduced motion and reduced transparency (DESIGN-01 s40)", () => {
+  it("one global reduced-motion rule shortens every animation and transition", () => {
+    const block = mediaBlock(tokens.replace(/\/\*[\s\S]*?\*\//g, ""), "prefers-reduced-motion: reduce")!;
+    expect(block).toContain("--transition: 0ms");
+    expect(block).toMatch(/animation-duration:\s*0\.001ms !important/);
+    expect(block).toMatch(/transition-duration:\s*0\.001ms !important/);
+  });
+  it("no stylesheet turns on smooth scrolling", () => {
+    expect(allCss).not.toMatch(/scroll-behavior:\s*smooth/);
+  });
+  it("glass bars turn solid with no blur under reduced transparency", () => {
+    const glass = read("src/styles/glass.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    const block = mediaBlock(glass, "prefers-reduced-transparency: reduce")!;
+    expect(block).toMatch(/background:\s*var\(--surface-card\)/);
+    expect(block).toMatch(/backdrop-filter:\s*none/);
+    expect(block).toContain(".ios-tab-bar");
+    expect(block).toContain(".top-bar.is-collapsed");
+  });
+  it("JS smooth scrolls go through scrollBehavior()", () => {
+    for (const f of ["src/components/layout/IosTabBar.tsx", "src/components/ui/BackToTop.tsx", "src/components/dailyPlan/startAction.ts"]) {
+      const src = read(f);
+      expect(src).not.toContain('"smooth"');
+      expect(src).toContain("scrollBehavior()");
+    }
+  });
+});

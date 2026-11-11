@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { scrollBehavior } from "../../lib/motion";
 
 /** A quiet shortcut for the two long study pages. */
 export function BackToTop() {
@@ -29,7 +30,7 @@ export function BackToTop() {
         heading.tabIndex = -1;
         heading.focus({ preventScroll: true });
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: scrollBehavior() });
     }}>
       <span aria-hidden="true">↑</span>
     </button>
