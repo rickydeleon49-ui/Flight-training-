@@ -13,7 +13,7 @@ it.each([
   ".button", ".list-row", ".filter-chip", ".badge--button", ".segmented__option", ".checkbox",
   ".radio-row__option", ".library-tab", ".search-field__clear", ".nav__link", ".ios-tab-bar__tab", ".ios-back",
 ])("%s has a visible :active style", (cls) => {
-  expect(files).toMatch(new RegExp(`${cls.replace(/\./g, "\\.")}(?![\\w-])[^{}]*:active`));
+  expect(files).toMatch(new RegExp(`${cls.replace(/[\\.]/g, "\\$&")}(?![\\w-])[^{}]*:active`));
 });
 
 it("keeps focus-visible rings", () => {

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 const css = readFileSync(new URL("./dailyPlan.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-const rule = (sel: string) => css.match(new RegExp(`(^|})\\s*${sel.replace(/[.[\]"=-]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[2] ?? "";
+const rule = (sel: string) => css.match(new RegExp(`(^|})\\s*${sel.replace(/[\\.[\]"=-]/g, "\\$&")}\\s*\\{([^}]*)\\}`))?.[2] ?? "";
 
 it("budget control wraps and stays inside its card at large text", () => {
   const group = rule(".daily-plan-budget-group");
