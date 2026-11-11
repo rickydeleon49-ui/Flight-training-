@@ -116,7 +116,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
   const [statusFailed, setStatusFailed] = useState(false);
   const [statusAttempt, setStatusAttempt] = useState(0);
   useEffect(() => { let mounted = true; void getGeminiStatus().then((status) => { if (mounted) { setCompany(providerCompany(status.model)); setProviderReady(true); setStatusFailed(false); } }).catch(() => { if (mounted) { setProviderReady(false); setStatusFailed(true); } }); return () => { mounted = false; }; }, [statusAttempt]);
-  const helper = company === "Anthropic" ? "Claude" : "Gemini";
+  const helper = !providerReady && !statusFailed ? "AI" : company === "Anthropic" ? "Claude" : "Gemini";
   const appData = useOptionalAppData();
   // Read the latest classification even if it changes while the listener starts.
   const dataRef = useRef(appData);

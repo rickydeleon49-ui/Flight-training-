@@ -579,6 +579,8 @@ export function StudyLibrary() {
         }
       />
 
+      {studyPacksAvailable() ? <p className="tiny muted">A study pack is a .hfdpack file of study guides and flashcards someone shared with you. Adding one keeps all your own work.</p> : null}
+
       <nav aria-label="Tools" className="row row--wrap">
         <span className="muted">Tools:</span>
         {LIBRARY_TOOLS.map(tool => (

@@ -15,7 +15,7 @@
     "notification:default",
     {
       "identifier": "opener:allow-open-path",
-      "allow": [{ "path": "$APPCONFIG/documents/**" }]
+      "allow": [{ "path": "$APPCONFIG/documents/**" }, { "path": "$APPCACHE/open-copies/**" }]
     },
     {
       "identifier": "opener:allow-reveal-item-in-dir",
