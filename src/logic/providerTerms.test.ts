@@ -29,6 +29,7 @@ it("keeps retention durations out of all other non-test src files", () => {
   const offenders = readdirSync(root, { recursive: true, encoding: "utf8" })
     .filter(file => !/(^|\/)(__tests__|__snapshots__)(\/|$)|\.(test|spec)\.|\.snap$/.test(file))
     .filter(file => file !== "logic/providerTerms.ts")
+    .filter(file => !file.startsWith("assets/diagrams/"))  // handbook facts (aeromed: 48 hours), not provider terms
     .filter(file => statSync(join(root, file)).isFile())
     .filter(file => /48 hours|within 30 days/.test(readFileSync(join(root, file), "utf8")));
   expect(offenders).toEqual([]);
