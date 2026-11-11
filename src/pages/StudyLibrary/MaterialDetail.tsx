@@ -1144,7 +1144,7 @@ function MaterialDetailPage() {
       <div className="material-detail stack stack--4">
         <div className="detail__column row row--between">
           {isPdf && !tipsHidden ? (
-            <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
+            <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.{material.filePath && !fileMissing ? <>{" "}<button type="button" className="link-button" onClick={() => jumpTo("read-pdf-text")}>Read this PDF's text</button></> : null}</p>
           ) : <span />}
           <Button size="small" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
         </div>
