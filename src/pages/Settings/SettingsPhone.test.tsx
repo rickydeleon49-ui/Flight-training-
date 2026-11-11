@@ -44,7 +44,7 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   expect(Boolean(screen.queryByRole("heading", { name: "Send my progress to the Mac" }))).toBe(phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Send to my iPhone" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Get progress from my iPhone" }))).toBe(!phone);
-  expect(document.querySelector(".stack.stack--5 > .card h2")?.textContent).toBe(phone ? "Get my study material" : "Send to my iPhone");
+  expect(document.querySelector(".stack.stack--5 > .card h2")?.textContent).toBe("AI helper");
   if (phone) {
     expect(document.body.textContent).not.toMatch(/sync|manifest|archive/i);
     for (const name of ["Save complete backup", "Restore backup", "Open folder"]) {
