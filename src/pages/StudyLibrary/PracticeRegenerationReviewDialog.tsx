@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button, Checkbox, Dialog } from "@/components/ui";
 import type { PracticeAuthoringQuestion, PracticeSnapshot } from "@/domain/types";
-import { canonicalJson } from "@/data/practiceSessionTransaction";
+import { canonicalJson } from "@/data/practiceCore";
 import { practiceContentHash, practiceRetirementRecord } from "@/data/practiceAuthoring";
 import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES } from "@/data/persistenceErrors";
 import { buildPracticeRegenerationOperation, mergePracticeRegeneration, practiceRegenerationPreview, resolvePracticeRegeneration, type PracticePreviewItem } from "@/logic/practiceRegeneration";
