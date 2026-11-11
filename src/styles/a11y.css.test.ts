@@ -176,3 +176,26 @@ describe("reduced motion and reduced transparency (DESIGN-01 s40)", () => {
     }
   });
 });
+
+describe("increase contrast and forced colors (DESIGN-01 s41)", () => {
+  const css = base.replace(/\/\*[\s\S]*?\*\//g, "");
+  const forced = mediaBlock(css, "forced-colors: active")!;
+  const more = css.slice(css.indexOf("@media (prefers-contrast: more)", css.indexOf("slice 41") > 0 ? 0 : 0));
+  it("input focus keeps a real outline in forced colors (box-shadow is removed)", () => {
+    expect(forced).toMatch(/\.input:focus[\s\S]*?outline:\s*2px solid Highlight/);
+  });
+  it("selected chip, segment and nav link get an outline, not colour alone", () => {
+    for (const sel of [".filter-chip.is-active", ".segmented__option.is-selected", ".nav__link.is-active"]) {
+      expect(forced).toContain(sel);
+      expect(more).toContain(sel);
+    }
+    expect(forced).toMatch(/outline:\s*2px solid Highlight/);
+  });
+  it("active iOS tab gets an underline cue in both modes", () => {
+    expect(forced).toMatch(/ios-tab-bar__tab\.is-active[^{]*\{[^}]*text-decoration:\s*underline/);
+    expect(more).toMatch(/ios-tab-bar__tab\.is-active[^{]*\{[^}]*text-decoration:\s*underline/);
+  });
+  it("card review session keeps a focus outline in forced colors", () => {
+    expect(forced).toMatch(/\.card-review__session:focus-visible/);
+  });
+});
