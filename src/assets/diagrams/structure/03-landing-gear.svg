@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 626" role="img" aria-labelledby="ti de"><title id="ti">Landing gear: the principal support</title><desc id="de">Landing gear supports the airplane when parked, taxiing, taking off or landing. Wheels are most common; floats are for water and skis for snow. Wheeled gear has two main wheels and a third wheel: a nosewheel makes it tricycle gear, a rear wheel makes it conventional or tailwheel gear. Steering is by rudder pedals or differential braking. Brakes squeeze caliper pads against a rotating rotor and their life is measured in landings.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Landing gear: the principal support</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">The landing gear supports the airplane when it is parked, taxiing, taking off or landing. The most</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">common type consists of wheels.</text>
+<rect x="20" y="93.0" width="220" height="107.0" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="130.0" y="112.0" style="font-size:13px">Wheels</text>
+<circle cx="130.0" cy="149.0" r="20" class="cl" style="stroke:currentColor;stroke-width:1.8"/>
+<circle cx="130.0" cy="149.0" r="6" class="ah"/>
+<text class="s m" x="130.0" y="189.0" style="font-size:11.5px">The most common type</text>
+<rect x="255" y="93.0" width="220" height="107.0" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="365.0" y="112.0" style="font-size:13px">Floats</text>
+<rect x="309.0" y="155.0" width="52" height="14" rx="7" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M335.0 155.0L335.0 131.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<rect x="369.0" y="155.0" width="52" height="14" rx="7" class="sky" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M395.0 155.0L395.0 131.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<text class="s m" x="365.0" y="189.0" style="font-size:11.5px">For water operations</text>
+<rect x="490" y="93.0" width="220" height="107.0" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="600.0" y="112.0" style="font-size:13px">Skis</text>
+<rect x="532.0" y="159.0" width="60" height="7" rx="3" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M562.0 159.0L562.0 133.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<rect x="608.0" y="159.0" width="60" height="7" rx="3" class="mint" style="stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/>
+<path d="M638.0 159.0L638.0 133.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<text class="s m" x="600.0" y="189.0" style="font-size:11.5px">For landing on snow</text>
+<rect x="20" y="210.0" width="337" height="195.0" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="188.5" y="229.0" style="font-size:13px">Tricycle gear</text>
+<ellipse cx="175" cy="278.0" rx="100" ry="16" class="cl" style="stroke:currentColor;stroke-width:1.6"/>
+<path d="M245 272.0L271 246.0L283 246.0L275 274.0Z" class="rose" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<rect x="145" y="269.0" width="54" height="5" rx="2" class="lav" style="stroke:currentColor;stroke-width:1.5;stroke-linejoin:round"/>
+<ellipse cx="74" cy="278.0" rx="3" ry="16" class="lav" style="stroke:currentColor;stroke-width:1.4"/>
+<path d="M45 320.0L305 320.0" class="dk" style="stroke-width:1.5;opacity:0.5"/>
+<path d="M103 292.0L103 313.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<circle cx="103" cy="313.0" r="7" class="cl" style="stroke:currentColor;stroke-width:1.8"/>
+<path d="M179 292.0L179 313.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<circle cx="179" cy="313.0" r="7" class="cl" style="stroke:currentColor;stroke-width:1.8"/>
+<text class="t m" x="103" y="344.0" style="font-size:11.5px">Nosewheel</text>
+<path d="M103 332.0L103 326.0" class="dk" style="stroke-width:1.2;opacity:0.75"/>
+<text class="t m" x="191" y="344.0" style="font-size:11.5px">Main wheels</text>
+<path d="M179 332.0L179 326.0" class="dk" style="stroke-width:1.2;opacity:0.75"/>
+<text class="s m" x="188.5" y="379.0" style="font-size:11.5px">Two main wheels and a third wheel on the nose, called</text>
+<text class="s m" x="188.5" y="394.0" style="font-size:11.5px">a nosewheel</text>
+<rect x="373" y="210.0" width="337" height="210.0" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="541.5" y="229.0" style="font-size:13px">Conventional gear (tailwheel)</text>
+<ellipse cx="528" cy="278.0" rx="100" ry="16" class="cl" style="stroke:currentColor;stroke-width:1.6"/>
+<path d="M598 272.0L624 246.0L636 246.0L628 274.0Z" class="rose" style="stroke:currentColor;stroke-width:1.6;stroke-linejoin:round"/>
+<rect x="498" y="269.0" width="54" height="5" rx="2" class="lav" style="stroke:currentColor;stroke-width:1.5;stroke-linejoin:round"/>
+<ellipse cx="427" cy="278.0" rx="3" ry="16" class="lav" style="stroke:currentColor;stroke-width:1.4"/>
+<path d="M398 320.0L658 320.0" class="dk" style="stroke-width:1.5;opacity:0.5"/>
+<path d="M490 292.0L490 313.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<circle cx="490" cy="313.0" r="7" class="cl" style="stroke:currentColor;stroke-width:1.8"/>
+<path d="M620 284.0L620 316.0" class="dk" style="stroke-width:2.5;opacity:0.9"/>
+<circle cx="620" cy="316.0" r="4" class="cl" style="stroke:currentColor;stroke-width:1.8"/>
+<text class="t m" x="490" y="344.0" style="font-size:11.5px">Main wheels</text>
+<path d="M490 332.0L490 326.0" class="dk" style="stroke-width:1.2;opacity:0.75"/>
+<text class="t m" x="620" y="344.0" style="font-size:11.5px">Tailwheel</text>
+<path d="M620 332.0L620 323.0" class="dk" style="stroke-width:1.2;opacity:0.75"/>
+<text class="s m" x="541.5" y="379.0" style="font-size:11.5px">Two main wheels and a third wheel at the rear.</text>
+<text class="s m" x="541.5" y="394.0" style="font-size:11.5px">Airplanes with it are sometimes called tailwheel</text>
+<text class="s m" x="541.5" y="409.0" style="font-size:11.5px">airplanes</text>
+<rect x="20" y="430.0" width="337" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="447.0" style="font-size:13px">Steering</text>
+<circle cx="31" cy="468.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="472.0" style="font-size:12px">A steerable nosewheel or tailwheel lets the pilot</text>
+<text class="s" x="40" y="487.5" style="font-size:12px">control the airplane throughout all ground</text>
+<text class="s" x="40" y="503.0" style="font-size:12px">operations</text>
+<circle cx="31" cy="518.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="522.5" style="font-size:12px">Most aircraft are steered by moving the rudder</text>
+<text class="s" x="40" y="538.0" style="font-size:12px">pedals, nosewheel or tailwheel</text>
+<circle cx="31" cy="553.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="557.5" style="font-size:12px">Some aircraft are also steered by differential</text>
+<text class="s" x="40" y="573.0" style="font-size:12px">braking</text>
+<rect x="373" y="430.0" width="337" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="447.0" style="font-size:13px">Brakes</text>
+<circle cx="384" cy="468.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="472.0" style="font-size:12px">Most modern airplane brakes: caliper pads</text>
+<text class="s" x="393" y="487.5" style="font-size:12px">hydraulically squeezed toward each other, with a</text>
+<text class="s" x="393" y="503.0" style="font-size:12px">rotating disk (the rotor) between them</text>
+<circle cx="384" cy="518.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="522.5" style="font-size:12px">Pad pressure on the rotor, turning with the</text>
+<text class="s" x="393" y="538.0" style="font-size:12px">wheel, adds friction and slows the wheel</text>
+<circle cx="384" cy="553.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="557.5" style="font-size:12px">Disks and pads are steel, or carbon that weighs</text>
+<text class="s" x="393" y="573.0" style="font-size:12px">less and absorbs more energy</text>
+<circle cx="384" cy="588.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="592.5" style="font-size:12px">Brake life is measured in landings, not miles</text>
+</svg>

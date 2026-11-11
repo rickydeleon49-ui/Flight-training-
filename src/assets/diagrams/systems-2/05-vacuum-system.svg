@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 523" role="img" aria-labelledby="ti de"><title id="ti">Vacuum system for gyro instruments</title><desc id="de">An engine-driven vacuum pump draws air through a filter, then through the attitude and heading indicators where it spins the gyros, past a relief valve that limits suction, then overboard or to other systems. A gauge, sometimes a warning light, shows suction; typical need is 4.5 to 5.5 inches of mercury. Low suction makes the gyro instruments unreliable.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Vacuum (suction) system for the gyro instruments</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Many airplanes spin their gyros with a stream of air. An engine-driven pump creates suction, and air</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">is pulled through the instruments. Layout is schematic.</text>
+<rect class="cl" x="20" y="91.0" width="690" height="250" rx="8"/>
+<rect x="34.0" y="111.0" width="149.0" height="81.0" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="108.5" y="130.0" style="font-size:12.5px">Air filter</text>
+<text class="s m" x="108.5" y="147.0" style="font-size:11px">Keeps foreign matter</text>
+<text class="s m" x="108.5" y="161.5" style="font-size:11px">out of the system.</text>
+<path d="M185.0 151.5L196.0 151.5" class="dk" style="stroke-width:2"/><path d="M203.0 151.5L196.0 154.7L196.0 148.3Z" class="dh" style=""/>
+<rect x="205.0" y="111.0" width="149.0" height="81.0" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="279.5" y="130.0" style="font-size:12.5px">Attitude and</text>
+<text class="t m" x="279.5" y="145.0" style="font-size:12.5px">heading indicators</text>
+<text class="s m" x="279.5" y="162.0" style="font-size:11px">Air hits rotor vanes</text>
+<text class="s m" x="279.5" y="176.5" style="font-size:11px">and spins the gyros.</text>
+<path d="M356.0 151.5L367.0 151.5" class="dk" style="stroke-width:2"/><path d="M374.0 151.5L367.0 154.7L367.0 148.3Z" class="dh" style=""/>
+<rect x="376.0" y="111.0" width="149.0" height="81.0" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="450.5" y="130.0" style="font-size:12.5px">Relief valve</text>
+<text class="s m" x="450.5" y="147.0" style="font-size:11px">Holds suction under the</text>
+<text class="s m" x="450.5" y="161.5" style="font-size:11px">prescribed limit.</text>
+<path d="M527.0 151.5L538.0 151.5" class="dk" style="stroke-width:2"/><path d="M545.0 151.5L538.0 154.7L538.0 148.3Z" class="dh" style=""/>
+<rect x="547.0" y="111.0" width="149.0" height="81.0" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="621.5" y="130.0" style="font-size:12.5px">Exhaust</text>
+<text class="s m" x="621.5" y="147.0" style="font-size:11px">Air goes overboard or</text>
+<text class="s m" x="621.5" y="161.5" style="font-size:11px">to other uses, such as</text>
+<text class="s m" x="621.5" y="176.0" style="font-size:11px">deicing boots.</text>
+<rect x="34" y="226.0" width="200" height="72" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="134.0" y="245.0" style="font-size:12.5px">Engine-driven vacuum pump</text>
+<text class="s m" x="134.0" y="262.0" style="font-size:11px">Vane type, on the accessory</text>
+<text class="s m" x="134.0" y="276.5" style="font-size:11px">case; draws the air through.</text>
+<rect x="260" y="226.0" width="200" height="72" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="360.0" y="245.0" style="font-size:12.5px">Suction gauge</text>
+<text class="s m" x="360.0" y="262.0" style="font-size:11px">Panel gauge shows system</text>
+<text class="s m" x="360.0" y="276.5" style="font-size:11px">pressure in inches of mercury</text>
+<text class="s m" x="360.0" y="291.0" style="font-size:11px">below ambient.</text>
+<rect x="486" y="226.0" width="210" height="72" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="591.0" y="245.0" style="font-size:12.5px">Warning light (some</text>
+<text class="t m" x="591.0" y="260.0" style="font-size:12.5px">airplanes)</text>
+<text class="s m" x="591.0" y="277.0" style="font-size:11px">Lights when vacuum falls below an</text>
+<text class="s m" x="591.0" y="291.5" style="font-size:11px">acceptable level.</text>
+<text class="s" x="34" y="322.0" style="font-size:11.5px">Typical instrument pressure is about 4.5 to 5.5 "Hg.</text>
+<rect x="20" y="355.0" width="222" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="372.0" style="font-size:13px">Why monitor it</text>
+<circle cx="31" cy="393.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="397.0" style="font-size:12px">Low suction can make the</text>
+<text class="s" x="40" y="412.5" style="font-size:12px">attitude and heading indicators</text>
+<text class="s" x="40" y="428.0" style="font-size:12px">unreliable</text>
+<circle cx="31" cy="443.5" r="2.2" class="ah"/>
+<text class="s" x="40" y="447.5" style="font-size:12px">Low vacuum lets gyros slow</text>
+<text class="s" x="40" y="463.0" style="font-size:12px">down, so they drift more</text>
+<rect x="254" y="355.0" width="222" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="264" y="372.0" style="font-size:13px">Backup power</text>
+<circle cx="265" cy="393.0" r="2.2" class="ah"/>
+<text class="s" x="274" y="397.0" style="font-size:12px">Most airplanes have at least</text>
+<text class="s" x="274" y="412.5" style="font-size:12px">two power sources so bank</text>
+<text class="s" x="274" y="428.0" style="font-size:12px">information survives one</text>
+<text class="s" x="274" y="443.5" style="font-size:12px">failure</text>
+<circle cx="265" cy="459.0" r="2.2" class="ah"/>
+<text class="s" x="274" y="463.0" style="font-size:12px">In some airplanes the</text>
+<text class="s" x="274" y="478.5" style="font-size:12px">electrical system powers the</text>
+<text class="s" x="274" y="494.0" style="font-size:12px">turn coordinator</text>
+<rect x="488" y="355.0" width="222" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="498" y="372.0" style="font-size:13px">Routine</text>
+<circle cx="499" cy="393.0" r="2.2" class="ah"/>
+<text class="s" x="508" y="397.0" style="font-size:12px">Cross-check the instruments</text>
+<text class="s" x="508" y="412.5" style="font-size:12px">often</text>
+<circle cx="499" cy="428.0" r="2.2" class="ah"/>
+<text class="s" x="508" y="432.0" style="font-size:12px">At idle the gyros may not be at</text>
+<text class="s" x="508" y="447.5" style="font-size:12px">full speed, so precession can</text>
+<text class="s" x="508" y="463.0" style="font-size:12px">be faster on the ground</text>
+</svg>

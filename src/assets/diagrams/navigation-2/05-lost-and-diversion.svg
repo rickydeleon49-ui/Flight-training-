@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 710" role="img" aria-labelledby="ti de"><title id="ti">Lost procedures and flight diversion</title><desc id="de">Lost procedures in order: climb, navigate by plotting an azimuth from two facilities or by GPS, communicate using sectional chart frequencies, and if threatening use 121.5 megahertz and transponder 7700. Diversion: check charts before flight, pick the alternate and measure the course with a straightedge and compass rose, turn promptly, then use winds aloft to compute heading, groundspeed, arrival time and fuel.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Lost and diversion: what to do, in order</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Two separate situations. Lost: you do not know where you are. Diversion: you know where you are but</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">cannot reach the planned destination. Priority in both: fly the aircraft.</text>
+<text class="t" x="20" y="107.0" style="font-size:14px">If you become lost</text>
+<rect x="20" y="115.0" width="690" height="63.0" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="42" cy="137.0" r="11" class="ah"/><text class="t m" x="42" y="141.33333333333334" style="font-size:13px;fill:#fff">1</text>
+<text class="t" x="62" y="137.0" style="font-size:13px">Climb</text>
+<text class="s" x="62" y="155.0" style="font-size:12px">If no town or city can be seen, climb first, watching traffic and weather. More altitude gives more</text>
+<text class="s" x="62" y="170.5" style="font-size:12px">radio and navigation range and more radar coverage. Look for a name on a water tower.</text>
+<rect x="20" y="186.0" width="690" height="63.0" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="42" cy="208.0" r="11" class="ah"/><text class="t m" x="42" y="212.33333333333334" style="font-size:13px;fill:#fff">2</text>
+<text class="t" x="62" y="208.0" style="font-size:13px">Navigate</text>
+<text class="s" x="62" y="226.0" style="font-size:12px">With a VOR or ADF receiver, plot an azimuth from two or more facilities. With GPS, fix position and</text>
+<text class="s" x="62" y="241.5" style="font-size:12px">find the nearest airport.</text>
+<rect x="20" y="257.0" width="690" height="63.0" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="42" cy="279.0" r="11" class="ah"/><text class="t m" x="42" y="283.3333333333333" style="font-size:13px;fill:#fff">3</text>
+<text class="t" x="62" y="279.0" style="font-size:13px">Communicate</text>
+<text class="s" x="62" y="297.0" style="font-size:12px">Use frequencies on the sectional. A controller may give radar vectors or direction finding help:</text>
+<text class="s" x="62" y="312.5" style="font-size:12px">hold the transmit button a few seconds, release, and repeat when asked.</text>
+<rect x="20" y="328.0" width="690" height="63.0" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="42" cy="350.0" r="11" class="ah"/><text class="t m" x="42" y="354.3333333333333" style="font-size:13px;fill:#fff">4</text>
+<text class="t" x="62" y="350.0" style="font-size:13px">Threatening? Declare it</text>
+<text class="s" x="62" y="368.0" style="font-size:12px">Transmit the situation on 121.5 MHz and set the transponder to 7700. Most facilities, and even</text>
+<text class="s" x="62" y="383.5" style="font-size:12px">airliners, monitor it.</text>
+<text class="t" x="20" y="419.0" style="font-size:14px">If you must divert</text>
+<rect x="20.0" y="427.0" width="159.0" height="153.5" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="99.5" y="446.0" style="font-size:12.5px">Before the flight</text>
+<text class="s m" x="99.5" y="463.0" style="font-size:11px">Check charts for</text>
+<text class="s m" x="99.5" y="477.5" style="font-size:11px">airports or suitable</text>
+<text class="s m" x="99.5" y="492.0" style="font-size:11px">landing areas along the</text>
+<text class="s m" x="99.5" y="506.5" style="font-size:11px">route, and for navaids</text>
+<text class="s m" x="99.5" y="521.0" style="font-size:11px">to use in a diversion.</text>
+<path d="M181.0 503.75L188.0 503.8" class="dk" style="stroke-width:2"/><path d="M195.0 503.75L188.0 506.9L188.0 500.6Z" class="dh" style=""/>
+<rect x="197.0" y="427.0" width="159.0" height="153.5" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="276.5" y="446.0" style="font-size:12.5px">Pick the alternate</text>
+<text class="t m" x="276.5" y="461.0" style="font-size:12.5px">and the course</text>
+<text class="s m" x="276.5" y="478.0" style="font-size:11px">Measure with a</text>
+<text class="s m" x="276.5" y="492.5" style="font-size:11px">straightedge and the</text>
+<text class="s m" x="276.5" y="507.0" style="font-size:11px">compass rose around a</text>
+<text class="s m" x="276.5" y="521.5" style="font-size:11px">VOR, or an airway. A</text>
+<text class="s m" x="276.5" y="536.0" style="font-size:11px">radial is outbound: use</text>
+<text class="s m" x="276.5" y="550.5" style="font-size:11px">the reciprocal to fly to</text>
+<text class="s m" x="276.5" y="565.0" style="font-size:11px">the station.</text>
+<path d="M358.0 503.75L365.0 503.8" class="dk" style="stroke-width:2"/><path d="M372.0 503.75L365.0 506.9L365.0 500.6Z" class="dh" style=""/>
+<rect x="374.0" y="427.0" width="159.0" height="153.5" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="453.5" y="446.0" style="font-size:12.5px">Turn now</text>
+<text class="s m" x="453.5" y="463.0" style="font-size:11px">If time permits, start</text>
+<text class="s m" x="453.5" y="477.5" style="font-size:11px">over a prominent ground</text>
+<text class="s m" x="453.5" y="492.0" style="font-size:11px">feature. In an</text>
+<text class="s m" x="453.5" y="506.5" style="font-size:11px">emergency, divert</text>
+<text class="s m" x="453.5" y="521.0" style="font-size:11px">promptly; do not finish</text>
+<text class="s m" x="453.5" y="535.5" style="font-size:11px">all the plotting first.</text>
+<path d="M535.0 503.75L542.0 503.8" class="dk" style="stroke-width:2"/><path d="M549.0 503.75L542.0 506.9L542.0 500.6Z" class="dh" style=""/>
+<rect x="551.0" y="427.0" width="159.0" height="153.5" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="630.5" y="446.0" style="font-size:12.5px">Then calculate</text>
+<text class="s m" x="630.5" y="463.0" style="font-size:11px">Once on course, note the</text>
+<text class="s m" x="630.5" y="477.5" style="font-size:11px">time. Use winds aloft</text>
+<text class="s m" x="630.5" y="492.0" style="font-size:11px">nearest the diversion</text>
+<text class="s m" x="630.5" y="506.5" style="font-size:11px">point for heading and</text>
+<text class="s m" x="630.5" y="521.0" style="font-size:11px">groundspeed, then new</text>
+<text class="s m" x="630.5" y="535.5" style="font-size:11px">arrival time and fuel.</text>
+<rect class="cl" x="20" y="594.5" width="690" height="108.0" rx="8"/>
+<circle cx="35" cy="616.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="620.5" style="font-size:12px">An alternate with a VOR or NDB on the field is typically easier to navigate to.</text>
+<circle cx="35" cy="636.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="640.0" style="font-size:12px">Choose the diversion altitude with cloud heights, winds, terrain and radio reception in mind.</text>
+<circle cx="35" cy="655.5" r="2.2" class="ah"/>
+<text class="s" x="44" y="659.5" style="font-size:12px">Divide attention between navigation and planning, with priority on flying the aircraft. Use shortcuts</text>
+<text class="s" x="44" y="675.0" style="font-size:12px">and rules of thumb.</text>
+</svg>

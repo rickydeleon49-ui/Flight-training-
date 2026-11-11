@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 699" role="img" aria-labelledby="ti de"><title id="ti">Climb performance: what reduces the climb</title><desc id="de">Maximum angle of climb at VX gains the most height for the least ground distance; maximum rate of climb at VY gains the most height in time. PHAK example: in 30 seconds an airplane reaches 1,000 feet AGL over 3,000 feet of ground at VX, or 1,500 feet over 6,000 feet at VY. More weight, higher altitude, gear down and flaps down all reduce excess thrust and excess power, so both maximum climb angle and rate fall. Rate of climb is zero at the absolute ceiling; the service ceiling is where the climb is 100 feet per minute or less.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Climb performance: what reduces the climb</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Climbing is work, so climb performance depends on excess thrust (angle of climb) or excess power (rate</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">of climb). Anything that eats the excess hurts both.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="256" rx="8"/>
+<path d="M30 239.0L700 239.0" class="dk" style="stroke-width:2.5;opacity:1"/>
+<path d="M40.0 239.0L310.0 169.0" class="dk" style="stroke-width:3;opacity:1"/>
+<path d="M40.0 239.0L580.0 134.0" class="acc" style="stroke-width:3;opacity:1"/>
+<circle cx="310.0" cy="169.0" r="5" class="ah"/>
+<circle cx="580.0" cy="134.0" r="5" class="ah"/>
+<path d="M310.0 239.0L310.0 169.0" class="dk" style="stroke-width:1.2;opacity:0.6;stroke-dasharray:6 5"/>
+<path d="M580.0 239.0L580.0 134.0" class="dk" style="stroke-width:1.2;opacity:0.6;stroke-dasharray:6 5"/>
+<text class="t e" x="302.0" y="159.0" style="font-size:12px">VX: 1,000 ft AGL after 30 s</text>
+<text class="s m" x="314.0" y="257.0" style="font-size:11.5px">3,000 ft over the ground</text>
+<text class="t e" x="572.0" y="124.0" style="font-size:12px">VY: 1,500 ft after 30 s</text>
+<text class="s m" x="520.0" y="257.0" style="font-size:11.5px">6,000 ft over the ground</text>
+<text class="s" x="30" y="107.0" style="font-size:11.5px">Same airplane, 30 seconds of climb at maximum throttle (PHAK example, schematic)</text>
+<text class="s" x="30" y="279.0" style="font-size:11.5px">Maximum angle of climb (VX): most altitude for the</text>
+<text class="s" x="30" y="294.0" style="font-size:11.5px">least ground covered. Use it to clear trees or</text>
+<text class="s" x="30" y="309.0" style="font-size:11.5px">power lines after a short-field takeoff.</text>
+<text class="s" x="380" y="279.0" style="font-size:11.5px">Maximum rate of climb (VY): the most altitude in a</text>
+<text class="s" x="380" y="294.0" style="font-size:11.5px">given time. It may not be enough to clear an obstacle</text>
+<text class="s" x="380" y="309.0" style="font-size:11.5px">that VX would clear.</text>
+<text class="t" x="20" y="361.0" style="font-size:13px">Four things that lower both maximum angle and maximum rate of climb</text>
+<rect x="20.0" y="371.0" width="156.0" height="34" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="98.0" y="392.0" style="font-size:12px">More weight</text>
+<path d="M178.0 388.0L189.0 388.0" class="dk" style="stroke-width:2"/><path d="M196.0 388.0L189.0 391.1L189.0 384.9Z" class="dh" style=""/>
+<rect x="198.0" y="371.0" width="156.0" height="34" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="276.0" y="392.0" style="font-size:12px">Higher altitude</text>
+<path d="M356.0 388.0L367.0 388.0" class="dk" style="stroke-width:2"/><path d="M374.0 388.0L367.0 391.1L367.0 384.9Z" class="dh" style=""/>
+<rect x="376.0" y="371.0" width="156.0" height="34" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="454.0" y="392.0" style="font-size:12px">Landing gear down</text>
+<path d="M534.0 388.0L545.0 388.0" class="dk" style="stroke-width:2"/><path d="M552.0 388.0L545.0 391.1L545.0 384.9Z" class="dh" style=""/>
+<rect x="554.0" y="371.0" width="156.0" height="34" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="632.0" y="392.0" style="font-size:12px">Flaps down</text>
+<text class="s m" x="365" y="423.0" style="font-size:12px">Each one reduces both excess thrust and excess power</text>
+<rect x="20" y="437.0" width="337" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="454.0" style="font-size:13px">Excess power is what climbs</text>
+<rect x="34" y="477.0" width="200.8" height="30" class="cl" style="stroke:currentColor;stroke-width:1.5"/>
+<rect x="234.8" y="477.0" width="108.2" height="30" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="134.425" y="496.0" style="font-size:11.5px">130 hp level flight</text>
+<text class="t m" x="288.925" y="496.0" style="font-size:11.5px">70 hp</text>
+<text class="s" x="34" y="525.0" style="font-size:11.5px">Engine makes 200 hp at this altitude (PHAK example)</text>
+<circle cx="35" cy="545.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="549.0" style="font-size:11.5px">Weight: more weight needs a higher angle of</text>
+<text class="s" x="44" y="564.0" style="font-size:11.5px">attack, so more induced and parasite drag, so less</text>
+<text class="s" x="44" y="579.0" style="font-size:11.5px">reserve thrust for climbing</text>
+<circle cx="35" cy="594.0" r="2.2" class="ah"/>
+<text class="s" x="44" y="598.0" style="font-size:11.5px">More weight also lowers the maximum rate of climb,</text>
+<text class="s" x="44" y="613.0" style="font-size:11.5px">and it must be flown at a higher climb speed</text>
+<rect x="373" y="437.0" width="337" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="454.0" style="font-size:13px">Altitude and the ceilings</text>
+<path d="M423 587.0L423 481.0" class="dk" style="stroke-width:2;opacity:1"/>
+<path d="M423 587.0L653 587.0" class="dk" style="stroke-width:2;opacity:1"/>
+<text class="t e" x="415" y="485.0" style="font-size:11px">Altitude</text>
+<text class="t e" x="653" y="602.0" style="font-size:11px">Rate of climb</text>
+<path d="M623.0 583.0L423.0 489.0" class="dk" style="stroke-width:2.5;opacity:1"/>
+<circle cx="433.0" cy="496.4" r="4" class="ah"/>
+<circle cx="423.0" cy="489.0" r="5" class="ah"/>
+<path d="M423 489.0L483 489.0" class="dk" style="stroke-width:1;opacity:0.5;stroke-dasharray:6 5"/>
+<text class="t" x="493" y="493.0" style="font-size:11px">Absolute ceiling: zero rate of climb</text>
+<text class="t" x="533" y="515.0" style="font-size:11px">Service ceiling: cannot climb faster</text>
+<text class="t" x="533" y="529.0" style="font-size:11px">than 100 fpm</text>
+<path d="M435 496.4L529 511.0" class="dk" style="stroke-width:1.2;opacity:0.75"/>
+<text class="s" x="631" y="581.0" style="font-size:11px">sea level rate</text>
+<circle cx="384" cy="615.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="619.0" style="font-size:11.5px">Climb performance diminishes with altitude</text>
+<circle cx="384" cy="634.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="638.0" style="font-size:11.5px">The speeds for best angle, best rate and level</text>
+<text class="s" x="393" y="653.0" style="font-size:11.5px">flight converge at the absolute ceiling: no excess</text>
+<text class="s" x="393" y="668.0" style="font-size:11.5px">power, one speed holds level flight</text>
+</svg>

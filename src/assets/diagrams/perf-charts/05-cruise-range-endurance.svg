@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 723" role="img" aria-labelledby="ti de"><title id="ti">Cruise: endurance versus range</title><desc id="de">Endurance is flying time and range is flying distance. For a propeller airplane power required can stand in for fuel flow. Maximum endurance is at the lowest point of the power required curve, point B. Maximum range is where speed divided by power required is greatest, found with a straight line from the origin touching the curve, and is at maximum lift to drag ratio. Long-range cruise is flown at 99 percent of maximum specific range, trading one percent of range for three to five percent more speed. As fuel burns off the best speed and power may fall or the best altitude rise.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Cruise: endurance versus range</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Endurance is flying time; range is flying distance. They are best at different speeds. The curve below</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">is schematic and uses no real aircraft numbers.</text>
+<rect class="cl" x="20" y="89.0" width="420" height="330" rx="8"/>
+<path d="M64 325.0L64 119.0" class="dk" style="stroke-width:2;opacity:1"/>
+<path d="M64 325.0L424 325.0" class="dk" style="stroke-width:2;opacity:1"/>
+<text class="t" x="68" y="111.0" style="font-size:11.5px">Power required (or fuel flow)</text>
+<text class="t e" x="424" y="317.0" style="font-size:11.5px">Airspeed</text>
+<path d="M92.3 254.1L98.0 256.2L103.7 258.0L109.3 259.6L115.0 261.0L120.7 262.2L126.3 263.2L132.0 264.1L137.7 264.9L143.3 265.4L149.0 265.9L154.7 266.2L160.3 266.4L166.0 266.5L171.7 266.4L177.3 266.2L183.0 265.9L188.7 265.5L194.3 265.0L200.0 264.4L205.7 263.6L211.3 262.8L217.0 261.8L222.7 260.7L228.3 259.6L234.0 258.3L239.7 256.9L245.3 255.4L251.0 253.8L256.7 252.1L262.3 250.3L268.0 248.3L273.7 246.3L279.3 244.2L285.0 241.9L290.7 239.5L296.3 237.1L302.0 234.5L307.7 231.8L313.3 229.0L319.0 226.0L324.7 223.0L330.3 219.8L336.0 216.5L341.7 213.1L347.3 209.6L353.0 206.0L358.7 202.2L364.3 198.3L370.0 194.3L375.7 190.2L381.3 185.9L387.0 181.5L392.7 177.0L398.3 172.3L404.0 167.5L409.7 162.6L415.3 157.5" class="dk" style="stroke-width:3;opacity:1"/>
+<path d="M64.0 325.0L310.5 228.3" class="acc" style="stroke-width:1.8;opacity:0.9;stroke-dasharray:6 5"/>
+<circle cx="92.3" cy="254.1" r="5" class="ah"/>
+<text class="t" x="88.33333333333333" y="242.1066511332345" style="font-size:11.5px">A: slow, high fuel flow</text>
+<circle cx="166.0" cy="266.5" r="5" class="ah"/>
+<circle cx="234.0" cy="258.3" r="5" class="ah"/>
+<path d="M166.0 325.0L166.0 266.4582583975295" class="dk" style="stroke-width:1.2;opacity:0.6;stroke-dasharray:6 5"/>
+<path d="M234.0 325.0L234.0 258.2768481253972" class="dk" style="stroke-width:1.2;opacity:0.6;stroke-dasharray:6 5"/>
+<text class="t e" x="172.0" y="341.0" style="font-size:11.5px">B: max endurance</text>
+<text class="t" x="228.0" y="341.0" style="font-size:11.5px">Max range</text>
+<text class="s" x="30" y="365.0" style="font-size:11.5px">Maximum range: where speed per power required is greatest (the</text>
+<text class="s" x="30" y="380.0" style="font-size:11.5px">dashed line from the origin just touches the curve). Maximum</text>
+<text class="s" x="30" y="395.0" style="font-size:11.5px">endurance: where power required is lowest.</text>
+<rect x="456" y="89.0" width="254" height="24" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="466" y="106.0" style="font-size:13px">Endurance (time)</text>
+<circle cx="467" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="476" y="131.0" style="font-size:12px">Specific endurance = flight hours</text>
+<text class="s" x="476" y="146.5" style="font-size:12px">per pound of fuel, or 1 divided by</text>
+<text class="s" x="476" y="162.0" style="font-size:12px">fuel flow</text>
+<circle cx="467" cy="177.5" r="2.2" class="ah"/>
+<text class="s" x="476" y="181.5" style="font-size:12px">Maximum endurance needs minimum fuel</text>
+<text class="s" x="476" y="197.0" style="font-size:12px">flow</text>
+<circle cx="467" cy="212.5" r="2.2" class="ah"/>
+<text class="s" x="476" y="216.5" style="font-size:12px">Point A: slow, high fuel flow</text>
+<text class="s" x="476" y="232.0" style="font-size:12px">(ground operations, takeoff, climb)</text>
+<circle cx="467" cy="247.5" r="2.2" class="ah"/>
+<text class="s" x="476" y="251.5" style="font-size:12px">Point B: lowest fuel flow. Faster</text>
+<text class="s" x="476" y="267.0" style="font-size:12px">than this costs more power and more</text>
+<text class="s" x="476" y="282.5" style="font-size:12px">fuel</text>
+<rect x="456" y="310.0" width="254" height="24" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="466" y="327.0" style="font-size:13px">Range (distance)</text>
+<circle cx="467" cy="348.0" r="2.2" class="ah"/>
+<text class="s" x="476" y="352.0" style="font-size:12px">Specific range = nautical miles per</text>
+<text class="s" x="476" y="367.5" style="font-size:12px">pound of fuel, or knots divided by</text>
+<text class="s" x="476" y="383.0" style="font-size:12px">fuel flow</text>
+<circle cx="467" cy="398.5" r="2.2" class="ah"/>
+<text class="s" x="476" y="402.5" style="font-size:12px">For a propeller airplane fuel flow</text>
+<text class="s" x="476" y="418.0" style="font-size:12px">follows power, so power can stand in</text>
+<text class="s" x="476" y="433.5" style="font-size:12px">for fuel flow</text>
+<circle cx="467" cy="449.0" r="2.2" class="ah"/>
+<text class="s" x="476" y="453.0" style="font-size:12px">Maximum range is at maximum L/D,</text>
+<text class="s" x="476" y="468.5" style="font-size:12px">unaffected by weight or altitude</text>
+<text class="s" x="476" y="484.0" style="font-size:12px">(they change the speed and power</text>
+<text class="s" x="476" y="499.5" style="font-size:12px">needed)</text>
+<rect x="20" y="529.0" width="337" height="24" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="546.0" style="font-size:13px">Long-range cruise: the 99 percent rule</text>
+<circle cx="31" cy="567.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="571.0" style="font-size:12px">Most long-range cruise is flown at 99 percent of</text>
+<text class="s" x="40" y="586.5" style="font-size:12px">the absolute maximum specific range</text>
+<circle cx="31" cy="602.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="606.0" style="font-size:12px">One percent of range is traded for three to five</text>
+<text class="s" x="40" y="621.5" style="font-size:12px">percent higher cruise speed</text>
+<circle cx="31" cy="637.0" r="2.2" class="ah"/>
+<text class="s" x="40" y="641.0" style="font-size:12px">Specific range depends on gross weight, altitude</text>
+<text class="s" x="40" y="656.5" style="font-size:12px">and aerodynamic configuration</text>
+<rect x="373" y="529.0" width="337" height="24" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="383" y="546.0" style="font-size:13px">As fuel burns off</text>
+<circle cx="384" cy="567.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="571.0" style="font-size:12px">Weight falls, so the best airspeed and power</text>
+<text class="s" x="393" y="586.5" style="font-size:12px">setting may decrease, or the best altitude may</text>
+<text class="s" x="393" y="602.0" style="font-size:12px">increase</text>
+<circle cx="384" cy="617.5" r="2.2" class="ah"/>
+<text class="s" x="393" y="621.5" style="font-size:12px">The best specific range increases</text>
+<circle cx="384" cy="637.0" r="2.2" class="ah"/>
+<text class="s" x="393" y="641.0" style="font-size:12px">Pilot makes the cruise control changes; a</text>
+<text class="s" x="393" y="656.5" style="font-size:12px">long-range airplane needs scheduled speed and</text>
+<text class="s" x="393" y="672.0" style="font-size:12px">power changes, a short-range one can hold</text>
+<text class="s" x="393" y="687.5" style="font-size:12px">constant speed and power</text>
+</svg>
