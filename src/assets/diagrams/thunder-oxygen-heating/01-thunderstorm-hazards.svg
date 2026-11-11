@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 867" role="img" aria-labelledby="ti de"><title id="ti">Thunderstorm hazards</title><desc id="de">Side view of a mature thunderstorm cloud with an anvil top, an updraft and a downdraft, a dashed freezing level line, hail under the anvil, a lightning bolt, a funnel cloud below the base and a gust front with a roll cloud at the ground. Six numbered hazards match cards for turbulence, icing, hail, tornadoes, gust front and lightning. Three more cards cover the squall line, visibility and altimeter errors, and the rule to stay 20 nautical miles from a severe storm.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style><style>.PN{fill:#1c2230;stroke:#8b93a7;stroke-width:1.2}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Thunderstorm hazards</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Every thunderstorm has hazards, and you cannot see from the ground which ones it holds. Find each</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">numbered hazard in the drawing, then read the card with the same number.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="262" rx="8"/>
+<path d="M30 329.0L700 329.0" class="o" style="stroke-width:2"/>
+<path d="M262 305.0L268 185.0Q272 145.0 312 139.0Q338 111.0 372 131.0Q404 119.0 424 147.0L470 145.0Q566 141.0 590 165.0Q530 179.0 450 181.0L450 305.0Z" class="dh" style="fill-opacity:.3;stroke:currentColor;stroke-width:2"/>
+<path d="M30 235.0L700 235.0" class="o d" style="stroke-width:1.3;opacity:.7"/>
+<text class="s e" x="698" y="230.0" style="font-size:10.5px">Freezing level</text>
+<path d="M300 295.0L300.0 196.0" class="acc" style="stroke-width:3"/><path d="M300 187.0L304.1 196.0L295.9 196.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s m" x="300" y="179.0" style="font-size:11px">Up</text>
+<path d="M412 187.0L412.0 286.0" class="acc" style="stroke-width:3"/><path d="M412 295.0L407.9 286.0L416.1 286.0Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<text class="s e" x="404" y="211.0" style="font-size:11px">Down</text>
+<path d="M342 305.0L370 305.0L358 327.0Z" class="dh" style="opacity:.8"/>
+<circle cx="480" cy="197.0" r="3.6" class="ah"/>
+<circle cx="510" cy="197.0" r="3.6" class="ah"/>
+<circle cx="540" cy="197.0" r="3.6" class="ah"/>
+<circle cx="489" cy="225.0" r="3.6" class="ah"/>
+<circle cx="519" cy="225.0" r="3.6" class="ah"/>
+<circle cx="549" cy="225.0" r="3.6" class="ah"/>
+<circle cx="498" cy="253.0" r="3.6" class="ah"/>
+<circle cx="528" cy="253.0" r="3.6" class="ah"/>
+<circle cx="558" cy="253.0" r="3.6" class="ah"/>
+<path d="M386 151.0L376 171.0L384 171.0L374 195.0L394 167.0L386 167.0Z" fill="#f5a623" stroke="#0b0f1a" stroke-width="1"/>
+<path d="M546 317.0L578.0 317.0" class="dk" style="stroke-width:2.5"/><path d="M586 317.0L578.0 320.6L578.0 313.4Z" class="dh"/>
+<path d="M600 317.0L632.0 317.0" class="dk" style="stroke-width:2.5"/><path d="M640 317.0L632.0 320.6L632.0 313.4Z" class="dh"/>
+<path d="M654 317.0L686.0 317.0" class="dk" style="stroke-width:2.5"/><path d="M694 317.0L686.0 320.6L686.0 313.4Z" class="dh"/>
+<path d="M610 291.0q10 -16 22 0q10 -16 22 0q10 -16 22 0" class="o" style="stroke-width:2"/>
+<text class="t" x="30" y="111.0" style="font-size:13px">Side view of a mature storm</text>
+<circle cx="356" cy="269.0" r="11" class="ah"/><text class="t m" x="356" y="273.3333333333333" style="font-size:13px;fill:#fff">1</text>
+<circle cx="356" cy="211.0" r="11" class="ah"/><text class="t m" x="356" y="215.33333333333334" style="font-size:13px;fill:#fff">2</text>
+<circle cx="570" cy="219.0" r="11" class="ah"/><text class="t m" x="570" y="223.33333333333334" style="font-size:13px;fill:#fff">3</text>
+<circle cx="318" cy="315.0" r="11" class="ah"/><text class="t m" x="318" y="319.3333333333333" style="font-size:13px;fill:#fff">4</text>
+<circle cx="640" cy="267.0" r="11" class="ah"/><text class="t m" x="640" y="271.3333333333333" style="font-size:13px;fill:#fff">5</text>
+<circle cx="414" cy="161.0" r="11" class="ah"/><text class="t m" x="414" y="165.33333333333334" style="font-size:13px;fill:#fff">6</text>
+<rect class="cl" x="20.0" y="363.0" width="222.0" height="164.0" rx="8"/>
+<rect x="20.0" y="363.0" width="222.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="35.0" cy="376.0" r="9" class="ah"/><text class="t m" x="35.0" y="379.6666666666667" style="font-size:11px;fill:#fff">1</text>
+<text class="t" x="50.0" y="381.0" style="font-size:13px">Turbulence</text>
+<circle cx="33.0" cy="399.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="403.0" style="font-size:11.5px">In all thunderstorms. Strongest</text>
+<text class="s" x="42.0" y="418.0" style="font-size:11.5px">in the cloud at the shear</text>
+<text class="s" x="42.0" y="433.0" style="font-size:11.5px">between updrafts and</text>
+<text class="s" x="42.0" y="448.0" style="font-size:11.5px">downdrafts.</text>
+<circle cx="33.0" cy="462.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="466.0" style="font-size:11.5px">Shear turbulence has been met</text>
+<text class="s" x="42.0" y="481.0" style="font-size:11.5px">several thousand feet above and</text>
+<text class="s" x="42.0" y="496.0" style="font-size:11.5px">20 miles to the side of a</text>
+<text class="s" x="42.0" y="511.0" style="font-size:11.5px">severe storm.</text>
+<rect class="cl" x="254.0" y="363.0" width="222.0" height="164.0" rx="8"/>
+<rect x="254.0" y="363.0" width="222.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="269.0" cy="376.0" r="9" class="ah"/><text class="t m" x="269.0" y="379.6666666666667" style="font-size:11px;fill:#fff">2</text>
+<text class="t" x="284.0" y="381.0" style="font-size:13px">Icing</text>
+<circle cx="267.0" cy="399.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="403.0" style="font-size:11.5px">Supercooled water freezes on</text>
+<text class="s" x="276.0" y="418.0" style="font-size:11.5px">impact above the freezing</text>
+<text class="s" x="276.0" y="433.0" style="font-size:11.5px">level.</text>
+<circle cx="267.0" cy="447.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="451.0" style="font-size:11.5px">Clear icing is very rapid</text>
+<text class="s" x="276.0" y="466.0" style="font-size:11.5px">between 0 and -15 degrees C.</text>
+<rect class="cl" x="488.0" y="363.0" width="222.0" height="164.0" rx="8"/>
+<rect x="488.0" y="363.0" width="222.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="503.0" cy="376.0" r="9" class="ah"/><text class="t m" x="503.0" y="379.6666666666667" style="font-size:11px;fill:#fff">3</text>
+<text class="t" x="518.0" y="381.0" style="font-size:13px">Hail</text>
+<circle cx="501.0" cy="399.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="403.0" style="font-size:11.5px">Competes with turbulence as the</text>
+<text class="s" x="510.0" y="418.0" style="font-size:11.5px">greatest hazard.</text>
+<circle cx="501.0" cy="432.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="436.0" style="font-size:11.5px">May be met in clear air several</text>
+<text class="s" x="510.0" y="451.0" style="font-size:11.5px">miles away. Rain at the surface</text>
+<text class="s" x="510.0" y="466.0" style="font-size:11.5px">does not mean no hail aloft.</text>
+<circle cx="501.0" cy="480.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="484.0" style="font-size:11.5px">Over one-half inch can damage</text>
+<text class="s" x="510.0" y="499.0" style="font-size:11.5px">an aircraft in seconds.</text>
+<rect class="cl" x="20.0" y="539.0" width="222.0" height="152.0" rx="8"/>
+<rect x="20.0" y="539.0" width="222.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="35.0" cy="552.0" r="9" class="ah"/><text class="t m" x="35.0" y="555.6666666666666" style="font-size:11px;fill:#fff">4</text>
+<text class="t" x="50.0" y="557.0" style="font-size:13px">Tornadoes</text>
+<circle cx="33.0" cy="575.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="579.0" style="font-size:11.5px">Wind in the vortex can exceed</text>
+<text class="s" x="42.0" y="594.0" style="font-size:11.5px">200 knots.</text>
+<circle cx="33.0" cy="608.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="612.0" style="font-size:11.5px">Entering one: almost certain</text>
+<text class="s" x="42.0" y="627.0" style="font-size:11.5px">loss of control and structural</text>
+<text class="s" x="42.0" y="642.0" style="font-size:11.5px">damage.</text>
+<circle cx="33.0" cy="656.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="660.0" style="font-size:11.5px">The vortex can be hidden in the</text>
+<text class="s" x="42.0" y="675.0" style="font-size:11.5px">cloud.</text>
+<rect class="cl" x="254.0" y="539.0" width="222.0" height="152.0" rx="8"/>
+<rect x="254.0" y="539.0" width="222.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="269.0" cy="552.0" r="9" class="ah"/><text class="t m" x="269.0" y="555.6666666666666" style="font-size:11px;fill:#fff">5</text>
+<text class="t" x="284.0" y="557.0" style="font-size:13px">Gust front</text>
+<circle cx="267.0" cy="575.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="579.0" style="font-size:11.5px">A low-level shear zone. A roll</text>
+<text class="s" x="276.0" y="594.0" style="font-size:11.5px">cloud on the leading edge marks</text>
+<text class="s" x="276.0" y="609.0" style="font-size:11.5px">it.</text>
+<circle cx="267.0" cy="623.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="627.0" style="font-size:11.5px">It can move up to 15 miles</text>
+<text class="s" x="276.0" y="642.0" style="font-size:11.5px">ahead of the rain and change</text>
+<text class="s" x="276.0" y="657.0" style="font-size:11.5px">the surface wind fast.</text>
+<rect class="cl" x="488.0" y="539.0" width="222.0" height="152.0" rx="8"/>
+<rect x="488.0" y="539.0" width="222.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="503.0" cy="552.0" r="9" class="ah"/><text class="t m" x="503.0" y="555.6666666666666" style="font-size:11px;fill:#fff">6</text>
+<text class="t" x="518.0" y="557.0" style="font-size:13px">Lightning</text>
+<circle cx="501.0" cy="575.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="579.0" style="font-size:11.5px">Can puncture the skin and</text>
+<text class="s" x="510.0" y="594.0" style="font-size:11.5px">damage radios and navigation</text>
+<text class="s" x="510.0" y="609.0" style="font-size:11.5px">gear.</text>
+<circle cx="501.0" cy="623.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="627.0" style="font-size:11.5px">Nearby lightning can blind you</text>
+<text class="s" x="510.0" y="642.0" style="font-size:11.5px">for a moment and cause</text>
+<text class="s" x="510.0" y="657.0" style="font-size:11.5px">permanent compass errors.</text>
+<rect class="cl" x="20.0" y="703.0" width="222.0" height="152.0" rx="8"/>
+<rect x="20.0" y="703.0" width="222.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="721.0" style="font-size:13px">Squall line</text>
+<circle cx="33.0" cy="739.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="743.0" style="font-size:11.5px">A narrow band of active</text>
+<text class="s" x="42.0" y="758.0" style="font-size:11.5px">thunderstorms, often on or</text>
+<text class="s" x="42.0" y="773.0" style="font-size:11.5px">ahead of a cold front.</text>
+<circle cx="33.0" cy="787.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="791.0" style="font-size:11.5px">Too long to detour, too severe</text>
+<text class="s" x="42.0" y="806.0" style="font-size:11.5px">to penetrate.</text>
+<circle cx="33.0" cy="820.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="824.0" style="font-size:11.5px">Strongest in late afternoon and</text>
+<text class="s" x="42.0" y="839.0" style="font-size:11.5px">the first hours of darkness.</text>
+<rect class="cl" x="254.0" y="703.0" width="222.0" height="152.0" rx="8"/>
+<rect x="254.0" y="703.0" width="222.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="264.0" y="721.0" style="font-size:13px">Visibility and altimeter</text>
+<circle cx="267.0" cy="739.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="743.0" style="font-size:11.5px">Visibility is near zero inside</text>
+<text class="s" x="276.0" y="758.0" style="font-size:11.5px">the cloud.</text>
+<circle cx="267.0" cy="772.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="776.0" style="font-size:11.5px">Pressure drops, jumps at the</text>
+<text class="s" x="276.0" y="791.0" style="font-size:11.5px">first gust, then falls back, in</text>
+<text class="s" x="276.0" y="806.0" style="font-size:11.5px">about 15 minutes. Without a</text>
+<text class="s" x="276.0" y="821.0" style="font-size:11.5px">corrected setting the altimeter</text>
+<text class="s" x="276.0" y="836.0" style="font-size:11.5px">may be over 100 feet in error.</text>
+<rect class="cl" x="488.0" y="703.0" width="222.0" height="152.0" rx="8"/>
+<rect x="488.0" y="703.0" width="222.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="498.0" y="721.0" style="font-size:13px">The rule</text>
+<circle cx="501.0" cy="739.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="743.0" style="font-size:11.5px">Stay at least 20 NM away from a</text>
+<text class="s" x="510.0" y="758.0" style="font-size:11.5px">severe storm or an extreme</text>
+<text class="s" x="510.0" y="773.0" style="font-size:11.5px">radar echo.</text>
+<circle cx="501.0" cy="787.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="791.0" style="font-size:11.5px">You cannot fly over one in a</text>
+<text class="s" x="510.0" y="806.0" style="font-size:11.5px">light aircraft.</text>
+<circle cx="501.0" cy="820.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="824.0" style="font-size:11.5px">If you cannot go around, stay</text>
+<text class="s" x="510.0" y="839.0" style="font-size:11.5px">on the ground.</text>
+</svg>

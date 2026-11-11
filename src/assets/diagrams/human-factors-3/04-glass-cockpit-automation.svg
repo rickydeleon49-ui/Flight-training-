@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 580" role="img" aria-labelledby="ti de"><title id="ti">Glass cockpit and automation: three skills</title><desc id="de">Two bars show that almost 40 percent of general aviation accidents happen in landing and another 15 percent in takeoff and initial climb. Three cards cover the skills of information, automation and risk management. Two more cards give checks before relying on automation, and the 1999 Colombia accident caused by a waypoint entered one degree wrong.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style><style>.PN{fill:#1c2230;stroke:#8b93a7;stroke-width:1.2}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Glass cockpit and automation: three skills</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Advanced avionics add information, but they do not replace basic flying. Learn to fly the airplane</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">first, then manage the screens.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="96" rx="8"/>
+<text class="t" x="30" y="111.0" style="font-size:13px">Where general aviation accidents happen</text>
+<rect x="30" y="129.0" width="320" height="16" rx="3" class="ah"/>
+<text class="s" x="360" y="142.0" style="font-size:11.5px">Landing phase: almost 40 percent</text>
+<rect x="30" y="155.0" width="120" height="16" rx="3" class="ah"/>
+<text class="s" x="160" y="168.0" style="font-size:11.5px">Takeoff and initial climb: another 15 percent</text>
+<rect class="cl" x="20.0" y="197.0" width="222.0" height="182.0" rx="8"/>
+<rect x="20.0" y="197.0" width="222.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="35.0" cy="210.0" r="9" class="ah"/><text class="t m" x="35.0" y="213.66666666666666" style="font-size:11px;fill:#fff">1</text>
+<text class="t" x="50.0" y="215.0" style="font-size:13px">Information</text>
+<circle cx="33.0" cy="233.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="237.0" style="font-size:11.5px">Learn how the system is</text>
+<text class="s" x="42.0" y="252.0" style="font-size:11.5px">organized, not only which knobs</text>
+<text class="s" x="42.0" y="267.0" style="font-size:11.5px">to turn. Expect surprises.</text>
+<circle cx="33.0" cy="281.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="285.0" style="font-size:11.5px">Stop, look and read before you</text>
+<text class="s" x="42.0" y="300.0" style="font-size:11.5px">push, pull or twist.</text>
+<circle cx="33.0" cy="314.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="318.0" style="font-size:11.5px">Set up the screens: map</text>
+<text class="s" x="42.0" y="333.0" style="font-size:11.5px">orientation, how much to show,</text>
+<text class="s" x="42.0" y="348.0" style="font-size:11.5px">map scale for en route versus</text>
+<text class="s" x="42.0" y="363.0" style="font-size:11.5px">terminal.</text>
+<rect class="cl" x="254.0" y="197.0" width="222.0" height="182.0" rx="8"/>
+<rect x="254.0" y="197.0" width="222.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="269.0" cy="210.0" r="9" class="ah"/><text class="t m" x="269.0" y="213.66666666666666" style="font-size:11px;fill:#fff">2</text>
+<text class="t" x="284.0" y="215.0" style="font-size:13px">Automation</text>
+<circle cx="267.0" cy="233.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="237.0" style="font-size:11.5px">Know which autopilot modes are</text>
+<text class="s" x="276.0" y="252.0" style="font-size:11.5px">engaged and which are armed,</text>
+<text class="s" x="276.0" y="267.0" style="font-size:11.5px">and check armed modes engage on</text>
+<text class="s" x="276.0" y="282.0" style="font-size:11.5px">time.</text>
+<circle cx="267.0" cy="296.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="300.0" style="font-size:11.5px">Use callouts, even when alone.</text>
+<circle cx="267.0" cy="314.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="318.0" style="font-size:11.5px">Know how the autopilot reacts</text>
+<text class="s" x="276.0" y="333.0" style="font-size:11.5px">to other changes. Some drop to</text>
+<text class="s" x="276.0" y="348.0" style="font-size:11.5px">wing level if you switch the</text>
+<text class="s" x="276.0" y="363.0" style="font-size:11.5px">navigation source.</text>
+<rect class="cl" x="488.0" y="197.0" width="222.0" height="182.0" rx="8"/>
+<rect x="488.0" y="197.0" width="222.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="503.0" cy="210.0" r="9" class="ah"/><text class="t m" x="503.0" y="213.66666666666666" style="font-size:11px;fill:#fff">3</text>
+<text class="t" x="518.0" y="215.0" style="font-size:13px">Risk</text>
+<circle cx="501.0" cy="233.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="237.0" style="font-size:11.5px">People are poor monitors of</text>
+<text class="s" x="510.0" y="252.0" style="font-size:11.5px">automated systems, and the more</text>
+<text class="s" x="510.0" y="267.0" style="font-size:11.5px">reliable it is, the worse they</text>
+<text class="s" x="510.0" y="282.0" style="font-size:11.5px">do.</text>
+<circle cx="501.0" cy="296.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="300.0" style="font-size:11.5px">Do not let the equipment make</text>
+<text class="s" x="510.0" y="315.0" style="font-size:11.5px">you the passenger in command.</text>
+<circle cx="501.0" cy="329.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="333.0" style="font-size:11.5px">Sometimes good judgment means</text>
+<text class="s" x="510.0" y="348.0" style="font-size:11.5px">saying no to a flight.</text>
+<rect class="cl" x="20" y="395.0" width="335" height="132" rx="8"/>
+<rect x="20" y="395.0" width="335" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="413.0" style="font-size:13px">Before you rely on it</text>
+<circle cx="33" cy="435.0" r="2.2" class="ah"/>
+<text class="s" x="42" y="439.0" style="font-size:11.5px">Verify everything programmed on the ground.</text>
+<circle cx="33" cy="453.0" r="2.2" class="ah"/>
+<text class="s" x="42" y="457.0" style="font-size:11.5px">Match the route to a paper log. If they differ, do</text>
+<text class="s" x="42" y="472.0" style="font-size:11.5px">not assume the computer is right.</text>
+<circle cx="33" cy="486.0" r="2.2" class="ah"/>
+<text class="s" x="42" y="490.0" style="font-size:11.5px">Verify waypoints. Back up GPS with VOR.</text>
+<circle cx="33" cy="504.0" r="2.2" class="ah"/>
+<text class="s" x="42" y="508.0" style="font-size:11.5px">Stay within your own limits.</text>
+<rect class="cl" x="375" y="395.0" width="335" height="132" rx="8"/>
+<rect x="375" y="395.0" width="335" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="385" y="413.0" style="font-size:13px">A one degree mistake</text>
+<text class="s" x="385" y="439.0" style="font-size:11.5px">In 1999 a crew in Colombia entered one waypoint</text>
+<text class="s" x="385" y="454.0" style="font-size:11.5px">wrong by one degree. The flight path ran 60 NM off</text>
+<text class="s" x="385" y="469.0" style="font-size:11.5px">course and into the Andes. They had charts and a</text>
+<text class="s" x="385" y="484.0" style="font-size:11.5px">paper log but let the automation fly itself.</text>
+<text class="s" x="20" y="545.0" style="font-size:12px">Electronic flight displays are a tool for safety. They do not replace basic flight knowledge and skills. The</text>
+<text class="s" x="20" y="560.5" style="font-size:12px">most common theme in fatal advanced-avionics accidents: continued VFR flight into IMC.</text>
+</svg>

@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 815" role="img" aria-labelledby="ti de"><title id="ti">Night vision illusions</title><desc id="de">Two night scenes: a single amber light in the dark that seems to drift after about 8 to 10 seconds, and a row of shore lights above dark water that look like stars. Below them, seven numbered cards for autokinesis, false horizon, reversible perspective, size-distance, fascination, flicker vertigo and night landing illusions, plus two cards on planning ahead and oxygen at night.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style><style>.PN{fill:#1c2230;stroke:#8b93a7;stroke-width:1.2}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Night vision illusions</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">The eyes can be fooled at night. Knowing the illusions ahead of time is usually the best way to avoid</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">them. Cards 1 to 7 are the illusions; the last two are ways to prepare.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="150" rx="8"/>
+<rect x="34" y="123.0" width="300" height="102" rx="6" class="PN"/>
+<text class="t" x="30" y="111.0" style="font-size:13px">1. One light in the dark</text>
+<circle cx="150" cy="179.0" r="6" fill="#f5a623"/>
+<circle cx="200" cy="172.75" r="6" fill="#f5a623" style="opacity:0.55"/>
+<circle cx="250" cy="166.5" r="6" fill="#f5a623" style="opacity:0.3"/>
+<path d="M162 177.0L238 167.0" class="o d" style="stroke:#f5a623;stroke-width:1.5"/>
+<text class="s m" x="184" y="151.0" style="font-size:11px;fill:#e8ecf5">seems to move on its own</text>
+<text class="s m" x="184" y="213.0" style="font-size:11px;fill:#e8ecf5">after about 8 to 10 seconds</text>
+<text class="t" x="380" y="111.0" style="font-size:13px">2. Shore lights over dark water</text>
+<rect x="380" y="123.0" width="320" height="102" rx="6" class="PN"/>
+<circle cx="410" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="452" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="494" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="536" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="578" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="620" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="662" cy="181.0" r="2.6" fill="#f5a623"/>
+<circle cx="420" cy="141.0" r="1.8" fill="#e8ecf5"/>
+<circle cx="500" cy="149.0" r="1.8" fill="#e8ecf5"/>
+<circle cx="590" cy="139.0" r="1.8" fill="#e8ecf5"/>
+<circle cx="660" cy="153.0" r="1.8" fill="#e8ecf5"/>
+<rect x="380" y="187.0" width="320" height="38" rx="4" fill="#0b0f1a" fill-opacity=".7"/>
+<text class="s m" x="540" y="211.0" style="font-size:11px;fill:#e8ecf5">Dark water: no horizon visible</text>
+<text class="s m" x="540" y="171.0" style="font-size:11px;fill:#e8ecf5">Shore lights can look like stars</text>
+<rect class="cl" x="20.0" y="251.0" width="222.0" height="182.0" rx="8"/>
+<rect x="20.0" y="251.0" width="222.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="35.0" cy="264.0" r="9" class="ah"/><text class="t m" x="35.0" y="267.6666666666667" style="font-size:11px;fill:#fff">1</text>
+<text class="t" x="50.0" y="269.0" style="font-size:13px">Autokinesis</text>
+<circle cx="33.0" cy="287.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="291.0" style="font-size:11.5px">Staring at one light against a</text>
+<text class="s" x="42.0" y="306.0" style="font-size:11.5px">dark background for more than a</text>
+<text class="s" x="42.0" y="321.0" style="font-size:11.5px">few seconds.</text>
+<circle cx="33.0" cy="335.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="339.0" style="font-size:11.5px">The light seems to move on its</text>
+<text class="s" x="42.0" y="354.0" style="font-size:11.5px">own, in about 8 to 10 seconds.</text>
+<circle cx="33.0" cy="368.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="372.0" style="font-size:11.5px">Scan, and look at objects at</text>
+<text class="s" x="42.0" y="387.0" style="font-size:11.5px">varying distances. Never stare</text>
+<text class="s" x="42.0" y="402.0" style="font-size:11.5px">at a light for more than 10</text>
+<text class="s" x="42.0" y="417.0" style="font-size:11.5px">seconds.</text>
+<rect class="cl" x="254.0" y="251.0" width="222.0" height="182.0" rx="8"/>
+<rect x="254.0" y="251.0" width="222.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="269.0" cy="264.0" r="9" class="ah"/><text class="t m" x="269.0" y="267.6666666666667" style="font-size:11px;fill:#fff">2</text>
+<text class="t" x="284.0" y="269.0" style="font-size:13px">False horizon</text>
+<circle cx="267.0" cy="287.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="291.0" style="font-size:11.5px">The natural horizon is hidden</text>
+<text class="s" x="276.0" y="306.0" style="font-size:11.5px">or hard to see.</text>
+<circle cx="267.0" cy="320.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="324.0" style="font-size:11.5px">Bright stars and city lights</text>
+<text class="s" x="276.0" y="339.0" style="font-size:11.5px">can be confused.</text>
+<circle cx="267.0" cy="353.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="357.0" style="font-size:11.5px">Flying toward a shore, lights</text>
+<text class="s" x="276.0" y="372.0" style="font-size:11.5px">along it can be mistaken for</text>
+<text class="s" x="276.0" y="387.0" style="font-size:11.5px">stars.</text>
+<rect class="cl" x="488.0" y="251.0" width="222.0" height="182.0" rx="8"/>
+<rect x="488.0" y="251.0" width="222.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="503.0" cy="264.0" r="9" class="ah"/><text class="t m" x="503.0" y="267.6666666666667" style="font-size:11px;fill:#fff">3</text>
+<text class="t" x="518.0" y="269.0" style="font-size:13px">Reversible perspective</text>
+<circle cx="501.0" cy="287.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="291.0" style="font-size:11.5px">An aircraft seems to move away</text>
+<text class="s" x="510.0" y="306.0" style="font-size:11.5px">when it is really approaching.</text>
+<text class="s" x="510.0" y="321.0" style="font-size:11.5px">Often when flying parallel to</text>
+<text class="s" x="510.0" y="336.0" style="font-size:11.5px">another course.</text>
+<circle cx="501.0" cy="350.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="354.0" style="font-size:11.5px">Watch its lights against the</text>
+<text class="s" x="510.0" y="369.0" style="font-size:11.5px">horizon. Brighter means</text>
+<text class="s" x="510.0" y="384.0" style="font-size:11.5px">approaching; dimmer means</text>
+<text class="s" x="510.0" y="399.0" style="font-size:11.5px">moving away.</text>
+<rect class="cl" x="20.0" y="445.0" width="222.0" height="149.0" rx="8"/>
+<rect x="20.0" y="445.0" width="222.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="35.0" cy="458.0" r="9" class="ah"/><text class="t m" x="35.0" y="461.6666666666667" style="font-size:11px;fill:#fff">4</text>
+<text class="t" x="50.0" y="463.0" style="font-size:13px">Size-distance</text>
+<circle cx="33.0" cy="481.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="485.0" style="font-size:11.5px">A light that gets brighter or</text>
+<text class="s" x="42.0" y="500.0" style="font-size:11.5px">dimmer.</text>
+<circle cx="33.0" cy="514.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="518.0" style="font-size:11.5px">You may read it as approaching</text>
+<text class="s" x="42.0" y="533.0" style="font-size:11.5px">or retreating.</text>
+<rect class="cl" x="254.0" y="445.0" width="222.0" height="149.0" rx="8"/>
+<rect x="254.0" y="445.0" width="222.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="269.0" cy="458.0" r="9" class="ah"/><text class="t m" x="269.0" y="461.6666666666667" style="font-size:11px;fill:#fff">5</text>
+<text class="t" x="284.0" y="463.0" style="font-size:13px">Fascination (fixation)</text>
+<circle cx="267.0" cy="481.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="485.0" style="font-size:11.5px">You ignore orientation cues and</text>
+<text class="s" x="276.0" y="500.0" style="font-size:11.5px">fix on a goal or an object,</text>
+<text class="s" x="276.0" y="515.0" style="font-size:11.5px">such as the instruments or the</text>
+<text class="s" x="276.0" y="530.0" style="font-size:11.5px">landing.</text>
+<circle cx="267.0" cy="544.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="548.0" style="font-size:11.5px">At night, closure rates are</text>
+<text class="s" x="276.0" y="563.0" style="font-size:11.5px">hard to judge and there may be</text>
+<text class="s" x="276.0" y="578.0" style="font-size:11.5px">little time to correct.</text>
+<rect class="cl" x="488.0" y="445.0" width="222.0" height="149.0" rx="8"/>
+<rect x="488.0" y="445.0" width="222.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="503.0" cy="458.0" r="9" class="ah"/><text class="t m" x="503.0" y="461.6666666666667" style="font-size:11px;fill:#fff">6</text>
+<text class="t" x="518.0" y="463.0" style="font-size:13px">Flicker vertigo</text>
+<circle cx="501.0" cy="481.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="485.0" style="font-size:11.5px">A light flickering at 4 to 20</text>
+<text class="s" x="510.0" y="500.0" style="font-size:11.5px">cycles per second.</text>
+<circle cx="501.0" cy="514.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="518.0" style="font-size:11.5px">Nausea, vomiting and vertigo</text>
+<text class="s" x="510.0" y="533.0" style="font-size:11.5px">may occur. Rarely: convulsions</text>
+<text class="s" x="510.0" y="548.0" style="font-size:11.5px">and unconsciousness.</text>
+<circle cx="501.0" cy="562.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="566.0" style="font-size:11.5px">Proper scanning prevents it.</text>
+<rect class="cl" x="20.0" y="606.0" width="222.0" height="197.0" rx="8"/>
+<rect x="20.0" y="606.0" width="222.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<circle cx="35.0" cy="619.0" r="9" class="ah"/><text class="t m" x="35.0" y="622.6666666666666" style="font-size:11px;fill:#fff">7</text>
+<text class="t" x="50.0" y="624.0" style="font-size:13px">Night landing illusions</text>
+<circle cx="33.0" cy="642.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="646.0" style="font-size:11.5px">Too low: featureless terrain,</text>
+<text class="s" x="42.0" y="661.0" style="font-size:11.5px">rain, haze or a dark runway</text>
+<text class="s" x="42.0" y="676.0" style="font-size:11.5px">area push you to fly lower than</text>
+<text class="s" x="42.0" y="691.0" style="font-size:11.5px">normal.</text>
+<circle cx="33.0" cy="705.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="709.0" style="font-size:11.5px">Too high: bright lights, steep</text>
+<text class="s" x="42.0" y="724.0" style="font-size:11.5px">terrain or a wide runway give a</text>
+<text class="s" x="42.0" y="739.0" style="font-size:11.5px">feeling of being too low, so</text>
+<text class="s" x="42.0" y="754.0" style="font-size:11.5px">you fly higher.</text>
+<circle cx="33.0" cy="768.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="772.0" style="font-size:11.5px">Road lights or train lights can</text>
+<text class="s" x="42.0" y="787.0" style="font-size:11.5px">look like runway lights.</text>
+<rect class="cl" x="254.0" y="606.0" width="222.0" height="197.0" rx="8"/>
+<rect x="254.0" y="606.0" width="222.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="264.0" y="624.0" style="font-size:13px">Plan before you go</text>
+<circle cx="267.0" cy="642.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="646.0" style="font-size:11.5px">Fly your routes by day. Set the</text>
+<text class="s" x="276.0" y="661.0" style="font-size:11.5px">minimum altitude you will</text>
+<text class="s" x="276.0" y="676.0" style="font-size:11.5px">accept at night.</text>
+<circle cx="267.0" cy="690.0" r="2.2" class="ah"/>
+<text class="s" x="276.0" y="694.0" style="font-size:11.5px">If weather stops you keeping</text>
+<text class="s" x="276.0" y="709.0" style="font-size:11.5px">it, decide early to turn 180</text>
+<text class="s" x="276.0" y="724.0" style="font-size:11.5px">degrees and land at an</text>
+<text class="s" x="276.0" y="739.0" style="font-size:11.5px">alternate.</text>
+<rect class="cl" x="488.0" y="606.0" width="222.0" height="197.0" rx="8"/>
+<rect x="488.0" y="606.0" width="222.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="498.0" y="624.0" style="font-size:13px">Oxygen at night</text>
+<circle cx="501.0" cy="642.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="646.0" style="font-size:11.5px">Think about oxygen at altitudes</text>
+<text class="s" x="510.0" y="661.0" style="font-size:11.5px">and times the FAA does not</text>
+<text class="s" x="510.0" y="676.0" style="font-size:11.5px">require, when judgment and</text>
+<text class="s" x="510.0" y="691.0" style="font-size:11.5px">hand-eye coordination matter</text>
+<text class="s" x="510.0" y="706.0" style="font-size:11.5px">(for example IFR).</text>
+<circle cx="501.0" cy="720.0" r="2.2" class="ah"/>
+<text class="s" x="510.0" y="724.0" style="font-size:11.5px">Also if you smoke or are not</text>
+<text class="s" x="510.0" y="739.0" style="font-size:11.5px">perfectly healthy.</text>
+</svg>

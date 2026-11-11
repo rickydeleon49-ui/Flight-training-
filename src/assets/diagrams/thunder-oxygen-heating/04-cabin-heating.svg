@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 667" role="img" aria-labelledby="ti de"><title id="ti">Cabin heating: four kinds</title><desc id="de">Four lanes, one for each heating system, each with three steps from heat source to cabin: exhaust heating, fuel fired heater, combustion heater and bleed air heating. Each lane has a safety note: carbon monoxide risk from a defective exhaust system, leaking vents on fuel fired heaters, the overheat switch on combustion heaters and the safety sensors on bleed air systems.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style><style>.PN{fill:#1c2230;stroke:#8b93a7;stroke-width:1.2}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Cabin heating: four kinds</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Cabin heat comes from different sources depending on the aircraft. Most light aircraft use exhaust</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">heat, so a defective one is a carbon monoxide risk.</text>
+<rect class="cl" x="20" y="89.0" width="690" height="126" rx="8"/>
+<rect x="20" y="89.0" width="690" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="107.0" style="font-size:13px">Exhaust heating</text>
+<text class="s e" x="700" y="107.0" style="font-size:11.5px">Most light aircraft</text>
+<rect x="30.0" y="125.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="133.0" y="147.0" style="font-size:11.5px">Hot exhaust gases</text>
+<path d="M239.0 147.0L251.0 147.0" class="acc" style="stroke-width:2.5"/><path d="M259.0 147.0L251.0 150.6L251.0 143.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="262.0" y="125.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="365.0" y="140.0" style="font-size:11.5px">Also a heat source for the cabin</text>
+<text class="s m" x="365.0" y="154.0" style="font-size:11.5px">and carburetor</text>
+<path d="M471.0 147.0L483.0 147.0" class="acc" style="stroke-width:2.5"/><path d="M491.0 147.0L483.0 150.6L483.0 143.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="494.0" y="125.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="597.0" y="147.0" style="font-size:11.5px">Cabin heat</text>
+<text class="s" x="30" y="187.0" style="font-size:11.5px">Defective: carbon monoxide poisoning, lower engine performance, more fire risk.</text>
+<rect class="cl" x="20" y="225.0" width="690" height="126" rx="8"/>
+<rect x="20" y="225.0" width="690" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="243.0" style="font-size:13px">Fuel fired heater</text>
+<text class="s e" x="700" y="243.0" style="font-size:11.5px">Small, mounted or portable</text>
+<rect x="30.0" y="261.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="133.0" y="276.0" style="font-size:11.5px">Fan blows air into a combustion</text>
+<text class="s m" x="133.0" y="290.0" style="font-size:11.5px">chamber; spark lights the fuel</text>
+<path d="M239.0 283.0L251.0 283.0" class="acc" style="stroke-width:2.5"/><path d="M259.0 283.0L251.0 286.6L251.0 279.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="262.0" y="261.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="365.0" y="276.0" style="font-size:11.5px">Second fan blows air warmed</text>
+<text class="s m" x="365.0" y="290.0" style="font-size:11.5px">around the tube</text>
+<path d="M471.0 283.0L483.0 283.0" class="acc" style="stroke-width:2.5"/><path d="M491.0 283.0L483.0 286.6L483.0 279.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="494.0" y="261.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="597.0" y="283.0" style="font-size:11.5px">Warm air to the interior</text>
+<text class="s" x="30" y="323.0" style="font-size:11.5px">5,000 to 50,000 BTU per hour. Needs 12 or 24 volts. Vents must not leak into the cabin. By-products include</text>
+<text class="s" x="30" y="338.0" style="font-size:11.5px">carbon monoxide.</text>
+<rect class="cl" x="20" y="361.0" width="690" height="126" rx="8"/>
+<rect x="20" y="361.0" width="690" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="379.0" style="font-size:13px">Combustion heater</text>
+<text class="s e" x="700" y="379.0" style="font-size:11.5px">Larger aircraft</text>
+<rect x="30.0" y="397.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="133.0" y="412.0" style="font-size:11.5px">Burns fuel in an airtight</text>
+<text class="s m" x="133.0" y="426.0" style="font-size:11.5px">chamber</text>
+<path d="M239.0 419.0L251.0 419.0" class="acc" style="stroke-width:2.5"/><path d="M259.0 419.0L251.0 422.6L251.0 415.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="262.0" y="397.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="365.0" y="412.0" style="font-size:11.5px">Ventilation air passes over the</text>
+<text class="s m" x="365.0" y="426.0" style="font-size:11.5px">chamber</text>
+<path d="M471.0 419.0L483.0 419.0" class="acc" style="stroke-width:2.5"/><path d="M491.0 419.0L483.0 422.6L483.0 415.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="494.0" y="397.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="597.0" y="419.0" style="font-size:11.5px">Warm air to the cabin</text>
+<text class="s" x="30" y="459.0" style="font-size:11.5px">Overheat switch shuts off the fuel. Carbon monoxide is unlikely: air pressure outside the chamber is higher than</text>
+<text class="s" x="30" y="474.0" style="font-size:11.5px">inside, so a leak goes into the chamber and out the exhaust.</text>
+<rect class="cl" x="20" y="497.0" width="690" height="126" rx="8"/>
+<rect x="20" y="497.0" width="690" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="515.0" style="font-size:13px">Bleed air heating</text>
+<text class="s e" x="700" y="515.0" style="font-size:11.5px">Turbine aircraft</text>
+<rect x="30.0" y="533.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="133.0" y="548.0" style="font-size:11.5px">Extremely hot compressor bleed</text>
+<text class="s m" x="133.0" y="562.0" style="font-size:11.5px">air</text>
+<path d="M239.0 555.0L251.0 555.0" class="acc" style="stroke-width:2.5"/><path d="M259.0 555.0L251.0 558.6L251.0 551.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="262.0" y="533.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="365.0" y="548.0" style="font-size:11.5px">Mixed with ambient or</text>
+<text class="s m" x="365.0" y="562.0" style="font-size:11.5px">recirculated air to cool it</text>
+<path d="M471.0 555.0L483.0 555.0" class="acc" style="stroke-width:2.5"/><path d="M491.0 555.0L483.0 558.6L483.0 551.4Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect x="494.0" y="533.0" width="206.0" height="44" rx="6" class="cl" style="stroke:currentColor;stroke-width:1.2"/>
+<text class="s m" x="597.0" y="555.0" style="font-size:11.5px">Air to the cabin</text>
+<text class="s" x="30" y="595.0" style="font-size:11.5px">Safety features: temperature sensors, check valves for engine start and full power, and engine sensors.</text>
+<text class="s" x="20" y="645.0" style="font-size:12.5px">Always read the heating section of the aircraft manual. Each system has its own inspection criteria.</text>
+</svg>
