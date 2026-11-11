@@ -72,9 +72,10 @@ describe("shipped SVG files", () => {
     }
   });
 
-  it("stay under 3 MB in total", () => {
+  // Cap raised 3 -> 3.5 MB: SVGs are minified (see scripts/minify-diagrams.mjs) but new PHAK sets need room.
+  it("stay under 3.5 MB in total", () => {
     const bytes = DIAGRAMS.reduce((n, d) => n + statSync(join(ROOT, d.set, d.file)).size, 0);
-    expect(bytes).toBeLessThan(3 * 1024 * 1024);
+    expect(bytes).toBeLessThan(3.5 * 1024 * 1024);
   });
 
   it("are already minified (run node scripts/minify-diagrams.mjs)", () => {

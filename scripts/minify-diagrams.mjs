@@ -23,10 +23,13 @@ const shortNumber = (n) => {
   return s === "-0" ? "0" : s;
 };
 
-// Only path d, points and transform attributes get shorter numbers.
+// Geometry attributes (path d, points, transform and plain coordinates/sizes) get shorter numbers.
+// Trailing ".0" goes too. Text, style and CSS content is never touched here.
+const GEOMETRY = "d|points|transform|x|y|x1|y1|x2|y2|cx|cy|r|rx|ry|width|height|viewBox|stroke-width|stroke-dasharray|fill-opacity|opacity";
 function shortenNumbers(markup) {
-  return markup.replace(/(\s(?:d|points|transform)=)(["'])([^"']*)\2/g, (_m, pre, q, value) =>
-    pre + q + value.replace(/\d+\.\d{3,}/g, shortNumber) + q,
+  const re = new RegExp(`(\\s(?:${GEOMETRY})=)(["'])([^"']*)\\2`, "g");
+  return markup.replace(re, (_m, pre, q, value) =>
+    pre + q + value.replace(/\d+\.\d+/g, (n) => shortNumber(n)) + q,
   );
 }
 
@@ -62,7 +65,47 @@ export function minify(svg) {
   out = out.replace(/>[ \t\r\n]+</g, (all, offset) => {
     return isInsideProtected(out, offset) ? all : "><";
   });
-  return out.trim() + "\n";
+  return hoistStyles(out.trim()) + "\n";
+}
+
+// Repeated inline style="..." values become one class each (appended last in the file's own
+// <style>, so same-specificity rules still lose to them just like they lost to inline styles).
+function hoistStyles(svg) {
+  const lastClose = svg.lastIndexOf("</style>");
+  if (lastClose === -1) return svg;
+  const tag = /<(text|path|rect|circle|ellipse|polygon|g)\b([^>]*?)(\/?)>/g;
+  const counts = new Map();
+  for (const m of svg.matchAll(tag)) {
+    const st = m[2].match(/\sstyle="([^"]*)"/);
+    if (st) counts.set(st[1], (counts.get(st[1]) || 0) + 1);
+  }
+  const names = new Map();
+  let rules = "";
+  const existing = new Set(svg.match(/\bq\d+\b/g) || []);
+  let i = 0;
+  for (const [value, n] of [...counts].sort((a, b) => b[1] - a[1])) {
+    const name = () => { while (existing.has("q" + i)) i += 1; return "q" + i; };
+    const cls = name();
+    // Saved per use: ` style="V"` -> ` q1` (when a class attr exists) or ` class="q1"`.
+    const saved = n * (` style="${value}"`.length - ` class="${cls}"`.length);
+    const cost = `.${cls}{${value}}`.length;
+    if (saved <= cost + 8) continue;
+    existing.add(cls);
+    names.set(value, cls);
+    rules += `.${cls}{${value}}`;
+  }
+  if (!names.size) return svg;
+  const body = svg.replace(tag, (all, el, attrs, slash) => {
+    const st = attrs.match(/\sstyle="([^"]*)"/);
+    if (!st || !names.has(st[1])) return all;
+    const cls = names.get(st[1]);
+    let rest = attrs.replace(st[0], "");
+    const c = rest.match(/\sclass="([^"]*)"/);
+    rest = c ? rest.replace(c[0], ` class="${c[1]} ${cls}"`) : rest + ` class="${cls}"`;
+    return `<${el}${rest}${slash}>`;
+  });
+  const close = body.lastIndexOf("</style>");
+  return body.slice(0, close) + rules + body.slice(close);
 }
 
 // True when the offset sits inside a <text>...</text> block (whitespace between tspans matters).
