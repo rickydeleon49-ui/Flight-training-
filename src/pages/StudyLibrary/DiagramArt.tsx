@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { diagramPhotoAlt, scopeDiagramSvg, type Diagram } from "@/logic/diagrams";
 import "./diagrams.css";
 
@@ -23,6 +23,34 @@ function loadDiagram(diagram: Diagram): Promise<string> {
     cache.set(key, found);
   }
   return found;
+}
+
+// Diagram style rules go in through the CSSOM (one shared constructed sheet):
+// the packaged app's CSP blocks an injected <style> element but not this.
+const scopedRules = new Map<string, string>();
+let sharedSheet: CSSStyleSheet | null = null;
+
+function syncSheet(): void {
+  if (typeof document === "undefined" || typeof CSSStyleSheet === "undefined" || !("adoptedStyleSheets" in document)) return;
+  try {
+    if (!sharedSheet) {
+      sharedSheet = new CSSStyleSheet();
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sharedSheet];
+    }
+    sharedSheet.replaceSync([...scopedRules.values()].join("\n"));
+  } catch {
+    // No constructable sheets here (old engine, test DOM): diagrams fall back to their own colours.
+  }
+}
+
+/** Install a diagram's scoped CSS while it is mounted; returns the remover. */
+function useDiagramCss(scope: string, css: string | null): void {
+  useEffect(() => {
+    if (!css) return;
+    scopedRules.set(scope, css);
+    syncSheet();
+    return () => { scopedRules.delete(scope); syncSheet(); };
+  }, [scope, css]);
 }
 
 /**
@@ -68,13 +96,15 @@ function DiagramSvg({ diagram, decorative }: { diagram: Diagram; decorative: boo
     return () => { live = false; };
   }, [diagram]);
   const ready = state?.file === diagram.id ? state : null;
+  const scoped = useMemo(() => (ready?.svg ? scopeDiagramSvg(ready.svg, prefix) : null), [ready?.svg, prefix]);
+  useDiagramCss(prefix.slice(0, -1), scoped?.css ?? null);
   if (ready && ready.svg === null) return <p className="small muted diagram-art diagram-art--empty">This diagram couldn't be loaded.</p>;
   return (
     <div
       className={`diagram-art ${prefix.slice(0, -1)}${ready ? "" : " diagram-art--loading"}`}
       aria-hidden={decorative || undefined}
       // eslint-disable-next-line react/no-danger -- our own bundled SVG file
-      dangerouslySetInnerHTML={ready?.svg ? { __html: scopeDiagramSvg(ready.svg, prefix) } : undefined}
+      dangerouslySetInnerHTML={scoped ? { __html: scoped.markup } : undefined}
     />
   );
 }
