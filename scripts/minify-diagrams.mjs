@@ -49,7 +49,12 @@ export function minify(svg) {
       const open = piece.markup.match(/^<[^>]*>/)[0];
       parts.push(shortenNumbers(open) + piece.markup.slice(open.length));
     } else {
-      parts.push(shortenNumbers(piece.markup.replace(/<!--[\s\S]*?-->/g, "")));
+      let stripped = piece.markup;
+      for (let prev = ""; prev !== stripped; ) {
+        prev = stripped;
+        stripped = stripped.replace(/<!--[\s\S]*?-->/g, "");
+      }
+      parts.push(shortenNumbers(stripped));
     }
   }
   let out = parts.join("");

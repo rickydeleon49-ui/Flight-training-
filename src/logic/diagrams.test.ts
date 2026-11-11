@@ -109,7 +109,15 @@ describe("shipped SVG files", () => {
 });
 
 describe("scopeDiagramSvg", () => {
-  const text = (svg: string) => [...svg.replace(/<style[\s\S]*?<\/style>/g, "").matchAll(/>([^<]+)</g)].map((m) => m[1]);
+  const stripStyle = (svg: string) => {
+    let out = svg;
+    for (let prev = ""; prev !== out; ) {
+      prev = out;
+      out = out.replace(/<style[\s\S]*?<\/style\s*>/gi, "");
+    }
+    return out;
+  };
+  const text = (svg: string) => [...stripStyle(svg).matchAll(/>([^<]+)</g)].map((m) => m[1]);
 
   it("keeps the visible text the same and prefixes every id and reference", () => {
     for (const diagram of SVGS) {
