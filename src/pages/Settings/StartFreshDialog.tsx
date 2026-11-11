@@ -161,7 +161,7 @@ export function StartFreshDialog({
       <div className="stack stack--4">
         <p className="muted">
           This erases your notes, logbook, study material, progress and saved safety copies on this
-          device. Your Gemini key stays saved. Backups you saved to iCloud or Files are not
+          device. Your AI key stays saved. Backups you saved to iCloud or Files are not
           touched.
         </p>
         <div>

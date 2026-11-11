@@ -49,7 +49,7 @@ describe("StartFreshDialog", () => {
   it("displays the exact plain-words body text", () => {
     render(<StartFreshDialog open={true} onClose={vi.fn()} />);
     const expected =
-      "This erases your notes, logbook, study material, progress and saved safety copies on this device. Your Gemini key stays saved. Backups you saved to iCloud or Files are not touched.";
+      "This erases your notes, logbook, study material, progress and saved safety copies on this device. Your AI key stays saved. Backups you saved to iCloud or Files are not touched.";
     expect(screen.getByText(expected)).toBeDefined();
   });
 

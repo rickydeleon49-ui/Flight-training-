@@ -2971,8 +2971,8 @@ mod tests {
             .collect();
         assert_eq!(
             allowed_paths,
-            vec!["$APPCONFIG/documents/**"],
-            "the webview may open documents only; the data folder is opened by `open_data_folder`"
+            vec!["$APPCONFIG/documents/**", "$APPCACHE/open-copies/**"],
+            "the webview may open documents and their named open copies only; the data folder is opened by `open_data_folder`"
         );
 
         let lib = include_str!("lib.rs");
@@ -2984,14 +2984,18 @@ mod tests {
 
     /// Capabilities must never grant unbounded or broad filesystem access.
     /// Every path scope in `opener` permissions must stay strictly pinned to
-    /// `$APPCONFIG` or `$APPCONFIG/documents/**`.
+    /// `$APPCONFIG`, `$APPCONFIG/documents/**` or `$APPCACHE/open-copies/**`.
     #[test]
     fn capabilities_do_not_grant_broad_filesystem_access() {
         let raw = include_str!("../capabilities/default.json");
         let capabilities: serde_json::Value = serde_json::from_str(raw).unwrap();
         let permissions = capabilities["permissions"].as_array().unwrap();
 
-        const APPROVED_PATH_SCOPES: &[&str] = &["$APPCONFIG", "$APPCONFIG/documents/**"];
+        const APPROVED_PATH_SCOPES: &[&str] = &[
+            "$APPCONFIG",
+            "$APPCONFIG/documents/**",
+            "$APPCACHE/open-copies/**",
+        ];
 
         for entry in permissions {
             if let Some(id) = entry.get("identifier").and_then(|id| id.as_str()) {
