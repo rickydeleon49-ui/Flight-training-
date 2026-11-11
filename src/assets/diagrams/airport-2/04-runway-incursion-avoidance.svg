@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 959.5" role="img" aria-labelledby="ti de"><title id="ti">Avoiding a runway incursion</title><desc id="de">What a runway incursion is, then three groups of habits: plan with the airport diagram, signs and NOTAMs; hear it right by reading back, writing down and saying unable; and look with eyes outside. Extra care with hold short, line up and wait, and runway crossing instructions, the numbers from the FAA data, and runway confusion.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Avoiding a runway incursion</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">A runway incursion is any occurrence in the airport runway environment involving an aircraft, vehicle,</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">person or object on the ground that creates a collision hazard or a loss of required separation with</text>
+<text class="s" x="20" y="83.0" style="font-size:13px">an aircraft taking off, intending to take off, landing or intending to land.</text>
+<rect class="cl" x="20.0" y="107.5" width="220.66666666666666" height="245.0" rx="8"/>
+<rect x="20.0" y="107.5" width="220.66666666666666" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="125.5" style="font-size:13px">Plan</text>
+<circle cx="33.0" cy="143.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="147.5" style="font-size:11.5px">Review the airport layout in</text>
+<text class="s" x="42.0" y="162.5" style="font-size:11.5px">preflight planning, before</text>
+<text class="s" x="42.0" y="177.5" style="font-size:11.5px">descending to land and while</text>
+<text class="s" x="42.0" y="192.5" style="font-size:11.5px">taxiing.</text>
+<circle cx="33.0" cy="206.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="210.5" style="font-size:11.5px">Know airport signage.</text>
+<circle cx="33.0" cy="224.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="228.5" style="font-size:11.5px">Review NOTAMs for runway and</text>
+<text class="s" x="42.0" y="243.5" style="font-size:11.5px">taxiway closures and</text>
+<text class="s" x="42.0" y="258.5" style="font-size:11.5px">construction.</text>
+<circle cx="33.0" cy="272.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="276.5" style="font-size:11.5px">Keep a current airport diagram</text>
+<text class="s" x="42.0" y="291.5" style="font-size:11.5px">and trace your taxi route.</text>
+<rect class="cl" x="254.66666666666666" y="107.5" width="220.66666666666666" height="245.0" rx="8"/>
+<rect x="254.66666666666666" y="107.5" width="220.66666666666666" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="264.66666666666663" y="125.5" style="font-size:13px">Hear it right</text>
+<circle cx="267.66666666666663" cy="143.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="147.5" style="font-size:11.5px">Read back all runway crossing</text>
+<text class="s" x="276.66666666666663" y="162.5" style="font-size:11.5px">and hold instructions,</text>
+<text class="s" x="276.66666666666663" y="177.5" style="font-size:11.5px">including the runway and your</text>
+<text class="s" x="276.66666666666663" y="192.5" style="font-size:11.5px">call sign.</text>
+<circle cx="267.66666666666663" cy="206.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="210.5" style="font-size:11.5px">Write down complex taxi</text>
+<text class="s" x="276.66666666666663" y="225.5" style="font-size:11.5px">instructions, especially at</text>
+<text class="s" x="276.66666666666663" y="240.5" style="font-size:11.5px">unfamiliar airports.</text>
+<circle cx="267.66666666666663" cy="254.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="258.5" style="font-size:11.5px">Ask for "progressive taxi" if</text>
+<text class="s" x="276.66666666666663" y="273.5" style="font-size:11.5px">unsure of the route, or "say</text>
+<text class="s" x="276.66666666666663" y="288.5" style="font-size:11.5px">again".</text>
+<circle cx="267.66666666666663" cy="302.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="306.5" style="font-size:11.5px">Say "UNABLE" if you cannot</text>
+<text class="s" x="276.66666666666663" y="321.5" style="font-size:11.5px">safely comply.</text>
+<rect class="cl" x="489.3333333333333" y="107.5" width="220.66666666666666" height="245.0" rx="8"/>
+<rect x="489.3333333333333" y="107.5" width="220.66666666666666" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="499.3333333333333" y="125.5" style="font-size:13px">Look</text>
+<circle cx="502.3333333333333" cy="143.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="147.5" style="font-size:11.5px">Heads-up, eyes outside; give</text>
+<text class="s" x="511.3333333333333" y="162.5" style="font-size:11.5px">your full attention to surface</text>
+<text class="s" x="511.3333333333333" y="177.5" style="font-size:11.5px">navigation.</text>
+<circle cx="502.3333333333333" cy="191.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="195.5" style="font-size:11.5px">Check for traffic before</text>
+<text class="s" x="511.3333333333333" y="210.5" style="font-size:11.5px">crossing a hold line or</text>
+<text class="s" x="511.3333333333333" y="225.5" style="font-size:11.5px">entering a taxiway.</text>
+<circle cx="502.3333333333333" cy="239.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="243.5" style="font-size:11.5px">Scan the full length of the</text>
+<text class="s" x="511.3333333333333" y="258.5" style="font-size:11.5px">runway and the final</text>
+<text class="s" x="511.3333333333333" y="273.5" style="font-size:11.5px">approaches, even with a</text>
+<text class="s" x="511.3333333333333" y="288.5" style="font-size:11.5px">clearance.</text>
+<circle cx="502.3333333333333" cy="302.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="306.5" style="font-size:11.5px">Turn on aircraft lights and the</text>
+<text class="s" x="511.3333333333333" y="321.5" style="font-size:11.5px">rotating beacon or strobe</text>
+<text class="s" x="511.3333333333333" y="336.5" style="font-size:11.5px">lights while taxiing.</text>
+<text class="t" x="20" y="372.5" style="font-size:14px">Instructions that need extra care</text>
+<rect class="cl" x="20.0" y="382.5" width="220.66666666666666" height="242.0" rx="8"/>
+<rect x="20.0" y="382.5" width="220.66666666666666" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="400.5" style="font-size:13px">Hold short</text>
+<circle cx="33.0" cy="418.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="422.5" style="font-size:11.5px">Taxi up to, but do not cross,</text>
+<text class="s" x="42.0" y="437.5" style="font-size:11.5px">any part of the runway holding</text>
+<text class="s" x="42.0" y="452.5" style="font-size:11.5px">marking.</text>
+<circle cx="33.0" cy="466.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="470.5" style="font-size:11.5px">At a towered airport, never</text>
+<text class="s" x="42.0" y="485.5" style="font-size:11.5px">cross a hold marking or enter a</text>
+<text class="s" x="42.0" y="500.5" style="font-size:11.5px">runway without explicit ATC</text>
+<text class="s" x="42.0" y="515.5" style="font-size:11.5px">instructions to cross, take off</text>
+<text class="s" x="42.0" y="530.5" style="font-size:11.5px">or "line up and wait" on that</text>
+<text class="s" x="42.0" y="545.5" style="font-size:11.5px">runway.</text>
+<circle cx="33.0" cy="559.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="563.5" style="font-size:11.5px">Read back the whole clearance</text>
+<text class="s" x="42.0" y="578.5" style="font-size:11.5px">and the hold short instruction,</text>
+<text class="s" x="42.0" y="593.5" style="font-size:11.5px">with runway and call sign. This</text>
+<text class="s" x="42.0" y="608.5" style="font-size:11.5px">is mandatory, verbatim.</text>
+<rect class="cl" x="254.66666666666666" y="382.5" width="220.66666666666666" height="242.0" rx="8"/>
+<rect x="254.66666666666666" y="382.5" width="220.66666666666666" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="264.66666666666663" y="400.5" style="font-size:13px">Line up and wait</text>
+<circle cx="267.66666666666663" cy="418.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="422.5" style="font-size:11.5px">It is not a takeoff clearance,</text>
+<text class="s" x="276.66666666666663" y="437.5" style="font-size:11.5px">only a clearance to enter the</text>
+<text class="s" x="276.66666666666663" y="452.5" style="font-size:11.5px">runway and hold in position.</text>
+<circle cx="267.66666666666663" cy="466.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="470.5" style="font-size:11.5px">Pay close attention at night or</text>
+<text class="s" x="276.66666666666663" y="485.5" style="font-size:11.5px">in low visibility.</text>
+<circle cx="267.66666666666663" cy="499.5" r="2.2" class="ah"/>
+<text class="s" x="276.66666666666663" y="503.5" style="font-size:11.5px">Scan the full length of the</text>
+<text class="s" x="276.66666666666663" y="518.5" style="font-size:11.5px">runway and its approach end</text>
+<text class="s" x="276.66666666666663" y="533.5" style="font-size:11.5px">before entering.</text>
+<rect class="cl" x="489.3333333333333" y="382.5" width="220.66666666666666" height="242.0" rx="8"/>
+<rect x="489.3333333333333" y="382.5" width="220.66666666666666" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="499.3333333333333" y="400.5" style="font-size:13px">Crossing runways</text>
+<circle cx="502.3333333333333" cy="418.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="422.5" style="font-size:11.5px">ATC must issue explicit "cross"</text>
+<text class="s" x="511.3333333333333" y="437.5" style="font-size:11.5px">or "hold short" instructions</text>
+<text class="s" x="511.3333333333333" y="452.5" style="font-size:11.5px">for each runway, active,</text>
+<text class="s" x="511.3333333333333" y="467.5" style="font-size:11.5px">inactive or closed.</text>
+<circle cx="502.3333333333333" cy="481.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="485.5" style="font-size:11.5px">Crossings are normally issued</text>
+<text class="s" x="511.3333333333333" y="500.5" style="font-size:11.5px">one at a time.</text>
+<circle cx="502.3333333333333" cy="514.5" r="2.2" class="ah"/>
+<text class="s" x="511.3333333333333" y="518.5" style="font-size:11.5px">Use extra caution at night and</text>
+<text class="s" x="511.3333333333333" y="533.5" style="font-size:11.5px">in reduced visibility.</text>
+<text class="t" x="20" y="644.5" style="font-size:14px">Why it matters</text>
+<rect class="cl" x="20.0" y="654.5" width="220.66666666666666" height="112" rx="8"/>
+<rect x="20.0" y="654.5" width="220.66666666666666" height="34" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="130.33333333333331" y="677.5" style="font-size:16px">About 3 a day</text>
+<text class="s" x="30.0" y="708.5" style="font-size:11.5px">Runway incursions at towered</text>
+<text class="s" x="30.0" y="723.5" style="font-size:11.5px">airports in the United States.</text>
+<rect class="cl" x="254.66666666666666" y="654.5" width="220.66666666666666" height="112" rx="8"/>
+<rect x="254.66666666666666" y="654.5" width="220.66666666666666" height="34" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="365.0" y="677.5" style="font-size:16px">About 65%</text>
+<text class="s" x="264.66666666666663" y="708.5" style="font-size:11.5px">of runway incursions are caused</text>
+<text class="s" x="264.66666666666663" y="723.5" style="font-size:11.5px">by pilots; of those, almost half</text>
+<text class="s" x="264.66666666666663" y="738.5" style="font-size:11.5px">by general aviation pilots.</text>
+<rect class="cl" x="489.3333333333333" y="654.5" width="220.66666666666666" height="112" rx="8"/>
+<rect x="489.3333333333333" y="654.5" width="220.66666666666666" height="34" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t m" x="599.6666666666666" y="677.5" style="font-size:16px">3 causes</text>
+<text class="s" x="499.3333333333333" y="708.5" style="font-size:11.5px">Failure to comply with ATC</text>
+<text class="s" x="499.3333333333333" y="723.5" style="font-size:11.5px">instructions, lack of airport</text>
+<text class="s" x="499.3333333333333" y="738.5" style="font-size:11.5px">familiarity, nonconformance with</text>
+<text class="s" x="499.3333333333333" y="753.5" style="font-size:11.5px">standard operating procedures.</text>
+<rect class="cl" x="20.0" y="778.5" width="338.0" height="167.0" rx="8"/>
+<rect x="20.0" y="778.5" width="338.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="796.5" style="font-size:13px">Taxiing at an unfamiliar airport</text>
+<circle cx="33.0" cy="814.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="818.5" style="font-size:11.5px">Can be very challenging, especially in darkness or</text>
+<text class="s" x="42.0" y="833.5" style="font-size:11.5px">low visibility.</text>
+<circle cx="33.0" cy="847.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="851.5" style="font-size:11.5px">Complete all checklists while the aircraft is</text>
+<text class="s" x="42.0" y="866.5" style="font-size:11.5px">stopped.</text>
+<circle cx="33.0" cy="880.5" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="884.5" style="font-size:11.5px">No non-essential chatter or other activities during</text>
+<text class="s" x="42.0" y="899.5" style="font-size:11.5px">taxi.</text>
+<rect class="cl" x="372.0" y="778.5" width="338.0" height="167.0" rx="8"/>
+<rect x="372.0" y="778.5" width="338.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="382.0" y="796.5" style="font-size:13px">Runway confusion</text>
+<circle cx="385.0" cy="814.5" r="2.2" class="ah"/>
+<text class="s" x="394.0" y="818.5" style="font-size:11.5px">Often means unintentionally taking off or landing</text>
+<text class="s" x="394.0" y="833.5" style="font-size:11.5px">on a taxiway or the wrong runway, usually without</text>
+<text class="s" x="394.0" y="848.5" style="font-size:11.5px">knowing until afterwards.</text>
+<circle cx="385.0" cy="862.5" r="2.2" class="ah"/>
+<text class="s" x="394.0" y="866.5" style="font-size:11.5px">Risk grows with airport complexity, runway</text>
+<text class="s" x="394.0" y="881.5" style="font-size:11.5px">thresholds close together, and using a runway as a</text>
+<text class="s" x="394.0" y="896.5" style="font-size:11.5px">taxiway.</text>
+<circle cx="385.0" cy="910.5" r="2.2" class="ah"/>
+<text class="s" x="394.0" y="914.5" style="font-size:11.5px">Before adding power, check that your heading and</text>
+<text class="s" x="394.0" y="929.5" style="font-size:11.5px">the runway heading are aligned.</text>
+</svg>

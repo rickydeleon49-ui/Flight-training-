@@ -2,12 +2,13 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { TOPIC_LABELS } from "@/domain/types";
-import { DIAGRAMS, diagramSourceLine, diagramsByTopic, diagramsForTopic, scopeDiagramSvg } from "./diagrams";
+import { AI_ILLUSTRATION_LABEL, DIAGRAMS, diagramPhotoAlt, diagramSourceLine, diagramsByTopic, diagramsForTopic, scopeDiagramSvg } from "./diagrams";
 
 const ROOT = join(__dirname, "..", "assets", "diagrams");
 const read = (diagram: { set: string; file: string }) => readFileSync(join(ROOT, diagram.set, diagram.file), "utf8");
 const shipped = readdirSync(ROOT).flatMap((set) =>
-  readdirSync(join(ROOT, set)).filter((f) => f.endsWith(".svg")).map((file) => `${set}/${file}`));
+  readdirSync(join(ROOT, set)).filter((f) => f.endsWith(".svg") || f.endsWith(".jpg")).map((file) => `${set}/${file}`));
+const SVGS = DIAGRAMS.filter((d) => d.kind !== "photo");
 
 describe("diagram manifest", () => {
   it("resolves every entry to a file, with a unique id", () => {
@@ -15,7 +16,7 @@ describe("diagram manifest", () => {
     expect(new Set(DIAGRAMS.map((d) => d.id)).size).toBe(DIAGRAMS.length);
   });
 
-  it("lists every shipped SVG, and nothing else", () => {
+  it("lists every shipped SVG and picture, and nothing else", () => {
     expect(DIAGRAMS.map((d) => `${d.set}/${d.file}`).sort()).toEqual([...shipped].sort());
   });
 
@@ -23,7 +24,7 @@ describe("diagram manifest", () => {
     for (const diagram of DIAGRAMS) {
       expect(Object.keys(TOPIC_LABELS), diagram.id).toContain(diagram.topic);
       expect(diagram.title.length, diagram.id).toBeGreaterThan(3);
-      expect(diagram.source, diagram.id).toMatch(/^(PHAK ch\. \d+|[A-Z][\w' ]+)$/);
+      expect(diagram.source, diagram.id).toMatch(/^(PHAK ch\. \d+|AI-made illustration|[A-Z][\w' ]+)$/);
     }
   });
 
@@ -41,14 +42,28 @@ describe("diagram manifest", () => {
   it("words the source line plainly", () => {
     const phak = DIAGRAMS.find((d) => d.source === "PHAK ch. 5")!;
     expect(diagramSourceLine(phak)).toBe("Drawn from the FAA Pilot's Handbook (PHAK), ch. 5. Study aid: check with your instructor.");
-    const guide = DIAGRAMS.find((d) => !d.source.startsWith("PHAK"))!;
+    const guide = SVGS.find((d) => !d.source.startsWith("PHAK"))!;
     expect(diagramSourceLine(guide)).toBe(`Drawn from the FAA ${guide.source}. Study aid: check with your instructor.`);
+  });
+});
+
+describe("AI-made pictures", () => {
+  const photos = DIAGRAMS.filter((d) => d.kind === "photo");
+  it("are flagged, labelled in the alt text (not repeated in the source line), and small", () => {
+    expect(photos.map((d) => d.id)).toEqual(["photos/windsock"]);
+    for (const p of photos) {
+      expect(p.aiIllustration).toBe(true);
+      expect(diagramPhotoAlt(p)).toContain(AI_ILLUSTRATION_LABEL);
+      expect(diagramSourceLine(p)).toBe("Made with AI as a study aid for this app.");
+      expect(statSync(join(ROOT, p.set, p.file)).size).toBeLessThan(200 * 1024);
+    }
+    expect(SVGS.every((d) => !d.aiIllustration && !d.kind)).toBe(true);
   });
 });
 
 describe("shipped SVG files", () => {
   it("each has a title, a description and real text, with no images or scripts", () => {
-    for (const diagram of DIAGRAMS) {
+    for (const diagram of SVGS) {
       const svg = read(diagram);
       expect(svg, diagram.id).toMatch(/<title[^>]*>[^<]+<\/title>/);
       expect(svg, diagram.id).toMatch(/<desc[^>]*>[^<]+<\/desc>/);
@@ -76,7 +91,7 @@ describe("shipped SVG files", () => {
     // Light grey and the accents only override a few surfaces, so Light, Dark and Auto-dark are the three that matter.
     const themes = [":root", ':root[data-theme="dark"]', ':root:not([data-theme="light"]):not([data-theme="light-grey"])'].map(names);
     const used = new Set<string>();
-    for (const diagram of DIAGRAMS) for (const m of read(diagram).matchAll(/var\(\s*(--[\w-]+)/g)) used.add(m[1]!);
+    for (const diagram of SVGS) for (const m of read(diagram).matchAll(/var\(\s*(--[\w-]+)/g)) used.add(m[1]!);
     expect(used.size).toBeGreaterThan(0);
     for (const name of used) {
       if (name === "--bg") expect(own, name).toMatch(/--bg\s*:/); // set by diagrams.css on every diagram
@@ -89,7 +104,7 @@ describe("scopeDiagramSvg", () => {
   const text = (svg: string) => [...svg.replace(/<style[\s\S]*?<\/style>/g, "").matchAll(/>([^<]+)</g)].map((m) => m[1]);
 
   it("keeps the visible text the same and prefixes every id and reference", () => {
-    for (const diagram of DIAGRAMS) {
+    for (const diagram of SVGS) {
       const svg = read(diagram);
       const scoped = scopeDiagramSvg(svg, "dgx1-");
       expect(text(scoped), diagram.id).toEqual(text(svg));

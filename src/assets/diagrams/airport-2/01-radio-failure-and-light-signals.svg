@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 677.0" role="img" aria-labelledby="ti de"><title id="ti">When the radio fails: watch the tower for light signals</title><desc id="de">Four steps for a towered airport when the radio fails: stay outside or above Class D airspace, advise the tower, enter the pattern, and watch for light signals from the tower. Then how to acknowledge ATC with a wing rock by day or a landing light blink at night when only the transmitter is out, and what to do before flying and at non-towered airports.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style>
+<text class="t" x="20" y="28" style="font-size:15px">When the radio fails: watch the tower for light signals</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">At a towered airport, a pilot with a radio problem stays clear of Class D airspace until the flow of</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">traffic is known, then enters the pattern and watches for light signals from the tower.</text>
+<rect class="cl" x="20.0" y="91.0" width="156.0" height="135.0" rx="8"/>
+<rect x="20.0" y="91.0" width="156.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="109.0" style="font-size:13px">Stay out</text>
+<circle cx="33.0" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="131.0" style="font-size:11.5px">Remain outside or</text>
+<text class="s" x="42.0" y="146.0" style="font-size:11.5px">above Class D</text>
+<text class="s" x="42.0" y="161.0" style="font-size:11.5px">airspace until the</text>
+<text class="s" x="42.0" y="176.0" style="font-size:11.5px">direction and flow</text>
+<text class="s" x="42.0" y="191.0" style="font-size:11.5px">of traffic is</text>
+<text class="s" x="42.0" y="206.0" style="font-size:11.5px">determined.</text>
+
+<path d="M179.0 158.5L187.0 158.5" class="acc" style="stroke-width:2.5"/><path d="M195.0 158.5L187.0 162.1L187.0 154.9Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect class="cl" x="198.0" y="91.0" width="156.0" height="135.0" rx="8"/>
+<rect x="198.0" y="91.0" width="156.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="208.0" y="109.0" style="font-size:13px">Tell the tower</text>
+<circle cx="211.0" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="220.0" y="131.0" style="font-size:11.5px">Advise the tower of</text>
+<text class="s" x="220.0" y="146.0" style="font-size:11.5px">aircraft type,</text>
+<text class="s" x="220.0" y="161.0" style="font-size:11.5px">position, altitude</text>
+<text class="s" x="220.0" y="176.0" style="font-size:11.5px">and intention to</text>
+<text class="s" x="220.0" y="191.0" style="font-size:11.5px">land (receiver out).</text>
+
+<path d="M357.0 158.5L365.0 158.5" class="acc" style="stroke-width:2.5"/><path d="M373.0 158.5L365.0 162.1L365.0 154.9Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect class="cl" x="376.0" y="91.0" width="156.0" height="135.0" rx="8"/>
+<rect x="376.0" y="91.0" width="156.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="386.0" y="109.0" style="font-size:13px">Enter the pattern</text>
+<circle cx="389.0" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="398.0" y="131.0" style="font-size:11.5px">Continue, enter the</text>
+<text class="s" x="398.0" y="146.0" style="font-size:11.5px">pattern and report a</text>
+<text class="s" x="398.0" y="161.0" style="font-size:11.5px">position as</text>
+<text class="s" x="398.0" y="176.0" style="font-size:11.5px">appropriate.</text>
+
+<path d="M535.0 158.5L543.0 158.5" class="acc" style="stroke-width:2.5"/><path d="M551.0 158.5L543.0 162.1L543.0 154.9Z" class="dh" style="fill:var(--palette-berry,#A84C6B)"/>
+<rect class="cl" x="554.0" y="91.0" width="156.0" height="135.0" rx="8"/>
+<rect x="554.0" y="91.0" width="156.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="564.0" y="109.0" style="font-size:13px">Watch the tower</text>
+<circle cx="567.0" cy="127.0" r="2.2" class="ah"/>
+<text class="s" x="576.0" y="131.0" style="font-size:11.5px">Watch for light</text>
+<text class="s" x="576.0" y="146.0" style="font-size:11.5px">signals from the</text>
+<text class="s" x="576.0" y="161.0" style="font-size:11.5px">tower. Light signal</text>
+<text class="s" x="576.0" y="176.0" style="font-size:11.5px">colors and their</text>
+<text class="s" x="576.0" y="191.0" style="font-size:11.5px">meanings are in</text>
+<text class="s" x="576.0" y="206.0" style="font-size:11.5px">Figure 14-42.</text>
+
+<text class="t" x="20" y="248.0" style="font-size:14px">If only the transmitter is out</text>
+<rect class="cl" x="20" y="258.0" width="337" height="118" rx="8"/>
+<rect class="cl" x="373" y="258.0" width="337" height="118" rx="8"/>
+<text class="t" x="34" y="282.0" style="font-size:13px">In daylight</text>
+<text class="s" x="34" y="302.0" style="font-size:12px">Rock the wings to acknowledge</text>
+<text class="s" x="34" y="317.5" style="font-size:12px">ATC transmissions.</text>
+<circle cx="329" cy="282.0" r="9" style="fill:#e8b923;stroke:currentColor;stroke-width:1.2"/>
+<path d="M251 336.0L339 304.0" class="dk" style="stroke-width:6"/>
+<path d="M251 304.0L339 336.0" class="dk" style="stroke-width:6;opacity:.25"/>
+<ellipse cx="295" cy="320.0" rx="8" ry="12" class="sky" style="stroke:currentColor;stroke-width:1.6"/>
+<text class="t" x="387" y="282.0" style="font-size:13px">At night</text>
+<text class="s" x="387" y="302.0" style="font-size:12px">Blink the landing light to</text>
+<text class="s" x="387" y="317.5" style="font-size:12px">acknowledge ATC</text>
+<text class="s" x="387" y="333.0" style="font-size:12px">transmissions.</text>
+<path d="M678 274.0a11 11 0 1 0 8 19a9 9 0 0 1 -8 -19Z" style="fill:#e8b923;stroke:currentColor;stroke-width:1.2"/>
+<path d="M604 320.0L692 320.0" class="dk" style="stroke-width:6"/>
+<ellipse cx="648" cy="320.0" rx="8" ry="12" class="sky" style="stroke:currentColor;stroke-width:1.6"/>
+<path d="M655.1 350.0L661.0 350.0" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M653.1 355.1L657.2 359.2" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M648.0 357.1L648.0 363.0" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M642.9 355.1L638.8 359.2" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M640.9 350.0L635.0 350.0" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M642.9 344.9L638.8 340.8" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M648.0 342.9L648.0 337.0" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><path d="M653.1 344.9L657.2 340.8" style="stroke:#e8b923;stroke-width:2;stroke-linecap:round"/><circle cx="648.0" cy="350.0" r="4" style="fill:#e8b923;stroke:currentColor;stroke-width:1.2"/>
+<path d="M648 332.0L648 337.0" class="dk" style="stroke-width:2"/>
+<rect class="cl" x="20" y="384.0" width="690" height="64" rx="8"/>
+<text class="s" x="32" y="404.0" style="font-size:12px">Also monitor the appropriate ATC frequency. If both receiver and transmitter are out, stay outside Class D</text>
+<text class="s" x="32" y="419.5" style="font-size:12px">airspace until the flow of traffic has been determined, then enter the pattern and watch for light</text>
+<text class="s" x="32" y="435.0" style="font-size:12px">signals.</text>
+<text class="t" x="20" y="468.0" style="font-size:14px">Before and after</text>
+<rect class="cl" x="20.0" y="478.0" width="338.0" height="185.0" rx="8"/>
+<rect x="20.0" y="478.0" width="338.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="496.0" style="font-size:13px">Fix it first</text>
+<circle cx="33.0" cy="514.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="518.0" style="font-size:11.5px">Radio malfunctions should be repaired before</text>
+<text class="s" x="42.0" y="533.0" style="font-size:11.5px">further flight.</text>
+<circle cx="33.0" cy="547.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="551.0" style="font-size:11.5px">If that is not possible, ATC may be contacted by</text>
+<text class="s" x="42.0" y="566.0" style="font-size:11.5px">telephone to request a VFR departure without</text>
+<text class="s" x="42.0" y="581.0" style="font-size:11.5px">two-way radio.</text>
+<circle cx="33.0" cy="595.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="599.0" style="font-size:11.5px">NORDO (no radio) arrivals are not accepted at busy</text>
+<text class="s" x="42.0" y="614.0" style="font-size:11.5px">airports.</text>
+<circle cx="33.0" cy="628.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="632.0" style="font-size:11.5px">If authorized to depart, monitor the appropriate</text>
+<text class="s" x="42.0" y="647.0" style="font-size:11.5px">frequency and/or watch for light signals.</text>
+<rect class="cl" x="372.0" y="478.0" width="338.0" height="185.0" rx="8"/>
+<rect x="372.0" y="478.0" width="338.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="382.0" y="496.0" style="font-size:13px">Consider a quieter airport</text>
+<circle cx="385.0" cy="514.0" r="2.2" class="ah"/>
+<text class="s" x="394.0" y="518.0" style="font-size:11.5px">If radio communication is lost, it may be a prudent</text>
+<text class="s" x="394.0" y="533.0" style="font-size:11.5px">decision to land at a non-towered airport with</text>
+<text class="s" x="394.0" y="548.0" style="font-size:11.5px">lower traffic volume, if practical.</text>
+<circle cx="385.0" cy="562.0" r="2.2" class="ah"/>
+<text class="s" x="394.0" y="566.0" style="font-size:11.5px">At a non-towered airport no radio communication is</text>
+<text class="s" x="394.0" y="581.0" style="font-size:11.5px">necessary, but be extra vigilant when not using the</text>
+<text class="s" x="394.0" y="596.0" style="font-size:11.5px">radio. Other traffic may not be aware of you if</text>
+<text class="s" x="394.0" y="611.0" style="font-size:11.5px">they are expecting the standard radio calls.</text>
+</svg>

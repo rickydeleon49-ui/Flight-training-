@@ -16,10 +16,26 @@ export interface Diagram {
   topic: Topic;
   /** "PHAK ch. 5" for the Pilot's Handbook; otherwise the book's name. */
   source: string;
+  /** "photo" for a picture file (JPEG) instead of an SVG drawing; absent means SVG. */
+  kind?: "photo";
+  /** True for AI-made pictures: always shown with AI_ILLUSTRATION_LABEL. */
+  aiIllustration?: boolean;
+}
+
+/** Shown next to every AI-made picture, and in its alt text. */
+export const AI_ILLUSTRATION_LABEL = "AI-made illustration, not a real photo. Check against FAA guidance and your instructor.";
+
+/** The text alternative for an AI-made picture: its title plus the label. */
+export function diagramPhotoAlt(diagram: Diagram): string {
+  return `${diagram.title}. ${AI_ILLUSTRATION_LABEL}`;
 }
 
 function d(set: string, file: string, title: string, topic: Topic, source: string): Diagram {
-  return { id: `${set}/${file.replace(/\.svg$/, "")}`, set, file, title, topic, source };
+  return { id: `${set}/${file.replace(/\.(svg|jpg)$/, "")}`, set, file, title, topic, source };
+}
+
+function photo(set: string, file: string, title: string, topic: Topic): Diagram {
+  return { ...d(set, file, title, topic, "AI-made illustration"), kind: "photo", aiIllustration: true };
 }
 
 export const DIAGRAMS: readonly Diagram[] = [
@@ -130,6 +146,12 @@ export const DIAGRAMS: readonly Diagram[] = [
   d("airport", "03-hold-short.svg", "Runway holding position", "airports", "PHAK ch. 14"),
   d("airport", "04-airport-signs.svg", "Airport signs", "airports", "PHAK ch. 14"),
   d("airport", "05-vasi.svg", "Two-bar VASI", "airports", "PHAK ch. 14"),
+  d("airport-2", "01-radio-failure-and-light-signals.svg", "When the radio fails: watch the tower for light signals", "airports", "PHAK ch. 14"),
+  d("airport-2", "02-airport-lighting.svg", "Airport lighting at night", "airports", "PHAK ch. 14"),
+  d("airport-2", "03-wind-direction-indicators.svg", "Wind direction indicators", "airports", "PHAK ch. 14"),
+  d("airport-2", "04-runway-incursion-avoidance.svg", "Avoiding a runway incursion", "airports", "PHAK ch. 14"),
+  d("airport-2", "05-runway-and-hold-line-lights.svg", "Lights on the runway and at the hold line", "airports", "PHAK ch. 14"),
+  photo("photos", "windsock.jpg", "Wind sock at an airfield", "airports"),
   d("performance", "01-arm-moment.svg", "Arm and moment", "performance", "PHAK ch. 10"),
   d("performance", "02-cg-envelope.svg", "CG limits envelope", "performance", "PHAK ch. 10"),
   d("performance", "03-cg-effects.svg", "Effects of forward and aft CG", "performance", "PHAK ch. 5"),
@@ -196,6 +218,7 @@ export function diagramsByTopic(): Array<{ topic: Topic; label: string; diagrams
 
 /** The line shown under a diagram. */
 export function diagramSourceLine(diagram: Diagram): string {
+  if (diagram.aiIllustration) return "Made with AI as a study aid for this app.";
   const from = diagram.source.startsWith("PHAK ")
     ? `the FAA Pilot's Handbook (PHAK), ${diagram.source.slice(5)}`
     : `the FAA ${diagram.source}`;

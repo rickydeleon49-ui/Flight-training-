@@ -49,3 +49,6 @@
 .dialog.dialog--diagram { width: min(60rem, calc(100vw - 2rem)); }
 .diagram-source { margin: var(--space-3) 0 0; }
 .diagram-group > summary { cursor: pointer; }
+
+.diagram-art--photo img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm, 6px); }
+.diagram-tile__ai, .diagram-ai-label { display: block; font-weight: 600; }
