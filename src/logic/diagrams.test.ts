@@ -24,14 +24,14 @@ describe("diagram manifest", () => {
     for (const diagram of DIAGRAMS) {
       expect(Object.keys(TOPIC_LABELS), diagram.id).toContain(diagram.topic);
       expect(diagram.title.length, diagram.id).toBeGreaterThan(3);
-      expect(diagram.source, diagram.id).toMatch(/^(PHAK ch\. \d+|AI-made illustration|[A-Z][\w' ]+)$/);
+      expect(diagram.source, diagram.id).toMatch(/^(PHAK ch\. \d+|AI-made illustration|[A-Z][\w' ]+|[A-Z][\w' ]+ ch\. \d+)$/);
     }
   });
 
   it("looks diagrams up by topic, in the app's topic order", () => {
     expect(diagramsForTopic("weather").every((d) => d.topic === "weather")).toBe(true);
     expect(diagramsForTopic("weather").length).toBeGreaterThan(0);
-    expect(diagramsForTopic("landings").length).toBe(5);
+    expect(diagramsForTopic("landings").length).toBe(11);
     const groups = diagramsByTopic();
     expect(groups.reduce((n, g) => n + g.diagrams.length, 0)).toBe(DIAGRAMS.length);
     const order = Object.keys(TOPIC_LABELS);
