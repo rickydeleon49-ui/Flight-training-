@@ -34,6 +34,7 @@ import {
 } from "./useCardReview";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { useSavedVisual } from "./useSavedVisual";
+import { useStickyCardHeight } from "./useStickyCardHeight";
 import { VisualPicture } from "./VisualPicture";
 
 export const MALFORMED_CARDS_MESSAGE =
@@ -420,6 +421,7 @@ export function SessionView({
   const appData = useContext(AppDataContext);
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
   const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
+  useStickyCardHeight(question, shown?.itemId ?? "", review.revealed);
 
   // Extra review keeps its place unless the next question would be clipped.
   const extraCardOffScreen = () => {
