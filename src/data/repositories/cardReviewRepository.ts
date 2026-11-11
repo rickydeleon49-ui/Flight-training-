@@ -20,11 +20,13 @@ import type {
   CardReviewSnapshot,
 } from "@/domain/types";
 import { readCardPageSource, mergeCardPageSources } from "../studyPageSources";
-import { deriveCurrentCards } from "@/logic/cardIdentity";
+import { canonicalJson, deriveCurrentCards, sha256Hex } from "@/logic/cardIdentity";
 
 import type { SqlDatabase } from "../db";
-import { cardReviewRequestHash } from "../cardReviewTransaction";
 import { CardReviewError } from "../persistenceErrors";
+
+// Same identity as cardReviewTransaction.cardReviewRequestHash, kept local so that module can load lazily.
+const cardReviewRequestHash = (action: CardReviewAction): Promise<string> => sha256Hex(canonicalJson(action));
 
 export const MAX_NEW_PER_SESSION = 10;
 export const MAX_CARDS_PER_SESSION = 20;

@@ -18,7 +18,7 @@ import type {
 } from "@/domain/types";
 
 import type { SqlDatabase } from "../db";
-import { SkillEvidenceError } from "../skillEvidenceTransaction";
+import { SkillEvidenceError } from "../skillEvidenceCore";
 
 const UNSUPPORTED = "Skill evidence isn't available with this storage, so nothing was changed.";
 

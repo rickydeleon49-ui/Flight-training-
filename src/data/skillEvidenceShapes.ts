@@ -22,7 +22,7 @@ import type {
 } from "@/domain/types";
 
 import { ResultShapeError, decodeSkillEvidenceResult, subjectOf } from "./skillEvidenceResult";
-import { SkillEvidenceError } from "./skillEvidenceTransaction";
+import { SkillEvidenceError } from "./skillEvidenceCore";
 
 /** The native refusals and their fixed messages (`SkillEvidenceErrorCode::message` in skill_evidence.rs). */
 export const SKILL_EVIDENCE_ERROR_MESSAGES: Record<SkillEvidenceErrorCode, string> = {

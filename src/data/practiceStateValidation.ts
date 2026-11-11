@@ -22,7 +22,7 @@ import type { PracticeSaveOperation, SkillEvidenceActionName, StudyItemOrigin } 
 
 import type { SqlValue } from "./db";
 import { MIGRATIONS } from "./migrations";
-import { codePointLength } from "./practiceSessionTransaction";
+import { codePointLength } from "./practiceCore";
 import {
   ASSESSMENT_ACTIONS,
   OBSERVATION_HISTORY_ACTIONS,
@@ -30,7 +30,7 @@ import {
   SKILL_ACTIONS,
   decodeStoredResult,
 } from "./skillEvidenceResult";
-import { labelKey } from "./skillEvidenceTransaction";
+import { labelKey } from "./skillEvidenceCore";
 
 export type ValidationQuery = (
   sql: string,

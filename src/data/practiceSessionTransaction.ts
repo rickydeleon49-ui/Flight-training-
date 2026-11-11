@@ -28,8 +28,9 @@ import { PracticeSessionError, type PracticeSessionErrorCode } from "./persisten
 import { homeworkCardContextCodec, parseHomeworkJson, type HomeworkSnapshot } from "@/domain/homework";
 import { applyHomeworkOperation } from "./homeworkTransaction";
 import { collectQuestionSources } from "./studyPageSources";
+import { canonicalJson, codePointLength, computeCanonicalHash, isUuidV4, type Query } from "./practiceCore";
 
-export type Query = (sql: string, params: SqlValue[]) => Promise<Record<string, unknown>[]> | Record<string, unknown>[];
+export { canonicalJson, codePointLength, computeCanonicalHash, isUuidV4, type Query };
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_ID_CHARS = 128;
@@ -40,60 +41,14 @@ const MAX_OPTIONS = 8;
 const MAX_OPTION_CHARS = 1_000;
 const MAX_PRACTICE_QUESTIONS = 200;
 
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const VALID_ID = /^[A-Za-z0-9_.-]+$/;
 
 function refuse(code: PracticeSessionErrorCode): never {
   throw new PracticeSessionError(code);
 }
 
-export function isUuidV4(value: string): boolean {
-  return typeof value === "string" && UUID_V4.test(value);
-}
-
 export function isValidId(value: string): boolean {
   return typeof value === "string" && value.length > 0 && value.length <= MAX_ID_CHARS && VALID_ID.test(value);
-}
-
-export function codePointLength(str: string): number {
-  return Array.from(str).length;
-}
-
-/** Formats JSON canonically with sorted object keys and compact whitespace. */
-export function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== "object") {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return "[" + value.map(canonicalJson).join(",") + "]";
-  }
-  const keys = Object.keys(value as Record<string, unknown>).sort();
-  return (
-    "{" +
-    keys
-      .map(
-        (key) =>
-          JSON.stringify(key) +
-          ":" +
-          canonicalJson((value as Record<string, unknown>)[key]),
-      )
-      .join(",") +
-    "}"
-  );
-}
-
-/** Compute SHA-256 of canonical JSON string. */
-export async function computeCanonicalHash(value: unknown): Promise<string> {
-  const text = canonicalJson(value);
-  if (typeof globalThis.crypto?.subtle?.digest === "function") {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  }
-  const { createHash } = await import(/* @vite-ignore */ "node:crypto");
-  return createHash("sha256").update(text, "utf8").digest("hex");
 }
 
 type Json = Record<string, unknown>;

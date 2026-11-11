@@ -41,8 +41,8 @@ import {
   SOURCE_FIELD_COLUMNS,
   SkillEvidenceError,
   isCalendarDate,
-  type Query,
-} from "./skillEvidenceTransaction";
+} from "./skillEvidenceCore";
+import type { Query } from "./skillEvidenceTransaction";
 
 const CURSOR_VERSION = 2;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;

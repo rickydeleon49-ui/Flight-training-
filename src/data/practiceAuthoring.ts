@@ -51,7 +51,7 @@ import {
   computeCanonicalHash,
   isUuidV4,
   type Query,
-} from "./practiceSessionTransaction";
+} from "./practiceCore";
 import { normalizedStudyText, retirementTerms } from "@/logic/studyAuthoring";
 import { sha256Hex } from "@/logic/cardIdentity";
 

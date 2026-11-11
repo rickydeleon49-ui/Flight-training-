@@ -38,7 +38,6 @@ import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "./connectionOwner";
 import { applyMigrations } from "./migrations";
-import { executeLegacyConversion } from "./practiceSessionTransaction";
 import { validateApplicationDatabase } from "./practiceStateValidation";
 import type { SqlDatabase, SqlValue } from "./db";
 import { DatabaseDisabledError, StorageDurabilityError } from "./persistenceErrors";
@@ -189,6 +188,7 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
 
     const reference = await createReference(SQL);
     try {
+      const { executeLegacyConversion } = await import("./practiceSessionTransaction");
       await executeLegacyConversion(exec, run, query, undefined, () =>
         validateApplicationDatabase(query, reference.query),
       );
