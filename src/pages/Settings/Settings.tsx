@@ -749,13 +749,6 @@ export function Settings() {
       </nav>
 
       <div className="settings-layout stack stack--5">
-        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
-        {deviceCan().sendToIphone ? <SendChangesToIphoneCard /> : null}
-        {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
-        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
-        {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
-        {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
-
         {deviceCan().geminiKey ? (
         <Card variant="grouped">
           <CardHeader
@@ -902,6 +895,13 @@ export function Settings() {
           </CardBody>
         </Card>
         ) : null}
+
+        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
+        {deviceCan().sendToIphone ? <SendChangesToIphoneCard /> : null}
+        {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
+        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
+        {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
+        {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
 
         <Card variant="grouped">
           <CardHeader title="About you" headingId="settings-about-you" eyebrow="Greeting and focus" />
@@ -1220,7 +1220,7 @@ export function Settings() {
                 appearance="switch"
                 strikethrough={false}
                 label="Glass bars"
-                meta="Frosted tab bar and top bar. Off until it's tested on your iPhone."
+                meta="Frosted tab bar and top bar. Still being tested on iPhone."
                 checked={appearance === "glass"}
                 onChange={(on) => chooseAppearance(on ? "glass" : "classic")}
               />
