@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
 import { isIOS } from "@/services/platform";
-import { Button, TextInput } from "@/components/ui";
+import { Button, ConfirmDialog, TextInput } from "@/components/ui";
 import { CLAUDE_MODEL_CHOICES, getGeminiStatus, setGeminiModel, geminiModelName, type GeminiModelChoice } from "@/services/gemini";
 import { SAVED_KEY_UNREADABLE, CLAUDE_KEY_URL, configureProvider, disconnectProvider, providerStatus, retryKeyAccess, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
 
@@ -13,6 +13,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [problem, setProblem] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [claudeChoice, setClaudeChoice] = useState<{ choice: GeminiModelChoice; model: string } | null>(null);
   useEffect(() => {
     if (isTauri()) void providerStatus().then(setStatus).catch(() => { setProblem(true); setNote("Could not check your AI connections. Reopen Settings to try again."); });
@@ -32,6 +33,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
     finally { setBusy(false); }
   }
   const tryAgain = <div><Button disabled={busy} onClick={() => void run(async () => { setStatus(await retryKeyAccess()); onRetried?.(); })}>Try again</Button></div>;
+  const disconnectClaude = () => { setConfirmDisconnect(false); void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); }); };
   async function choose(id: ProviderId) {
     await selectProvider(id);
     setStatus(await providerStatus());
@@ -56,7 +58,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
         {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : getKey}
         {unreadable ? null : connected ? <div className="row row--wrap">
           {status.selected !== "claude" && <Button disabled={busy} onClick={() => void run(() => choose("claude"))}>Use Claude</Button>}
-          <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
+          <Button variant="danger" disabled={busy} onClick={() => setConfirmDisconnect(true)}>Disconnect Claude</Button>
         </div> : keyBox}
       </div>
   );
@@ -75,7 +77,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
         </label>)}
       </fieldset>}
       {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : connected
-        ? <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
+        ? <Button variant="danger" disabled={busy} onClick={() => setConfirmDisconnect(true)}>Disconnect Claude</Button>
         // Claude chosen but its key is missing: let the student put a key back in.
         : <>{getKey}{keyBox}</>}
     </div>}
@@ -86,6 +88,15 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
         <div><Button disabled={busy} onClick={() => void run(() => choose("gemini"))}>Use Gemini</Button></div>
       </div>}
     </details>
+    {confirmDisconnect && <ConfirmDialog
+      open={confirmDisconnect}
+      title="Disconnect Claude?"
+      message={`Your saved key will be removed from this ${isIOS() ? "phone" : "computer"}. Your study guides, flashcards and tests are kept. To use Claude again, you'll paste your key back in.`}
+      confirmLabel="Disconnect"
+      destructive
+      onConfirm={disconnectClaude}
+      onCancel={() => setConfirmDisconnect(false)}
+    />}
     {note && <p className="small" role={problem ? "alert" : "status"}>{note}</p>}
   </div>;
 }

@@ -99,6 +99,21 @@ describe("Gemini model choice in Settings", () => {
     expect(paragraph.match(/\./g)).toHaveLength(2);
   });
 
+  it("asks before disconnecting Gemini; Cancel keeps it, Confirm disconnects once", async () => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
+    const disconnect = vi.spyOn(geminiService, "disconnectGemini").mockResolvedValue({ ...STANDARD, configured: false });
+    await open();
+    fireEvent.click(await screen.findByRole("button", { name: "Disconnect Gemini" }));
+    const dialog = await screen.findByRole("dialog", { name: "Disconnect Gemini?" });
+    expect(disconnect).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(disconnect).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Disconnect Gemini" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Gemini" }));
+    fireEvent.click(within(await screen.findByRole("dialog", { name: "Disconnect Gemini?" })).getByRole("button", { name: "Disconnect" }));
+    await waitFor(() => expect(disconnect).toHaveBeenCalledTimes(1));
+  });
+
   it("does not label an unreadable selected Claude key as not set up", async () => {
     vi.spyOn(appDataApi, "isTauri").mockReturnValue(true);
     vi.spyOn(backupService, "backupsAvailable").mockReturnValue(false);

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ProviderControls } from "./ProviderControls";
 import * as provider from "@/services/provider";
@@ -13,7 +13,7 @@ function open() {
   return render(h(ProviderControls, { children: h("fieldset", null,
     h("legend", null, "Model for new study aids"), h("label", null, h("input", {type:"radio", name:"model"}), "Standard"), h("label", null, h("input", {type:"radio", name:"model"}), "Most capable"), h("p", null, "Gemini setup unchanged")) }));
 }
-beforeEach(() => { vi.spyOn(provider,"providerStatus").mockResolvedValue(status("gemini")); });
+beforeEach(() => { HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); }; HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); }; vi.spyOn(provider,"providerStatus").mockResolvedValue(status("gemini")); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 it("keeps Gemini content and closes the quiet disclosure by default", async () => {
   const { container } = open();
@@ -60,6 +60,7 @@ it("disconnects Claude and restores Gemini study tools", async () => {
   const disconnect=vi.spyOn(provider,"disconnectProvider").mockResolvedValue(status("gemini",false));
   const {container}=open(); container.querySelector("details")!.open=true;
   fireEvent.click(await screen.findByRole("button",{name:"Disconnect Claude"}));
+  fireEvent.click(within(await screen.findByRole("dialog",{name:"Disconnect Claude?"})).getByRole("button",{name:"Disconnect"}));
   await screen.findByText("Claude disconnected. Study tools use Gemini again. Your saved study material is kept.");
   expect(disconnect).toHaveBeenCalledWith("claude");
   expect(screen.getByRole("radio",{name:"Standard"})).toBeTruthy();
@@ -152,4 +153,27 @@ it("lets Claude's two models be chosen and names each", async () => {
   expect(CLAUDE_MODEL_CHOICES["most-capable"].label).toBe("Most capable — Claude Sonnet 5.5");
   expect(geminiModelName("claude-sonnet-5-5")).toBe("Claude Sonnet 5.5");
   expect(geminiModelName("claude-haiku-5-5")).toBe("Claude Haiku 5.5");
+});
+it("asks before disconnecting Claude (both buttons); Cancel keeps it, Confirm disconnects once", async () => {
+  vi.mocked(provider.providerStatus).mockResolvedValue(status("claude",true));
+  const disconnect=vi.spyOn(provider,"disconnectProvider").mockResolvedValue(status("gemini",false));
+  open();
+  fireEvent.click(await screen.findByRole("button",{name:"Disconnect Claude"}));
+  const dialog=await screen.findByRole("dialog",{name:"Disconnect Claude?"});
+  expect(disconnect).not.toHaveBeenCalled();
+  fireEvent.click(within(dialog).getByRole("button",{name:"Cancel"}));
+  expect(disconnect).not.toHaveBeenCalled();
+  expect(screen.getByRole("button",{name:"Disconnect Claude"})).toBeTruthy();
+  fireEvent.click(screen.getByRole("button",{name:"Disconnect Claude"}));
+  fireEvent.click(within(await screen.findByRole("dialog",{name:"Disconnect Claude?"})).getByRole("button",{name:"Disconnect"}));
+  await waitFor(()=>expect(disconnect).toHaveBeenCalledTimes(1));
+});
+it("asks before disconnecting Claude from the details button too", async () => {
+  vi.mocked(provider.providerStatus).mockResolvedValue(status("gemini",true));
+  const disconnect=vi.spyOn(provider,"disconnectProvider").mockResolvedValue(status("gemini",false));
+  const {container}=open(); await waitFor(()=>expect(provider.providerStatus).toHaveBeenCalled()); container.querySelector("details")!.open=true;
+  fireEvent.click(await screen.findByRole("button",{name:"Disconnect Claude"}));
+  expect(disconnect).not.toHaveBeenCalled();
+  fireEvent.click(within(await screen.findByRole("dialog",{name:"Disconnect Claude?"})).getByRole("button",{name:"Disconnect"}));
+  await waitFor(()=>expect(disconnect).toHaveBeenCalledTimes(1));
 });
