@@ -111,3 +111,17 @@ describe("touch targets", () => {
     });
   }
 });
+
+describe("shared filter chip", () => {
+  const body = ruleBodies(ui.replace(/\/\*[\s\S]*?\*\//g, ""), ".filter-chip").join("\n");
+  it("wraps long labels instead of clipping", () => {
+    expect(body).toMatch(/white-space:\s*normal/);
+    expect(body).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(body).toMatch(/max-width:\s*100%/);
+    expect(body).not.toMatch(/nowrap/);
+  });
+  it("active chip has a non-colour cue (bold)", () => {
+    const active = ruleBodies(ui.replace(/\/\*[\s\S]*?\*\//g, ""), ".filter-chip.is-active").join("\n");
+    expect(active).toMatch(/font-weight:\s*600/);
+  });
+});

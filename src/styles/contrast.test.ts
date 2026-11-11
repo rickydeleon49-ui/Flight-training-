@@ -115,6 +115,12 @@ describe("colour contrast (WCAG 2.x)", () => {
         check(`${L} overdue on overdue-fill`, t("--status-overdue"), t("--status-overdue-fill"), 4.5);
         check(`${L} due-today on due-today-fill`, t("--status-due-today"), t("--status-due-today-fill"), 4.5);
         check(`${L} accent on accent-fill`, t("--accent-primary"), t("--accent-fill"), 3);
+        // Filter chips: active chip text on its tint, inactive chip text on the sunken track.
+        check(`${L} chip active: accent on accent-fill`, t("--accent-primary"), t("--accent-fill"), 4.5);
+        check(`${L} chip inactive: text-secondary on sunken`, t("--text-secondary"), t("--surface-sunken"), 4.5);
+        if (theme.name === "dark") {
+          check(`${L} journal tab active: on-accent on border-control`, t("--text-on-accent"), t("--border-control"), 4.5);
+        }
       });
     }
   }

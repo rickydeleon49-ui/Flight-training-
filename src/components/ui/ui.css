@@ -939,7 +939,11 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   color: var(--text-secondary);
   font-size: var(--text-sm);
   cursor: pointer;
-  white-space: nowrap;
+  /* Long labels and large text wrap inside the chip instead of clipping. */
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
   transition: background var(--transition), border-color var(--transition), color var(--transition);
 }
 /* 32px capsule with a 44px touch area. */
