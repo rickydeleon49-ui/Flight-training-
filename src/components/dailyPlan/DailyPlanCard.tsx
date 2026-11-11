@@ -194,7 +194,7 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
         eyebrow="Daily Flight Plan"
         action={
           <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
-            {isSaving ? <span className="tiny muted" aria-live="polite">Saving…</span> : null}
+            <span aria-live="polite" style={{ display: "contents" }}>{isSaving ? <span className="tiny muted">Saving…</span> : null}</span>
             <button
               type="button"
               className="button button--ghost button--small"
@@ -310,11 +310,9 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
             </ErrorNote>
           ) : null}
 
-          {startNote ? (
-            <p className="tiny muted" role="status">
-              {startNote}
-            </p>
-          ) : null}
+          <div role="status" style={{ display: "contents" }}>
+            {startNote ? <p className="tiny muted">{startNote}</p> : null}
+          </div>
         </div>
 
         {/* Suggested short list (3-5 items) */}

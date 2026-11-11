@@ -79,14 +79,16 @@ export function Schedule() {
         }
       />
 
-      {saved ? (
-        <div className="row gap--3 schedule__saved">
-          <p role="status" className="small">Added “{saved.title}” to your schedule.</p>
-          {saved.eventType === "flight_lesson" ? (
-            <Link to={`/schedule/${saved.id}#lesson-preparation`}>Add preparation</Link>
-          ) : null}
-        </div>
-      ) : null}
+      <div role="status" style={{ display: "contents" }}>
+        {saved ? (
+          <div className="row gap--3 schedule__saved">
+            <p className="small">Added “{saved.title}” to your schedule.</p>
+            {saved.eventType === "flight_lesson" ? (
+              <Link to={`/schedule/${saved.id}#lesson-preparation`}>Add preparation</Link>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       <div className="schedule">
         <div className="stack stack--5">

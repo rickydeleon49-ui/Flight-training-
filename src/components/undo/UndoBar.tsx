@@ -22,12 +22,12 @@ export function UndoBar() {
     return () => window.clearInterval(timer);
   }, [pendingDelete]);
 
-  if (!pendingDelete) return null;
-
   const remaining = Math.max(0, 1 - elapsed / UNDO_WINDOW_MS);
 
   return (
-    <div className="undo-bar" role="status" aria-live="polite">
+    <div role="status" aria-live="polite" style={{ display: "contents" }}>
+      {pendingDelete ? (
+    <div className="undo-bar">
       <span className="undo-bar__progress" style={{ transform: `scaleX(${remaining})` }} />
       <p className="undo-bar__text truncate">
         Deleted <span className="strong">{pendingDelete.label}</span>
@@ -35,6 +35,8 @@ export function UndoBar() {
       <button type="button" className="undo-bar__action" onClick={undoDelete}>
         Undo
       </button>
+    </div>
+      ) : null}
     </div>
   );
 }
