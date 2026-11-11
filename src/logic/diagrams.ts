@@ -334,7 +334,10 @@ export function scopeDiagramSvg(svg: string, prefix: string): { markup: string; 
       return "";
     });
   }
-  lifted = lifted.replace(/<\/?style\b[^>]*>?/gi, "");
+  for (let before = ""; before !== lifted; ) {
+    before = lifted;
+    lifted = lifted.replace(/<\/?style\b[^>]*>?/gi, "");
+  }
   const markup = lifted
     .replace(/\bid="([^"]+)"/g, (_m, id: string) => `id="${prefix}${id}"`)
     .replace(/\baria-(labelledby|describedby)="([^"]+)"/g, (_m, name: string, ids: string) =>
