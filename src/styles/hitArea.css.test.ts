@@ -13,8 +13,8 @@ describe("phone hit areas", () => {
     expect(phone).toMatch(/\.button--small\s*\{\s*min-height:\s*44px/);
   });
   it("checkbox and radio rows get a transparent 44px hit area", () => {
-    expect(phone).toMatch(/\.checkbox::before,\s*\.radio-row__option::before\s*\{[^}]*inset:\s*-12px 0/);
-    expect(phone).toMatch(/\.radio-row__option\s*\{\s*min-height:\s*44px/);
+    expect(phone).toMatch(/\.checkbox,\s*\.radio-row__option\s*\{\s*min-height:\s*44px/);
+    expect(phone).not.toMatch(/::before[^{]*\{[^}]*inset:\s*-12px/);
   });
   it("undo action is 44px tall", () => {
     expect(undo).toMatch(/\.undo-bar__action\s*\{[^}]*min-height:\s*44px/);
