@@ -30,7 +30,7 @@
   border: 2px solid var(--category-flight-edge);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .waypoint--done .waypoint__marker {
@@ -160,3 +160,10 @@
 .enroll-show {
   margin: 0;
 }
+
+/* Inline styles moved here (DESIGN-01 s23). */
+.inline-add--26 { max-width: 26rem; }
+.inline-add--28 { max-width: 28rem; }
+.fp-lead { margin-bottom: var(--space-3); }
+.fp-note { margin-top: var(--space-3); }
+.fp-rot { transform: rotate(90deg); display: inline-flex; }

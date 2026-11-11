@@ -1,6 +1,6 @@
 .visual-card-editor { width: min(680px, calc(100vw - 24px)); }
 .visual-card-editor .button, .visual-card-editor input, .visual-card-editor select, .visual-picture select { min-height: 44px; }
-.visual-card-editor :focus-visible, .visual-picture :focus-visible { outline: 3px solid #604778; outline-offset: 3px; }
+.visual-card-editor :focus-visible, .visual-picture :focus-visible { outline: 3px solid var(--focus-outline-plum); outline-offset: 3px; }
 .visual-picture { width: 100%; min-width: 0; }
 
 .visual-card-editor .icon-button { min-width: 44px; min-height: 44px; }

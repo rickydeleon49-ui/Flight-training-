@@ -115,13 +115,13 @@ export function FlightPath() {
       <>
         <PageHeader title="Flight Path" subtitle="Where you are going, and what you are working toward." />
         <BeforeYouEnroll profile={data.profile} />
-        <Card>
+        <Card variant="grouped">
           <EmptyState
             icon={<RouteIcon size={30} />}
             title="Your flight path starts here."
             body="Add the stages of your training — exploring, ground school, first lessons, the skills you want to build. Requirements differ by school and instructor, so these are yours to shape."
             action={
-              <div className="inline-add" style={{ maxWidth: "26rem" }}>
+              <div className="inline-add inline-add--26">
                 <TextInput
                   value={newMilestone}
                   aria-label="New milestone"
@@ -186,7 +186,7 @@ export function FlightPath() {
                 {unassignedGoals.length} {unassignedGoals.length === 1 ? "goal" : "goals"}
               </span>
             </div>
-            <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
+            <p className="small muted fp-lead">
               These are yours to keep here, or edit one to move it into a stage.
             </p>
             {unassignedGoals.map((goal) => (
@@ -204,7 +204,7 @@ export function FlightPath() {
 
       <Card variant="quiet">
         <CardBody>
-          <div className="inline-add" style={{ maxWidth: "28rem" }}>
+          <div className="inline-add inline-add--28">
             <TextInput
               value={newMilestone}
               aria-label="New milestone"
@@ -221,7 +221,7 @@ export function FlightPath() {
               <PlusIcon size={14} /> Milestone
             </Button>
           </div>
-          <p className="tiny dim" style={{ marginTop: "var(--space-3)" }}>
+          <p className="tiny dim fp-note">
             Training requirements differ by location, school, instructor and certificate.
             These stages are yours — your instructor and the official requirements remain
             authoritative.
@@ -326,7 +326,7 @@ function MilestoneSection({
             disabled={!canMoveUp}
             onClick={() => onMove("up")}
           >
-            <span style={{ transform: "rotate(90deg)", display: "inline-flex" }}>
+            <span className="fp-rot">
               <ChevronLeftIcon size={15} />
             </span>
           </IconButton>
@@ -335,7 +335,7 @@ function MilestoneSection({
             disabled={!canMoveDown}
             onClick={() => onMove("down")}
           >
-            <span style={{ transform: "rotate(90deg)", display: "inline-flex" }}>
+            <span className="fp-rot">
               <ChevronRightIcon size={15} />
             </span>
           </IconButton>
@@ -353,7 +353,7 @@ function MilestoneSection({
       </div>
 
       {milestone.description ? (
-        <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
+        <p className="small muted fp-lead">
           {milestone.description}
         </p>
       ) : null}

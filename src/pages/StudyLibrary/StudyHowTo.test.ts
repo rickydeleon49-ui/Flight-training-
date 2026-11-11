@@ -60,11 +60,11 @@ it("reads ?tab=howto as the How to tab", () => {
   expect(libraryTabFrom(new URLSearchParams("tab=howto"))).toBe("howto");
 });
 
-it("puts How to after History and shows the general steps from a deep link", async () => {
+it("puts How to after History and Diagrams and shows the general steps from a deep link", async () => {
   renderAt("/study?tab=howto");
   const tab = await screen.findByRole("tab", { name: "How to", selected: true });
   const tabs = screen.getAllByRole("tab").map(node => node.textContent);
-  expect(tabs).toEqual(["Library", "Review due", "History", "How to"]);
+  expect(tabs).toEqual(["Library", "Review due", "History", "Diagrams", "How to"]);
   const panel = screen.getByRole("tabpanel");
   expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
   const steps = within(panel).getByRole("list", { name: "PDF study steps" });

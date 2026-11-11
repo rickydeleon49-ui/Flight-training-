@@ -107,7 +107,7 @@ export function GetStudyMaterialCard() {
 
   return (
     <>
-      <Card>
+      <Card variant="grouped">
         <CardHeader title={staged ? "All set" : "Get my study material"} eyebrow="Study on the go" />
         <CardBody>
           {staged ? (

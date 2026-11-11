@@ -1,6 +1,6 @@
 import { isIOS } from "@/services/platform";
 import { useHistoryScroll } from "./useHistoryScroll";
-import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
@@ -34,8 +34,9 @@ import {
   Loading,
 } from "@/components/ui";
 
-import { IosBackButton } from "./IosBackButton";
 import { IosTabBar } from "./IosTabBar";
+import { TopBar } from "./TopBar";
+import { TopBarContext } from "./topBarContext";
 
 import "./shell.css";
 import { DISCLAIMER_LINE } from "@/logic/legal";
@@ -68,6 +69,8 @@ export function AppShell() {
   const [desktop, setDesktop] = useState(() => window.matchMedia?.("(min-width: 1000px)").matches ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
   const resizeFocusRef = useRef<"search" | "menu" | null>(null);
+  const [barTitle, setBarTitle] = useState("");
+  const [barCollapsed, setBarCollapsed] = useState(false);
 
   // Anchor destinations stay below the sticky header, including enlarged text.
   useLayoutEffect(() => {
@@ -123,6 +126,13 @@ export function AppShell() {
   // iPhone only: a bottom tab bar replaces the header and menu. A wide iPad keeps the sidebar.
   const tabs = isIOS() && !desktop;
 
+  // The narrow Mac layout keeps its own sticky Menu header instead.
+  const hasTopBar = tabs || desktop;
+  const barState = useMemo(
+    () => ({ title: barTitle, setTitle: setBarTitle, collapsed: barCollapsed, setCollapsed: setBarCollapsed }),
+    [barTitle, barCollapsed],
+  );
+
   const beforeQuickFindOpen = useCallback(() => {
     if (desktop || tabs) return;
     // Give the dialog a visible return target before it captures focus.
@@ -160,6 +170,7 @@ export function AppShell() {
   }, [desktop, location.pathname]);
 
   return (
+    <TopBarContext.Provider value={barState}>
     <div className={tabs ? "shell shell--tabs" : "shell"}>
       {tabs ? <IosTabBar overdueCount={overdueCount} questionsToAsk={questionsToAsk} /> : (
       <aside ref={sidebarRef} className="sidebar" onKeyDown={(event) => {
@@ -261,8 +272,8 @@ export function AppShell() {
       </aside>
       )}
 
-      <main className="content">
-        {tabs ? <IosBackButton /> : null}
+      <main className={hasTopBar ? "content content--top-bar" : "content"}>
+        {hasTopBar ? <TopBar back={tabs} /> : null}
         <div className="content__inner">
           <GeminiOrphanNotices />
           <StudyPackNotice />
@@ -278,5 +289,6 @@ export function AppShell() {
       <QuickFind onBeforeOpen={beforeQuickFindOpen} />
       <UndoBar />
     </div>
+    </TopBarContext.Provider>
   );
 }

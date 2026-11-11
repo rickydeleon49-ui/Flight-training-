@@ -6,8 +6,9 @@
  * the product spec are recorded here as the private --palette-* layer and are
  * never used directly in a component.
  *
- * The product commits to one warm light palette; there is no dark theme, so
- * every colour is defined once and stated explicitly.
+ * These are the light values (the original warm ivory palette). Dark values
+ * follow below; src/styles/contrast.test.ts measures every text and background
+ * pair.
  */
 
 :root {
@@ -27,6 +28,7 @@
   /* ---- Surfaces ---- */
   --surface-page: var(--palette-ivory);
   --surface-card: var(--palette-white);
+  --surface-sidebar: #ffffff;
   --surface-sunken: #f3eeea;
   --surface-raised: #fffdfc;
   /* Tinted washes for section headers and quiet panels. */
@@ -44,6 +46,7 @@
 
   /* ---- Lines and edges ---- */
   --border-subtle: #ece4de;
+  --border-control: #8c8f9a;
   --border-strong: #ddd2ca;
   --border-focus: var(--palette-berry);
 
@@ -53,7 +56,8 @@
    */
   --accent-primary: var(--palette-berry);
   --accent-primary-hover: #8d3c59;
-  --accent-primary-fill: #fbeff3;
+  --accent-fill: #fbeff3;
+  --accent-primary-fill: var(--accent-fill);
   --accent-secondary: var(--palette-rose);
   /* Channels of the active accent, for translucent effects. */
   --accent-rgb: 168 76 107;
@@ -91,23 +95,30 @@
   --status-danger: var(--status-overdue);
 
   /* ---- Type ---- */
-  /* Both families are bundled with the application; the stacks behind them
-     still matter for glyphs outside the subsets we ship. */
-  --font-display: "Fraunces Variable", "Iowan Old Style", "Palatino Linotype",
-    Palatino, Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, "Helvetica Neue", sans-serif;
-  --font-numeric: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* System font (SF on Apple systems) everywhere; Fraunces only for the brand
+     name and instructor quotes via --font-brand. */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", system-ui, sans-serif;
+  --font-numeric: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", system-ui, sans-serif;
+  --font-brand: "Fraunces Variable", Georgia, serif;
 
+  --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
   --text-base: 0.9375rem;
+  --text-callout: 1rem;
   --text-md: 1.0625rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.625rem;
+  --text-title3: 1.25rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
   --text-2xl: 2.125rem;
+  --text-hero: 3rem;
 
   --leading-tight: 1.2;
+  --leading-ui: 1.3;
   --leading-normal: 1.55;
 
   /* ---- Space ---- */
@@ -123,14 +134,28 @@
   /* ---- Shape ---- */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   /* ---- Depth. Kept very soft; the design leans on spacing, not shadow. -- */
   --shadow-sm: 0 1px 2px rgba(23, 35, 60, 0.04);
   --shadow-md: 0 2px 10px rgba(23, 35, 60, 0.05);
   --shadow-lg: 0 12px 32px rgba(23, 35, 60, 0.1);
+
+  --shadow-popover: 0 6px 20px rgb(0 0 0 / 12%);
+  --shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-card-soft: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --overlay: rgb(23 35 60 / 0.28);
+  --badge-alert: #c0392b;
+  --text-on-tint: #fff;
+  --tint-overdue-hover: #fbeceb;
+  --border-warn: #ecd8b6;
+  --focus-outline-blue: #3b82f6;
+  --focus-outline-plum: #604778;
+  --surface-faint: rgba(0, 0, 0, 0.02);
+  --surface-press: rgba(0, 0, 0, 0.06);
+  --sketch-canvas-bg: #eee6dc;
 
   --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.28);
 
@@ -139,6 +164,22 @@
   --content-max: 76rem;
 
   --transition: 140ms ease;
+
+  /* ---- Sidebar (slice 14): light keeps the original colours ---- */
+  --nav-ink: var(--text-secondary);
+  --nav-icon-ink: currentColor;
+  --nav-active-ink: var(--accent-primary);
+  --nav-count-fill: var(--status-overdue-fill);
+  --nav-count-edge: var(--status-overdue-edge);
+  --nav-count-ink: var(--status-overdue);
+  --nav-quiet-fill: var(--surface-sunken);
+  --nav-quiet-edge: var(--border-subtle);
+  --nav-search-fill: var(--surface-card);
+  --nav-search-edge: var(--border-subtle);
+  --nav-search-edge-hover: var(--border-strong);
+  --sidebar-note-fill: var(--surface-tint-sky);
+  --sidebar-note-ink: var(--category-flight-ink);
+  --brand-mark-fill: linear-gradient(150deg, var(--accent-primary), var(--accent-primary-hover));
 }
 
 /* ------------------------------------------------------------------ *
@@ -152,7 +193,7 @@
 :root[data-accent="lavender"] {
   --accent-primary: #5b4d95;
   --accent-primary-hover: #4c4080;
-  --accent-primary-fill: #f2effb;
+  --accent-fill: #efecf9;
   --accent-secondary: var(--palette-lavender);
   --accent-rgb: 91 77 149;
 }
@@ -160,7 +201,7 @@
 :root[data-accent="sky"] {
   --accent-primary: #2b6285;
   --accent-primary-hover: #22506e;
-  --accent-primary-fill: #eaf3f9;
+  --accent-fill: #e6f1f8;
   --accent-secondary: var(--palette-sky);
   --accent-rgb: 43 98 133;
 }
@@ -168,9 +209,304 @@
 :root[data-accent="mint"] {
   --accent-primary: #2f6d59;
   --accent-primary-hover: #265948;
-  --accent-primary-fill: #e9f5f0;
+  --accent-fill: #e4f3ec;
   --accent-secondary: var(--palette-mint);
   --accent-rgb: 47 109 89;
+}
+
+/* ------------------------------------------------------------------ *
+ * Light grey theme (a choice in Settings): iOS-style warm grey page with
+ * white groups. The default light theme above stays the original ivory.
+ * ------------------------------------------------------------------ */
+
+:root[data-theme="light-grey"] {
+  --palette-ivory: #f5f2f0;
+  --surface-sidebar: #ede9e6;
+  --surface-sunken: #ebe7e4;
+  --surface-raised: #ffffff;
+  --border-subtle: #e3ded9;
+  --accent-fill: #f7e9ee;
+
+  --nav-ink: var(--text-primary);
+  --nav-icon-ink: var(--accent-primary);
+  --nav-active-ink: var(--text-primary);
+  --nav-count-fill: var(--badge-alert);
+  --nav-count-edge: transparent;
+  --nav-count-ink: var(--text-on-accent);
+  --nav-quiet-fill: transparent;
+  --nav-quiet-edge: transparent;
+  --nav-search-fill: var(--surface-sunken);
+  --nav-search-edge: transparent;
+  --nav-search-edge-hover: transparent;
+  --sidebar-note-fill: var(--surface-card);
+  --sidebar-note-ink: var(--text-secondary);
+  --brand-mark-fill: var(--accent-primary);
+}
+:root[data-theme="light-grey"][data-accent="lavender"] { --accent-fill: #efecf9; }
+:root[data-theme="light-grey"][data-accent="sky"] { --accent-fill: #e6f1f8; }
+:root[data-theme="light-grey"][data-accent="mint"] { --accent-fill: #e4f3ec; }
+
+/* ------------------------------------------------------------------ *
+ * Dark theme (DESIGN-01 slice 5).
+ *
+ * Every light custom property has a dark twin here, written twice with the
+ * same declarations: once for an explicit data-theme="dark", once for Auto
+ * when the system is dark. tokens.test.ts and contrast.test.ts keep the two
+ * copies identical. Non-colour tokens (type, space, shape, layout) are shared.
+ * ------------------------------------------------------------------ */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --palette-ivory: #1c1c1e;
+  --palette-white: #2c2c2e;
+  --palette-navy: #f2f2f7;
+  --palette-navy-muted: #aeaeb8;
+  --palette-berry: #e0809f;
+  --palette-rose: #8a5668;
+  --palette-lavender: #6f649c;
+  --palette-sky: #4a7892;
+  --palette-mint: #4f8570;
+
+  --surface-page: #1c1c1e;
+  --surface-card: #2c2c2e;
+  --surface-sidebar: #252527;
+  --surface-sunken: #3a3a3c;
+  --surface-raised: #2c2c2e;
+  --surface-tint-berry: #3a2830;
+  --surface-tint-sky: #25323b;
+  --surface-tint-lavender: #302c42;
+  --surface-tint-mint: #243630;
+  --surface-tint-warn: #3d2826;
+
+  --text-primary: #f2f2f7;
+  --text-secondary: rgba(235, 235, 245, 0.6);
+  --text-tertiary: rgba(235, 235, 245, 0.45);
+  --text-on-accent: #000000;
+
+  --border-subtle: rgba(84, 84, 88, 0.65);
+  --border-control: #8e8e93;
+  --border-strong: rgba(84, 84, 88, 0.9);
+  --border-focus: var(--palette-berry);
+
+  --accent-primary: var(--palette-berry);
+  --accent-primary-hover: #ec96b1;
+  --accent-fill: #402b35;
+  --accent-primary-fill: var(--accent-fill);
+  --accent-secondary: var(--palette-rose);
+  --accent-rgb: 224 128 159;
+
+  --accent-swatch-berry: #e0809f;
+  --accent-swatch-lavender: #a99bea;
+  --accent-swatch-sky: #6fb4dd;
+  --accent-swatch-mint: #62c4a0;
+
+  --category-study-fill: var(--surface-tint-lavender);
+  --category-study-ink: #c4b8f0;
+  --category-study-edge: var(--palette-lavender);
+  --category-flight-fill: var(--surface-tint-sky);
+  --category-flight-ink: #8ec5e6;
+  --category-flight-edge: var(--palette-sky);
+  --category-complete-fill: var(--surface-tint-mint);
+  --category-complete-ink: #7fcfae;
+  --category-complete-edge: var(--palette-mint);
+
+  --status-overdue: #ff8a80;
+  --status-overdue-fill: var(--surface-tint-warn);
+  --status-overdue-edge: #7a3f3b;
+  --status-due-today: #e8b04a;
+  --status-due-today-fill: #3a2f1c;
+  --status-complete: var(--category-complete-ink);
+  --status-danger: var(--status-overdue);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-popover: 0 6px 20px rgb(0 0 0 / 45%);
+  --shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card-soft: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --badge-alert: #e5484d;
+  --text-on-tint: #000000;
+  --tint-overdue-hover: #4a2e2c;
+  --border-warn: #6b5427;
+  --focus-outline-blue: #6ea8fe;
+  --focus-outline-plum: #b79ad6;
+  --surface-faint: rgba(255, 255, 255, 0.03);
+  --surface-press: rgba(255, 255, 255, 0.08);
+  --sketch-canvas-bg: #2a2724;
+
+  --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.5);
+
+  --nav-ink: var(--text-primary);
+  --nav-icon-ink: var(--accent-primary);
+  --nav-active-ink: var(--text-primary);
+  --nav-count-fill: var(--badge-alert);
+  --nav-count-edge: transparent;
+  --nav-count-ink: var(--text-on-accent);
+  --nav-quiet-fill: transparent;
+  --nav-quiet-edge: transparent;
+  --nav-search-fill: var(--surface-sunken);
+  --nav-search-edge: transparent;
+  --nav-search-edge-hover: transparent;
+  --sidebar-note-fill: var(--surface-card);
+  --sidebar-note-ink: var(--text-secondary);
+  --brand-mark-fill: var(--accent-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) {
+    color-scheme: dark;
+
+    --palette-ivory: #1c1c1e;
+    --palette-white: #2c2c2e;
+    --palette-navy: #f2f2f7;
+    --palette-navy-muted: #aeaeb8;
+    --palette-berry: #e0809f;
+    --palette-rose: #8a5668;
+    --palette-lavender: #6f649c;
+    --palette-sky: #4a7892;
+    --palette-mint: #4f8570;
+
+    --surface-page: #1c1c1e;
+    --surface-card: #2c2c2e;
+    --surface-sidebar: #252527;
+    --surface-sunken: #3a3a3c;
+    --surface-raised: #2c2c2e;
+    --surface-tint-berry: #3a2830;
+    --surface-tint-sky: #25323b;
+    --surface-tint-lavender: #302c42;
+    --surface-tint-mint: #243630;
+    --surface-tint-warn: #3d2826;
+
+    --text-primary: #f2f2f7;
+    --text-secondary: rgba(235, 235, 245, 0.6);
+    --text-tertiary: rgba(235, 235, 245, 0.45);
+    --text-on-accent: #000000;
+
+    --border-subtle: rgba(84, 84, 88, 0.65);
+    --border-control: #8e8e93;
+    --border-strong: rgba(84, 84, 88, 0.9);
+    --border-focus: var(--palette-berry);
+
+    --accent-primary: var(--palette-berry);
+    --accent-primary-hover: #ec96b1;
+    --accent-fill: #402b35;
+    --accent-primary-fill: var(--accent-fill);
+    --accent-secondary: var(--palette-rose);
+    --accent-rgb: 224 128 159;
+
+    --accent-swatch-berry: #e0809f;
+    --accent-swatch-lavender: #a99bea;
+    --accent-swatch-sky: #6fb4dd;
+    --accent-swatch-mint: #62c4a0;
+
+    --category-study-fill: var(--surface-tint-lavender);
+    --category-study-ink: #c4b8f0;
+    --category-study-edge: var(--palette-lavender);
+    --category-flight-fill: var(--surface-tint-sky);
+    --category-flight-ink: #8ec5e6;
+    --category-flight-edge: var(--palette-sky);
+    --category-complete-fill: var(--surface-tint-mint);
+    --category-complete-ink: #7fcfae;
+    --category-complete-edge: var(--palette-mint);
+
+    --status-overdue: #ff8a80;
+    --status-overdue-fill: var(--surface-tint-warn);
+    --status-overdue-edge: #7a3f3b;
+    --status-due-today: #e8b04a;
+    --status-due-today-fill: #3a2f1c;
+    --status-complete: var(--category-complete-ink);
+    --status-danger: var(--status-overdue);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --shadow-popover: 0 6px 20px rgb(0 0 0 / 45%);
+    --shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-card-soft: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --overlay: rgba(0, 0, 0, 0.5);
+    --badge-alert: #e5484d;
+    --text-on-tint: #000000;
+    --tint-overdue-hover: #4a2e2c;
+    --border-warn: #6b5427;
+    --focus-outline-blue: #6ea8fe;
+    --focus-outline-plum: #b79ad6;
+    --surface-faint: rgba(255, 255, 255, 0.03);
+    --surface-press: rgba(255, 255, 255, 0.08);
+    --sketch-canvas-bg: #2a2724;
+
+    --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.5);
+
+    --nav-ink: var(--text-primary);
+    --nav-icon-ink: var(--accent-primary);
+    --nav-active-ink: var(--text-primary);
+    --nav-count-fill: var(--badge-alert);
+    --nav-count-edge: transparent;
+    --nav-count-ink: var(--text-on-accent);
+    --nav-quiet-fill: transparent;
+    --nav-quiet-edge: transparent;
+    --nav-search-fill: var(--surface-sunken);
+    --nav-search-edge: transparent;
+    --nav-search-edge-hover: transparent;
+    --sidebar-note-fill: var(--surface-card);
+    --sidebar-note-ink: var(--text-secondary);
+    --brand-mark-fill: var(--accent-primary);
+  }
+}
+
+:root[data-theme="dark"][data-accent="lavender"] {
+  --accent-primary: #a99bea;
+  --accent-primary-hover: #bbb0f2;
+  --accent-fill: #322d4a;
+  --accent-secondary: var(--palette-lavender);
+  --accent-rgb: 169 155 234;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"])[data-accent="lavender"] {
+    --accent-primary: #a99bea;
+    --accent-primary-hover: #bbb0f2;
+    --accent-fill: #322d4a;
+    --accent-secondary: var(--palette-lavender);
+    --accent-rgb: 169 155 234;
+  }
+}
+
+:root[data-theme="dark"][data-accent="sky"] {
+  --accent-primary: #6fb4dd;
+  --accent-primary-hover: #8bc4e6;
+  --accent-fill: #243746;
+  --accent-secondary: var(--palette-sky);
+  --accent-rgb: 111 180 221;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"])[data-accent="sky"] {
+    --accent-primary: #6fb4dd;
+    --accent-primary-hover: #8bc4e6;
+    --accent-fill: #243746;
+    --accent-secondary: var(--palette-sky);
+    --accent-rgb: 111 180 221;
+  }
+}
+
+:root[data-theme="dark"][data-accent="mint"] {
+  --accent-primary: #62c4a0;
+  --accent-primary-hover: #7bd0b2;
+  --accent-fill: #213a31;
+  --accent-secondary: var(--palette-mint);
+  --accent-rgb: 98 196 160;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"])[data-accent="mint"] {
+    --accent-primary: #62c4a0;
+    --accent-primary-hover: #7bd0b2;
+    --accent-fill: #213a31;
+    --accent-secondary: var(--palette-mint);
+    --accent-rgb: 98 196 160;
+  }
 }
 
 /* Respect a request for reduced motion across every animated element. */

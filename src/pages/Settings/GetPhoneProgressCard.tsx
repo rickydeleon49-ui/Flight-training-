@@ -38,7 +38,7 @@ export function GetPhoneProgressCard() {
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader
         title="Get progress from my iPhone"
         headingId="get-phone-progress"

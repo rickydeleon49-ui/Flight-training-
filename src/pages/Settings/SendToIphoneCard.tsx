@@ -57,7 +57,7 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader
         title="Send to my iPhone"
         headingId="send-to-iphone"

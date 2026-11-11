@@ -71,6 +71,8 @@ npm run test:cargo-lock
 
 CI (`.github/workflows/checks.yml`) runs these on every pull request.
 
+New diagram sets in `src/assets/diagrams` are shrunk with `node scripts/minify-diagrams.mjs` (`--check` only reports).
+
 ## Offline PDF reading and search
 
 In the desktop app, prepare a PDF once to search its readable text without a

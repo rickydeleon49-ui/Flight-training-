@@ -244,3 +244,48 @@
   text-decoration-color: var(--border-strong, currentColor);
   text-underline-offset: 2px;
 }
+
+/* ---------------- Classes that replace inline styles ---------------- */
+
+.deck-center { justify-content: center; }
+.deck-why-wrap { margin-top: var(--space-5); max-width: 34rem; }
+.deck-gap-top-1 { margin-top: var(--space-1); }
+.deck-gap-top-2 { margin-top: var(--space-2); }
+.deck-gap-top-3 { margin-top: var(--space-3); }
+.deck-attention-note { margin-bottom: var(--space-3); }
+.deck-min0 { min-width: 0; }
+.deck-overdue { color: var(--status-overdue); }
+.deck-noshrink { flex: none; }
+.deck-tertiary { color: var(--text-tertiary); }
+.deck-plan-groups { padding-bottom: var(--space-4); }
+.deck-date-meta { gap: var(--space-2); flex: none; }
+
+/* --------------- Grouped look (iOS-style groups) --------------- */
+
+.deck .card--grouped .action-group__name {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+html.is-ios .deck-flight-hours__total {
+  font-size: var(--text-hero);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The top action sits flat: a tinted block, no outline or gradient. */
+html.is-ios .top-action {
+  border: 0;
+  background: var(--accent-primary-fill);
+}
+
+html.is-ios .encouragement { border: 0; }
+html.is-ios .why-card { border: 0; }
+
+/* Separators between rows inside grouped cards, inset like iOS lists. */
+.card--grouped .attention-row,
+.card--grouped .prep-list__item + .prep-list__item {
+  border-bottom-color: var(--border-subtle);
+}
+html.is-ios .card--grouped .card__body { padding-top: var(--space-2); }

@@ -12,7 +12,7 @@ export function CheckrideDateCard() {
     mutate((repos) => repos.toolkit.save({ ...data.toolkit, checkrideDate }));
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Checkride date" eyebrow="On this device" />
       <CardBody>
         <div className="stack stack--3">

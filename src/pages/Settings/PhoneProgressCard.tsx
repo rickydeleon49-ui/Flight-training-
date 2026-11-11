@@ -53,7 +53,7 @@ export function PhoneProgressCard() {
 
   const counts = work ? unsavedPhoneWorkCounts(work) : null;
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Send my progress to the Mac" eyebrow="What you did on this phone" headingId="phone-progress" />
       <CardBody>
         {checkProblem ? <p role="alert">{checkProblem}</p>

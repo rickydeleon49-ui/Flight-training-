@@ -49,7 +49,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
     if (isTauri()) { event.preventDefault(); void run(async () => { await openUrl(terms.termsUrl); }); }
   }}>{terms.company}'s terms</a>)</>;
   const claude = (
-      <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+      <div className="stack stack--3 settings-stack-top">
         <p className="small strong">Claude (Anthropic)</p>
         <p className="tiny dim">{privacy}</p>
         <p className="tiny dim">Your key stays on this {isIOS() ? "phone" : "computer"} and is not included in backups.</p>
@@ -81,7 +81,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
     </div>}
     <details key={status.selected}>
       <summary className="small">Use a different provider</summary>
-      {status.selected === "gemini" ? claude : <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+      {status.selected === "gemini" ? claude : <div className="stack stack--3 settings-stack-top">
         {children}
         <div><Button disabled={busy} onClick={() => void run(() => choose("gemini"))}>Use Gemini</Button></div>
       </div>}

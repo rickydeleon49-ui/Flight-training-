@@ -3,14 +3,8 @@ import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
 
-// Self-hosted fonts: the desktop app must look right with no network.
-// Fraunces carries the optical-size axis, so headings are optically adjusted
-// at display sizes; Inter is latin-only, and the token stacks cover the rest.
-import "@fontsource-variable/fraunces/opsz.css";
-import "@fontsource/inter/latin-400.css";
-import "@fontsource/inter/latin-500.css";
-import "@fontsource/inter/latin-600.css";
-
+// Brand face (Fraunces, latin only) is self-hosted: the app must look right offline.
+import "./styles/fonts.css";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/layout.css";
@@ -19,9 +13,11 @@ import "./styles/glass.css";
 
 import { initIOSText } from "./lib/iosText";
 import { initAppearance } from "./lib/appearance";
+import { initTheme } from "./lib/theme";
 
 // Apply appearance before initial render so restored theme appears without flash.
 initAppearance();
+initTheme();
 initIOSText();
 
 const container = document.getElementById("root");

@@ -81,18 +81,20 @@ import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { PhotoPictureButton } from "./PhotoPictureButton";
 import { StudyLibraryHistory } from "./StudyLibraryHistory";
 import { StudyHowTo } from "./StudyHowTo";
+import { DiagramsView } from "./DiagramsView";
 import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
 import { useLibraryDueStream } from "./useLibraryReviews";
 import { useOfflineBadges, type OfflineBadge } from "./useOfflineBadges";
 import { FreeStudyLinks } from "./FreeStudyLinks";
 import "./studyLibrary.css";
 
-export type LibraryTab = "library" | "due" | "history" | "howto";
+export type LibraryTab = "library" | "due" | "history" | "diagrams" | "howto";
 type LibraryTabChoice = { value: LibraryTab; label: string };
 const TABS: LibraryTabChoice[] = [
   { value: "library", label: "Library" },
   { value: "due", label: "Review due" },
   { value: "history", label: "History" },
+  { value: "diagrams", label: "Diagrams" },
   { value: "howto", label: "How to" },
 ];
 
@@ -114,10 +116,10 @@ function LibraryTabButton({ choice, state }: { choice: LibraryTabChoice; state: 
   );
 }
 
-/** The tab named in the address (`?tab=due`, `?tab=history`, `?tab=howto`); anything else is the Library. */
+/** The tab named in the address (`?tab=due`, `?tab=history`, `?tab=diagrams`, `?tab=howto`); anything else is the Library. */
 export function libraryTabFrom(params: URLSearchParams): LibraryTab {
   const tab = params.get("tab");
-  return tab === "due" || tab === "history" || tab === "howto" ? tab : "library";
+  return tab === "due" || tab === "history" || tab === "diagrams" || tab === "howto" ? tab : "library";
 }
 
 type StatusFilter = ReviewStatus | "all" | "next_up";
@@ -598,6 +600,11 @@ export function StudyLibrary() {
           <StudyLibraryHistory repository={cardLibrary} materials={data.materials} dataRevision={dataRevision} />
         </div>
       ) : null}
+      {tab === "diagrams" ? (
+        <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-diagrams" aria-labelledby="library-tab-diagrams">
+          <DiagramsView topic={params.get("topic")} />
+        </div>
+      ) : null}
       {tab === "howto" ? (
         <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-howto" aria-labelledby="library-tab-howto">
           <StudyHowTo />
@@ -707,7 +714,7 @@ export function StudyLibrary() {
       ) : null}
 
       {hasAny ? (
-        <div className="filter-chips" style={{ marginBottom: "var(--space-5)" }}>
+        <div className="filter-chips scroll-x" style={{ marginBottom: "var(--space-5)" }}>
           {STATUS_FILTERS.map((filter) => (
             <button
               type="button"

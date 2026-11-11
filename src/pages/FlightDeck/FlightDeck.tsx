@@ -107,7 +107,7 @@ export function FlightDeck() {
             title="Your flight deck is ready."
             body="Add your first lesson, study material, or goal and this page will start telling you what to do next."
             action={
-              <div className="row row--wrap" style={{ justifyContent: "center" }}>
+              <div className="row row--wrap deck-center">
                 <Button variant="primary" onClick={() => setCreating(true)}>
                   Add a next action
                 </Button>
@@ -123,7 +123,7 @@ export function FlightDeck() {
         </Card>
         {/* The student's why belongs here most of all: a deck with nothing in it yet is
             exactly when the reason for starting is worth seeing. */}
-        <div style={{ marginTop: "var(--space-5)", maxWidth: "34rem" }}>
+        <div className="deck-why-wrap">
           <WhyCard model={model} />
         </div>
 
@@ -167,7 +167,7 @@ export function FlightDeck() {
               <p className="top-action__label">Most important next</p>
               <p className="top-action__title wrap-anywhere">{model.topAction.title}</p>
               {model.topAction.dueDate ? (
-                <p className="small muted" style={{ marginTop: "var(--space-2)" }}>
+                <p className="small muted deck-gap-top-2">
                   {data.homework?.some(h => h.assignment.action_id === model.topAction!.id && !h.assignment.archived)
                     ? (model.topAction.dueDate < model.today ? "Homework overdue" : "Homework due")
                     : describeRelativeDate(model.topAction.dueDate, model.today)}
@@ -176,7 +176,7 @@ export function FlightDeck() {
               {(() => {
                 const boundHw = data.homework?.find(h => h.assignment.action_id === model.topAction!.id && !h.assignment.archived);
                 return boundHw ? (
-                  <div style={{ marginTop: "var(--space-3)" }}>
+                  <div className="deck-gap-top-3">
                     <Link
                       className="button button--secondary button--small"
                       to={`/study/homework/${boundHw.assignment.id}`}
@@ -190,7 +190,7 @@ export function FlightDeck() {
           ) : null}
 
           {model.needsAttention.length > 0 ? (
-            <Card>
+            <Card variant="grouped">
               <CardHeader
                 title="Needs attention"
                 action={
@@ -200,7 +200,7 @@ export function FlightDeck() {
                 }
               />
               <CardBody>
-                <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
+                <p className="small muted deck-attention-note">
                   {model.needsAttention.every((action) =>
                     data.homework?.some(
                       (h) => h.assignment.action_id === action.id && !h.assignment.archived,
@@ -215,13 +215,13 @@ export function FlightDeck() {
                   const boundHw = data.homework?.find(h => h.assignment.action_id === action.id && !h.assignment.archived);
                   return (
                     <div className="attention-row" key={action.id} id={`attention-${action.id}`}>
-                      <div style={{ minWidth: 0 }}>
+                      <div className="deck-min0">
                         <p className="attention-row__title wrap-anywhere">{action.title}</p>
-                        <p className="tiny" style={{ color: "var(--status-overdue)" }}>
+                        <p className="tiny deck-overdue">
                           {boundHw ? "Homework overdue" : describeRelativeDate(action.dueDate as string, model.today)}
                         </p>
                       </div>
-                      <div className="row" style={{ flex: "none" }}>
+                      <div className="row deck-noshrink">
                         {boundHw ? (
                           <Link
                             className="button button--secondary button--small"
@@ -236,7 +236,6 @@ export function FlightDeck() {
                             </Button>
                             <Button
                               size="small"
-                              variant="primary"
                               onClick={() => operations.toggle(action)}
                             >
                               Complete
@@ -251,7 +250,7 @@ export function FlightDeck() {
             </Card>
           ) : null}
 
-          <Card>
+          <Card variant="grouped">
             <CardHeader
               title="Today's plan"
               action={
@@ -280,7 +279,7 @@ export function FlightDeck() {
                   }
                 />
               ) : (
-                <div style={{ paddingBottom: "var(--space-4)" }}>
+                <div className="deck-plan-groups">
                   {model.planGroups.map((group) => (
                     <section className="action-group" key={group.category}>
                       <header className="action-group__heading">
@@ -329,7 +328,7 @@ export function FlightDeck() {
           <WhyCard model={model} />
 
           {model.awaitingDebrief.length > 0 ? (
-            <Card>
+            <Card variant="grouped">
               <CardHeader title="Waiting on a debrief" eyebrow="Flight Journal" />
               <CardBody>
                 <div className="stack stack--2">
@@ -435,7 +434,7 @@ function FlightHoursCard({
   const activity = flightActivity(entries, today);
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader
         title="Flight hours"
         eyebrow="Logbook snapshot"
@@ -466,8 +465,7 @@ function FlightHoursCard({
           <span>Night {formatHours(totals.nightTime)}</span>
         </div>
         <Link
-          className="button button--ghost button--small"
-          style={{ marginTop: "var(--space-3)" }}
+          className="button button--ghost button--small deck-gap-top-3"
           to="/journal"
         >
           View hour dashboard
@@ -481,7 +479,7 @@ function NextFlightCard({ model }: { model: Model }) {
   const weatherOn = useSyncExternalStore(airportWeather.subscribe, () => airportWeather.snapshot().enabled);
   if (!model.nextFlight) {
     return (
-      <Card>
+      <Card variant="grouped">
         <CardHeader title="Next flight" />
         <CardBody>
           <EmptyState
@@ -502,7 +500,7 @@ function NextFlightCard({ model }: { model: Model }) {
   const { event, preparation, materials, daysAway } = model.nextFlight;
 
   return (
-    <Card variant="accent">
+    <Card variant="grouped">
       <CardHeader
         title="Next flight"
         action={
@@ -520,7 +518,7 @@ function NextFlightCard({ model }: { model: Model }) {
             </p>
             <p className="next-flight__title wrap-anywhere">{event.title}</p>
             {event.instructor || event.location ? (
-              <p className="small muted" style={{ marginTop: "var(--space-1)" }}>
+              <p className="small muted deck-gap-top-1">
                 {[event.instructor, event.location].filter(Boolean).join(" · ")}
               </p>
             ) : null}
@@ -582,7 +580,7 @@ function NextFlightCard({ model }: { model: Model }) {
 
           {materials.length > 0 ? (
             <div className="stack stack--2">
-              <p className="route-rule tiny strong" style={{ color: "var(--text-tertiary)" }}>
+              <p className="route-rule tiny strong deck-tertiary">
                 Materials
               </p>
               {materials.map((material) => (
@@ -618,7 +616,7 @@ function MilestoneCard({ model }: { model: Model }) {
   const { milestone, progress, nextAction } = model.currentMilestone;
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title={milestone.title} eyebrow="Current milestone" />
       <CardBody>
         <div className="stack stack--4">
@@ -705,14 +703,14 @@ function KeyDatesCard({ model }: { model: Model }) {
   if (model.keyDates.length === 0) return null;
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Dates ahead" />
       <CardBody>
         <div className="stack stack--3">
           {model.keyDates.map((date) => (
             <div className="row row--between" key={date.id}>
               <span className="small truncate">{date.label}</span>
-              <span className="row" style={{ gap: "var(--space-2)", flex: "none" }}>
+              <span className="row deck-date-meta">
                 <span className="tiny dim">{formatShortDate(date.date)}</span>
                 {date.passed ? (
                   <Badge tone="overdue" icon={<AlertIcon size={12} />}>
@@ -743,13 +741,13 @@ function StudyFocusCard({ model }: { model: Model }) {
   const { material, nextAction } = model.studyFocus;
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Study focus" />
       <CardBody>
         <div className="stack stack--3">
           <div>
             <p className="strong wrap-anywhere">{material.title}</p>
-            <div className="row row--wrap" style={{ marginTop: "var(--space-2)" }}>
+            <div className="row row--wrap deck-gap-top-2">
               <Badge tone="study">{TOPIC_LABELS[material.topic]}</Badge>
               <Badge>{REVIEW_STATUS_LABELS[material.reviewStatus]}</Badge>
             </div>

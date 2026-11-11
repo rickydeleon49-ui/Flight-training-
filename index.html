@@ -3,12 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <style>
+      .boot-loading {
+        margin: 0;
+        padding: calc(env(safe-area-inset-top, 0px) + 40vh) 24px 0;
+        text-align: center;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 17px;
+        color: #667;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]):not([data-theme="light-grey"]) body { background: #1c1c1e; }
+        :root:not([data-theme="light"]):not([data-theme="light-grey"]) .boot-loading { color: #9a9aa6; }
+      }
+      :root[data-theme="dark"] body { background: #1c1c1e; }
+      :root[data-theme="dark"] .boot-loading { color: #9a9aa6; }
+    </style>
+    <script src="/theme-boot.js"></script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Your Flight Deck</title>
   </head>
   <body>
     <div id="root">
-      <p style="margin:0;padding:calc(env(safe-area-inset-top, 0px) + 40vh) 24px 0;text-align:center;font-family:system-ui,-apple-system,sans-serif;font-size:17px;color:#667;">Opening Your Flight Deck…</p>
+      <p class="boot-loading">Opening Your Flight Deck…</p>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

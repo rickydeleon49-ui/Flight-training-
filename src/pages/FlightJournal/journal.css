@@ -103,7 +103,7 @@
 
 .feedback-note__quote {
   display: block;
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: var(--text-md);
   line-height: 1.45;
   color: var(--text-primary);
@@ -126,6 +126,67 @@
   display: flex;
   gap: var(--space-2);
   margin-bottom: var(--space-5);
+}
+
+/* Segmented look: a sunken track with a raised thumb. The track pads the buttons
+   so the visible segment is 32px while each button keeps its 44px target. */
+.view-tabs.filter-chips {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  max-width: 100%;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-pill);
+}
+.view-tabs.filter-chips .filter-chip {
+  position: relative;
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+.view-tabs.filter-chips .filter-chip:hover { background: transparent; }
+.view-tabs.filter-chips .filter-chip.is-active,
+.view-tabs.filter-chips .filter-chip[aria-selected="true"] {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+
+/* Dark: the raised fill is darker than the track, so use the control edge grey. */
+:root[data-theme="dark"] .view-tabs.filter-chips .filter-chip.is-active,
+:root[data-theme="dark"] .view-tabs.filter-chips .filter-chip[aria-selected="true"] {
+  background: var(--border-control);
+  color: var(--text-on-accent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .view-tabs.filter-chips .filter-chip.is-active,
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .view-tabs.filter-chips .filter-chip[aria-selected="true"] {
+    background: var(--border-control);
+    color: var(--text-on-accent);
+  }
+}
+
+/* Phone: keep each label on one line; the track scrolls sideways if it must. */
+@media (max-width: 700px) {
+  .view-tabs.filter-chips {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .view-tabs.filter-chips .filter-chip {
+    flex: 0 0 auto;
+    padding: 0 6px;
+    font-size: 0.6875rem;
+  }
 }
 
 /* ----------------------------- Flight log ----------------------------- */
@@ -163,7 +224,7 @@
 }
 
 .flight-rhythm__value span {
-  font-family: var(--font-body);
+  font-family: inherit;
   font-size: var(--text-xs);
   color: var(--text-tertiary);
 }
@@ -178,7 +239,7 @@
   height: 0.45rem;
   margin-top: var(--space-2);
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-sunken);
 }
 
@@ -218,7 +279,45 @@
   letter-spacing: 0.06em;
 }
 
-.flight-log-table tbody tr:last-child td { border-bottom: 0; }
+.flight-log-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-card);
+}
+
+.flight-log-table td.numeric,
+.flight-log-table th.numeric { font-variant-numeric: tabular-nums; }
+
+.flight-log-table tfoot th,
+.flight-log-table tfoot td {
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-sunken);
+}
+.flight-log-table tfoot th {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.flight-log-table tfoot tr:first-child th,
+.flight-log-table tfoot tr:first-child td { border-top: 1px solid var(--border-strong); }
+.flight-log-table tfoot .ledger-total th,
+.flight-log-table tfoot .ledger-total td {
+  font-weight: 600;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 0;
+}
+
+.ledger-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ledger-pager .button { min-width: 2.75rem; min-height: 2.75rem; font-size: var(--text-base); }
+
+.flight-log-table tbody tr:last-child td { border-bottom: 1px solid var(--border-subtle); }
 .flight-log-table tbody tr:hover { background: var(--surface-sunken); }
 .flight-log-table .numeric { text-align: right; }
 
@@ -268,4 +367,156 @@
   .journal-notes-callout {
     flex-wrap: wrap;
   }
+}
+
+/* ------------------- Phone logbook: stacked rows + totals ------------------- */
+@media (max-width: 700px) {
+  html.is-ios .flight-log-summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  html.is-ios .flight-log-summary .card {
+    border: 0;
+    border-radius: 0;
+  }
+  html.is-ios .flight-log-summary .card + .card { border-top: 0.5px solid var(--border-subtle); }
+  html.is-ios .flight-log-summary .card__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: baseline;
+    column-gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+  html.is-ios .flight-log-summary .card__body > p { margin: 0; }
+  html.is-ios .flight-log-summary__value {
+    font-size: var(--text-md);
+    font-family: inherit;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  html.is-ios .flight-log-table-wrap { overflow-x: visible; }
+  html.is-ios .flight-log-table,
+  html.is-ios .flight-log-table tbody,
+  html.is-ios .flight-log-table tfoot { display: block; white-space: normal; }
+  html.is-ios .flight-log-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  html.is-ios .flight-log-table tbody tr,
+  html.is-ios .flight-log-table tfoot tr {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding: var(--space-3) calc(var(--space-4) + var(--space-5)) var(--space-3) var(--space-4);
+    border-bottom: 0.5px solid var(--border-subtle);
+  }
+  html.is-ios .flight-log-table tbody tr:last-child { border-bottom: 0; }
+  html.is-ios .flight-log-table tbody tr:hover { background: transparent; }
+  html.is-ios .flight-log-table tbody tr::after {
+    content: "";
+    position: absolute;
+    right: var(--space-4);
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-top: 2px solid var(--text-tertiary);
+    border-right: 2px solid var(--text-tertiary);
+    transform: translateY(-50%) rotate(45deg);
+  }
+  html.is-ios .flight-log-table tr::before { content: ""; order: 5; flex: 0 0 100%; height: 0; }
+  html.is-ios .flight-log-table tbody tr td,
+  html.is-ios .flight-log-table tbody tr:last-child td,
+  html.is-ios .flight-log-table tfoot tr th,
+  html.is-ios .flight-log-table tfoot tr td {
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    background: transparent;
+  }
+
+  /* Line 1: date and total. Line 2: route and aircraft. Line 3: the small times. */
+  html.is-ios .flight-log-table tbody td:nth-child(1) {
+    order: 1;
+    flex: 1 1 calc(100% - 4rem);
+    font-size: var(--text-md);
+    font-weight: 600;
+  }
+  html.is-ios .flight-log-table tbody td:nth-child(1) a { color: var(--text-primary); text-decoration: none; }
+  html.is-ios .flight-log-table tbody td:nth-child(1) a::after { content: ""; position: absolute; inset: 0; }
+  html.is-ios .flight-log-table tbody td:nth-child(1) a:focus-visible { outline: none; }
+  html.is-ios .flight-log-table tbody td:nth-child(1) a:focus-visible::after {
+    outline: 2px solid var(--border-focus);
+    outline-offset: -2px;
+    border-radius: var(--radius-md);
+  }
+  html.is-ios .flight-log-table tbody td:nth-child(2) {
+    order: 3;
+    flex: 0 1 auto;
+    margin-right: var(--space-1);
+  }
+  html.is-ios .flight-log-table tbody td:nth-child(3) {
+    order: 4;
+    flex: 1 1 0;
+  }
+  html.is-ios .flight-log-table tbody td:nth-child(2),
+  html.is-ios .flight-log-table tbody td:nth-child(3),
+  html.is-ios .flight-log-table td:nth-child(n+5):not(:nth-child(4)) {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+  html.is-ios .flight-log-table tbody td:nth-child(3):not(:empty)::before { content: "· "; }
+  html.is-ios .flight-log-table tbody td:nth-child(4) {
+    order: 2;
+    flex: 0 0 4rem;
+    text-align: right;
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  html.is-ios .flight-log-table td[data-empty] { display: none; }
+  html.is-ios .flight-log-table tbody td:nth-child(n+5) { order: 6; }
+  html.is-ios .flight-log-table tbody td[data-label]:nth-child(n+5)::before { content: attr(data-label) " "; }
+  html.is-ios .flight-log-table tbody td[data-label]:nth-child(n+5):not([data-empty]) ~ td[data-label]:not([data-empty])::before {
+    content: "· " attr(data-label) " ";
+  }
+
+  /* Totals: label left, total time right, the rest as the small line. */
+  html.is-ios .flight-log-table tfoot { margin-top: var(--space-3); border-top: 1px solid var(--border-strong); background: var(--surface-sunken); }
+  html.is-ios .flight-log-table tfoot tr:first-child { border-top: 0; }
+  html.is-ios .flight-log-table tfoot tr:last-child { border-bottom: 0; }
+  html.is-ios .flight-log-table tfoot th {
+    order: 1;
+    flex: 1 1 calc(100% - 4rem);
+    font-size: var(--text-md);
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-primary);
+  }
+  html.is-ios .flight-log-table tfoot td:nth-child(2) {
+    order: 2;
+    flex: 0 0 4rem;
+    text-align: right;
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  html.is-ios .flight-log-table tfoot td:nth-child(n+3) {
+    order: 6;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+  html.is-ios .flight-log-table tfoot td:nth-child(n+3)::before { content: attr(data-label) " "; }
+  html.is-ios .flight-log-table tfoot td:nth-child(n+4)::before { content: "· " attr(data-label) " "; }
 }

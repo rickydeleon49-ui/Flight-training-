@@ -18,7 +18,7 @@
 }
 
 .skill-evidence__item {
-  border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-top: 1px solid var(--border-subtle);
   padding-top: var(--space-3);
 }
 
@@ -38,13 +38,13 @@
 .skill-evidence__menu > summary {
   cursor: pointer;
   font-size: var(--text-xs);
-  color: var(--text-muted, inherit);
+  color: inherit;
 }
 
 .skill-evidence__menu-items { margin-top: var(--space-2); flex-wrap: wrap; gap: var(--space-2); }
 
 .skill-evidence__history {
-  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md, 0.5rem);
   padding: var(--space-3);
   display: grid;

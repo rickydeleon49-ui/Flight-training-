@@ -339,7 +339,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
 
   if (!isOpen) {
     return (
-      <div style={{ marginTop: "var(--space-2)" }}>
+      <div className="ask-gemini__opener">
         <Button
           ref={openerRef}
           type="button"
@@ -365,23 +365,16 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
         event.stopPropagation();
         closePanel();
       }}
-      style={{
-        marginTop: "var(--space-2)",
-        padding: "var(--space-3)",
-        border: "1px solid var(--border-subtle, #e2e8f0)",
-        borderRadius: "var(--radius-md, 8px)",
-        background: "var(--bg-surface-raised, #f8fafc)",
-      }}
     >
       {/* Stays at the top while answers scroll, so Ask another never moves. */}
       <div
         className="row row--between ask-gemini-panel__header"
-        style={{ alignItems: "center", position: "sticky", top: 0, zIndex: 1, background: "var(--bg-surface-raised, #f8fafc)" }}
+        style={{ alignItems: "center", position: "sticky", top: 0, zIndex: 1, background: "var(--surface-sunken)" }}
       >
-        <span className="small bold" style={{ color: "var(--fg-default)" }}>
+        <span className="small bold ask-gemini__title">
           Ask {helper}
         </span>
-        <div className="row row--gap-2" style={{ alignItems: "center" }}>
+        <div className="row row--gap-2 ask-gemini__center">
           {(history.length > 0 || isLoading) && (
             <Button
               type="button"
@@ -409,7 +402,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
         </div>
       </div>
 
-      <p className="tiny dim" role="note" style={{ margin: 0, overflowWrap: "anywhere" }}>
+      <p className="tiny dim ask-gemini__note" role="note">
         {cardText
           ? `Your question, this ${contextNoun}, the text of the pages around its source page (if read on this Mac) and recent conversation are sent to ${company}. The PDF itself is not sent.`
           : evidenceMode && material?.filePath
@@ -424,37 +417,32 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
               key={idx}
               ref={idx === history.length - 1 && turn.role === "model" ? lastAnswerRef : undefined}
               className={`ask-gemini-turn ask-gemini-turn--${turn.role}`}
-              style={{
-                padding: "var(--space-2)",
-                borderRadius: "var(--radius-sm, 4px)",
-                background: turn.role === "user" ? "var(--bg-surface-active, #e2e8f0)" : "var(--bg-surface, #fff)",
-              }}
             >
-              <span className="tiny dim" style={{ display: "block", marginBottom: "var(--space-1)" }}>
+              <span className="tiny dim ask-gemini__who">
                 {turn.role === "user" ? "You" : (turn.model?.startsWith("claude-") ? "Claude" : "Gemini")}
               </span>
-              <p className="small ai-copy" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+              <p className="small ai-copy ask-gemini__copy">
                 {turn.role === "model" && turn.evidence && turn.notAnswered ? notAnsweredMessage(range, topics) : turn.text}
               </p>
               {turn.role === "model" && turn.notAnswered ? <p className="small">Try asking in words from this document, or pick a page range that covers it.</p> : null}
               {turn.role === "model" && (
-                <p className="tiny dim" style={{ margin: "var(--space-1) 0 0" }}>
+                <p className="tiny dim ask-gemini__sent-top">
                   Answered by {geminiModelName(turn.model ?? "")}
                 </p>
               )}
               {turn.role === "model" && turn.contextPages && (
-                <p className="tiny dim" style={{ margin: 0 }}>{sentLine(contextNoun, turn.contextPages)}</p>
+                <p className="tiny dim ask-gemini__flat">{sentLine(contextNoun, turn.contextPages)}</p>
               )}
               {turn.evidence && turn.role === "model" && !turn.notAnswered && (
                 turn.passages && turn.passages.length > 0 ? (
-                  <details className="small" style={{ marginTop: "var(--space-1)" }}>
-                    <summary style={{ minHeight: 44, alignContent: "center", cursor: "pointer" }}>
+                  <details className="small ask-gemini__details">
+                    <summary className="ask-gemini__summary">
                       Sources ({turn.passages.length})
                     </summary>
                     {turn.passages.map((passage, index) => (
                       <div key={index} className="stack stack--1">
                         <span className="tiny dim">Page {passage.page}</span>
-                        <blockquote style={{ margin: "var(--space-1) 0 var(--space-2)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                        <blockquote className="ask-gemini__quote">
                           {passage.quote}
                         </blockquote>
                       </div>
@@ -479,18 +467,12 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
 
       {stopped && <p className="small dim" role="status">Stopped that question.</p>}
 
-      {hint && <p className="small" role="status" style={{ margin: 0 }}>{hint}</p>}
+      {hint && <p className="small ask-gemini__flat" role="status">{hint}</p>}
 
       {(refusal || error) && (
         <div
           role="alert"
-          style={{
-            padding: "var(--space-2)",
-            color: "var(--fg-error, #b91c1c)",
-            background: "var(--bg-error-subtle, #fef2f2)",
-            borderRadius: "var(--radius-sm, 4px)",
-            fontSize: "0.875rem",
-          }}
+          className="ask-gemini__alert"
         >
           {refusal || error}
         </div>
@@ -501,13 +483,12 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
       )}
 
       <form onSubmit={handleAsk} className="stack stack--2">
-        <div className="row row--gap-2" style={{ alignItems: "center" }}>
+        <div className="row row--gap-2 ask-gemini__center">
           <input
             ref={inputRef}
             type="text"
             maxLength={1000}
-            className="input"
-            style={{ flex: 1 }}
+            className="input ask-gemini__input"
             placeholder="Ask a question about this..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -524,17 +505,17 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
           </Button>
         </div>
         {readingText && (
-          <p className="small row" role="status" style={{ margin: 0 }}>
+          <p className="small row ask-gemini__flat" role="status">
             <span className="spinner" aria-hidden="true" />
             Reading this PDF on your Mac…
           </p>
         )}
         {isLoading && progress && (
-          <p className="small dim" role="status" style={{ margin: 0 }}>{progress}</p>
+          <p className="small dim ask-gemini__flat" role="status">{progress}</p>
         )}
       </form>
 
-      <p className="tiny dim" style={{ margin: 0 }}>
+      <p className="tiny dim ask-gemini__flat">
         {hasPdf ? "Study aid — check the sources and your instructor." : "Study aid — check it against FAA guidance and your instructor."}
       </p>
     </div>

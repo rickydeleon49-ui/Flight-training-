@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { describeRelativeDate, formatLocalDay, formatLongDate, formatShortDate, formatTypedDate, localDayOf, parseTypedDate } from "./dates";
+import { describeRelativeDate, formatLocalDay, formatLogbookDate, formatLongDate, formatShortDate, formatTypedDate, localDayOf, parseTypedDate } from "./dates";
 
 /**
  * Runs the enclosing describe block in `zone`, then puts process.env.TZ back
@@ -210,5 +210,12 @@ describe("QUICKFIX-01 parseTypedDate", () => {
   it("writes a stored day back the way she types it", () => {
     expect(formatTypedDate("2026-11-05")).toBe("11/05/2026");
     expect(formatTypedDate("")).toBe("");
+  });
+});
+
+describe("formatLogbookDate", () => {
+  it("reads like a logbook line", () => {
+    expect(formatLogbookDate("2026-11-12")).toBe("12 Nov 2026");
+    expect(formatLogbookDate("2026-01-05")).toBe("5 Jan 2026");
   });
 });

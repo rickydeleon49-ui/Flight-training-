@@ -1,0 +1,113 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const read = (rel: string) => readFileSync(join(process.cwd(), rel), "utf8");
+const tokens = read("src/styles/tokens.css");
+const base = read("src/styles/base.css");
+const ui = read("src/components/ui/ui.css");
+const shell = read("src/components/layout/shell.css");
+const iosTabBar = read("src/components/layout/iosTabBar.css");
+const allCss = [tokens, base, ui, shell, iosTabBar].join("\n").replace(/\/\*[\s\S]*?\*\//g, "");
+
+/** Body of the first `@media (query) { ... }` block, with nested braces balanced. */
+function mediaBlock(css: string, query: string): string | null {
+  const start = css.indexOf(`@media (${query})`);
+  if (start < 0) return null;
+  const open = css.indexOf("{", start);
+  let depth = 0;
+  for (let i = open; i < css.length; i += 1) {
+    if (css[i] === "{") depth += 1;
+    if (css[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return css.slice(open + 1, i);
+    }
+  }
+  return null;
+}
+
+/** Declarations of a top-level rule whose selector list contains `selector` exactly. */
+function ruleBodies(css: string, selector: string): string[] {
+  const bodies: string[] = [];
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(css))) {
+    const sels = (m[1] ?? "").split(",").map((s) => s.trim());
+    if (sels.includes(selector)) bodies.push(m[2] ?? "");
+  }
+  return bodies;
+}
+
+function minHeightPx(value: string): number {
+  const v = value.trim();
+  if (v.startsWith("var(")) {
+    const name = v.slice(4, -1).trim();
+    const def = new RegExp(`${name}:\\s*([^;]+);`).exec(tokens);
+    return def?.[1] ? minHeightPx(def[1]) : 0;
+  }
+  if (v.endsWith("rem")) return parseFloat(v) * 16;
+  if (v.endsWith("px")) return parseFloat(v);
+  return 0;
+}
+
+function maxMinHeight(selector: string): number {
+  let best = 0;
+  for (const body of ruleBodies(allCss, selector)) {
+    const m = /(?:^|[;\s])min-height:\s*([^;]+);/.exec(body);
+    if (m?.[1]) best = Math.max(best, minHeightPx(m[1]));
+  }
+  return best;
+}
+
+describe("reduced motion", () => {
+  it("has one global override with !important durations", () => {
+    const block = mediaBlock(tokens, "prefers-reduced-motion: reduce");
+    expect(block).not.toBeNull();
+    expect(block).toMatch(/animation-duration:\s*[^;]*!important/);
+    expect(block).toMatch(/transition-duration:\s*[^;]*!important/);
+  });
+});
+
+describe("increase contrast", () => {
+  const block = mediaBlock(base, "prefers-contrast: more");
+  it("exists and makes the top bar and tab bar solid", () => {
+    expect(block).not.toBeNull();
+    expect(block).toMatch(/\.top-bar[^{]*\{[^}]*background:\s*var\(--surface-card\)/);
+    expect(block).toMatch(/\.ios-tab-bar\s*\{[^}]*background:\s*var\(--surface-card\)/);
+  });
+  it("strengthens separators, secondary text and the focus ring", () => {
+    expect(block).toMatch(/--border-subtle:\s*var\(--border-control\)/);
+    expect(block).toMatch(/--text-secondary:\s*var\(--text-primary\)/);
+    expect(block).toMatch(/--focus-ring:\s*0 0 0 3px/);
+  });
+});
+
+describe("touch targets", () => {
+  // Compact Mac-pointer controls: dense rows keep these small on a pointer.
+  const macPointerException = new Set([".button"]);
+  const targets: Array<[string, string[]]> = [
+    [".button", [".button--primary", ".button--secondary"]],
+    [".list-row", [".list-row"]],
+    [".ios-tab-bar__tab", ["html.is-ios .ios-tab-bar"]],
+    [".nav__link", [".nav__link"]],
+    [".segmented__option", [".segmented__option"]],
+    [".icon-button", [".icon-button"]],
+  ];
+  for (const [name, selectors] of targets) {
+    it(`${name} is at least 44px or an explicit exception`, () => {
+      if (macPointerException.has(name)) {
+        // Base .button is sized by its variants; the full-size ones must be 44px.
+        for (const s of selectors) expect(maxMinHeight(s)).toBeGreaterThanOrEqual(44);
+        return;
+      }
+      const best = Math.max(...selectors.map(maxMinHeight));
+      if (name === ".icon-button") {
+        // 2rem on a Mac pointer; 44px on touch screens.
+        const coarse = mediaBlock(base, "pointer: coarse") ?? "";
+        expect(coarse).toMatch(/\.icon-button\s*\{[^}]*min-height:\s*44px/);
+        return;
+      }
+      expect(best).toBeGreaterThanOrEqual(44);
+    });
+  }
+});

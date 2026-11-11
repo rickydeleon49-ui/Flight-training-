@@ -9,7 +9,7 @@ packages) and Cargo.lock (via `cargo metadata`). Do not edit it by hand: run
 `node scripts/third-party-notices.mjs` after changing dependencies. CI runs it with --check.
 Vite copies public/ into dist/, and Tauri embeds dist/, so this file ships inside every build.
 
-Contents: 31 npm packages, 623 Rust crates (4 of them test-only), bundled fonts and data.
+Contents: 30 npm packages, 623 Rust crates (4 of them test-only), bundled fonts and data.
 The Rust list covers every target platform (macOS, Windows, Linux, iOS, Android); a given
 build contains only the crates for its platform. Where a package offers a choice of licenses,
 the entry says which one this app uses.
@@ -24,13 +24,6 @@ the entry says which one this app uses.
 
 PART 1  BUNDLED FONTS AND DATA
 ==============================
-
--------------------------------------------------------------------------------
-Inter typeface (font files bundled via @fontsource/inter 5.3.0)
-License: OFL-1.1 (SIL Open Font License 1.1; full text in Part 6)
-Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
-The fonts are embedded in the app unchanged. They may be bundled with software but
-not sold by themselves; see the license for the full terms.
 
 -------------------------------------------------------------------------------
 Fraunces typeface (font files bundled via @fontsource-variable/fraunces 5.3.0)
@@ -76,17 +69,6 @@ Source: https://registry.npmjs.org/@fontsource-variable/fraunces/-/fraunces-5.3.
 Repository: https://github.com/fontsource/font-files
 Authors: Google Inc.
 Copyright 2020 The Fraunces Project Authors (github.com/undercasetype/Fraunces) Fraunces-Italic[SOFT,WONK,opsz,wght].ttf: Copyright 2020 The Fraunces Project Authors (github.com/undercasetype/Fraunces)
-License text: OFL-1.1 standard text in Part 6.
-Package license files: LICENSE (standard OFL-1.1)
-
--------------------------------------------------------------------------------
-@fontsource/inter 5.3.0
-From: npm
-License: OFL-1.1
-Source: https://registry.npmjs.org/@fontsource/inter/-/inter-5.3.0.tgz
-Repository: https://github.com/fontsource/font-files
-Authors: Google Inc.
-Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
 License text: OFL-1.1 standard text in Part 6.
 Package license files: LICENSE (standard OFL-1.1)
 

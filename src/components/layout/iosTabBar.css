@@ -3,29 +3,23 @@
 
 html.is-ios .shell--tabs {
   --tabbar-h: calc(49px + env(safe-area-inset-bottom, 0px));
-  --narrow-header-height: env(safe-area-inset-top, 0px);
+  --narrow-header-height: calc(44px + env(safe-area-inset-top, 0px));
   display: block;
-}
-
-/* Keeps scrolled text from showing under the clock and notch. */
-html.is-ios .shell--tabs::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: var(--surface-card);
-  z-index: 20;
 }
 
 /* Side insets too: in landscape the phone is wider than the 700px rule, and
    the Dynamic Island would otherwise cover the left edge of the page. */
 html.is-ios .shell--tabs .content {
-  padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
+  padding-top: 0;
+  --content-pad-x: max(var(--space-4), env(safe-area-inset-left, 0px));
   padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
   padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
   padding-bottom: calc(var(--tabbar-h) + var(--space-5));
+}
+
+html.is-ios .shell--tabs .top-bar {
+  height: calc(44px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 html.is-ios .shell--tabs .back-to-top {
@@ -49,7 +43,7 @@ html.is-ios .ios-tab-bar {
   min-height: 49px;
   padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   background: var(--surface-card);
-  border-top: 1px solid var(--border-subtle);
+  border-top: 0.5px solid var(--border-subtle); /* iOS is always 2x or 3x */
 }
 
 html.is-ios .ios-tab-bar__tab {
@@ -61,41 +55,71 @@ html.is-ios .ios-tab-bar__tab {
   justify-content: center;
   gap: 2px;
   padding: 4px 2px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-decoration: none;
   touch-action: manipulation;
   position: relative;
+  transition: transform 100ms;
 }
+
+html.is-ios .ios-tab-bar {
+  transition: transform 200ms ease;
+}
+
+/* Scrolling down: labels fade, icons shrink, the bar settles toward the home indicator.
+   Transform and opacity only, so the bar's box (and the page padding) never changes. */
+html.is-ios .ios-tab-bar.is-compact {
+  transform: translateY(14px);
+}
+
+html.is-ios .ios-tab-bar.is-compact .ios-tab-bar__icon {
+  transform: scale(0.8);
+}
+
+html.is-ios .ios-tab-bar.is-compact .ios-tab-bar__label {
+  opacity: 0;
+}
+
+html.is-ios .ios-tab-bar__tab:active { transform: scale(.97); }
+
+html.is-ios a, html.is-ios button, html.is-ios [role="button"], html.is-ios label { -webkit-tap-highlight-color: transparent; }
 
 html.is-ios .ios-tab-bar__tab.is-active { color: var(--accent-primary); }
 
-html.is-ios .ios-tab-bar__icon { display: inline-flex; }
+html.is-ios .ios-tab-bar__icon { display: inline-flex; transition: transform 200ms ease; }
 
 html.is-ios .ios-tab-bar__label {
   font-size: min(0.625rem, 12px);
+  font-weight: 500;
   line-height: 1.1;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: opacity 200ms ease;
 }
 
 html.is-ios .ios-tab-bar__badge {
   position: absolute;
-  top: 4px;
-  left: calc(50% + 6px);
-  min-width: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--danger, #c0392b);
-  color: #fff;
+  top: 2px;
+  left: auto;
+  right: 5px; /* anchored to the tab's edge so a wide count never leaves the screen */
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--badge-alert);
+  color: var(--text-on-accent);
   font-size: min(0.625rem, 12px);
-  line-height: 16px;
+  font-weight: 600;
+  line-height: 18px;
   text-align: center;
 }
 
+/* The More icon is three dots, so its badge sits clear of them at the top-right corner. */
 html.is-ios .ios-tab-bar__badge--quiet {
-  background: var(--text-tertiary);
+  right: 2px;
+  top: 0;
+  background: var(--text-secondary);
 }
 
 /* Hide while typing, in a full-screen layer or in the fallback PDF viewer. */
@@ -111,7 +135,7 @@ html.is-ios .ios-back {
   min-width: 44px;
   min-height: 44px;
   max-width: 100%;
-  margin: calc(-1 * var(--space-3)) 0 var(--space-2) calc(-1 * var(--space-2));
+  margin: 0 0 0 calc(-1 * var(--space-2));
   padding: 0 var(--space-2);
   border: 0;
   background: none;

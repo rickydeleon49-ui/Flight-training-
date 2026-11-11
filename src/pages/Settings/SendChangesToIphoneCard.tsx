@@ -36,7 +36,7 @@ export function SendChangesToIphoneCard() {
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader
         title="Send changes to my iPhone"
         headingId="send-changes-to-iphone"

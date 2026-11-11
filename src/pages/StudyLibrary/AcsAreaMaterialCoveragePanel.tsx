@@ -52,7 +52,7 @@ export function AcsAreaMaterialCoveragePanel({
                   className="acs-coverage-row"
                   style={{
                     padding: "var(--space-2) 0",
-                    borderBottom: "1px solid var(--border-subtle, #eee)",
+                    borderBottom: "1px solid var(--border-subtle)",
                   }}
                 >
                   <div style={{ fontWeight: 600 }}>{summary.areaLabel}</div>

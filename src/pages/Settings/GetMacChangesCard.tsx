@@ -39,7 +39,7 @@ export function GetMacChangesCard() {
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader
         title="Get changes from my Mac"
         headingId="get-mac-changes"

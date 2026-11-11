@@ -13,6 +13,7 @@ import {
   ChevronRightIcon,
   EmptyState,
   IconButton,
+  ListRow,
   PlusIcon,
 } from "@/components/ui";
 import { EVENT_TYPE_LABELS, type ScheduleEvent } from "@/domain/types";
@@ -79,7 +80,7 @@ export function Schedule() {
       />
 
       {saved ? (
-        <div className="row gap--3" style={{ marginBottom: "var(--space-4)", flexWrap: "wrap" }}>
+        <div className="row gap--3 schedule__saved">
           <p role="status" className="small">Added “{saved.title}” to your schedule.</p>
           {saved.eventType === "flight_lesson" ? (
             <Link to={`/schedule/${saved.id}#lesson-preparation`}>Add preparation</Link>
@@ -89,7 +90,7 @@ export function Schedule() {
 
       <div className="schedule">
         <div className="stack stack--5">
-          <Card>
+          <Card variant="grouped">
             <CardHeader
               title="Coming up"
               action={<span className="tiny dim">{upcoming.length} scheduled</span>}
@@ -113,7 +114,7 @@ export function Schedule() {
           </Card>
 
           {past.length > 0 ? (
-            <Card>
+            <Card variant="grouped">
               <CardHeader title="Already flown" />
               <CardBody flush>
                 {past.slice(0, 12).map((event) => (
@@ -128,7 +129,7 @@ export function Schedule() {
           <CardHeader
             title={formatMonthYear(monthAnchor)}
             action={
-              <div className="row" style={{ gap: 2 }}>
+              <div className="row schedule__month-nav">
                 <IconButton
                   label="Previous month"
                   onClick={() => setMonthAnchor(startOfMonth(addDays(monthAnchor, -1)))}
@@ -182,7 +183,7 @@ export function Schedule() {
                   );
                 })}
             </div>
-            <p className="tiny dim" style={{ marginTop: "var(--space-3)" }}>
+            <p className="tiny dim schedule__month-note">
               Dots mark days with something scheduled.
             </p>
           </CardBody>
@@ -211,15 +212,20 @@ function EventRow({
 }) {
   const date = parseIsoDate(event.date);
 
-  return (
-    <Link className={`event-row${past ? " event-row--past" : ""}`} to={`/schedule/${event.id}`}>
-      <span className="event-row__date">
-        <span className="event-row__month">{MONTH_SHORT[date.getMonth()]}</span>
-        <span className="event-row__day">{date.getDate()}</span>
-      </span>
+  const cost = event.actualCost ?? event.estimatedCost;
 
-      <span className="event-row__main">
-        <span className="event-row__title wrap-anywhere">{event.title}</span>
+  return (
+    <ListRow
+      to={`/schedule/${event.id}`}
+      chevron
+      icon={
+        <span className={`event-row__date${past ? " event-row__date--past" : ""}`}>
+          <span className="event-row__month">{MONTH_SHORT[date.getMonth()]}</span>
+          <span className="event-row__day">{date.getDate()}</span>
+        </span>
+      }
+      title={<span className="wrap-anywhere">{event.title}</span>}
+      subtitle={
         <span className="event-row__meta">
           <Badge tone={event.eventType === "flight_lesson" ? "flight" : "neutral"}>
             {EVENT_TYPE_LABELS[event.eventType]}
@@ -231,27 +237,17 @@ function EventRow({
           {event.status === "cancelled" ? <Badge>Cancelled</Badge> : null}
           {event.date === today ? <Badge tone="due">Today</Badge> : null}
         </span>
-      </span>
-
-      {event.actualCost ?? event.estimatedCost ? (
-        <span className="event-row__cost numeric">
-          {event.actualCost != null ? (
-            <>
-              {formatMoney(event.actualCost)}
-              <span className="tiny dim" style={{ display: "block" }}>
-                actual
-              </span>
-            </>
-          ) : (
-            <>
-              {formatMoney(event.estimatedCost as number)}
-              <span className="tiny dim" style={{ display: "block" }}>
-                estimated
-              </span>
-            </>
-          )}
-        </span>
-      ) : null}
-    </Link>
+      }
+      value={
+        cost ? (
+          <span className="event-row__cost">
+            {event.actualCost != null ? formatMoney(event.actualCost) : formatMoney(event.estimatedCost as number)}
+            <span className="tiny dim event-row__cost-note">
+              {event.actualCost != null ? "actual" : "estimated"}
+            </span>
+          </span>
+        ) : undefined
+      }
+    />
   );
 }

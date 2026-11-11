@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 591" role="img" aria-labelledby="ti de"><title id="ti">Stress, fatigue, dehydration and airsickness</title><desc id="de">A two by two table. Columns are stress and fatigue. Rows are acute, short term, and chronic, long term. Acute stress is an immediate perceived threat that a healthy person copes with; chronic stress is a burden beyond coping, so see a physician. Acute fatigue is cured by rest and 8 hours of sleep; chronic fatigue is not relieved by rest, so see a physician. Two cards below cover dehydration and heatstroke, and airsickness.</desc><style>.t{fill:currentColor;font:600 22px system-ui,-apple-system,"Segoe UI",sans-serif}.s{fill:currentColor;font:400 19px system-ui,-apple-system,"Segoe UI",sans-serif;opacity:.85}.o{fill:none;stroke:currentColor;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}.d{stroke-dasharray:10 8}.m{text-anchor:middle}.e{text-anchor:end}.sky{fill:var(--palette-sky,#8EBFDA);fill-opacity:.6}.lav{fill:var(--palette-lavender,#B9ADDF);fill-opacity:.6}.mint{fill:var(--palette-mint,#AAD4C4);fill-opacity:.6}.rose{fill:var(--palette-rose,#DFA7B8);fill-opacity:.6}.acc{stroke:var(--palette-berry,#A84C6B);fill:none;stroke-width:4;stroke-linecap:round}.ah{fill:var(--palette-berry,#A84C6B)}.cl{fill:currentColor;fill-opacity:.2}.dk{stroke:currentColor;fill:none;stroke-width:4;stroke-linecap:round}.dh{fill:currentColor}</style><style>.PN{fill:#1c2230;stroke:#8b93a7;stroke-width:1.2}</style>
+<text class="t" x="20" y="28" style="font-size:15px">Stress, fatigue, dehydration and airsickness</text>
+<text class="s" x="20" y="50.0" style="font-size:13px">Four things that can make a healthy pilot unsafe. Stress and fatigue each come in a short-term and a</text>
+<text class="s" x="20" y="66.5" style="font-size:13px">long-term kind, and the two kinds need different fixes.</text>
+<rect x="20" y="89.0" width="339.0" height="26" rx="10" class="sky" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30" y="107.0" style="font-size:13px">Stress</text>
+<rect x="371.0" y="89.0" width="339.0" height="26" rx="10" class="lav" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="381.0" y="107.0" style="font-size:13px">Fatigue</text>
+<rect class="cl" x="20.0" y="123.0" width="339.0" height="79" rx="8"/>
+<text class="t" x="30.0" y="143.0" style="font-size:12px">Acute: short term</text>
+<text class="s" x="30.0" y="161.0" style="font-size:11.5px">Immediate threat seen as danger: the fight or flight</text>
+<text class="s" x="30.0" y="176.0" style="font-size:11.5px">response, real or imagined. A healthy person normally</text>
+<text class="s" x="30.0" y="191.0" style="font-size:11.5px">copes.</text>
+<rect class="cl" x="371.0" y="123.0" width="339.0" height="79" rx="8"/>
+<text class="t" x="381.0" y="143.0" style="font-size:12px">Acute: short term</text>
+<text class="s" x="381.0" y="161.0" style="font-size:11.5px">Tiredness after strenuous effort, excitement or lack</text>
+<text class="s" x="381.0" y="176.0" style="font-size:11.5px">of sleep. Rest and 8 hours of sound sleep ordinarily</text>
+<text class="s" x="381.0" y="191.0" style="font-size:11.5px">cure it. If acutely tired, stay on the ground.</text>
+<rect class="cl" x="20.0" y="212.0" width="339.0" height="64" rx="8"/>
+<text class="t" x="30.0" y="232.0" style="font-size:12px">Chronic: long term</text>
+<text class="s" x="30.0" y="250.0" style="font-size:11.5px">A burden beyond your ability to cope; performance</text>
+<text class="s" x="30.0" y="265.0" style="font-size:11.5px">falls sharply. Not safe to fly. See a physician.</text>
+<rect class="cl" x="371.0" y="212.0" width="339.0" height="64" rx="8"/>
+<text class="t" x="381.0" y="232.0" style="font-size:12px">Chronic: long term</text>
+<text class="s" x="381.0" y="250.0" style="font-size:11.5px">Long period, usually psychological roots. Diet, rest</text>
+<text class="s" x="381.0" y="265.0" style="font-size:11.5px">and sleep do not relieve it. See a physician.</text>
+<text class="s" x="20" y="292.0" style="font-size:12px">Stressors: physical (noise, vibration), physiological (fatigue), psychological (difficult work or personal</text>
+<text class="s" x="20" y="307.5" style="font-size:12px">situations). Stress releases adrenaline and raises heart rate, respiration and blood pressure.</text>
+<rect class="cl" x="20.0" y="331.0" width="339.0" height="248.0" rx="8"/>
+<rect x="20.0" y="331.0" width="339.0" height="26" rx="10" class="rose" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="30.0" y="349.0" style="font-size:13px">Dehydration and heatstroke</text>
+<circle cx="33.0" cy="367.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="371.0" style="font-size:11.5px">Causes: hot flight decks and flight lines, wind,</text>
+<text class="s" x="42.0" y="386.0" style="font-size:11.5px">humidity, and diuretic drinks (coffee, tea,</text>
+<text class="s" x="42.0" y="401.0" style="font-size:11.5px">alcohol, caffeinated soft drinks).</text>
+<circle cx="33.0" cy="415.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="419.0" style="font-size:11.5px">Signs: headache, fatigue, cramps, sleepiness,</text>
+<text class="s" x="42.0" y="434.0" style="font-size:11.5px">dizziness.</text>
+<circle cx="33.0" cy="448.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="452.0" style="font-size:11.5px">Thirst comes late, at about a 1.5 quart deficit (2</text>
+<text class="s" x="42.0" y="467.0" style="font-size:11.5px">percent of body weight). Do not wait for it.</text>
+<circle cx="33.0" cy="481.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="485.0" style="font-size:11.5px">Drink two to four quarts of water every 24 hours,</text>
+<text class="s" x="42.0" y="500.0" style="font-size:11.5px">as a guide.</text>
+<circle cx="33.0" cy="514.0" r="2.2" class="ah"/>
+<text class="s" x="42.0" y="518.0" style="font-size:11.5px">Heatstroke: the body cannot control its</text>
+<text class="s" x="42.0" y="533.0" style="font-size:11.5px">temperature. It may show only as a collapse. Drink</text>
+<text class="s" x="42.0" y="548.0" style="font-size:11.5px">one pint per hour in moderate heat stress, one</text>
+<text class="s" x="42.0" y="563.0" style="font-size:11.5px">quart in severe.</text>
+<rect class="cl" x="371.0" y="331.0" width="339.0" height="248.0" rx="8"/>
+<rect x="371.0" y="331.0" width="339.0" height="26" rx="10" class="mint" style="stroke:currentColor;stroke-width:1.5"/>
+<text class="t" x="381.0" y="349.0" style="font-size:13px">Airsickness</text>
+<circle cx="384.0" cy="367.0" r="2.2" class="ah"/>
+<text class="s" x="393.0" y="371.0" style="font-size:11.5px">The brain gets conflicting messages about the state</text>
+<text class="s" x="393.0" y="386.0" style="font-size:11.5px">of the body.</text>
+<circle cx="384.0" cy="400.0" r="2.2" class="ah"/>
+<text class="s" x="393.0" y="404.0" style="font-size:11.5px">Symptoms: general discomfort, nausea, dizziness,</text>
+<text class="s" x="393.0" y="419.0" style="font-size:11.5px">paleness, sweating, vomiting.</text>
+<circle cx="384.0" cy="433.0" r="2.2" class="ah"/>
+<text class="s" x="393.0" y="437.0" style="font-size:11.5px">It usually goes away within the first few lessons.</text>
+<text class="s" x="393.0" y="452.0" style="font-size:11.5px">It says nothing about your ability.</text>
+<circle cx="384.0" cy="466.0" r="2.2" class="ah"/>
+<text class="s" x="393.0" y="470.0" style="font-size:11.5px">Tell your instructor. Open the fresh air vents,</text>
+<text class="s" x="393.0" y="485.0" style="font-size:11.5px">look at objects outside, avoid unnecessary head</text>
+<text class="s" x="393.0" y="500.0" style="font-size:11.5px">movements.</text>
+<circle cx="384.0" cy="514.0" r="2.2" class="ah"/>
+<text class="s" x="393.0" y="518.0" style="font-size:11.5px">Dramamine-type medicine is not recommended while</text>
+<text class="s" x="393.0" y="533.0" style="font-size:11.5px">flying: drowsiness and other problems.</text>
+</svg>

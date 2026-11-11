@@ -45,8 +45,12 @@ body {
 h1, h2, h3, h4 {
   margin: 0;
   font-weight: 500;
-  line-height: var(--leading-tight);
+  line-height: var(--leading-ui);
 }
+h1 { font-size: var(--text-2xl); font-weight: 700; line-height: 1.2059; } /* Large Title 34/41 */
+h2 { font-size: var(--text-lg); font-weight: 700; }
+h3 { font-size: var(--text-title3); font-weight: 600; }
+h4 { font-size: var(--text-md); font-weight: 600; }
 
 p { margin: 0; }
 
@@ -54,7 +58,7 @@ p { margin: 0; }
    moments; everything functional stays in the readable sans. */
 .display {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
@@ -105,3 +109,48 @@ textarea {
   border-radius: var(--radius-pill);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ------------------------------------------------------------------ *
+ * Increase Contrast (slice 26). Only inside this query, so every theme keeps
+ * its normal colours otherwise. The :root:root:root selector outranks the
+ * theme blocks in tokens.css whatever their order.
+ * ------------------------------------------------------------------ */
+@media (prefers-contrast: more) {
+  :root:root:root {
+    --border-subtle: var(--border-control);
+    --border-strong: var(--border-control);
+    --text-secondary: var(--text-primary);
+    --text-tertiary: var(--text-primary);
+    --focus-ring: 0 0 0 3px var(--accent-primary);
+  }
+
+  .top-bar,
+  .top-bar.is-collapsed {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-control);
+  }
+
+  html.is-ios .ios-tab-bar {
+    background: var(--surface-card);
+    border-top: 1px solid var(--border-control);
+  }
+
+  .input,
+  .textarea,
+  .select {
+    border: 1px solid var(--border-control);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Touch screens: icon-only controls reach the 44 pt target (Mac keeps 2rem). */
+@media (pointer: coarse) {
+  .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

@@ -101,50 +101,50 @@ describe("Glass appearance styles (glass.css)", () => {
     expect(checkedBlocks).toBeGreaterThan(0);
   });
 
-  it("provides hover lift only inside prefers-reduced-motion: no-preference", () => {
-    expect(glassCss).toContain("@media (prefers-reduced-motion: no-preference)");
-    const motionBlock = glassCss.slice(
-      glassCss.indexOf("@media (prefers-reduced-motion: no-preference)"),
-    );
-    expect(motionBlock).toMatch(/translateY\(-3px\)/);
-    expect(motionBlock).toMatch(/transition:\s*transform\s+150ms/);
+  const code = glassCss.replace(/\/\*[\s\S]*?\*\//g, "");
 
-    // Make sure hover lift does not occur outside reduced-motion media query
-    const beforeMotionBlock = glassCss.slice(
-      0,
-      glassCss.indexOf("@media (prefers-reduced-motion: no-preference)"),
-    );
-    expect(beforeMotionBlock).not.toContain("translateY");
+  it("has no hover lift, page wash or glass on cards, sidebar and dialogs", () => {
+    expect(code).not.toContain("translateY");
+    expect(code).not.toContain("radial-gradient");
+    for (const gone of [".card", ".material-card", ".sidebar", ".dialog", ".modal-fallback", "body", ".shell"]) {
+      expect(code).not.toContain(gone);
+    }
   });
 
-  it("provides @supports not fallback with a near-opaque surface", () => {
-    expect(glassCss).toMatch(/--glass-surface-opaque:\s*rgba\(255,\s*255,\s*255,\s*0\.94\)/);
+  it("provides @supports not fallback with an opaque bar", () => {
     expect(glassCss).toMatch(/@supports\s+not\s+\(\(backdrop-filter:\s*blur\(1px\)\)\s+or\s+\(-webkit-backdrop-filter:\s*blur\(1px\)\)\)/);
-    const supportsBlock = glassCss.slice(glassCss.search(/@supports\s+not/), glassCss.indexOf("@media (prefers-reduced-transparency"));
-    expect(supportsBlock).toMatch(/background:\s*var\(--glass-surface-opaque\)/);
+    const supportsBlock = glassCss.slice(glassCss.search(/@supports\s+not/), glassCss.indexOf("@media (prefers-contrast"));
+    expect(supportsBlock).toMatch(/background:\s*var\(--surface-card\)/);
   });
 
-  it("provides prefers-reduced-transparency: reduce fallback: near-opaque and no blur", () => {
-    expect(glassCss).toContain("@media (prefers-reduced-transparency: reduce)");
-    const transparencyBlock = glassCss.slice(glassCss.indexOf("@media (prefers-reduced-transparency: reduce)"));
-    expect(transparencyBlock).toMatch(/background:\s*var\(--glass-surface-opaque\)/);
-    expect(transparencyBlock).toMatch(/[^-]backdrop-filter:\s*none/);
-    expect(transparencyBlock).toMatch(/-webkit-backdrop-filter:\s*none/);
+  it("provides prefers-contrast: more fallback: opaque, no blur, 1px edge", () => {
+    const start = glassCss.indexOf("@media (prefers-contrast: more)");
+    expect(start).toBeGreaterThan(-1);
+    const block = glassCss.slice(start, glassCss.indexOf("@media (prefers-reduced-transparency"));
+    expect(block).toMatch(/background:\s*var\(--surface-card\)/);
+    expect(block).toMatch(/[^-]backdrop-filter:\s*none/);
+    expect(block).toMatch(/-webkit-backdrop-filter:\s*none/);
+    expect(block).toMatch(/1px solid/);
   });
 
-  it("live blur is only on the sidebar and dialogs, never on cards (8 GB Mac)", () => {
+  it("keeps the reduce-transparency block (dead in WebKit, harmless) opaque with no blur", () => {
+    const block = glassCss.slice(glassCss.indexOf("@media (prefers-reduced-transparency: reduce)"));
+    expect(block).toMatch(/background:\s*var\(--surface-card\)/);
+    expect(block).toMatch(/[^-]backdrop-filter:\s*none/);
+  });
+
+  it("live blur is only on the iOS tab bar and the collapsed top bar", () => {
     const blurred = new Set<string>();
-    const css = glassCss.replace(/\/\*[\s\S]*?\*\//g, "");
-    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    for (const m of code.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       if (/[^-]backdrop-filter:\s*var\(--glass-blur\)/.test(m[2]!)) {
         m[1]!.split(",").map((sel) => sel.trim()).filter(Boolean).forEach((sel) => blurred.add(sel));
       }
     }
     expect([...blurred].sort()).toEqual([
-      ':root[data-appearance="glass"] .dialog',
-      ':root[data-appearance="glass"] .modal-fallback',
-      ':root[data-appearance="glass"] .sidebar',
+      ':root[data-appearance="glass"] .top-bar.is-collapsed',
+      ':root[data-appearance="glass"].is-ios .ios-tab-bar',
     ]);
+    expect(glassCss).toMatch(/--glass-blur:\s*blur\(20px\)\s+saturate\(180%\)/);
   });
 
   it("main.tsx imports glass.css after other style imports", () => {
@@ -176,43 +176,37 @@ describe("Glass appearance styles (glass.css)", () => {
       return match[1];
     };
 
-    const ivoryHex = getHexToken("--palette-ivory");
-    const navyHex = getHexToken("--palette-navy");
-    const navyMutedHex = getHexToken("--palette-navy-muted");
-    const overdueHex = getHexToken("--status-overdue");
-    const dueTodayHex = getHexToken("--status-due-today");
+    expect(getHexToken("--palette-ivory")).toBe("#faf7f4");
+    const darkStart = tokensCss.indexOf(':root[data-theme="dark"] {');
+    const lightPart = tokensCss.slice(0, darkStart);
+    const darkPart = tokensCss.slice(darkStart);
+    const hexes = (css: string, name: string) =>
+      [...css.matchAll(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`, "g"))].map((m) => parseHex(m[1]!));
 
-    expect(ivoryHex).toBe("#faf7f4");
+    const barOf = (re: RegExp) => {
+      const m = glassCss.match(re)!;
+      return { r: Number(m[1]), g: Number(m[2]), b: Number(m[3]), a: Number(m[4]) };
+    };
+    const lightBar = barOf(/\[data-appearance="glass"\]\s*\{[^}]*--glass-bar:\s*rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+    const darkBar = barOf(/\[data-theme="dark"\]\s*\{[^}]*--glass-bar:\s*rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+    expect(lightBar.a).toBeGreaterThan(0);
+    expect(darkBar.a).toBeGreaterThan(0);
 
-    const ivory = parseHex(ivoryHex);
-    // Worst case: the strongest palette tint (32%) behind the page, with the
-    // 62% white glass card over it. Secondary text also sits on the bare page.
-    const tints = ["--palette-rose", "--palette-lavender", "--palette-sky", "--palette-mint"].map((t) => parseHex(getHexToken(t)));
-    // Read the real strengths from glass.css so a stronger look can't skip this check.
-    const tintAlpha = Math.max(...[...glassCss.matchAll(/radial-gradient\([^,]+,\s*rgba\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/g)].map((m) => Number(m[1])));
-    const cardAlpha = Number(glassCss.match(/--glass-surface:\s*rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/)![1]);
-    expect(tintAlpha).toBeGreaterThan(0);
-    const worst = (text: string, onCard: boolean) =>
-      Math.min(...tints.map((tint) => {
-        const page = blendOver({ ...tint, a: tintAlpha }, ivory);
-        return contrastRatio(parseHex(text), onCard ? blendOver({ r: 255, g: 255, b: 255, a: cardAlpha }, page) : page);
-      }));
-
-    const primaryContrast = Math.min(worst(navyHex, true), worst(navyHex, false));
-    const secondaryContrast = Math.min(worst(navyMutedHex, true), worst(navyMutedHex, false));
-    const overdueContrast = worst(overdueHex, true);
-    const dueTodayContrast = worst(dueTodayHex, true);
+    // The bar can sit over the page, a card or any accent fill; check each.
+    const worstOver = (bar: typeof lightBar, css: string, white: string, textToken: string) => {
+      const text = hexes(css, textToken)[0]!;
+      const under = [
+        hexes(css, "--palette-ivory")[0]!,
+        parseHex(white),
+        ...hexes(css, "--accent-fill"),
+      ];
+      return Math.min(...under.map((u) => contrastRatio(text, blendOver(bar, u))));
+    };
+    const lightContrast = worstOver(lightBar, lightPart, "#ffffff", "--palette-navy");
+    const darkContrast = worstOver(darkBar, darkPart, "#2c2c2e", "--text-primary");
 
     // WCAG AA requirement: >= 4.5
-    expect(primaryContrast).toBeGreaterThanOrEqual(4.5);
-    expect(secondaryContrast).toBeGreaterThanOrEqual(4.5);
-    expect(overdueContrast).toBeGreaterThanOrEqual(4.5);
-    expect(dueTodayContrast).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("tints the Glass background with the chosen accent's pastel, not a fixed blend", () => {
-    const modern = glassCss.match(/background-image:[^;]*color-mix[^;]*;/)![0];
-    expect(modern).toContain("var(--accent-secondary)");
-    expect(modern).not.toMatch(/--palette-(rose|lavender|sky)\)/);
+    expect(lightContrast).toBeGreaterThanOrEqual(4.5);
+    expect(darkContrast).toBeGreaterThanOrEqual(4.5);
   });
 });

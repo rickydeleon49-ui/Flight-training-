@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",
-    "@fontsource/inter": "^5.3.0",
     "@react-aria/tabs": "3.12.1",
     "@react-stately/tabs": "3.9.1",
     "@tauri-apps/api": "^2.12.3",

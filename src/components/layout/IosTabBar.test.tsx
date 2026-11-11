@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -55,6 +55,15 @@ describe("iPhone tab bar", () => {
     expect(document.querySelector(".shell--tabs")).toBeTruthy();
     for (const name of ["Home", "Study", "Schedule", "Log", "More"]) expect(tab(name)).toBeTruthy();
     expect(tab("Home").getAttribute("aria-current")).toBe("page");
+  });
+
+  it("the active tab icon has the heavier stroke", () => {
+    mount("/study");
+    const w = (name: string) => tab(name).querySelector("svg")?.getAttribute("stroke-width");
+    expect(w("Study")).toBe("2.25");
+    for (const n of ["Home", "Schedule", "Log", "More"]) expect(w(n)).toBe("1.75");
+    expect(tab("Study").getAttribute("aria-current")).toBe("page");
+    expect(tab("Home").getAttribute("aria-current")).toBeNull();
   });
 
   it("a wide iPad keeps the sidebar and has no tab bar", () => {
@@ -142,5 +151,24 @@ describe("More page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
     expect(open).toHaveBeenCalled();
     window.removeEventListener("quickfind:open", open);
+  });
+
+  it("goes compact on scroll down and expands on scroll up", () => {
+    vi.useFakeTimers();
+    let y = 0;
+    Object.defineProperty(window, "scrollY", { configurable: true, get: () => y });
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 800 });
+    Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, value: 3000 });
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(() => cb(0), 0) as unknown as number);
+    mount("/");
+    const nav = document.querySelector(".ios-tab-bar")!;
+    const go = (next: number) => { y = next; act(() => { fireEvent.scroll(window); vi.runAllTimers(); }); };
+    expect(nav.classList.contains("is-compact")).toBe(false);
+    go(300);
+    expect(nav.classList.contains("is-compact")).toBe(true);
+    expect(tab("Home").textContent).toContain("Home");
+    go(250);
+    expect(nav.classList.contains("is-compact")).toBe(false);
+    vi.useRealTimers();
   });
 });

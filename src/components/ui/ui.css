@@ -24,6 +24,40 @@
   box-shadow: var(--shadow-md);
 }
 
+/* Grouped: the iOS settings group. White rounded block on the grey page. */
+.card--grouped {
+  border: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+:root[data-theme="dark"] .card--grouped { border: 0.5px solid var(--border-subtle); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card--grouped { border: 0.5px solid var(--border-subtle); }
+}
+.card--grouped > .card__header {
+  padding: var(--space-3) var(--space-4) 6px;
+}
+.card--grouped .card__title,
+.card--grouped .card__eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+/* Grouped: the caps title is the section label; the eyebrow reads as a plain note under it. */
+.card--grouped > .card__header > div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.card--grouped .card__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-top: 2px;
+}
+
 .card__header {
   display: flex;
   align-items: baseline;
@@ -35,16 +69,14 @@
 .card__title {
   font-family: var(--font-display);
   font-size: var(--text-md);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .card__eyebrow {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: var(--space-1);
 }
 
@@ -65,9 +97,64 @@
   font-weight: 500;
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition),
-    color var(--transition);
+    color var(--transition), transform 100ms;
   white-space: nowrap;
 }
+
+.button:active,
+.list-row:active { transform: scale(.97); }
+
+.list-row { transition: transform 100ms; }
+
+/* ------------------------- Grouped list rows ------------------------- */
+
+.list-group { list-style: none; margin: 0; padding: 0; }
+
+.list-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0 0 var(--space-4);
+  box-sizing: border-box;
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+a.list-row, button.list-row { cursor: pointer; }
+.list-row__icon { display: inline-flex; align-items: center; padding-right: var(--space-3); color: var(--accent-primary); }
+.list-row__main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--space-2);
+  padding: 11px var(--space-4) 11px 0;
+}
+.list-row__text { min-width: 0; display: flex; flex-direction: column; }
+.list-row__title { font-size: var(--text-base); overflow-wrap: anywhere; }
+html.is-ios .list-row__title { font-size: var(--text-md); }
+.list-row__subtitle { font-size: var(--text-sm); color: var(--text-secondary); overflow-wrap: anywhere; }
+.list-row__value { color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
+.list-row__chevron { flex: none; color: var(--text-tertiary); font-size: 14px; }
+
+/* Inset separator: starts at the text column. */
+.list-row + .list-row .list-row__main,
+.list-group > li + li > .list-row .list-row__main { border-top: 1px solid var(--border-subtle); }
+@media (min-resolution: 2dppx) {
+  .list-row + .list-row .list-row__main,
+  .list-group > li + li > .list-row .list-row__main { border-top-width: .5px; }
+}
+
+@media (hover: hover) {
+  a.list-row:hover, button.list-row:hover { background: var(--surface-sunken); }
+}
+a.list-row:active, button.list-row:active { background: var(--surface-sunken); }
+.list-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 
 .button:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -162,7 +249,7 @@ button[role="tab"] {
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   font-size: var(--text-xs);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -199,7 +286,7 @@ button[role="tab"] {
 }
 .badge--due {
   background: var(--status-due-today-fill);
-  border-color: #ecd8b6;
+  border-color: var(--border-warn);
   color: var(--status-due-today);
 }
 
@@ -249,9 +336,29 @@ button[role="tab"] {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   padding: 0.55rem 0.75rem;
-  font-size: var(--text-base);
+  min-height: 44px;
+  font-size: var(--text-callout);
   color: var(--text-primary);
   transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+/* Dark and high contrast: sunken fill with a visible control edge. */
+:root[data-theme="dark"] .input,
+:root[data-theme="dark"] .textarea,
+:root[data-theme="dark"] .select {
+  background-color: var(--surface-sunken);
+  border-color: var(--border-control);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .input,
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .textarea,
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .select {
+    background-color: var(--surface-sunken);
+    border-color: var(--border-control);
+  }
+}
+@media (prefers-contrast: more) {
+  .input, .textarea, .select { border-color: var(--border-control); }
 }
 
 .input::placeholder,
@@ -314,7 +421,7 @@ button[role="tab"] {
   height: 1.15rem;
   margin-top: 0.15rem;
   border: 1.5px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface-card);
   display: grid;
   place-items: center;
@@ -325,7 +432,7 @@ button[role="tab"] {
 .checkbox input:checked + .checkbox__mark {
   background: var(--category-complete-ink);
   border-color: var(--category-complete-ink);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .checkbox input:focus-visible + .checkbox__mark {
@@ -350,6 +457,45 @@ button[role="tab"] {
 
 .checkbox__meta { display: block; }
 
+/* Optional switch look: same checkbox input (role="switch"), a 51x31 track and 27px knob. */
+.checkbox--switch { align-items: center; position: relative; }
+.checkbox--switch input {
+  width: 51px;
+  height: 31px;
+}
+.checkbox--switch .checkbox__mark {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  margin-top: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--border-control);
+  transition: background var(--transition);
+}
+.checkbox--switch .checkbox__mark svg { display: none; }
+.checkbox--switch .checkbox__mark::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition);
+}
+.checkbox--switch input:checked + .checkbox__mark {
+  background: var(--category-complete-ink);
+  border-color: transparent;
+}
+.checkbox--switch input:checked + .checkbox__mark::after { transform: translateX(20px); }
+.checkbox--switch input:focus-visible + .checkbox__mark { box-shadow: var(--focus-ring); }
+@media (prefers-reduced-motion: reduce) {
+  .checkbox--switch .checkbox__mark, .checkbox--switch .checkbox__mark::after { transition: none; }
+}
+
 /* ----------------------------- Dialog ----------------------------- */
 /* Built on the native <dialog> element, so focus trapping, Escape and
    inertness of the page behind come from the platform. */
@@ -360,12 +506,12 @@ button[role="tab"] {
   padding: 0;
   width: min(42rem, calc(100vw - 3rem));
   max-height: calc(100vh - 4rem);
-  background: var(--surface-card);
+  background: var(--surface-raised);
   color: var(--text-primary);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-popover);
 }
 
-.dialog::backdrop { background: rgba(23, 35, 60, 0.28); }
+.dialog::backdrop { background: var(--overlay); }
 
 /* WebKit before macOS 12.3 has no modal <dialog>: there the element is not
    hidden by default, has no top layer and no ::backdrop. useModalDialog marks
@@ -388,7 +534,7 @@ dialog:not([open]) { display: none; }
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(23, 35, 60, 0.28);
+  background: var(--overlay);
 }
 
 .dialog--narrow { width: min(28rem, calc(100vw - 3rem)); }
@@ -447,6 +593,103 @@ dialog:not([open]) { display: none; }
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* iPhone: dialogs are bottom sheets. The global reduced-motion override in
+   tokens.css covers the animations, so no wrapper is used here. */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+html.is-ios .dialog {
+  position: fixed;
+  width: calc(100vw - 16px);
+  max-width: none;
+  margin: auto 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  max-height: 92vh;
+  max-height: 92dvh;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+html.is-ios .dialog[open] {
+  display: flex;
+  animation: sheet-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+html.is-ios .dialog.modal-fallback[open] {
+  top: auto;
+  left: 8px;
+  right: 8px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  transform: none;
+}
+
+/* Grabber: decorative only. */
+html.is-ios .dialog::before {
+  content: "";
+  flex: none;
+  align-self: center;
+  width: 36px;
+  height: 5px;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+html.is-ios .dialog__header { border-bottom: 0; padding-top: var(--space-3); }
+html.is-ios .dialog__title { font-size: var(--text-xl); }
+
+html.is-ios .dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+/* A medium sheet: as tall as its content. */
+html.is-ios .dialog--narrow { width: calc(100vw - 16px); }
+
+html.is-ios .dialog__footer {
+  flex: none;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+html.is-ios .dialog__footer-main {
+  flex-direction: column;
+  align-items: stretch;
+  margin-left: 0;
+}
+html.is-ios .dialog__footer > .button,
+html.is-ios .dialog__footer-main > .button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Keyboard check (M4): WKWebView does not shrink the layout for the keyboard,
+   so a sheet with a field stays at the top and keeps its footer reachable.
+   Confirm dialogs, which have no fields, sit at the bottom. */
+html.is-ios .dialog:has(input, textarea, select) {
+  margin-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  margin-bottom: auto;
+}
+html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  bottom: auto;
+}
+
+/* Menus and popovers open from their button. */
+.quick-find[open]:not(.modal-fallback) {
+  transform-origin: top center;
+  animation: popover-in 180ms ease-out;
 }
 
 /* --------------------------- Empty state -------------------------- */
@@ -627,4 +870,88 @@ dialog:not([open]) { display: none; }
   }
   html.is-ios .dialog__header > .icon-button { flex-shrink: 0; }
   html.is-ios .row { flex-wrap: wrap; }
+}
+
+/* Choice controls (radio groups): segmented track and plain inline radios. */
+.segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  flex-wrap: wrap; /* at the largest text size the options wrap instead of clipping */
+  max-width: 100%;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  min-height: 32px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-pill);
+}
+.segmented__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+.segmented__option.is-selected {
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+.segmented__option:has(input:focus-visible) {
+  outline: 2px solid var(--focus-outline-blue);
+  outline-offset: 1px;
+}
+.segmented__option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.radio-row__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+/* Filter chips, shared by the Study Library, Questions, Toolkit, Review and History. */
+.filter-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.filter-chip {
+  position: relative;
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+/* 32px capsule with a 44px touch area. */
+.filter-chip::after {
+  content: "";
+  position: absolute;
+  inset: -6px -2px;
+}
+.filter-chip:hover { border-color: var(--border-strong); }
+.filter-chip.is-active {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--accent-primary);
+  font-weight: 600;
 }

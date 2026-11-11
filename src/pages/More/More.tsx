@@ -1,9 +1,10 @@
 import type { ReactElement } from "react";
-import { Link } from "react-router-dom";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { QUICK_FIND_EVENT } from "@/components/quickfind/QuickFind";
 import {
-  ChevronRightIcon,
+  Card,
+  ListRow,
   NoteIcon,
   QuestionIcon,
   RouteIcon,
@@ -48,49 +49,53 @@ export function More() {
 
   return (
     <div className="more stack stack--5">
-      <h1 className="more__title">More</h1>
+      <PageHeader title="More" />
 
-      <ul className="more__list">
-        <li>
-          <button type="button" className="more__row" onClick={() => window.dispatchEvent(new Event(QUICK_FIND_EVENT))}>
-            <span className="more__icon"><SearchIcon size={20} /></span>
-            <span className="more__label">Search</span>
-            <ChevronRightIcon size={18} className="more__chevron" />
-          </button>
-        </li>
-      </ul>
+      <Card variant="grouped" ariaLabel="Search">
+        <ul className="list-group">
+          <li>
+            <ListRow
+              onClick={() => window.dispatchEvent(new Event(QUICK_FIND_EVENT))}
+              icon={<SearchIcon size={20} />}
+              title="Search"
+              chevron
+            />
+          </li>
+        </ul>
+      </Card>
 
       {GROUPS.map((group) => (
-        <section key={group.title} aria-label={group.title}>
-          <ul className="more__list">
+        <Card key={group.title} variant="grouped" ariaLabel={group.title}>
+          <ul className="list-group">
             {group.rows.map((row) => (
               <li key={row.to}>
-                <Link to={row.to} className="more__row">
-                  <span className="more__icon">{row.icon}</span>
-                  <span className="more__label">{row.label}</span>
-                  {row.to === "/questions" && toAsk > 0 ? (
-                    <span className="more__count">
-                      {toAsk}
-                      <span className="visually-hidden"> to ask</span>
-                    </span>
-                  ) : null}
-                  <ChevronRightIcon size={18} className="more__chevron" />
-                </Link>
+                <ListRow
+                  to={row.to}
+                  icon={row.icon}
+                  title={row.label}
+                  value={
+                    row.to === "/questions" && toAsk > 0 ? (
+                      <span className="more__count">
+                        {toAsk}
+                        <span className="visually-hidden"> to ask</span>
+                      </span>
+                    ) : undefined
+                  }
+                  chevron
+                />
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       ))}
 
-      <ul className="more__list">
-        <li>
-          <Link to="/settings" className="more__row">
-            <span className="more__icon"><SettingsIcon size={20} /></span>
-            <span className="more__label">Settings</span>
-            <ChevronRightIcon size={18} className="more__chevron" />
-          </Link>
-        </li>
-      </ul>
+      <Card variant="grouped" ariaLabel="Settings">
+        <ul className="list-group">
+          <li>
+            <ListRow to="/settings" icon={<SettingsIcon size={20} />} title="Settings" chevron />
+          </li>
+        </ul>
+      </Card>
 
       <p className="more__note">
         {DISCLAIMER_LINE}

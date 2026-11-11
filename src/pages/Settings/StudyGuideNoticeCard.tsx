@@ -25,7 +25,7 @@ export function StudyGuideNoticeCard() {
   };
 
   return (
-    <Card>
+    <Card variant="grouped">
       <CardHeader title="Notifications" eyebrow="On this device" />
       <CardBody>
         <div className="stack stack--3">

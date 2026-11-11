@@ -10,13 +10,21 @@ import {
   APPEARANCE_STORAGE_KEY,
   applyAppearance,
   getStoredAppearance,
+  GLASS_BARS_RESET_KEY,
   initAppearance,
   setStoredAppearance,
 } from "@/lib/appearance";
+import { getStoredTheme, THEME_STORAGE_KEY } from "@/lib/theme";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { expectNoA11yViolations } from "@/testing/a11y";
 import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
+
+const isIOSMock = vi.hoisted(() => vi.fn(() => false));
+vi.mock("@/services/platform", async (orig) => ({
+  ...(await orig<typeof import("@/services/platform")>()),
+  isIOS: isIOSMock,
+}));
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -67,13 +75,11 @@ describe("Appearance setting in Settings", () => {
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
     expect(document.documentElement.getAttribute("data-appearance")).toBeNull();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
-    expect(classic.checked).toBe(true);
     expect(glass.checked).toBe(false);
     expect(
-      screen.getByText("Glass gives cards a soft frosted look. Classic is the standard look."),
+      screen.getByText("Frosted tab bar and top bar. Off until it's tested on your iPhone."),
     ).toBeTruthy();
   await expectNoA11yViolations(document.body);
   });
@@ -81,8 +87,7 @@ describe("Appearance setting in Settings", () => {
   it("choosing Glass sets the data-appearance attribute and saves it", async () => {
     await open();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
 
@@ -91,7 +96,6 @@ describe("Appearance setting in Settings", () => {
     });
 
     expect(glass.checked).toBe(true);
-    expect(classic.checked).toBe(false);
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
     expect(getStoredAppearance()).toBe("glass");
     expect(localStorage.getItem(APPEARANCE_STORAGE_KEY)).toBe(JSON.stringify("glass"));
@@ -100,8 +104,7 @@ describe("Appearance setting in Settings", () => {
   it("choosing Classic removes the data-appearance attribute and saves Classic", async () => {
     await open();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
     await act(async () => {
       fireEvent.click(glass);
@@ -109,10 +112,9 @@ describe("Appearance setting in Settings", () => {
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
 
     await act(async () => {
-      fireEvent.click(classic);
+      fireEvent.click(glass);
     });
 
-    expect(classic.checked).toBe(true);
     expect(glass.checked).toBe(false);
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
     expect(document.documentElement.getAttribute("data-appearance")).toBeNull();
@@ -120,6 +122,7 @@ describe("Appearance setting in Settings", () => {
   });
 
   it("saved Glass is applied at start before render", async () => {
+    localStorage.setItem(GLASS_BARS_RESET_KEY, "1");
     setStoredAppearance("glass");
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
 
@@ -130,15 +133,28 @@ describe("Appearance setting in Settings", () => {
 
     await open();
 
-    const classic = (await screen.findByRole("radio", { name: /^Classic/ })) as HTMLInputElement;
-    const glass = screen.getByRole("radio", { name: /^Glass/ }) as HTMLInputElement;
+    const glass = (await screen.findByRole("switch", { name: /^Glass bars/ })) as HTMLInputElement;
 
     expect(glass.checked).toBe(true);
-    expect(classic.checked).toBe(false);
+    expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
+  });
+
+  it("resets stored Glass to Classic once, then leaves later choices alone", () => {
+    setStoredAppearance("glass");
+    expect(localStorage.getItem(GLASS_BARS_RESET_KEY)).toBeNull();
+    expect(initAppearance()).toBe("classic");
+    expect(getStoredAppearance()).toBe("classic");
+    expect(localStorage.getItem(GLASS_BARS_RESET_KEY)).not.toBeNull();
+    expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
+
+    setStoredAppearance("glass");
+    expect(initAppearance()).toBe("glass");
+    expect(getStoredAppearance()).toBe("glass");
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
   });
 
   it("handles unquoted raw strings and invalid values safely", () => {
+    localStorage.setItem(GLASS_BARS_RESET_KEY, "1");
     localStorage.setItem(APPEARANCE_STORAGE_KEY, "glass");
     expect(getStoredAppearance()).toBe("glass");
     initAppearance();
@@ -155,5 +171,66 @@ describe("Appearance setting in Settings", () => {
     expect(document.documentElement.getAttribute("data-appearance")).toBe("glass");
     applyAppearance("classic");
     expect(document.documentElement.hasAttribute("data-appearance")).toBe(false);
+  });
+
+  describe("Theme control", () => {
+    afterEach(() => {
+      document.documentElement.removeAttribute("data-theme");
+    });
+
+    it("Mac: Auto is selected by default", async () => {
+      await open();
+      const group = await screen.findByRole("radiogroup", { name: "Theme" });
+      expect(group).toBeTruthy();
+      expect((screen.getByRole("radio", { name: "Auto" }) as HTMLInputElement).checked).toBe(true);
+      expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+    });
+
+    it("choosing Dark sets data-theme and saves; Auto removes it and saves auto", async () => {
+      await open();
+      const dark = (await screen.findByRole("radio", { name: "Dark" })) as HTMLInputElement;
+      await act(async () => {
+        fireEvent.click(dark);
+      });
+      expect(dark.checked).toBe(true);
+      expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+      expect(getStoredTheme()).toBe("dark");
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("radio", { name: "Auto" }));
+      });
+      expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(JSON.stringify("auto"));
+      expect(screen.getByText("Matches your iPhone or Mac")).toBeTruthy();
+    });
+
+    it("Light grey sets data-theme and saves", async () => {
+      await open();
+      await act(async () => {
+        fireEvent.click(await screen.findByRole("radio", { name: "Light grey" }));
+      });
+      expect(document.documentElement.getAttribute("data-theme")).toBe("light-grey");
+      expect(getStoredTheme()).toBe("light-grey");
+    });
+
+    it("radios share a name so arrow keys move the choice", async () => {
+      await open();
+      const radios = (await screen.findAllByRole("radio")).filter(
+        (r) => (r as HTMLInputElement).name === "theme",
+      ) as HTMLInputElement[];
+      expect(radios.map((r) => r.value)).toEqual(["light", "light-grey", "dark", "auto"]);
+    });
+
+    it("iPhone: no radiogroup, plain Auto row", async () => {
+      isIOSMock.mockReturnValue(true);
+      try {
+        await open();
+        await screen.findByText("Appearance");
+        expect(screen.queryByRole("radiogroup", { name: "Theme" })).toBeNull();
+        expect(screen.getByText("Auto · Matches your iPhone")).toBeTruthy();
+      } finally {
+        isIOSMock.mockReturnValue(false);
+      }
+    });
   });
 });

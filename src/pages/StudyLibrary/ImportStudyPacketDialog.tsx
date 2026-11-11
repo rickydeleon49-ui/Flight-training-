@@ -308,7 +308,7 @@ function PreviewView({ preview }: { preview: Preview }) {
           maxHeight: "24rem",
           overflowY: "auto",
           padding: "var(--space-3)",
-          border: "1px solid var(--border-subtle, #e2e8f0)",
+          border: "1px solid var(--border-subtle)",
           borderRadius: "var(--radius-md)",
         }}
         tabIndex={0}
@@ -388,7 +388,7 @@ function PreviewView({ preview }: { preview: Preview }) {
                   className="stack stack--2"
                   style={{
                     padding: "var(--space-3)",
-                    border: "1px solid var(--border-subtle, #e2e8f0)",
+                    border: "1px solid var(--border-subtle)",
                     borderRadius: "var(--radius-md)",
                     background: "var(--surface-card)",
                   }}
@@ -417,8 +417,8 @@ function PreviewView({ preview }: { preview: Preview }) {
                           style={{
                             padding: "var(--space-2) var(--space-3)",
                             borderRadius: "var(--radius-sm)",
-                            background: isCorrect ? "var(--category-complete-fill)" : "var(--surface-subtle, transparent)",
-                            border: isCorrect ? "1px solid var(--category-complete-edge)" : "1px solid var(--border-subtle, #e2e8f0)",
+                            background: isCorrect ? "var(--category-complete-fill)" : "var(--surface-faint)",
+                            border: isCorrect ? "1px solid var(--category-complete-edge)" : "1px solid var(--border-subtle)",
                           }}
                         >
                           <span className="ai-copy">

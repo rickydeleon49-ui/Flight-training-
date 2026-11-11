@@ -79,13 +79,13 @@ export function Finances() {
     return (
       <>
         <PageHeader title="Finances" subtitle="What you have set aside, and what training is costing." />
-        <Card>
+        <Card variant="grouped">
           <EmptyState
             icon={<WalletIcon size={30} />}
             title="Your Flight Fund starts here."
             body="Record what you have set aside for training and what you spend. Estimated lesson costs from your Schedule will show up as upcoming expenses."
             action={
-              <div className="row row--wrap" style={{ justifyContent: "center" }}>
+              <div className="row row--wrap fin-center">
                 <Button variant="primary" onClick={() => setFormType("contribution")}>
                   Add funds
                 </Button>
@@ -143,7 +143,7 @@ export function Finances() {
 
         <div className="detail">
           <div className="detail__column">
-            <Card>
+            <Card variant="grouped">
               <CardHeader
                 title="Recent activity"
                 action={<span className="tiny dim">{data.transactions.length} transactions</span>}
@@ -160,7 +160,7 @@ export function Finances() {
                           {transaction.description ||
                             (income ? "Added to fund" : EXPENSE_CATEGORY_LABELS[transaction.category])}
                         </span>
-                        <span className="row row--wrap" style={{ gap: "var(--space-2)", marginTop: 2 }}>
+                        <span className="row row--wrap txn-row__meta">
                           {income ? (
                             <Badge tone="complete">Added</Badge>
                           ) : (
@@ -203,7 +203,7 @@ export function Finances() {
           </div>
 
           <div className="detail__column">
-            <Card>
+            <Card variant="grouped">
               <CardHeader
                 title="Savings target"
                 action={
@@ -236,7 +236,7 @@ export function Finances() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card variant="grouped">
               <CardHeader title="Coming up" />
               <CardBody>
                 {upcoming.length === 0 ? (
@@ -266,7 +266,7 @@ export function Finances() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card variant="grouped">
               <CardHeader title="What training is costing" />
               <CardBody>
                 <div className="insight-list">
@@ -295,17 +295,17 @@ export function Finances() {
                     <p className="insight__value">{formatMoney(totalUpcoming(upcoming))}</p>
                   </div>
                 </div>
-                <p className="tiny dim" style={{ marginTop: "var(--space-4)" }}>
+                <p className="tiny dim fin-note-4">
                   Averages come from the lesson and rental expenses you have recorded. Expenses
                   linked to the same lesson count as one lesson. They are not a forecast.
                 </p>
-                <p className="tiny dim" data-testid="per-hour-basis" style={{ marginTop: "var(--space-2)" }}>
+                <p className="tiny dim fin-note-2" data-testid="per-hour-basis">
                   {costs.perFlightHour === null
                     ? "Per flight hour needs a lesson with a recorded cost and a journal entry for that lesson with its total time."
                     : `Per flight hour uses ${costs.perFlightHour.lessonsCounted} of ${costs.lessons.length} ${costs.lessons.length === 1 ? "lesson" : "lessons"}: those with logged flight time (${costs.perFlightHour.hours} hr).`}
                 </p>
                 {costs.possibleDoubleCounts.length > 0 && (
-                  <div className="stack stack--2" role="note" style={{ marginTop: "var(--space-4)" }}>
+                  <div className="stack stack--2 fin-note-4" role="note">
                     <p className="small">
                       {costs.possibleDoubleCounts.length === 1
                         ? "One lesson has a recorded lesson total and separate lesson expenses. If they are the same money, edit or delete one so it isn't counted twice."
@@ -324,7 +324,7 @@ export function Finances() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card variant="grouped">
               <CardHeader title="Spending by month" />
               <CardBody>
                 <table className="month-table">
@@ -349,7 +349,7 @@ export function Finances() {
                       ))}
                   </tbody>
                 </table>
-                <p className="tiny dim" style={{ marginTop: "var(--space-3)" }}>
+                <p className="tiny dim fin-note-3">
                   Only expenses you have recorded. Estimated lesson costs stay under Coming up.
                 </p>
               </CardBody>
@@ -461,7 +461,7 @@ function FundGoalDialog({
         </>
       }
     >
-      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <fieldset disabled={busy} className="form-grid fin-fieldset">
         <Field label="What is it for?" full>
           {({ id }) => (
             <TextInput id={id} value={title} onChange={(e) => setTitle(e.target.value)} />

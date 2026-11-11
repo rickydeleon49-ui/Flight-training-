@@ -111,13 +111,17 @@ interface CheckboxProps {
   meta?: ReactNode;
   disabled?: boolean;
   strikethrough?: boolean;
+  /** "switch" draws the same checkbox as an on/off switch (role="switch"). */
+  appearance?: "checkbox" | "switch";
 }
 
-export function Checkbox({ checked, onChange, label, meta, disabled, strikethrough = true }: CheckboxProps) {
+export function Checkbox({ checked, onChange, label, meta, disabled, strikethrough = true, appearance = "checkbox" }: CheckboxProps) {
+  const isSwitch = appearance === "switch";
   return (
-    <label className={`checkbox${!strikethrough ? " checkbox--no-strike" : ""}`}>
+    <label className={`checkbox${!strikethrough ? " checkbox--no-strike" : ""}${isSwitch ? " checkbox--switch" : ""}`}>
       <input
         type="checkbox"
+        role={isSwitch ? "switch" : undefined}
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}

@@ -1,12 +1,21 @@
 /* Questions: a running list of things to ask. */
 
+.questions__fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.questions__filters { padding: var(--space-2) var(--space-4) var(--space-3); }
+.questions__note { padding: 0 var(--space-4) var(--space-3); }
+.questions__more { padding: var(--space-3) var(--space-4); }
+
+/* Grouped rows: inset hairline between questions, like the other lists. */
 .question-row {
   display: flex;
   align-items: flex-start;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  margin-left: var(--space-4);
+  padding-left: 0;
   border-top: 1px solid var(--border-subtle);
 }
+.question-row__editor { margin-top: var(--space-3); }
 
 .question-row__main { flex: 1; min-width: 0; }
 
@@ -37,6 +46,6 @@
 }
 
 @media (max-width: 720px) {
-  .question-row { flex-direction: column; }
+  .question-row { flex-direction: column; gap: var(--space-2); }
   .question-row__tools { flex-direction: row; align-items: center; }
 }

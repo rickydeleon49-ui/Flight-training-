@@ -14,7 +14,7 @@
   background: var(--status-overdue-fill);
   box-shadow: inset 3px 0 0 var(--status-overdue);
 }
-.action-row--overdue:hover { background: #fbeceb; }
+.action-row--overdue:hover { background: var(--tint-overdue-hover); }
 
 .action-row .checkbox { flex: 1; min-width: 0; }
 
