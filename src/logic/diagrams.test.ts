@@ -123,7 +123,7 @@ describe("scopeDiagramSvg", () => {
   it("keeps the visible text the same and prefixes every id and reference", () => {
     for (const diagram of SVGS) {
       const svg = read(diagram);
-      const scoped = scopeDiagramSvg(svg, "dgx1-");
+      const scoped = scopeDiagramSvg(svg, "dgx1-").markup;
       expect(text(scoped), diagram.id).toEqual(text(svg));
       for (const m of scoped.matchAll(/\bid="([^"]+)"/g)) expect(m[1], diagram.id).toMatch(/^dgx1-/);
       for (const m of scoped.matchAll(/url\(#([^)]+)\)/g)) expect(m[1], diagram.id).toMatch(/^dgx1-/);
@@ -134,8 +134,10 @@ describe("scopeDiagramSvg", () => {
   });
 
   it("scopes style rules to the copy, so sets cannot restyle each other", () => {
-    const scoped = scopeDiagramSvg('<svg><style>.t{fill:red}.a,.b{x:1}</style><text class="t">Hi</text></svg>', "dgx2-");
-    expect(scoped).toContain(".dgx2 .t{fill:red}");
-    expect(scoped).toContain(".dgx2 .a,.dgx2 .b{x:1}");
+    const { markup, css } = scopeDiagramSvg('<svg><style>.t{fill:red}.a,.b{x:1}</style><text class="t">Hi</text></svg>', "dgx2-");
+    expect(markup).not.toMatch(/<style/i);
+    expect(markup).toContain('<text class="t">Hi</text>');
+    expect(css).toContain(".dgx2 .t{fill:red}");
+    expect(css).toContain(".dgx2 .a,.dgx2 .b{x:1}");
   });
 });

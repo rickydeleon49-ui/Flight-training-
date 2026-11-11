@@ -317,18 +317,24 @@ export function diagramSourceLine(diagram: Diagram): string {
 /**
  * Make one inline copy of a diagram safe to sit beside others on a page: ids
  * (and what points at them) get `prefix`, and the file's own style rules only
- * apply inside `.${prefix without the dash}`. Visible text is untouched.
+ * apply inside `.${prefix without the dash}`. Visible text is untouched. The style rules come back as `css` (scoped), not
+ * inside the markup, so the caller installs them through the CSSOM.
  */
-export function scopeDiagramSvg(svg: string, prefix: string): string {
+export function scopeDiagramSvg(svg: string, prefix: string): { markup: string; css: string } {
   const scope = prefix.replace(/-$/, "");
-  return svg
+  let css = "";
+  const markup = svg
     .replace(/<\?xml[^>]*\?>\s*/, "")
-    .replace(/<style([^>]*)>([\s\S]*?)<\/style>/g, (_all, attrs: string, css: string) =>
-      `<style${attrs}>${css.replace(/([^{}]+)\{/g, (_rule, selectors: string) =>
-        selectors.split(",").map((s) => `.${scope} ${s.trim()}`).join(",") + "{")}</style>`)
+    // The <style> element is lifted out: an injected one is blocked by the app's CSP.
+    .replace(/<style[^>]*>([\s\S]*?)<\/style>/g, (_all, body: string) => {
+      css += body.replace(/([^{}]+)\{/g, (_rule, selectors: string) =>
+        selectors.split(",").map((s) => `.${scope} ${s.trim()}`).join(",") + "{");
+      return "";
+    })
     .replace(/\bid="([^"]+)"/g, (_m, id: string) => `id="${prefix}${id}"`)
     .replace(/\baria-(labelledby|describedby)="([^"]+)"/g, (_m, name: string, ids: string) =>
       `aria-${name}="${ids.split(/\s+/).map((id) => prefix + id).join(" ")}"`)
     .replace(/\b((?:xlink:)?href)="#([^"]+)"/g, (_m, name: string, id: string) => `${name}="#${prefix}${id}"`)
     .replace(/url\(#([^)]+)\)/g, (_m, id: string) => `url(#${prefix}${id})`);
+  return { markup, css };
 }
