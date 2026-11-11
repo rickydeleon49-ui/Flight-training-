@@ -102,7 +102,13 @@ describe("colour contrast (WCAG 2.x)", () => {
           check(`${L} text-primary on ${s}`, t("--text-primary"), t(s), 4.5);
           check(`${L} text-secondary on ${s}`, t("--text-secondary"), t(s), 4.5);
         }
-        check(`${L} text-tertiary on card`, t("--text-tertiary"), t("--surface-card"), 3);
+        // Light keeps its original tertiary grey; dark and light-grey helper text must reach AA (DESIGN-02).
+        const tertiaryMin = theme.name === "light" ? 3 : 4.5;
+        check(`${L} text-tertiary on card`, t("--text-tertiary"), t("--surface-card"), tertiaryMin);
+        if (theme.name !== "light") {
+          check(`${L} text-tertiary on page`, t("--text-tertiary"), t("--surface-page"), 4.5);
+          check(`${L} text-tertiary on sunken`, t("--text-tertiary"), t("--surface-sunken"), 4.5);
+        }
         for (const s of ["--status-overdue", "--status-due-today", "--status-complete"]) {
           check(`${L} ${s} on card`, t(s), t("--surface-card"), 4.5);
         }

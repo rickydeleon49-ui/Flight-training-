@@ -30,10 +30,9 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   await waitFor(() => expect(screen.getByRole("heading", { name: "About you" })).toBeTruthy());
   expect(Boolean(screen.queryByRole("heading", { name: "Get my study material" }))).toBe(phone);
   (document.getElementById("settings-backups") as HTMLDetailsElement).open = true;
-  (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
   expect(Boolean(screen.queryByRole("heading", { name: "Your data" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Start fresh" }))).toBe(phone);
-  expect(screen.queryByRole("heading", { name: "AI provider" })).toBeTruthy();
+  expect(screen.queryByRole("heading", { name: "AI helper" })).toBeTruthy();
   const card = document.getElementById("ai-provider")?.closest(".card")?.textContent ?? "";
   if (phone) {
     expect(card).toMatch(/Keychain/);
