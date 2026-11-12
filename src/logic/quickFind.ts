@@ -52,7 +52,7 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
   { label: "Study Library", to: "/study", detail: "Materials and notes" },
   { label: "Schedule", to: "/schedule", detail: "Lessons and events" },
   { label: "Flight Log", to: "/journal", detail: "Flights and reflections" },
-  { label: "Questions", to: "/questions", detail: "To ask your instructor" },
+  { label: "Ask my instructor", to: "/questions", detail: "Questions to ask" },
   { label: "Notes", to: "/notes", detail: "Anything you wrote down" },
   { label: "Finances", to: "/finances", detail: "Spending and funds" },
   { label: "Pilot Toolkit", to: "/toolkit", detail: "Checkride readiness" },

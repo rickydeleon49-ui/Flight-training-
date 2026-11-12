@@ -225,7 +225,7 @@ export function Questions() {
   return (
     <>
       <PageHeader
-        title="Questions"
+        title="Ask my instructor"
         subtitle="Things you don't want to forget to ask."
       />
 

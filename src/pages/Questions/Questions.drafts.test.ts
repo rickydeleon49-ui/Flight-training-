@@ -54,7 +54,7 @@ function Ready() {
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(Ready))));
   await waitForReadyAfterEffects();
-  await screen.findByRole("heading", { name: "Questions" });
+  await screen.findByRole("heading", { name: "Ask my instructor" });
 }
 
 beforeEach(async () => {
