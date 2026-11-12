@@ -478,3 +478,22 @@ describe("paging resets on every real filter change", () => {
     expect(rows()).toBe(200);
   }, LONG_LIST_TIMEOUT_MS);
 });
+
+describe("editing a saved question's own wording", () => {
+  it("saves the new question text with the answer, and will not save it empty", async () => {
+    await seed(2);
+    await open();
+    startAnswer("Question 1", "Kept answer");
+    const row = rowFor("Question 1")!;
+    const field = within(row).getByLabelText("Question");
+    fireEvent.change(field, { target: { value: "   " } });
+    expect((within(row).getByRole("button", { name: "Save answer" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(field, { target: { value: "Reworded question" } });
+    await act(async () => {
+      fireEvent.click(within(row).getByRole("button", { name: "Save answer" }));
+    });
+    await waitFor(async () => expect((await repos.questions.get("q-1"))?.text).toBe("Reworded question"));
+    expect((await repos.questions.get("q-1"))?.answer).toBe("Kept answer");
+    expect(await screen.findByText("Reworded question")).toBeTruthy();
+  });
+});

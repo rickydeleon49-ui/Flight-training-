@@ -58,6 +58,8 @@ export const QUESTION_PAGE_SIZE = 100;
 
 interface AnswerDraft {
   text: string;
+  /** The question's own wording while it is being edited. */
+  questionText: string;
   revision: number;
 }
 
@@ -119,14 +121,16 @@ export function Questions() {
   const savingQuestionIdsRef = useRef<Set<string>>(new Set());
   const nextDraftRevisionRef = useRef(1);
 
-  const setAnswerDraft = (id: string, text: string | null) =>
+  const setAnswerDraft = (id: string, patch: Partial<Pick<AnswerDraft, "text" | "questionText">> | null) =>
     setAnswerDrafts((current) => {
       const next = new Map(current);
-      if (text === null) {
+      const existing = current.get(id);
+      if (patch === null) {
         next.delete(id);
       } else {
         next.set(id, {
-          text,
+          text: patch.text ?? existing?.text ?? "",
+          questionText: patch.questionText ?? existing?.questionText ?? "",
           revision: nextDraftRevisionRef.current++,
         });
       }
@@ -153,6 +157,7 @@ export function Questions() {
     const draft = answerDrafts.get(question.id);
     const answer = draft !== undefined ? draft.text : question.answer;
     const submittedRevision = draft?.revision;
+    const questionText = draft !== undefined && draft.questionText.trim() ? draft.questionText.trim() : question.text;
 
     setSavingQuestionIds((current) => {
       const next = new Set(current);
@@ -163,6 +168,7 @@ export function Questions() {
     try {
       const result = await mutate((repos) =>
         repos.questions.update(question.id, {
+          text: questionText,
           answer,
           status: answer.trim() ? "answered" : question.status,
         }),
@@ -325,9 +331,9 @@ export function Questions() {
                       question={question}
                       focused={question.id === focusId}
                       links={links}
-                      draft={answerDrafts.get(question.id)?.text}
+                      draft={answerDrafts.get(question.id)}
                       isSaving={savingQuestionIds.has(question.id)}
-                      onDraftChange={(text) => setAnswerDraft(question.id, text)}
+                      onDraftChange={(patch) => setAnswerDraft(question.id, patch)}
                       onSave={() => handleSaveAnswer(question)}
                       onCancel={() => setAnswerDraft(question.id, null)}
                       onDelete={() => setConfirmingDelete(question)}
@@ -416,19 +422,19 @@ function QuestionRow({
   /** Opened from an offline-search link. */
   focused?: boolean;
   links: QuestionLinks;
-  /** The unsaved answer being edited, or undefined when not editing. */
-  draft: string | undefined;
+  /** The unsaved question and answer being edited, or undefined when not editing. */
+  draft: AnswerDraft | undefined;
   /** True when a save for this question is currently in-flight. */
   isSaving: boolean;
-  /** Set the unsaved answer; null discards it and closes the editor. */
-  onDraftChange: (text: string | null) => void;
+  /** Change the unsaved edit; null discards it and closes the editor. */
+  onDraftChange: (patch: { text?: string; questionText?: string } | null) => void;
   onSave: () => void;
   onCancel: () => void;
   onDelete: () => void;
 }) {
   const { mutate } = useAppData();
   const editingAnswer = draft !== undefined;
-  const answer = draft ?? question.answer;
+  const answer = draft?.text ?? question.answer;
 
   const material = question.materialId ? links.materials.get(question.materialId) : undefined;
   const event = question.eventId ? links.events.get(question.eventId) : undefined;
@@ -483,17 +489,24 @@ function QuestionRow({
           <div className="stack stack--2 question-row__editor">
             <TextArea
               rows={2}
+              value={draft.questionText}
+              aria-label="Question"
+              disabled={isSaving}
+              onChange={(e) => onDraftChange({ questionText: e.target.value })}
+            />
+            <TextArea
+              rows={2}
               value={answer}
               aria-label="Answer"
               placeholder="What you were told, in your own words."
               disabled={isSaving}
-              onChange={(e) => onDraftChange(e.target.value)}
+              onChange={(e) => onDraftChange({ text: e.target.value })}
             />
             <div className="row">
               <Button
                 size="small"
                 variant="primary"
-                disabled={isSaving}
+                disabled={isSaving || !draft.questionText.trim()}
                 onClick={onSave}
               >
                 {isSaving ? "Saving…" : "Save answer"}
@@ -522,7 +535,7 @@ function QuestionRow({
           style={{ width: "auto" }}
         />
         {!editingAnswer ? (
-          <Button size="small" variant="ghost" disabled={isSaving} onClick={() => onDraftChange(question.answer)}>
+          <Button size="small" variant="ghost" disabled={isSaving} onClick={() => onDraftChange({ text: question.answer, questionText: question.text })}>
             {question.answer ? "Edit answer" : "Add answer"}
           </Button>
         ) : null}
