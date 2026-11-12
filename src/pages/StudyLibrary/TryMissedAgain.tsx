@@ -9,11 +9,13 @@ import { QuickQuestionRun } from "./QuickQuestionRun";
  * questions the student got wrong or marked "don't know". Nothing is saved: the
  * attempt, its history and its score stay exactly as they were.
  */
-export function TryMissedAgain({ attempt, items, responses, materialTitle }: {
-  attempt: PracticeAttempt;
+export function TryMissedAgain({ attempt, items, responses, materialTitle, primary = false }: {
+  attempt: Pick<PracticeAttempt, "id" | "sourceMaterialId">;
   items: readonly PracticeTestItem[];
   responses: readonly PracticeResponse[];
   materialTitle: string;
+  /** The one filled button of a results screen: "Review N missed questions". */
+  primary?: boolean;
 }) {
   const [run, setRun] = useState<MixedQuestion[] | null>(null);
   const missed = missedAgainQuestions(attempt.id, items, responses, attempt.sourceMaterialId ?? "", materialTitle);
@@ -22,8 +24,8 @@ export function TryMissedAgain({ attempt, items, responses, materialTitle }: {
 
   return <>
     <div className="row row--wrap row--gap-2">
-      <Button variant="secondary" onClick={() => setRun(missed)}>
-        Try the {missed.length} you missed again
+      <Button variant={primary ? "primary" : "secondary"} onClick={() => setRun(missed)}>
+        {primary ? `Review ${missed.length} missed questions` : `Try the ${missed.length} you missed again`}
       </Button>
     </div>
     {run ? <Dialog open title="Try them again" onClose={close}>

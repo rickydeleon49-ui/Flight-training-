@@ -14,6 +14,11 @@ import * as documentService from "@/services/documents";
 import * as geminiService from "@/services/gemini";
 import { AppDataProvider } from "@/state/AppDataContext";
 
+/** Owner decision 11 Nov: pick an answer, then press "Check answer". */
+function clickCheck(): void {
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+}
+
 let db: TestDatabase;
 vi.mock("@/data", () => ({
   getDatabase: () => Promise.resolve(db),
@@ -120,10 +125,10 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
 
     // Select Q1 answer
     const q1Options = screen.getAllByRole("radio");
-    fireEvent.click(q1Options[1]!); // correct option
+    fireEvent.click(q1Options[1]!); clickCheck(); // correct option
 
     await screen.findByText("Correct");
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(continueBtn);
 
@@ -174,7 +179,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     expect(q1Pill).toBeTruthy();
 
     // Continue to Q2 once persistence completes
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(continueBtn);
     await screen.findByText("Question 2 of 3");
@@ -214,7 +219,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 1 of 3");
 
     // Initially choose wrong option (index 0)
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await screen.findByText("Not quite");
 
     // Click "Change answer"
@@ -225,7 +230,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     // Options are re-enabled: choose correct option (index 1)
     const options = screen.getAllByRole("radio");
     expect(options[1]?.hasAttribute("disabled")).toBe(false);
-    fireEvent.click(options[1]!);
+    fireEvent.click(options[1]!); clickCheck();
 
     // Now reflects Correct
     await screen.findByText("Correct");
@@ -235,7 +240,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     const test = await seedMaterialAndTest("mat-calm", "Calm Material");
     renderInApp(h(PracticeTestPanel, { practiceTest: test, materialTitle: "Calm Material" }));
     await screen.findByText("Question 1 of 3");
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await screen.findByText("Not quite");
     expect(screen.getByText("Your answer")).toBeTruthy();
     expect(screen.getByText("Correct answer")).toBeTruthy();
@@ -257,7 +262,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 2 of 3");
 
     // Answer Q2
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Correct");
 
     // Navigate to Q3 using pill 3 once Q2 save finishes
@@ -267,7 +272,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 3 of 3");
 
     // Answer Q3
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Correct");
 
     // Click pill 1 to return to skipped Q1 once Q3 save finishes
@@ -277,7 +282,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 1 of 3");
 
     // Answer Q1
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Correct");
 
     // Finish test: navigate to Q3 and click See score
@@ -290,7 +295,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     fireEvent.click(seeScoreBtn);
 
     await screen.findByText("Practice test complete");
-    expect(screen.getByText("3 of 3 correct")).toBeTruthy();
+    expect(screen.getAllByText("3 of 3 correct").length).toBeGreaterThan(0);
     expect(
       screen.getByText(
         "Practice result from your material (100%). Not an official FAA knowledge test score or certification of flight readiness.",
@@ -308,7 +313,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 1 of 3");
 
     // Answer Q1 and finish early
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Correct");
 
     const completeBtn = screen.getByRole("button", { name: /Complete test now/ });
@@ -340,7 +345,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 1 of 3");
 
     // Answer Q1 so the attempt is in-progress and persisted
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await screen.findByText("Not quite");
 
     // Click "Close unfinished test" once persisted
@@ -589,7 +594,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 1 of 3");
 
     // Click answer option to trigger record_response
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
 
     // Error alert and Retry button appear
     await screen.findByRole("alert");

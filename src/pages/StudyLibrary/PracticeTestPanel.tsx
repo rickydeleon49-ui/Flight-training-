@@ -25,6 +25,8 @@ import type {
   PracticeTestVersion,
 } from "@/domain/types";
 import { formatLongDate, localDayOf } from "@/lib/dates";
+import { practiceWeakAreas, PASS_PERCENT } from "@/logic/practiceWeakAreas";
+import { TryMissedAgain } from "./TryMissedAgain";
 import { attemptReviewPath } from "@/logic/practiceAttemptReview";
 import { AppDataContext } from "@/state/AppDataContext";
 import "./studyLibrary.css";
@@ -912,12 +914,17 @@ export function PracticeTestPanel({
   const revealed =
     !state.changingAnswer && state.draft === null && confirmedResponse !== undefined;
 
-  const shownChoice = state.draft ? state.draft.choiceIndex : confirmedResponse?.selectedIndex ?? null;
+  // Owner decision 11 Nov: pick an answer first, then press "Check answer".
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => setPicked(null), [state.index, state.attempt?.attemptId]);
+
+  const shownChoice = state.draft
+    ? state.draft.choiceIndex
+    : !revealed && picked !== null ? picked : confirmedResponse?.selectedIndex ?? null;
   const shownDontKnow = state.draft ? state.draft.isDontKnow : confirmedResponse?.isDontKnow ?? false;
   const isCorrect = revealed && confirmedResponse !== undefined && confirmedResponse.isCorrect;
 
   const answeredCount = state.attempt?.answeredCount ?? 0;
-  const showContinue = state.draft !== null || confirmedResponse !== undefined;
 
   // -------------------------------------------------------------------------
   // Actions
@@ -968,10 +975,15 @@ export function PracticeTestPanel({
 
   const handleSelectOption = useCallback(
     (optionIndex: number) => {
-      submitAnswer(optionIndex, false);
+      if (!canEdit || busyRef.current || intentRef.current || revealed) return;
+      setPicked(optionIndex);
     },
-    [submitAnswer],
+    [canEdit, revealed],
   );
+
+  const handleCheck = useCallback(() => {
+    if (picked !== null) submitAnswer(picked, false);
+  }, [picked, submitAnswer]);
 
   const handleDontKnow = useCallback(() => {
     submitAnswer(null, true);
@@ -1131,12 +1143,13 @@ export function PracticeTestPanel({
             : !target.closest('button, a, [role="radio"]'))) {
         event.preventDefault();
         if (revealed) handleContinue();
+        else if (picked !== null) handleCheck();
         else handleSelectOption(state.focusIndex);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [canEdit, revealed, question, offeringSkipped, confirmingAbandon, handleSelectOption, handleContinue, state.focusIndex]);
+  }, [canEdit, revealed, question, offeringSkipped, confirmingAbandon, handleSelectOption, handleContinue, handleCheck, picked, state.focusIndex]);
 
   // Focus follows the authoritative phase, not a pending click. These are layout
   // effects on purpose: the choice that just became revealed is disabled in the
@@ -1262,6 +1275,7 @@ export function PracticeTestPanel({
 
   if (state.completedResult !== null) {
     const result = state.completedResult;
+    const weakAreas = practiceWeakAreas(questions, state.attempt?.responses ?? []);
     const disclaimer = `Practice result from your material (${result.scorePercent}%). Not an official FAA knowledge test score or certification of flight readiness.`;
     // Only an acknowledged completion of the attempt this panel ran, on its own
     // frozen version, links to that exact attempt's review.
@@ -1277,9 +1291,16 @@ export function PracticeTestPanel({
         {notices}
         <div className="stack stack--2">
           <p className="eyebrow">Practice test complete</p>
-          <h3 className="ai-guide__title">
-            {result.correctCount} of {result.totalQuestions} correct
-          </h3>
+          <div className="row row--between practice-result__head">
+            <h3 className="ai-guide__title">
+              {result.correctCount} of {result.totalQuestions} correct
+            </h3>
+            <span className="practice-result__percent">{result.scorePercent}%</span>
+          </div>
+          <div className="practice-result__bar" aria-hidden="true">
+            <span style={{ width: `${Math.min(100, Math.max(0, result.scorePercent))}%` }} />
+          </div>
+          <p className="small dim">FAA pass mark is {PASS_PERCENT}%.</p>
         </div>
 
         <div className="row row--wrap row--gap-2">
@@ -1289,19 +1310,23 @@ export function PracticeTestPanel({
           <Badge tone="due">{result.unansweredCount} unanswered</Badge>
         </div>
 
-        <div className="ai-disclaimer" role="note">
-          <AlertIcon size={16} />
-          <p className="tiny">{disclaimer}</p>
-        </div>
-
         <div className="row row--wrap row--gap-2">
-          <Button onClick={handleRetake} disabled={state.phase !== "completed"}>
+          {reviewHistoryKey && (
+            <TryMissedAgain
+              primary
+              attempt={{ id: result.attemptId, sourceMaterialId: materialId }}
+              items={questions}
+              responses={(state.attempt?.responses ?? []).map((r, i) => ({ ...r, id: `${result.attemptId}:${i}`, attemptId: result.attemptId, answeredAt: result.completedAt }))}
+              materialTitle={_materialTitle ?? ""}
+            />
+          )}
+          <Button variant="ghost" onClick={handleRetake} disabled={state.phase !== "completed"}>
             Retake this test
           </Button>
           {reviewHistoryKey && (
             <a
               href={`#${attemptReviewPath(reviewHistoryKey, result.attemptId, "missed")}`}
-              className="button button--secondary"
+              className="button button--ghost"
             >
               {entrySummary ? "Short saved review" : "Review missed or skipped questions"}
             </a>
@@ -1309,11 +1334,37 @@ export function PracticeTestPanel({
           {entrySummary ? historyAction : materialId && (
             <a
               href={`#/study/history/${encodeURIComponent(materialId)}`}
-              className="button button--secondary"
+              className="button button--ghost"
             >
-              View practice history
+              Test history
             </a>
           )}
+        </div>
+
+        {weakAreas.length > 0 && (
+          <div className="stack stack--2 practice-focus">
+            <p className="eyebrow">Where to focus</p>
+            <p className="small dim">By checkride area, weakest first.</p>
+            <ul className="practice-focus__list">
+              {weakAreas.map((area) => (
+                <li key={area.code || "other"} className="practice-focus__row">
+                  <span className={`practice-focus__dot${area.weak ? " practice-focus__dot--weak" : ""}`} aria-hidden="true" />
+                  <span className="practice-focus__name">
+                    {area.title}
+                    <span className="tiny dim">{area.code ? `${area.code} · ` : ""}{area.correct} of {area.total} correct{area.weak ? ", needs work" : ""}</span>
+                  </span>
+                  {materialId && area.weak && (
+                    <a href={`#/study/${encodeURIComponent(materialId)}`} className="practice-focus__study">Study</a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="ai-disclaimer" role="note">
+          <AlertIcon size={16} />
+          <p className="tiny">{disclaimer}</p>
         </div>
       </div>
     );
@@ -1502,16 +1553,16 @@ export function PracticeTestPanel({
         </div>
       )}
 
-      {showContinue && (
+      {(
         <div className="stack stack--2" style={{ marginTop: "var(--space-2)" }}>
           <Button
             ref={actionButtonRef}
             className="practice-next"
             variant="primary"
-            disabled={!canEdit || confirmedResponse === undefined}
-            onClick={handleContinue}
+            disabled={revealed ? !canEdit : !canEdit || picked === null}
+            onClick={revealed ? handleContinue : handleCheck}
           >
-            {state.index + 1 < totalQuestions ? "Continue" : "See score"}
+            {!revealed ? "Check answer" : state.index + 1 < totalQuestions ? "Next question" : "See score"}
           </Button>
 
           {answeredCount > 0 && answeredCount < totalQuestions && (
