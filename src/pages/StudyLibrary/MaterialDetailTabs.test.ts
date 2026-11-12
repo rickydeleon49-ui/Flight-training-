@@ -145,7 +145,7 @@ it("updates the top Flashcards row after the review session finishes", async () 
   await within(list).findByRole("button", { name: /^Flashcards: Start 1 new card/ });
   fireEvent.click(await screen.findByRole("button", { name: "Start 1 new card" }));
   fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
-  fireEvent.click(await screen.findByRole("button", { name: /^Good: again in/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Got it: again in/ }));
   await screen.findByText(/^Done for now/);
   await waitFor(() => expect(within(list).getByRole("button", { name: "Flashcards: Open" })).toBeTruthy());
   expect(within(list).queryByRole("button", { name: /^Flashcards: (Start|Review)/ })).toBeNull();
