@@ -69,6 +69,7 @@ import { ArrangeBar, ArrangeRow, MANUAL_ONLY_HINT, MoveToast } from "./ArrangePa
 import { MoveToDialog } from "./MoveToDialog";
 import { useArrange } from "./useArrange";
 import { ContinueStudying } from "./ContinueStudying";
+import { ProgressLine, materialProgress, type MaterialProgress } from "./LibrarySections";
 import { RECENT_SHOWN, resolveRecent, useRecentlyOpened } from "./recentlyOpened";
 import { FolderActionsMenu, FolderDialogs, NewFolderButton, StarterFoldersDialog, type FolderDialogState } from "./FolderDialogs";
 import { FaaReferences } from "./FaaReferences";
@@ -439,6 +440,7 @@ export function StudyLibrary() {
       nextActionTitle={nextActionTitles.get(item.id)}
       offline={offlineBadges.get(item.id)}
       review={tab === "library" ? reviewIndicator(binderStatus, item.id, materialsWithCards.has(item.id)) : null}
+      progress={tab === "library" ? materialProgress(binderStatus, item.id, materialsWithCards.has(item.id)) : null}
       folderName={searching && !chapterIds.has(item.id) ? folderOf(item.id)?.name : undefined}
     />
   );
@@ -555,7 +557,7 @@ export function StudyLibrary() {
       <BackToTop />
       <PageHeader
         title="Study Library"
-        subtitle="Your training binder — notes, handouts, worksheets and what to do with them."
+        subtitle="Your training binder."
         action={
           <div className="row row--wrap">
             <Link to="/study/homework" className="button button--secondary">Homework</Link>
@@ -571,7 +573,7 @@ export function StudyLibrary() {
               </div>
             </details> : null}
             {studyPacksAvailable() ? <Button onClick={() => setAddingPack(true)} disabled={addingPack}>Add study pack</Button> : null}
-            {deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
+            {deviceCan().importFiles ? <Button variant={hasAny && !searching && !arranging && continueItems.length > 0 ? undefined : "primary"} onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button> : null}
             {deviceCan().pictureFromPhoto ? <PhotoPictureButton /> : null}
@@ -581,7 +583,7 @@ export function StudyLibrary() {
 
       {studyPacksAvailable() ? <p className="tiny muted">A study pack is a .hfdpack file of study guides and flashcards someone shared with you. Adding one keeps all your own work.</p> : null}
 
-      <nav aria-label="Tools" className="row row--wrap">
+      <nav aria-label="Tools" className="row row--wrap library__tools">
         <span className="muted">Tools:</span>
         {LIBRARY_TOOLS.map(tool => (
           <Link key={tool.id} to={`/study#${tool.id}`} onClick={openShelf}>{tool.label}</Link>
@@ -709,7 +711,7 @@ export function StudyLibrary() {
         </div>
       )}
 
-      {hasAny && !searching && !arranging ? <ContinueStudying materials={continueItems} /> : null}
+      {hasAny && !searching && !arranging ? <ContinueStudying materials={continueItems} progressOf={(id) => materialProgress(binderStatus, id, materialsWithCards.has(id))} /> : null}
 
       {!titleMatchesSearch ? (
       <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
@@ -963,11 +965,13 @@ function MaterialCard({
   material,
   nextActionTitle,
   review,
+  progress,
   offline,
   folderName,
   list,
 }: {
   list?: boolean;
+  progress?: MaterialProgress | null;
   material: StudyMaterial;
   nextActionTitle?: string;
   review?: string | null;
@@ -1020,12 +1024,15 @@ function MaterialCard({
       ) : null}
 
       <span className="material-card__meta">
+        {progress ? <span className={`status-dot status-dot--${progress.due ? "due" : "complete"}`} aria-hidden="true" /> : null}
         <Badge tone="study">{TOPIC_LABELS[material.topic]}</Badge>
         <Badge tone={statusTone}>{REVIEW_STATUS_LABELS[material.reviewStatus]}</Badge>
         {material.priority === "next_up" ? <Badge tone="berry">Next Up</Badge> : null}
         {offline ? <Badge tone={offline.tone}>{offline.label}</Badge> : null}
         {review ? <Badge tone={review === "Caught up" ? "complete" : review.startsWith("Cards") ? "neutral" : "due"}>{review}</Badge> : null}
       </span>
+
+      {progress ? <ProgressLine progress={progress} /> : null}
 
       {nextActionTitle ? (
         <span className="material-card__next truncate">Next: {nextActionTitle}</span>

@@ -58,7 +58,7 @@ it("shows the last three opened, newest first, and the list count is unchanged",
   open();
   await screen.findByText("Showing 4 of 4 materials");
   const links = within(row()!).getAllByRole("link");
-  expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(["Sheet D", "Sheet C", "Sheet B"]);
+  expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(["Continue Sheet D", "Sheet C", "Sheet B"]);
 });
 
 it("ignores a deleted material and navigates on click", async () => {
