@@ -71,6 +71,9 @@ import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { CardReviewPanel } from "./CardReviewPanel";
 import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
+import { nextLocalMidnightUtc } from "@/logic/localDay";
+import { reviewButtonLabel, reviewStatusLine } from "@/logic/cardReviewStatus";
+import { summarizeCards, useCardReview, type CardReviewController } from "./useCardReview";
 import { OralScenariosCard } from "./OralScenariosCard";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
@@ -200,6 +203,7 @@ function MaterialDetailPage() {
   });
   const tabListRef = useRef<HTMLDivElement>(null);
   const { tabListProps } = useTabList({ "aria-label": "Study this material", keyboardActivation: "automatic" }, tabState, tabListRef);
+  const [cardStartSignal, setCardStartSignal] = useState(0);
   const [pendingJump, setPendingJump] = useState<string | null>(null);
   const tabForAnchor = (id: string) => {
     const guideIndex = /^search-target-guide-(\d+)$/.exec(id)?.[1];
@@ -432,6 +436,8 @@ function MaterialDetailPage() {
   const conversionStatus = practiceMetadata.phase === "loaded" ? practiceMetadata.conversionStatus : null;
   const completedCount = practiceMetadata.phase === "loaded" ? practiceMetadata.completedCount : 0;
   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
+  // One card-review state shared by the Study actions row and the Flashcards panel.
+  const cardReview = useCardReview(materialId, repositories?.cardReviews, { contentKey: studySet?.updatedAt });
   const guideSections = useMemo(
     () => (studySet?.sections ?? []).map((section, originalIndex) => ({ section, originalIndex })).filter(({ section }) => !section.pdfProvenance),
     [studySet?.sections],
@@ -1069,8 +1075,12 @@ function MaterialDetailPage() {
       <PageHeader
         title={material.title}
         subtitle={<span className="material-header-meta">
-          <span>{isPdf ? "PDF · " : ""}{MATERIAL_TYPE_LABELS[material.materialType]} · {TOPIC_LABELS[material.topic]}</span>
-          <span className="tag">{REVIEW_STATUS_LABELS[material.reviewStatus]}</span>
+          <span>{[
+            `${isPdf ? "PDF " : ""}${MATERIAL_TYPE_LABELS[material.materialType]}`,
+            TOPIC_LABELS[material.topic],
+            studySet && studySet.flashcards.length > 0 ? `${studySet.flashcards.length} card${studySet.flashcards.length === 1 ? "" : "s"}` : null,
+            material.originalFileName,
+          ].filter(Boolean).join(" · ")}</span>
           {material.tags.map(tag => <span className="tag" key={tag}>{tag}</span>)}
           {fileMissing ? <span className="tag">File missing</span> : null}
           {libraryFolders.folderOf(material.id) ? <span className="tiny muted material-in-folder">In: {libraryFolders.folderOf(material.id)!.name}</span> : null}
@@ -1079,7 +1089,7 @@ function MaterialDetailPage() {
         </span>}
         action={
           <div className="row row--wrap material-header-actions">
-            {deviceCan().generate && isPdf && material.filePath ? <Button ref={askPdfButton} variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
+            {deviceCan().generate && isPdf && material.filePath ? <Button ref={askPdfButton} variant="secondary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
               <Button onClick={() => setEditing(true)}>Edit</Button>
               {deviceCan().splitFiles && canSplit ? <>
@@ -1170,6 +1180,13 @@ function MaterialDetailPage() {
             <StartManualStudySet material={material} />
           </CardBody></Card> : null}
           {kitMakerAtTop && kitMaker ? <Card>{kitMaker}</Card> : null}
+          {studySet || practiceTest ? <StudyActionsList
+            review={cardReview}
+            hasCards={Boolean(studySet && studySet.flashcards.length > 0)}
+            questionCount={practiceTest?.questions.length ?? 0}
+            onReview={() => { setCardStartSignal((n) => n + 1); jumpTo("material-flashcards"); }}
+            onJump={jumpTo}
+          /> : null}
           {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
@@ -1594,7 +1611,10 @@ function MaterialDetailPage() {
                         materialFilePath={material.filePath ?? null}
                         repository={repositories?.cardReviews}
                         contentKey={studySet.updatedAt}
+                        review={cardReview}
                         autoStart={startCardReview}
+                        startSignal={cardStartSignal}
+                        quietStart
                         studySet={studySet}
                         browseCard={
                           guideFlashcards[safeCardIndex]
@@ -1920,7 +1940,7 @@ function MaterialDetailPage() {
               {kitMaker}
             </details>
           </Card> : null}
-          <OralScenariosCard material={material} />
+          <div id="material-oral" tabIndex={-1}><OralScenariosCard material={material} /></div>
 
           <MaterialVideoLinks key={material.id} materialId={material.id} />
 
@@ -2657,5 +2677,43 @@ function GenerationNoticeView({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Top of the Study tab: three rows, one obvious next step. */
+function StudyActionsList({ review, hasCards, questionCount, onReview, onJump }: {
+  review: CardReviewController; hasCards: boolean;
+  questionCount: number; onReview: () => void; onJump: (id: string) => void;
+}) {
+  const { read, clock } = review;
+  let due = 0;
+  let fresh = 0;
+  if (read.phase === "ready" && read.snapshot.current.status === "ok") {
+    const now = clock.now();
+    const summary = summarizeCards(read.snapshot, now, nextLocalMidnightUtc(now, clock.timeZone()));
+    due = summary.dueNow; fresh = summary.newCount;
+  }
+  const ready = due + fresh > 0;
+  return (
+    <Card>
+      <ul className="study-actions" aria-label="Next steps">
+        {hasCards ? <li className="study-actions__row">
+          <div><p className="study-actions__title">Flashcards</p>
+            <p className="small muted">{ready ? reviewStatusLine(due, fresh) : "Nothing due"}</p></div>
+          {ready
+            ? <Button variant="primary" aria-label={`Flashcards: ${reviewButtonLabel(due, fresh)}`} onClick={onReview}>{reviewButtonLabel(due, fresh)}</Button>
+            : <Button variant="secondary" aria-label="Flashcards: Open" onClick={() => onJump("material-flashcards")}>Open ›</Button>}
+        </li> : null}
+        {questionCount > 0 ? <li className="study-actions__row">
+          <div><p className="study-actions__title">Practice test</p>
+            <p className="small muted">{questionCount} question{questionCount === 1 ? "" : "s"}</p></div>
+          <Button variant="secondary" onClick={() => onJump("material-practice-test")}>Start</Button>
+        </li> : null}
+        <li className="study-actions__row">
+          <div><p className="study-actions__title">Oral questions</p></div>
+          <Button variant="ghost" onClick={() => onJump("material-oral")}>Open ›</Button>
+        </li>
+      </ul>
+    </Card>
   );
 }

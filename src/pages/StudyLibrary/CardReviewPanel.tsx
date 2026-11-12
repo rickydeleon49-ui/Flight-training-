@@ -63,14 +63,30 @@ interface CardReviewPanelProps {
   browseCard?: { index: number; front: string; back: string } | null;
   /** Opened from Review due: start this material's session once its cards are read. */
   autoStart?: boolean;
+  /** Bumped by the Study actions list: start a session when it changes. */
+  startSignal?: number;
+  /** The Study actions list holds the one filled button, so this one is secondary. */
+  quietStart?: boolean;
   studySet?: AiStudySet | null;
   /** Where the rarely used reset action is shown: the end of the Flashcards panel. */
   resetSlot?: HTMLElement | null;
+  /** A review controller owned by the parent, so other rows share this state. */
+  review?: CardReviewController;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet, numberedAction = false, resetSlot }: CardReviewPanelProps) {
+export function CardReviewPanel(props: CardReviewPanelProps) {
+  return props.review
+    ? <CardReviewPanelBody {...props} review={props.review} />
+    : <OwnedCardReviewPanel {...props} />;
+}
+
+function OwnedCardReviewPanel(props: CardReviewPanelProps) {
+  const review = useCardReview(props.materialId, props.repository, { contentKey: props.contentKey });
+  return <CardReviewPanelBody {...props} review={review} />;
+}
+
+function CardReviewPanelBody({ materialId, materialTitle, repository, materialFilePath, browseCard, autoStart = false, startSignal = 0, quietStart = false, studySet, numberedAction = false, resetSlot, review }: CardReviewPanelProps & { review: CardReviewController }) {
   useReviewBodySpace();
-  const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
   const autoStarted = useRef(false);
@@ -92,6 +108,13 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
       void startSession();
     }
   }, [autoStart, reviewRead, session, blocked, starting, startSession, clock]);
+
+  const lastSignal = useRef(startSignal);
+  useEffect(() => {
+    if (startSignal === lastSignal.current) return;
+    lastSignal.current = startSignal;
+    if (!session && !blocked && !starting) void startSession();
+  }, [startSignal, session, blocked, starting, startSession]);
 
   // The dialog closes once its reset is resolved (acknowledged or refused).
   useEffect(() => {
@@ -198,7 +221,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
         {review.session || (!reviewable && !review.starting) ? null : (
           <Button
             size={numberedAction ? undefined : "small"}
-            variant="primary"
+            variant={quietStart ? "secondary" : "primary"}
             disabled={!reviewable || review.blocked || review.starting}
             onClick={() => void review.startSession()}
           >

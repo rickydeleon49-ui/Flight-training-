@@ -137,6 +137,19 @@ it("keeps a revealed card and a live card review session mounted", async () => {
   expect(document.querySelector(".card-review__session")).toBe(session);
   expect(screen.getByRole("group", { name: "Rate this card" })).toBeTruthy();
 });
+it("updates the top Flashcards row after the review session finishes", async () => {
+  await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic saved cards", summary: "Synthetic guide", sections: [],
+    flashcards: [{ front: "Synthetic card question", back: "Synthetic card answer", sourcePage: null }], sourceNotes: "", model: "test" });
+  await open();
+  const list = screen.getByRole("list", { name: "Next steps" });
+  await within(list).findByRole("button", { name: /^Flashcards: Start 1 new card/ });
+  fireEvent.click(await screen.findByRole("button", { name: "Start 1 new card" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Got it: again in/ }));
+  await screen.findByText(/^Done for now/);
+  await waitFor(() => expect(within(list).getByRole("button", { name: "Flashcards: Open" })).toBeTruthy());
+  expect(within(list).queryByRole("button", { name: /^Flashcards: (Start|Review)/ })).toBeNull();
+});
 it("keeps all tabs for a material without a file and handles unknown URL tabs", async () => {
   await createRepositories(db).documents.update("tips", { filePath: null, originalFileName: null });
   await open("?tab=unknown");
@@ -180,12 +193,12 @@ it("puts the numbered review action above browsing and updates the header status
   await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic cards", summary: "Guide", sections: [],
     flashcards: [{ front: "Fictional front", back: "Fictional back", sourcePage: null }], sourceNotes: "", model: "test" });
   await open();
-  const review = await screen.findByRole("button", { name: "Start 1 new card" });
+  const review = await screen.findByRole("button", { name: "Flashcards: Start 1 new card" });
+  const panelStart = await screen.findByRole("button", { name: "Start 1 new card" });
   expect(review.classList.contains("button--primary")).toBe(true);
+  expect(panelStart.classList.contains("button--primary")).toBe(false);
   expect(review.compareDocumentPosition(screen.getByRole("button", { name: "Reveal flashcard answer" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  pick("More");
-  fireEvent.change(screen.getByRole("combobox", { name: "Review status" }), { target: { value: "confident" } });
-  await waitFor(() => expect(document.querySelector(".material-header-meta")?.textContent).toContain("Confident"));
+  expect(document.querySelector(".material-header-meta")?.textContent).toContain("1 card");
 });
 
 it("starts an acknowledged practice attempt, keeps it through tabs and links its completed saved review", async () => {
@@ -194,7 +207,6 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
     questions: [{ question: "Synthetic practice question", options: ["A", "B"], correctIndex: 0, explanation: "Synthetic explanation", sourcePage: null }] });
   await open();
   const start = await screen.findByRole("button", { name: "Start practice test" });
-  expect(start.classList.contains("button--primary")).toBe(true);
   expect((await screen.findByRole("button", { name: "Short saved review" })).hasAttribute("disabled")).toBe(true);
   expect(screen.queryByRole("link", { name: /View practice history/ })).toBeNull();
   fireEvent.click(start);

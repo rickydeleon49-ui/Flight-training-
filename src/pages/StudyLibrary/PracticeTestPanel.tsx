@@ -1391,7 +1391,7 @@ export function PracticeTestPanel({
   if (!question) return <div className="stack stack--3">{notices}</div>;
 
   const startBlock = <div className="row row--wrap">
-        {!state.attempt && startHeld ? <p className="small muted">{startHeld}</p> : !state.attempt ? <Button variant="primary" disabled={!canEdit} onClick={() => {
+        {!state.attempt && startHeld ? <p className="small muted">{startHeld}</p> : !state.attempt ? <Button variant="secondary" disabled={!canEdit} onClick={() => {
           if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
         }}>Start practice test</Button> : null}
         <ShortSavedReviewLink materialId={materialId} />
