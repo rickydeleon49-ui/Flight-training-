@@ -62,8 +62,19 @@ export function FlightDeck() {
   const readiness = usePracticeReadiness(data, dataRevision);
   const coverage = useMemo(() => {
     const areas = summarizeAcsAreaMaterialCoverage({ materials: data.materials });
-    return { covered: areas.filter((a) => a.distinctMaterialCount > 0).length, total: areas.length };
-  }, [data.materials]);
+    // AI-made questions carry checkride-topic codes (e.g. PA.I.H); those count too.
+    const questionAreas = new Set<string>();
+    for (const test of data.practiceTests) {
+      for (const q of test.questions) {
+        const area = /^PA\.([IVX]+)\./.exec(q.acsTask ?? "")?.[1];
+        if (area) questionAreas.add(area);
+      }
+    }
+    return {
+      covered: areas.filter((a) => a.distinctMaterialCount > 0 || questionAreas.has(a.area)).length,
+      total: areas.length,
+    };
+  }, [data.materials, data.practiceTests]);
 
   // Quiet the daily plan's start button only while the review card has the filled one.
   const [reviewHasPrimary, setReviewHasPrimary] = useState(Boolean(repositories?.cardLibrary));

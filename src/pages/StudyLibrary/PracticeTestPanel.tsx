@@ -1611,7 +1611,7 @@ export function PracticeTestPanel({
       <ConfirmDialog
         open={confirmingAbandon}
         title="Close your unfinished test?"
-        message="This will close your unfinished test and keep its saved answers. Your finished tests stay in your history."
+        message="Closing ends this try, and next time starts again at question 1. To pick up where you left off, leave this page without closing. Finished tests stay in your history."
         confirmLabel="Close unfinished test"
         destructive={true}
         pending={state.phase === "write_in_flight" || state.phase === "write_unknown"}

@@ -357,7 +357,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Close your unfinished test?");
     expect(
       screen.getByText(
-        "This will close your unfinished test and keep its saved answers. Your finished tests stay in your history.",
+        "Closing ends this try, and next time starts again at question 1. To pick up where you left off, leave this page without closing. Finished tests stay in your history.",
       ),
     ).toBeTruthy();
 
