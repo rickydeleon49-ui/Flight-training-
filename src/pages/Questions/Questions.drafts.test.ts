@@ -497,3 +497,21 @@ describe("editing a saved question's own wording", () => {
     expect(await screen.findByText("Reworded question")).toBeTruthy();
   });
 });
+
+describe("Save question button", () => {
+  it("is disabled while the question is empty and enabled once there is text", async () => {
+    await open();
+    const save = screen.getByRole("button", { name: "Save question" }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Why flaps?" } });
+    expect(save.disabled).toBe(false);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "  " } });
+    expect(save.disabled).toBe(true);
+  });
+
+  it("has a flat dark-theme disabled style in the shared button css", async () => {
+    const { readFileSync } = await import("node:fs");
+    const css = readFileSync("src/components/ui/ui.css", "utf8");
+    expect(css).toMatch(/data-theme="dark"\] \.button--primary:disabled/);
+  });
+});
