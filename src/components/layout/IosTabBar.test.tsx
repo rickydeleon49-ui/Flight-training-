@@ -115,15 +115,19 @@ describe("iPhone tab bar", () => {
     },
   );
 
-  it("shows overdue and to-ask badges", () => {
+  it("shows an overdue dot on Home with the count kept for screen readers", () => {
     mocks.data = {
       ...EMPTY_DATA,
       questions: [{ id: "q", status: "to_ask" }],
       actions: [{ id: "a", status: "open", dueDate: "2000-01-01" }],
     };
     mount("/");
-    expect(tab(/^Home/).textContent).toMatch(/1 overdue/);
-    expect(tab(/^More/).textContent).toMatch(/1 to ask/);
+    const home = tab(/^Home/);
+    expect(home.querySelector(".ios-tab-bar__dot")).toBeTruthy();
+    expect(home.querySelector(".ios-tab-bar__dot")?.getAttribute("aria-hidden")).toBe("true");
+    expect(home.textContent).toMatch(/1 overdue/);
+    expect(tab(/^More/).querySelector(".ios-tab-bar__dot, .ios-tab-bar__badge")).toBeNull();
+    expect(tab(/^More/).textContent).not.toMatch(/to ask/);
   });
 
   it("passes the accessibility check with a single Main landmark", async () => {

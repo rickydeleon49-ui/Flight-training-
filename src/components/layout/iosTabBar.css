@@ -99,27 +99,15 @@ html.is-ios .ios-tab-bar__label {
   transition: opacity 200ms ease;
 }
 
-html.is-ios .ios-tab-bar__badge {
+/* A quiet 8px dot beside the Home icon. The count is read out by screen readers via visually-hidden text. */
+html.is-ios .ios-tab-bar__dot {
   position: absolute;
-  top: 2px;
-  left: auto;
-  right: 5px; /* anchored to the tab's edge so a wide count never leaves the screen */
-  min-width: 18px;
-  padding: 0 5px;
-  border-radius: var(--radius-pill);
-  background: var(--badge-alert);
-  color: var(--text-on-accent);
-  font-size: min(0.625rem, 12px);
-  font-weight: 600;
-  line-height: 18px;
-  text-align: center;
-}
-
-/* The More icon is three dots, so its badge sits clear of them at the top-right corner. */
-html.is-ios .ios-tab-bar__badge--quiet {
-  right: 2px;
-  top: 0;
-  background: var(--text-secondary);
+  top: 6px;
+  left: calc(50% + 12px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-overdue);
 }
 
 /* Hide while typing, in a full-screen layer or in the fallback PDF viewer. */

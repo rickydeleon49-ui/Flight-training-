@@ -174,7 +174,7 @@ export function AppShell() {
   return (
     <TopBarContext.Provider value={barState}>
     <div className={tabs ? "shell shell--tabs" : "shell"}>
-      {tabs ? <IosTabBar overdueCount={overdueCount} questionsToAsk={questionsToAsk} /> : (
+      {tabs ? <IosTabBar overdueCount={overdueCount} /> : (
       <aside ref={sidebarRef} className="sidebar" onKeyDown={(event) => {
         if (event.key !== "Escape" || event.defaultPrevented || desktop || !menuOpen) return;
         const target = event.target as HTMLElement;
