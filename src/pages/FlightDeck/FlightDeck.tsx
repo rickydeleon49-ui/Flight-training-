@@ -46,12 +46,21 @@ import { useActionOperations } from "@/state/useActions";
 import { airportWeather } from "@/services/weather";
 import { AcsAreaMaterialCoveragePanel } from "@/pages/StudyLibrary/AcsAreaMaterialCoveragePanel";
 
+import { TodayReviewCard, useTestsThisWeek } from "./TodayReviewCard";
 import "./flightDeck.css";
 
 export function FlightDeck() {
-  const { data } = useAppData();
+  const { data, dataRevision, repositories } = useAppData();
+  const practiceSessions = repositories?.practiceSessions;
+  const readRecentTests = useMemo(
+    () => (practiceSessions ? (limit: number) => practiceSessions.getRecentCompletedAttempts(limit) : undefined),
+    [practiceSessions],
+  );
+  const testsThisWeek = useTestsThisWeek(readRecentTests, dataRevision);
   const operations = useActionOperations();
 
+  // Quiet the daily plan's start button only while the review card has the filled one.
+  const [reviewHasPrimary, setReviewHasPrimary] = useState(Boolean(repositories?.cardLibrary));
   const [editing, setEditing] = useState<NextAction | null>(null);
   const [creating, setCreating] = useState(false);
   const [rescheduling, setRescheduling] = useState<NextAction | null>(null);
@@ -148,8 +157,13 @@ export function FlightDeck() {
           </>
         }
         action={
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            <PlusIcon size={16} /> Add action
+          <Button
+            variant="secondary"
+            className="deck-add"
+            aria-label="Add action"
+            onClick={() => setCreating(true)}
+          >
+            <PlusIcon size={16} /> <span className="deck-add__label">Add action</span>
           </Button>
         }
       />
@@ -160,7 +174,13 @@ export function FlightDeck() {
 
       <div className="deck">
         <div className="deck__column">
-          <DailyPlanCard onStartAction={startAction} />
+          <TodayReviewCard
+            repository={repositories?.cardLibrary}
+            dataRevision={dataRevision}
+            testsThisWeek={testsThisWeek}
+            onPrimaryChange={setReviewHasPrimary}
+          />
+          <DailyPlanCard onStartAction={startAction} quietStart={reviewHasPrimary} />
 
           {model.topAction ? (
             <div className="top-action">
