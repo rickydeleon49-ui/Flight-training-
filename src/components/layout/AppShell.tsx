@@ -54,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/study", label: "Study Library", icon: <BookIcon size={19} /> },
   { to: "/schedule", label: "Schedule", icon: <CalendarIcon size={19} /> },
   { to: "/journal", label: "Flight Log", icon: <JournalIcon size={19} /> },
-  { to: "/questions", label: "Questions", icon: <QuestionIcon size={19} /> },
+  { to: "/questions", label: "Ask my instructor", icon: <QuestionIcon size={19} /> },
   { to: "/notes", label: "Notes", icon: <NoteIcon size={19} /> },
   { to: "/finances", label: "Finances", icon: <WalletIcon size={19} /> },
   { to: "/toolkit", label: "Pilot Toolkit", icon: <TargetIcon size={19} /> },
@@ -240,7 +240,7 @@ export function AppShell() {
                     className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
                   >
                     <span className="nav__icon">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span className="nav__label">{item.label}</span>
                     {count ? (
                       <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
                         {count.value}

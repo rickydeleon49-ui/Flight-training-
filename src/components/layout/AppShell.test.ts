@@ -41,7 +41,7 @@ function resize(width: number) {
 }
 const menu = () => screen.getByRole("button", { name: "Menu" });
 const sections = ["Flight Deck", "Flight Path", "Study Library", "Schedule", "Flight Log",
-  "Questions", "Notes", "Finances", "Pilot Toolkit", "Settings"];
+  "Ask my instructor", "Notes", "Finances", "Pilot Toolkit", "Settings"];
 
 beforeEach(() => {
   media = {

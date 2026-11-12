@@ -91,6 +91,8 @@
   font-weight: 600;
 }
 
+.nav__label { white-space: nowrap; }
+
 .nav__icon { flex: none; display: grid; place-items: center; color: var(--nav-icon-ink); }
 
 /* Count of things wanting attention: quiet text, or an alert capsule. */

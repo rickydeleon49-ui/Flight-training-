@@ -279,6 +279,9 @@ describe("PracticeTestPanel", () => {
     await repos.practiceSessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId: "mat-1", versionId: active.version.id });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
     expect(screen.queryByRole("button", { name: "Start a fresh test" })).toBeNull();
+    // The resumed attempt loads after the heading; answer only once it is ready.
+    const closeButton = await screen.findByRole("button", { name: "Close unfinished test" });
+    await waitFor(() => expect(closeButton.hasAttribute("disabled")).toBe(false));
     checkAnswer(0);
     const next = await screen.findByRole("button", { name: "Next question" });
     await waitFor(() => expect(next.hasAttribute("disabled")).toBe(false));

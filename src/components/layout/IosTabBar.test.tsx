@@ -140,7 +140,7 @@ describe("iPhone tab bar", () => {
 describe("More page", () => {
   it("lists every remaining page and reaches Settings", () => {
     mount("/more");
-    for (const name of ["Flight Path", "Questions", "Notes", "Finances", "Pilot Toolkit", "Settings"]) {
+    for (const name of ["Flight Path", "Ask my instructor", "Notes", "Finances", "Pilot Toolkit", "Settings"]) {
       expect(screen.getByRole("link", { name })).toBeTruthy();
     }
     expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();

@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
 import { Item } from "react-stately/Item";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -80,6 +80,11 @@ const TOOLS: ToolChoice[] = [
   { id: "career", label: "Career Portfolio" },
 ];
 
+/** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else is Checkride. */
+export function toolFrom(value: string | null): Tool {
+  return TOOLS.find((choice) => choice.id === value)?.id ?? "readiness";
+}
+
 function PilotToolTab({ choice, state }: { choice: ToolChoice; state: TabListState<ToolChoice> }) {
   const ref = useRef<HTMLButtonElement>(null);
   const { tabProps, isSelected } = useTab({ key: choice.id }, state, ref);
@@ -104,7 +109,8 @@ function PilotToolTab({ choice, state }: { choice: ToolChoice; state: TabListSta
 
 export function PilotToolkit() {
   const { data, mutate } = useAppData();
-  const [tool, setTool] = useState<Tool>("readiness");
+  const [params] = useSearchParams();
+  const [tool, setTool] = useState<Tool>(() => toolFrom(params.get("tool")));
   const [saved, setSaved] = useState(false);
   const tabState = useTabListState<ToolChoice>({
     selectedKey: tool,

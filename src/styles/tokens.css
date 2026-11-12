@@ -160,7 +160,7 @@
   --focus-ring: 0 0 0 3px rgb(var(--accent-rgb) / 0.28);
 
   /* ---- Layout ---- */
-  --sidebar-width: 15rem;
+  --sidebar-width: 16rem;
   --content-max: 76rem;
 
   --transition: 140ms ease;

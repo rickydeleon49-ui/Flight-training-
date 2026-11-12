@@ -29,7 +29,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
     title: "Training",
     rows: [
       { to: "/flight-path", label: "Flight Path", icon: <RouteIcon size={20} /> },
-      { to: "/questions", label: "Questions", icon: <QuestionIcon size={20} /> },
+      { to: "/questions", label: "Ask my instructor", icon: <QuestionIcon size={20} /> },
       { to: "/notes", label: "Notes", icon: <NoteIcon size={20} /> },
     ],
   },

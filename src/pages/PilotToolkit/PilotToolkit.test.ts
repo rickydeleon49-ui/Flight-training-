@@ -240,3 +240,13 @@ it("says 'In progress' in the instructor report when no goal is being worked on"
   fireEvent.click(screen.getByRole("tab", { name: "Instructor Report" }));
   expect(screen.getByText("No goals marked In Progress.")).toBeTruthy();
 });
+
+it("opens on Quizzes when the address says ?tool=quiz (the Study Library's Practice test link)", () => {
+  render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=quiz"] }, h(PilotToolkit)));
+  expect(screen.getByRole("tab", { name: "Quizzes" }).getAttribute("aria-selected")).toBe("true");
+});
+
+it("opens on Checkride for an unknown ?tool= value", () => {
+  render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=nope"] }, h(PilotToolkit)));
+  expect(screen.getByRole("tab", { name: "Checkride" }).getAttribute("aria-selected")).toBe("true");
+});
