@@ -8,6 +8,7 @@
  * provider or network.
  */
 import { createElement as h, StrictMode } from "react";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { setTimeout as realDelay } from "node:timers/promises";
 import { performance } from "node:perf_hooks";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -137,6 +138,7 @@ const setVisibility = (next: DocumentVisibilityState) =>
   });
 
 beforeEach(async () => {
+  setFourRatingButtons(true); // these tests cover the four-button row
   unhandled = [];
   failNextWrite = false;
   visibility = "visible";

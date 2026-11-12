@@ -14,7 +14,8 @@ export function faaPdfPrompt(ios: boolean): string {
 }
 
 /** The keyboard hint, or null where there is no keyboard (the phone). */
-export function ratingKeyHint(ios: boolean, detailed: boolean): string | null {
+export function ratingKeyHint(ios: boolean, detailed: boolean, four = true): string | null {
   if (ios) return null;
+  if (!four) return detailed ? "1–2 rate it (1: Again, 2: Got it)." : "1–2 rate it.";
   return detailed ? "1–4 rate it (1: Again, 2: Hard, 3: Good, 4: Easy)." : "1–4 rate it.";
 }
