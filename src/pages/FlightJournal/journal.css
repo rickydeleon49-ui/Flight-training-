@@ -554,10 +554,11 @@
 
 .flight-totals {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5rem), 1fr));
   gap: var(--space-4);
 }
 .flight-totals__value {
+  white-space: nowrap;
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   color: var(--text-primary);
