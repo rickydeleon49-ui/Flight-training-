@@ -9,3 +9,9 @@ it("lets the journal view switch wrap at the largest text size instead of clippi
   expect(rule).not.toMatch(/flex-wrap:\s*nowrap/);
   expect(rule).toMatch(/gap:\s*12px 2px/);
 });
+
+it("keeps flight totals numbers on one line and lets the columns wrap", () => {
+  const grid = css.match(/\.flight-totals\s*\{([^}]*)\}/)?.[1] ?? "";
+  expect(grid).toMatch(/auto-fit/);
+  expect(css.match(/\.flight-totals__value\s*\{([^}]*)\}/)?.[1] ?? "").toMatch(/white-space:\s*nowrap/);
+});
