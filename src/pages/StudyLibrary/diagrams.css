@@ -14,7 +14,7 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   gap: var(--space-3);
 }
 /* The strip under a material scrolls sideways and keeps its own scrollbar. */
@@ -41,6 +41,9 @@
   text-align: left;
   cursor: pointer;
 }
+.diagram-tile .diagram-art { aspect-ratio: 730 / 430; display: flex; align-items: center; }
+.diagram-tile .diagram-art svg { height: 100%; }
+.diagram-tile .diagram-art--photo img { height: 100%; object-fit: contain; }
 .diagram-tile:hover { border-color: var(--border-strong); background: var(--surface-sunken); }
 .diagram-tile:hover .diagram-art { --bg: var(--surface-sunken); }
 .diagram-tile:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
