@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Unsaved answers and paging on the Questions page, through the real page,
+ * Unsaved answers and paging on the Ask my instructor page, through the real page,
  * AppDataProvider and SQLite. Order is deterministic: rows are listed newest
  * first by `created_at`, and fixtures set it explicitly.
  *
@@ -113,7 +113,7 @@ function startAnswer(text: string, typed: string) {
 const draftIn = (text: string) =>
   (rowFor(text) ? within(rowFor(text)!).queryByLabelText("Answer") as HTMLTextAreaElement | null : null)?.value;
 
-describe("unsaved answers on the Questions page", () => {
+describe("unsaved answers on the Ask my instructor page", () => {
   it("keep a draft when a new question pushes its row off the page, and restore it after Show more", async () => {
     await seed(QUESTION_PAGE_SIZE + 1); // q-100 newest … q-1 is the 100th row, q-0 the 101st
     await open();
