@@ -518,10 +518,25 @@ export function SessionView({
           {session.extra ? "Extra review · " : ""}Card {number} of {total}
           {shown.kind === "new" ? " · new" : ""}
         </h4>
-        {!item.visualRegionId || item.pageSource ? (
-          <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
-        ) : null}
+        <Button size="small" variant="ghost" onClick={onDone ?? review.endSession}>
+          Done for now
+        </Button>
       </div>
+      <div
+        className="card-review__progress"
+        role="progressbar"
+        aria-label="Cards reviewed this session"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={Math.min(number, total)}
+      >
+        <span style={{ width: `${total > 0 ? Math.min(100, Math.round((number / total) * 100)) : 0}%` }} />
+      </div>
+      {!item.visualRegionId || item.pageSource ? (
+        <div className="row" style={{ justifyContent: "flex-end" }}>
+          <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
+        </div>
+      ) : null}
       {progress ? <p className="tiny dim">From {progress.from}</p> : null}
       {item.visualRegionId ? (
         visual.loaded ? (
@@ -572,14 +587,14 @@ export function SessionView({
               <Button
                 key={rating}
                 size="small"
-                variant={rating === "good" ? "primary" : "secondary"}
+                variant="secondary"
                 disabled={busy}
                 aria-keyshortcuts={String(index + 1)}
                 aria-label={`${RATING_LABELS[rating]}: again in ${waits?.[rating] ?? "a while"}`}
                 onClick={() => rate(rating)}
               >
                 <span>{RATING_LABELS[rating]}</span>
-                <span className="tiny card-review__wait"> · {waits?.[rating] ?? "—"}</span>
+                <span className="card-review__wait">{waits?.[rating] ?? "—"}</span>
               </Button>
             ))}
           </div>
@@ -596,8 +611,8 @@ export function SessionView({
           ) : null}
         </>
       ) : !item.visualRegionId ? (
-        <div>
-          <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onMouseDown={keepRevealInPlace} onClick={reveal}>
+        <div className="card-review__reveal">
+          <Button variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onMouseDown={keepRevealInPlace} onClick={reveal}>
             Show answer
           </Button>
           <p className="tiny dim">Space or Enter shows the answer.</p>
@@ -610,9 +625,6 @@ export function SessionView({
           disabled={review.blocked}
           onAction={(kind) => { navigationFrom.current = item.itemId; review.itemAction(item.itemId, kind); }}
         />
-        <Button size="small" variant="ghost" onClick={onDone ?? review.endSession}>
-          Done for now
-        </Button>
       </div>
     </div>
   );
@@ -705,10 +717,12 @@ function RecentReviews({ review, zone }: { review: CardReviewController; zone: s
   if (rows.length === 0) return null;
   const format = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: zone });
   return (
-    <section className="stack stack--2" aria-labelledby="card-review-recent-title">
-      <h4 id="card-review-recent-title" className="small strong">
-        Recent reviews
-      </h4>
+    <details className="card-review__recent stack stack--2">
+      <summary>
+        <h4 id="card-review-recent-title" className="small strong">
+          Recent reviews
+        </h4>
+      </summary>
       <ul className="card-review__list">
         {rows.map((row) => (
           <li key={row.id} className="small">
@@ -729,6 +743,6 @@ function RecentReviews({ review, zone }: { review: CardReviewController; zone: s
           </Button>
         </div>
       ) : null}
-    </section>
+    </details>
   );
 }

@@ -241,9 +241,11 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   padding: var(--space-5);
   border: 1px solid var(--category-study-edge);
   border-radius: var(--radius-lg);
-  background: var(--category-study-fill);
+  background: var(--surface-card);
   color: var(--text-primary);
   font: inherit;
+  font-family: var(--font-display);
+  font-weight: 500;
   font-size: var(--text-lg);
   line-height: 1.45;
   text-align: left;
@@ -1206,3 +1208,42 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 /* Closed "Videos for this section" disclosure: .card__header has no bottom padding, so the closed row looked cut off. */
 .video-links__summary { cursor: pointer; align-items: center; padding-bottom: var(--space-5); }
 details[open] > .video-links__summary { padding-bottom: 0; }
+
+/* R3 flashcards: progress, big reveal, outlined ratings */
+.card-review__progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+.card-review__progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent-primary);
+}
+.card-review__reveal { display: flex; flex-direction: column; gap: var(--space-2); align-items: stretch; text-align: center; }
+.card-review__reveal .button { width: 100%; }
+.card-review .card-review__ratings .button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  box-shadow: none;
+}
+.card-review .card-review__wait {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  opacity: 1;
+  color: var(--text-secondary);
+}
+.card-review__recent > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.card-review__recent > summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+@media (max-width: 560px) {
+  .flashcard { font-size: var(--text-title3); }
+}
