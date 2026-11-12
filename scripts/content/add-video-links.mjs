@@ -99,18 +99,22 @@ export function loadManifest(file) {
   });
 }
 
+// sha256 of a material's stored PDF (the value the app records on first open), or null.
+function fileSha256(dir, filePath) {
+  if (!filePath) return null;
+  const docs = path.join(dir, 'documents');
+  const file = path.resolve(docs, filePath);
+  if (!file.startsWith(docs + path.sep) || !existsSync(file)) return null;
+  return createHash('sha256').update(readFileSync(file)).digest('hex');
+}
+
 // Prints materialId, title, sha256 of the real file bytes and the stored value (flags mismatches).
 function printChecksums(db, dir) {
   const rows = db.prepare('SELECT m.id, m.title, m.file_path, c.content_sha256 AS stored FROM study_materials m LEFT JOIN material_content_identities c ON c.material_id = m.id ORDER BY m.title, m.id').all();
-  const docs = path.join(dir, 'documents');
   const lines = [];
   let mismatches = 0;
   for (const r of rows) {
-    let actual = null;
-    if (r.file_path) {
-      const file = path.resolve(docs, r.file_path);
-      if (file.startsWith(docs + path.sep) && existsSync(file)) actual = createHash('sha256').update(readFileSync(file)).digest('hex');
-    }
+    const actual = fileSha256(dir, r.file_path);
     const flag = !actual ? 'NO-FILE' : !r.stored ? 'NO-STORED' : actual !== r.stored ? 'MISMATCH' : 'ok';
     if (flag !== 'ok') mismatches++;
     lines.push(`${r.id}\t${r.title}\t${actual ?? '-'}\t${r.stored ?? '-'}\t${flag}`);
@@ -134,16 +138,18 @@ export async function run({ profile, manifest, mode = 'apply', home = homedir() 
   const db = new DatabaseSync(path.join(dir, dbName), { readOnly: readOnlyMode });
   try {
     db.exec('PRAGMA foreign_keys=ON');
-    const material = db.prepare('SELECT id FROM study_materials WHERE id = ?');
+    const material = db.prepare('SELECT id, file_path FROM study_materials WHERE id = ?');
     const checksum = db.prepare('SELECT content_sha256 FROM material_content_identities WHERE material_id = ?');
     const existing = db.prepare('SELECT url, title FROM material_video_links WHERE material_id = ?');
     const plan = [];
     const diffs = [];
     for (const e of entries) {
-      if (!material.get(e.materialId)) refuse(`Material not found: ${e.materialId} (${e.title}).`);
-      const row = checksum.get(e.materialId);
-      if (!row) refuse(`No checksum recorded for ${e.materialId} (${e.title}): open this chapter once in the app so it records its checksum.`);
-      if (row.content_sha256 !== e.sourceChecksum) refuse(`Checksum mismatch for ${e.materialId} (${e.title}).`);
+      const mat = material.get(e.materialId);
+      if (!mat) refuse(`Material not found: ${e.materialId} (${e.title}).`);
+      // Prefer the checksum the app recorded; a chapter never opened has none, so use its stored file's sha256.
+      const stored = checksum.get(e.materialId)?.content_sha256 ?? fileSha256(dir, mat.file_path);
+      if (!stored) refuse(`No checksum for ${e.materialId} (${e.title}): no recorded checksum and no stored file.`);
+      if (stored !== e.sourceChecksum) refuse(`Checksum mismatch for ${e.materialId} (${e.title}).`);
       const rows = existing.all(e.materialId);
       const have = new Set(rows.map(r => r.url));
       for (const v of e.videos) plan.push({ materialId: e.materialId, ...v, present: have.has(v.url) });
