@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -100,6 +100,28 @@ export function FlightJournal() {
   const privatePilotReference = useMemo(() => privatePilotPart61Reference(totals), [totals]);
   const timeChecks = useMemo(() => flightTimeChecks(data.journalEntries), [data.journalEntries]);
 
+  // The "More" disclosure closes on Escape (focus returns to its summary) and on any pointer press outside it.
+  const moreMenu = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const menu = moreMenu.current;
+      if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      const menu = moreMenu.current;
+      if (event.key === "Escape" && menu?.open) {
+        menu.open = false;
+        menu.querySelector("summary")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
   return (
     <>
       <PageHeader
@@ -107,14 +129,22 @@ export function FlightJournal() {
         subtitle="Flight time, lesson notes, and instructor feedback in one training history."
         action={
           <div className="row header-actions">
-            <Link className="button button--secondary" to="/journal/new?mode=quick">
-              Quick debrief
-            </Link>
-            <Link className="button button--secondary" to="/journal/new?mode=discovery">
-              Log discovery flight
-            </Link>
-            <Link className="button button--primary" to="/journal/new">
-              <PlusIcon size={16} /> Log a flight
+            <details className="header-more" ref={moreMenu}>
+              <summary className="button button--ghost">More</summary>
+              <div className="header-more__menu">
+                <Link className="header-more__item" to="/journal/new?mode=quick">
+                  Quick debrief
+                </Link>
+                <Link className="header-more__item" to="/journal/new?mode=discovery">
+                  Log discovery flight
+                </Link>
+              </div>
+            </details>
+            <Link
+              className="button button--primary"
+              to={view === "log" ? "/journal/new" : "/journal/new?mode=quick"}
+            >
+              <PlusIcon size={16} /> {view === "log" ? "Log a flight" : "Add debrief"}
             </Link>
           </div>
         }
@@ -136,6 +166,9 @@ export function FlightJournal() {
           onClick={() => setView("debriefs")}
         >
           Debriefs{data.journalEntries.length > 0 ? ` (${data.journalEntries.length})` : ""}
+          {awaiting.length > 0 ? (
+            <span className="due-dot" aria-label="A debrief is waiting" role="img" />
+          ) : null}
         </button>
         <button
           type="button"
@@ -199,26 +232,47 @@ export function FlightJournal() {
         </Card>
       ) : view === "log" ? (
         <div className="stack stack--5">
-          <div className="flight-log-summary">
-            {(
-              [
-                ["Total time", formatHours(totals.totalTime)],
-                ["Training received", formatHours(totals.dualReceived)],
-                ["PIC", formatHours(totals.picTime)],
-                ["Cross-country", formatHours(totals.crossCountryTime)],
-                ["Night", formatHours(totals.nightTime)],
-                ["Instrument", formatHours(totals.instrumentTime)],
-              ] as const
-            ).map(([label, value]) => (
-              <Card variant="quiet" key={label}>
-                <CardBody>
-                  <p className="tiny dim">{label}</p>
-                  <p className="flight-log-summary__value numeric">{value}</p>
-                  <p className="tiny dim">hours</p>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardBody>
+              <div className="flight-totals">
+                {(
+                  [
+                    ["Total hours", formatHours(totals.totalTime)],
+                    ["Solo", formatHours(totals.soloTime)],
+                    ["Landings", String(totals.landings)],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label}>
+                    <p className="flight-totals__value numeric">{value}</p>
+                    <p className="tiny dim">{label}</p>
+                  </div>
+                ))}
+              </div>
+              <details className="all-totals">
+                <summary className="all-totals__link">All totals</summary>
+                <div className="flight-log-summary">
+                  {(
+                    [
+                      ["Total time", formatHours(totals.totalTime)],
+                      ["Training received", formatHours(totals.dualReceived)],
+                      ["PIC", formatHours(totals.picTime)],
+                      ["Cross-country", formatHours(totals.crossCountryTime)],
+                      ["Night", formatHours(totals.nightTime)],
+                      ["Instrument", formatHours(totals.instrumentTime)],
+                    ] as const
+                  ).map(([label, value]) => (
+                    <Card variant="quiet" key={label}>
+                      <CardBody>
+                        <p className="tiny dim">{label}</p>
+                        <p className="flight-log-summary__value numeric">{value}</p>
+                        <p className="tiny dim">hours</p>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </div>
+              </details>
+            </CardBody>
+          </Card>
 
           {timeChecks.length > 0 ? (
             <Card>
@@ -551,6 +605,12 @@ export function FlightJournal() {
                         ) : null}
                         {entry.confidence != null ? (
                           <Badge tone="study">Confidence {entry.confidence}/5</Badge>
+                        ) : null}
+                        {entry.totalTime != null ? (
+                          <span className="journal-entry__hours numeric">
+                            {formatHours(entry.totalTime)}
+                            <span className="visually-hidden"> hours</span>
+                          </span>
                         ) : null}
                       </span>
                       {entry.mission ? (
