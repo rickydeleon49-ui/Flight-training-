@@ -231,6 +231,18 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Correct");
   });
 
+  it("marks a wrong pick with a calm 'Your answer' tag and no overdue styling", async () => {
+    const test = await seedMaterialAndTest("mat-calm", "Calm Material");
+    renderInApp(h(PracticeTestPanel, { practiceTest: test, materialTitle: "Calm Material" }));
+    await screen.findByText("Question 1 of 3");
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await screen.findByText("Not quite");
+    expect(screen.getByText("Your answer")).toBeTruthy();
+    expect(screen.getByText("Correct answer")).toBeTruthy();
+    expect(document.querySelector(".badge--overdue")).toBeNull();
+    expect(document.querySelector('[class*="practice-option"][class*="overdue"]')).toBeNull();
+  });
+
   it("supports skipping and navigation pills across questions", async () => {
     const test = await seedMaterialAndTest("mat-nav", "Navigation Test Material");
 

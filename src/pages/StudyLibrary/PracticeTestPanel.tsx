@@ -1403,7 +1403,7 @@ export function PracticeTestPanel({
       </div>
 
       <PdfItemLabel sectionLabelled={practiceTest.questions.every((item) => item.pdfProvenance?.status === "valid")} provenance={question.pdfProvenance} origin={question.origin} />
-      <p className="small ai-copy">{question.questionText}</p>
+      <p className="practice-question ai-copy">{question.questionText}</p>
       <AcsTaskChip code={question.acsTask} showSources />
 
       <div className="stack stack--2" role="radiogroup" aria-label="Answer choices">
@@ -1444,7 +1444,10 @@ export function PracticeTestPanel({
               }
               onKeyDown={(e) => handleKeyDown(e, optionIndex)}
             >
-              {option}
+              <span className="practice-option__letter" aria-hidden="true">{String.fromCharCode(65 + optionIndex)}</span>
+              <span className="practice-option__text">{option}</span>
+              {tone === "incorrect" && <span className="practice-option__tag" aria-hidden="true">Your answer</span>}
+              {tone === "correct" && <span className="practice-option__tag practice-option__tag--correct" aria-hidden="true">Correct answer</span>}
             </button>
           );
         })}
@@ -1472,7 +1475,7 @@ export function PracticeTestPanel({
       {revealed && (
         <div className="stack stack--2" role="region" aria-live="polite" aria-label="Question result">
           <div className="row row--wrap row--gap-2" style={{ alignItems: "center" }}>
-            <Badge tone={shownDontKnow ? "due" : isCorrect ? "complete" : "overdue"}>
+            <Badge tone={shownDontKnow ? "due" : isCorrect ? "complete" : "neutral"}>
               {shownDontKnow ? "Marked as don’t know" : isCorrect ? "Correct" : "Not quite"}
             </Badge>
             <Button size="small" variant="ghost" disabled={!canEdit} onClick={handleChangeAnswer}>
@@ -1480,7 +1483,12 @@ export function PracticeTestPanel({
             </Button>
           </div>
 
-          <p className="tiny dim ai-copy">{question.explanation}</p>
+          <p className="practice-explanation ai-copy">{question.explanation}</p>
+          {(question.acsTask || question.sourcePage) && (
+            <p className="tiny dim practice-source">
+              Source: {[question.acsTask ? `ACS ${question.acsTask}` : null, question.sourcePage ? `page ${question.sourcePage}` : null].filter(Boolean).join(" · ")}
+            </p>
+          )}
 
           <AskGeminiPanel
             key={`${state.version?.id}:${question.id}`}
@@ -1495,9 +1503,10 @@ export function PracticeTestPanel({
       )}
 
       {showContinue && (
-        <div className="row row--between" style={{ marginTop: "var(--space-2)" }}>
+        <div className="stack stack--2" style={{ marginTop: "var(--space-2)" }}>
           <Button
             ref={actionButtonRef}
+            className="practice-next"
             variant="primary"
             disabled={!canEdit || confirmedResponse === undefined}
             onClick={handleContinue}
