@@ -14,6 +14,15 @@ import * as geminiService from "@/services/gemini";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
 
+/** Owner decision 11 Nov: pick an answer, then press "Check answer". */
+function clickCheck(): void {
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+}
+function checkAnswer(index: number): void {
+  fireEvent.click(screen.getAllByRole("radio")[index]!);
+  clickCheck();
+}
+
 describe("PracticeTestPanel", () => {
   let db: TestDatabase;
   let repos: Repositories;
@@ -88,7 +97,7 @@ describe("PracticeTestPanel", () => {
 
   it("uses calm progress for a new attempt and resume wording only after reopening", async () => {
     const view = await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
     expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
     const progress = screen.getByRole("status", {name:"Practice progress"});
@@ -106,7 +115,7 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
     expect(screen.getByRole("status", {name:"Practice progress"}).textContent).toBe("Question 1 of 2");
     expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
     expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
   });
@@ -114,7 +123,7 @@ describe("PracticeTestPanel", () => {
   it.each(["answer", "finish"])("offers skipped questions at the end and lets her %s", async action => {
     await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
     fireEvent.click(screen.getByRole("button", {name:"Skip for now →"}));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
     const score = screen.getByRole("button", {name:"See score"});
     await waitFor(() => expect(score.hasAttribute("disabled")).toBe(false));
@@ -125,10 +134,10 @@ describe("PracticeTestPanel", () => {
     if (action === "answer") {
       fireEvent.click(within(confirm).getByRole("button", {name:"Answer skipped"}));
       expect(screen.getByRole("heading", {name:"Question 1 of 2"})).toBeTruthy();
-      fireEvent.click(screen.getAllByRole("radio")[1]!);
+      checkAnswer(1);
       await screen.findByText("Correct");
       await waitFor(async () => expect((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.responses).toHaveLength(2));
-      fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+      fireEvent.click(screen.getByRole("button", {name:"Next question"}));
       await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
       expect(screen.queryByRole("heading", {name:"Question 2 of 2"})).toBeNull();
     } else {
@@ -145,17 +154,17 @@ describe("PracticeTestPanel", () => {
       await screen.findByRole("heading", {name:`Question ${i} of 5`});
       if (i === 1 || i === 3) fireEvent.click(screen.getByRole("button", {name:"Skip for now →"}));
       else {
-        fireEvent.click(screen.getAllByRole("radio")[1]!);
+        checkAnswer(1);
         await screen.findByText("Correct");
-        fireEvent.click(screen.getByRole("button", {name:i === 5 ? "See score" : "Continue"}));
+        fireEvent.click(screen.getByRole("button", {name:i === 5 ? "See score" : "Next question"}));
       }
     }
     fireEvent.click(within(screen.getByRole("dialog", {name:"Answer skipped questions?"})).getByRole("button", {name:"Answer skipped"}));
     for (const i of [1, 3]) {
       await screen.findByRole("heading", {name:`Question ${i} of 5`});
-      fireEvent.click(screen.getAllByRole("radio")[1]!);
+      checkAnswer(1);
       await screen.findByText("Correct");
-      fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+      fireEvent.click(screen.getByRole("button", {name:"Next question"}));
     }
     await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
     expect(screen.queryByRole("radio")).toBeNull();
@@ -163,9 +172,9 @@ describe("PracticeTestPanel", () => {
 
   it("keeps number and Enter shortcuts after mouse navigation without consuming text-input keys", async () => {
     await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
-    fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+    fireEvent.click(screen.getByRole("button", {name:"Next question"}));
     const heading = screen.getByRole("heading", {name:"Question 2 of 2"});
     await waitFor(() => expect(document.activeElement).toBe(heading));
     const input = document.createElement("input");
@@ -176,7 +185,7 @@ describe("PracticeTestPanel", () => {
     expect(screen.queryByText("Correct")).toBeNull();
     input.remove();
     heading.focus();
-    fireEvent.keyDown(heading, {key:"2"});
+    fireEvent.keyDown(heading, {key:"2"}); clickCheck();
     await screen.findByText("Correct");
     // A click can also leave focus on the body; Enter still advances.
     document.activeElement instanceof HTMLElement && document.activeElement.blur();
@@ -189,16 +198,16 @@ describe("PracticeTestPanel", () => {
 
   it("accepts numbers outside the panel after a click, and Enter on another panel button after reveal", async () => {
     await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
-    fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+    fireEvent.click(screen.getByRole("button", {name:"Next question"}));
     await screen.findByRole("heading", {name:"Question 2 of 2"});
     const outside = document.createElement("button");
     document.body.append(outside);
     try {
       fireEvent.click(outside);
       outside.focus();
-      fireEvent.keyDown(outside, {key:"2"});
+      fireEvent.keyDown(outside, {key:"2"}); clickCheck();
       await screen.findByText("Correct");
       const close = screen.getByRole("button", {name:"Close unfinished test"});
       close.focus();
@@ -255,7 +264,7 @@ describe("PracticeTestPanel", () => {
     const value = { repositories: repos, data: EMPTY_DATA, status: "ready", error: null } as ContextType<typeof AppDataContext>;
     render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
     fireEvent.click(await screen.findByRole("button", { name: "Continue earlier attempt" }));
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    checkAnswer(0);
     const complete = await screen.findByRole("button", { name: /Complete test now/ });
     fireEvent.click(complete);
     fireEvent.click(await screen.findByRole("button", { name: "Retake this test" }));
@@ -270,8 +279,8 @@ describe("PracticeTestPanel", () => {
     await repos.practiceSessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId: "mat-1", versionId: active.version.id });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
     expect(screen.queryByRole("button", { name: "Start a fresh test" })).toBeNull();
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
-    const next = await screen.findByRole("button", { name: "Continue" });
+    checkAnswer(0);
+    const next = await screen.findByRole("button", { name: "Next question" });
     await waitFor(() => expect(next.hasAttribute("disabled")).toBe(false));
     const abandon = screen.getByRole("button", { name: "Close unfinished test" });
     expect(next.classList.contains("button--primary")).toBe(true);
@@ -300,7 +309,7 @@ describe("PracticeTestPanel", () => {
       answer: "A fictional practice explanation.", model: "gemini-3.5-flash", sourcePages: [],
     });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }), null);
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    checkAnswer(0);
     await screen.findByText("Not quite");
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why this answer?" } });
@@ -324,12 +333,12 @@ describe("PracticeTestPanel", () => {
       .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
       .mockResolvedValueOnce({ answer: "Current answer", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
-    await waitFor(() => expect(screen.getByRole("button", { name: "Continue" }).hasAttribute("disabled")).toBe(false));
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Next question" }).hasAttribute("disabled")).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Next question" }));
     await screen.findByText("Question 2 of 2");
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
     fireEvent.click(screen.getByRole("button", { name: "Question 1, correct" }));
     await screen.findByText("Question 1 of 2");
@@ -379,7 +388,7 @@ describe("PracticeTestPanel", () => {
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
     const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer: "Bounded answer", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     await renderPanel(h(PracticeTestPanel, { practiceTest: test }));
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    checkAnswer(0);
     await screen.findByText("Not quite");
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
@@ -404,7 +413,7 @@ describe("PracticeTestPanel", () => {
     vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
     expect(scroll).not.toHaveBeenCalled();
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    checkAnswer(0);
     await screen.findByText("Not quite");
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Why?" } });
@@ -414,7 +423,7 @@ describe("PracticeTestPanel", () => {
     // wait for it so it cannot land after the counter is cleared (CI flake).
     await waitFor(() => expect(scroll).toHaveBeenCalledWith(expect.objectContaining({ block: "nearest" })));
     scroll.mockClear();
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next question" }));
     const heading = await screen.findByRole("heading", { name: "Question 2 of 2" });
     expect(document.activeElement).toBe(heading);
     expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reduced ? "auto" : "smooth" });
@@ -430,13 +439,13 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
     expect(screen.getByRole("button", { name: "Question 1, unanswered" }).className).toContain("practice-pill--current");
     expect(screen.getByRole("button", { name: "Question 2, unanswered" }).className).toBe("practice-pill");
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    checkAnswer(0);
     await screen.findByText("Not quite");
     expect(screen.getByRole("button", { name: "Question 1, not quite" }).className).toContain("practice-pill--incorrect");
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next question" }));
     await screen.findByText("Question 2 of 2");
     expect(screen.getByRole("button", { name: "Question 1, not quite" }).className).not.toContain("practice-pill--current");
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
     const correct = screen.getByRole("button", { name: "Question 2, correct" });
     expect(correct.className).toContain("practice-pill--correct");
@@ -481,7 +490,7 @@ describe("PracticeTestPanel", () => {
     expect(await db.select("SELECT * FROM practice_attempts")).toEqual(before);
     expect(await db.select("SELECT * FROM practice_responses")).toEqual(responses);
 
-    fireEvent.click(options[1]!);
+    fireEvent.click(options[1]!); clickCheck();
     await screen.findByText("Correct");
     const savedAttempts = await db.select("SELECT * FROM practice_attempts");
     const savedResponses = await db.select("SELECT * FROM practice_responses");
@@ -515,11 +524,11 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
-    fireEvent.click(options[1]!); // 1,000 feet AGL is correct
+    fireEvent.click(options[1]!); clickCheck(); // 1,000 feet AGL is correct
 
     await screen.findByText("Correct");
     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
 
     // Radio buttons should be disabled once revealed
@@ -532,7 +541,7 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
-    fireEvent.click(options[0]!); // 800 feet AGL is wrong
+    fireEvent.click(options[0]!); clickCheck(); // 800 feet AGL is wrong
 
     await screen.findByText("Not quite");
     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
@@ -542,16 +551,16 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     // Q1: answer correctly
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    checkAnswer(1);
     await screen.findByText("Correct");
-    const cont1 = screen.getByRole("button", { name: "Continue" });
+    const cont1 = screen.getByRole("button", { name: "Next question" });
     await waitFor(() => expect(cont1.hasAttribute("disabled")).toBe(false));
     fireEvent.click(cont1);
 
     // Q2: answer incorrectly
     await screen.findByText("Question 2 of 2");
     expect(screen.getByText("Check source")).toBeTruthy();
-    fireEvent.click(screen.getAllByRole("radio")[0]!); // Crosswind is wrong
+    checkAnswer(0); // Crosswind is wrong
 
     await screen.findByText("Not quite");
     const scoreBtn = screen.getByRole("button", { name: "See score" });
@@ -608,12 +617,12 @@ describe("PracticeTestPanel", () => {
     // Move to option 1 (correct answer) and press Enter to select
     fireEvent.keyDown(options[2]!, { key: "ArrowUp" });
     expect(options[1]?.getAttribute("tabindex")).toBe("0");
-    fireEvent.keyDown(options[1]!, { key: "Enter" });
+    fireEvent.keyDown(options[1]!, { key: "Enter" }); clickCheck();
 
     // Answer should now be revealed and focus moved to Continue
     await screen.findByText("Correct");
     expect(screen.getAllByRole("radio")[1]?.getAttribute("aria-label")).toContain("Correct answer");
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     expect(document.activeElement).toBe(continueBtn);
   });
 
@@ -621,10 +630,10 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
-    fireEvent.click(options[0]!);
+    fireEvent.click(options[0]!); clickCheck();
 
     await screen.findByText("Not quite");
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     expect(document.activeElement).toBe(continueBtn);
 
     // Click Continue and verify focus moves to the Question 2 heading
@@ -641,10 +650,10 @@ describe("PracticeTestPanel", () => {
 
     const options = screen.getAllByRole("radio");
     // Press Space on option 1 (Question 1)
-    fireEvent.keyDown(options[1]!, { key: " " });
+    fireEvent.keyDown(options[1]!, { key: " " }); clickCheck();
 
     await screen.findByText("Correct");
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     expect(document.activeElement).toBe(continueBtn);
 
     // Advance to Question 2 (final question)
@@ -655,7 +664,7 @@ describe("PracticeTestPanel", () => {
     expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Question 2 of 2" }));
 
     // Select final question answer with Enter
-    fireEvent.keyDown(q2Options[1]!, { key: "Enter" });
+    fireEvent.keyDown(q2Options[1]!, { key: "Enter" }); clickCheck();
     await screen.findByText("Correct");
     const seeScoreBtn = screen.getByRole("button", { name: "See score" });
     expect(document.activeElement).toBe(seeScoreBtn);
@@ -665,16 +674,16 @@ describe("PracticeTestPanel", () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     // Advance to final question
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    checkAnswer(0);
     await screen.findByText("Not quite");
-    const continueBtn = screen.getByRole("button", { name: "Continue" });
+    const continueBtn = screen.getByRole("button", { name: "Next question" });
     await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(continueBtn);
 
     // Click final question option
     await screen.findByText("Question 2 of 2");
     const finalOptions = screen.getAllByRole("radio");
-    fireEvent.click(finalOptions[0]!);
+    fireEvent.click(finalOptions[0]!); clickCheck();
 
     await screen.findByText("Not quite");
     const seeScoreBtn = screen.getByRole("button", { name: "See score" });

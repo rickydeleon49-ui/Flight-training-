@@ -276,6 +276,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     fireEvent.click(scope.getByRole("button", { name: "Question 2, unanswered" }));
     await scope.findByText("Synthetic question 1?");
     fireEvent.click(scope.getByRole("radio", { name: "Yes" }));
+    fireEvent.click(scope.getByRole("button", { name: "Check answer" }));
     await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("pdf-mat-1")).toBeTruthy());
     const attemptBefore = await repos.practiceSessions.getCurrentAttempt("pdf-mat-1");
     const currentQuestion = scope.getByText("Synthetic question 1?");

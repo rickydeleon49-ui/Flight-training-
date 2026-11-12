@@ -21,6 +21,11 @@ import { MaterialDetail } from "./MaterialDetail";
 import { makeMaterial } from "@/testing/factories";
 import { checkAiSubmission } from "@/logic/aiSafety";
 
+/** Owner decision 11 Nov: pick an answer, then press "Check answer". */
+function clickCheck(): void {
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+}
+
 const allowedMaterial = makeMaterial({ id: "mat-1", filePath: "documents/test.pdf" });
 const allowedData = { ...EMPTY_DATA, materials: [allowedMaterial] };
 function render(ui: React.ReactElement) {
@@ -120,7 +125,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       answer: "The supplied explanation supports this answer.", model: "gemini-3.5-flash", sourcePages: [], contextPages: [],
     });
     await renderPracticePanel();
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Correct");
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     expect((screen.getByLabelText("Ask a question") as HTMLInputElement).value).toBe("Why is that the correct answer?");
@@ -140,7 +145,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
   it.each([["admin", true], ["credential", true], ["admin", false], ["credential", false]] as const)("refuses %s reclassification after a saved quiz and listener startup (file attached: %s)", async (kind, hasFile) => {
     const view = await renderPracticePanel();
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await screen.findByText("Not quite");
     let ready!: (stop: () => void) => void;
     vi.mocked(watchAskGeminiProgress).mockImplementationOnce(() => new Promise((resolve) => { ready = resolve; }));
@@ -196,7 +201,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
     // Select an answer
     const options = screen.getAllByRole("radio");
-    fireEvent.click(options[1]!);
+    fireEvent.click(options[1]!); clickCheck();
 
     // Answer is now revealed, so Why? Ask Gemini appears
     await screen.findByText("Correct");
@@ -215,7 +220,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
     // Answer the question
     const options = screen.getAllByRole("radio");
-    fireEvent.click(options[0]!); // chosen 800 feet AGL (incorrect)
+    fireEvent.click(options[0]!); clickCheck(); // chosen 800 feet AGL (incorrect)
     await screen.findByText("Not quite");
 
     // Open Ask Gemini panel

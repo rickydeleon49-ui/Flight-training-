@@ -206,6 +206,7 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
   pick("Notes"); pick("Study");
   expect(await screen.findByRole("heading", { name: "Question 1 of 1" })).toBe(question);
   fireEvent.click((await screen.findAllByRole("radio"))[1]!);
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
   const score = await screen.findByRole("button", { name: "See score" });
   await waitFor(() => expect(score.hasAttribute("disabled")).toBe(false));
   fireEvent.click(score);

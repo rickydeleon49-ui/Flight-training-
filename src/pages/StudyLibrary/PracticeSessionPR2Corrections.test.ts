@@ -10,6 +10,11 @@ import { PracticeTestPanel } from './PracticeTestPanel';
 import { PracticeHistory } from './PracticeHistory';
 import { AppDataContext, EMPTY_DATA } from '@/state/AppDataContext';
 
+/** Owner decision 11 Nov: pick an answer, then press "Check answer". */
+function clickCheck(): void {
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+}
+
 let db: TestDatabase;
 let repos: Repositories;
 function deferred<T>() {
@@ -53,7 +58,7 @@ async function panel(test: PracticeTest) {
  return view;
 }
 async function answerConfirmed() {
- fireEvent.click(screen.getAllByRole('radio')[0]!);
+ fireEvent.click(screen.getAllByRole('radio')[0]!); clickCheck();
  await waitFor(async () => expect(await db.select('SELECT id FROM practice_responses')).toHaveLength(1));
  await act(async () => { await Promise.resolve(); });
 }
@@ -75,7 +80,7 @@ describe('Codex PR2 review: actual UI and disposable persisted state', () => {
    if (action.action === 'record_response') await gate.promise;
    return save(action);
   });
-  fireEvent.click(screen.getAllByRole('radio')[0]!);
+  fireEvent.click(screen.getAllByRole('radio')[0]!); clickCheck();
   await act(async () => { await Promise.resolve(); });
   const prematureFeedback = screen.queryByRole('region', { name: 'Question result' }) !== null;
   gate.resolve();
@@ -92,9 +97,9 @@ describe('Codex PR2 review: actual UI and disposable persisted state', () => {
    if (action.action === 'record_response') await gate.promise;
    return save(action);
   });
-  fireEvent.click(screen.getAllByRole('radio')[0]!);
+  fireEvent.click(screen.getAllByRole('radio')[0]!); clickCheck();
   await act(async () => { await Promise.resolve(); });
-  const canContinue = !screen.getByRole('button', { name: 'Continue' }).hasAttribute('disabled');
+  const canContinue = !screen.getByRole('button', { name: /Check answer|Next question/ }).hasAttribute('disabled');
   gate.resolve();
   await waitFor(async () => expect(await db.select('SELECT id FROM practice_responses')).toHaveLength(1));
   expect(canContinue).toBe(false);
@@ -124,7 +129,7 @@ describe('Codex PR2 review: actual UI and disposable persisted state', () => {
    if (action.action === 'record_response') failNext = true;
    return result;
   });
-  fireEvent.click(screen.getAllByRole('radio')[0]!);
+  fireEvent.click(screen.getAllByRole('radio')[0]!); clickCheck();
   fireEvent.click(await screen.findByRole('button', { name: 'Retry refresh' }));
   await act(async () => { await Promise.resolve(); });
   expect({ errorRemains: !!screen.queryByText(/refreshing status failed/), changeDisabled: screen.getByRole('button', { name: 'Change answer' }).hasAttribute('disabled') }).toEqual({ errorRemains: false, changeDisabled: false });
@@ -160,7 +165,7 @@ describe('Codex PR2 review: actual UI and disposable persisted state', () => {
   await waitFor(() => expect(currentRead).toHaveBeenCalledWith('route-B'));
   gate.resolve(await activeRead('route-A'));
   await act(async () => { await Promise.resolve(); });
-  fireEvent.click(screen.getAllByRole('radio')[0]!);
+  fireEvent.click(screen.getAllByRole('radio')[0]!); clickCheck();
   await waitFor(async () => expect(await db.select('SELECT id FROM practice_responses')).toHaveLength(1));
   const result = await db.select<{ source_material_id: string }>('SELECT a.source_material_id FROM practice_responses r JOIN practice_attempts a ON r.attempt_id=a.id');
   expect(result).toEqual([{ source_material_id: 'route-B' }]);

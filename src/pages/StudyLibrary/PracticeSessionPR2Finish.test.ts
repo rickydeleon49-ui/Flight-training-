@@ -23,6 +23,11 @@ import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
 import { PracticeHistory } from "./PracticeHistory";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 
+/** Owner decision 11 Nov: pick an answer, then press "Check answer". */
+function clickCheck(): void {
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+}
+
 let db: TestDatabase;
 let repos: Repositories;
 
@@ -134,7 +139,7 @@ async function panel(test: PracticeTest) {
 }
 
 async function answerConfirmed() {
-  fireEvent.click(screen.getAllByRole("radio")[0]!);
+  fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
   await waitFor(async () =>
     expect(await db.select("SELECT id FROM practice_responses")).toHaveLength(1),
   );
@@ -303,7 +308,7 @@ describe("M2UI-R6: one unresolved intent locks every conflicting action", () => 
     vi.spyOn(repos.practiceSessions, "saveSessionAction").mockRejectedValue(
       Error("Synthetic changed-answer refusal"),
     );
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Synthetic changed-answer refusal");
     const stored = (await repos.practiceSessions.getCurrentAttempt("change-refused"))!;
     expect({
@@ -347,12 +352,12 @@ describe("M2UI-R6: one unresolved intent locks every conflicting action", () => 
       return result;
     });
 
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await screen.findByText("Synthetic lost response acknowledgement");
 
     // Ordinary inputs cannot allocate or replace the pending payload.
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
+    fireEvent.click(screen.getByRole("button", { name: /Check answer|Next question/ }));
     await act(async () => {
       await Promise.resolve();
     });
@@ -396,7 +401,7 @@ describe("M2UI-R6: one unresolved intent locks every conflicting action", () => 
       return result;
     });
 
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await screen.findByText(/refreshing status failed/);
     const writesBeforeRetry = sent.length;
 
@@ -426,7 +431,7 @@ describe("M2UI-R6: one unresolved intent locks every conflicting action", () => 
       return save(action);
     });
 
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText("Synthetic start refusal");
 
     expect(await db.select("SELECT id FROM practice_attempts")).toHaveLength(0);
@@ -434,7 +439,7 @@ describe("M2UI-R6: one unresolved intent locks every conflicting action", () => 
     expect(screen.getAllByRole("radio")[1]!.getAttribute("aria-checked")).toBe("true");
 
     // A fresh answer click cannot allocate a second start.
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await act(async () => {
       await Promise.resolve();
     });
@@ -609,7 +614,7 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
       return result;
     });
     fireEvent.click(screen.getByRole("button", { name: "Change answer" }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await waitFor(async () =>
       expect(await repos.practiceSessions.getCurrentAttempt("null-refresh")).toBeNull(),
     );
@@ -643,7 +648,7 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
 
     // The answer commits, then its refresh fails: acknowledged but unconfirmed.
     fireEvent.click(screen.getByRole("button", { name: "Change answer" }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText(/refreshing status failed/);
 
     // The attempt is really closed now, so the retry read must report null.
@@ -678,7 +683,7 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
     await abandon("conflict-null");
 
     fireEvent.click(screen.getByRole("button", { name: "Change answer" }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await screen.findByText(/choose the action again/);
     // The reconcile read that follows the refusal is what clears the stale attempt.
     await waitFor(() =>
@@ -984,7 +989,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
       .spyOn(repos.practiceSessions, "getVersion")
       .mockRejectedValue(Error("Synthetic replacement content read failure"));
     fireEvent.click(screen.getByRole("button", { name: "Change answer" }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await waitFor(() => expect(versionRead).toHaveBeenCalled());
     await act(async () => {
       await Promise.resolve();
@@ -1031,7 +1036,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
       return result;
     });
     fireEvent.click(screen.getByRole("button", { name: "Change answer" }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: "Retry refresh" })).not.toBeNull(),
     );
@@ -1078,7 +1083,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Change answer" }));
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     const retryBtn = await screen.findByRole("button", { name: "Retry refresh" });
 
     // Allow read to succeed on retry.
@@ -1133,7 +1138,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
     });
 
     // Click answer on panel (which still displays v1) -> starts attempt (acknowledged as v2)
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
 
     // Start was acknowledged, but adoption of v2 failed -> enters refresh_failed
     const retryBtn = await screen.findByRole("button", { name: "Retry refresh" });
@@ -1261,7 +1266,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
     });
 
     // Start is acknowledged, its frozen-content adoption fails.
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     const retryBtn = await screen.findByRole("button", { name: "Retry refresh" });
     expect(recorded.filter((a) => a.action === "start_or_resume")).toHaveLength(1);
     expect(await db.select("SELECT id FROM practice_responses")).toHaveLength(0);
@@ -1281,7 +1286,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
     ).toBe(true);
 
     // A genuinely new deliberate answer against the replacement content saves.
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await waitFor(async () =>
       expect(await db.select("SELECT id FROM practice_responses")).toHaveLength(1),
     );
@@ -1303,7 +1308,7 @@ describe("M2UI-R13: tie synchronous locks to their owning material/generation", 
       if (action.action === "record_response" && sent.length === 1) await gate.promise;
       return save(action);
     });
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await waitFor(() => expect(sent).toHaveLength(1));
     view.rerender(wrap(h(PracticeTestPanel, { practiceTest: b })));
     await screen.findByText("Frozen pending-material-B question 1");
@@ -1312,7 +1317,7 @@ describe("M2UI-R13: tie synchronous locks to their owning material/generation", 
     await act(async () => {
       await Promise.resolve();
     });
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
@@ -1346,7 +1351,7 @@ describe("M2UI-R13: tie synchronous locks to their owning material/generation", 
     });
 
     // Start mutation on A
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await waitFor(() => expect(sent).toHaveLength(1));
 
     // Rerender for B and wait for B to be ready
@@ -1354,7 +1359,7 @@ describe("M2UI-R13: tie synchronous locks to their owning material/generation", 
     await screen.findByText("Frozen converse-material-B question 1");
 
     // Start mutation on B (enters flight, held on gateB)
-    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    fireEvent.click(screen.getAllByRole("radio")[0]!); clickCheck();
     await waitFor(() =>
       expect(
         sent.some(
@@ -1376,7 +1381,7 @@ describe("M2UI-R13: tie synchronous locks to their owning material/generation", 
 
     // Second click on B while B's mutation is still in flight:
     // settling A must NOT have cleared B's lock!
-    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    fireEvent.click(screen.getAllByRole("radio")[1]!); clickCheck();
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
