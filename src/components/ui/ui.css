@@ -974,6 +974,9 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   .button--small { min-height: 44px; }
   /* Real box height, not an overlay, so stacked rows never steal each other's taps. */
   .checkbox, .radio-row__option { min-height: 44px; }
+  /* The 32px icon button keeps its look; a transparent extension makes the tap area 44px. */
+  .icon-button { position: relative; }
+  .icon-button::after { content: ""; position: absolute; inset: -6px; }
 }
 
 /* Live regions stay mounted so screen readers announce text added later. While
