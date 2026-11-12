@@ -3,6 +3,7 @@ import type { DragEvent, ReactNode } from "react";
 import { Button } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import type { LibrarySection } from "@/logic/libraryFolders";
+import type { BinderStatus } from "./StudyLibrary";
 
 export const SECTION_PAGE_SIZE = 100;
 
@@ -103,5 +104,32 @@ export function LibrarySections({
         );
       })}
     </div>
+  );
+}
+
+/** Cards reviewed so far for one material (total is null once only "all reviewed" is known). */
+export interface MaterialProgress { done: number; total: number | null; due: boolean }
+
+/** From the binder's existing review read: no extra query per row. */
+export function materialProgress(status: BinderStatus | null, materialId: string, hasCards: boolean): MaterialProgress | null {
+  if (!status || !hasCards) return null;
+  const entry = status.entries.get(materialId);
+  if (entry) {
+    if (entry.cardCount <= 0) return null;
+    return { done: Math.max(0, entry.cardCount - entry.newCount), total: entry.cardCount, due: entry.totalDueCount > 0 };
+  }
+  return status.complete && !status.issues.has(materialId) ? { done: 0, total: null, due: false } : null;
+}
+
+export function progressLabel(progress: MaterialProgress): string {
+  return progress.total === null ? "All cards reviewed" : `${progress.done.toLocaleString()} of ${progress.total.toLocaleString()} cards reviewed`;
+}
+
+export function ProgressLine({ progress }: { progress: MaterialProgress }) {
+  const pct = progress.total === null ? 100 : Math.round((progress.done / Math.max(1, progress.total)) * 100);
+  return (
+    <span className="bar bar--thin" role="img" aria-label={progressLabel(progress)}>
+      <span className="bar__fill" style={{ width: `${pct}%` }} />
+    </span>
   );
 }
