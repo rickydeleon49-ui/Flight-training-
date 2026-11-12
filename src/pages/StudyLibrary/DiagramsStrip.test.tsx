@@ -49,3 +49,16 @@ it("labels the AI-made picture in its tile, its alt text and the large viewer, a
   expect(dialog.textContent).toContain(AI_ILLUSTRATION_LABEL);
   expect(dialog.querySelector("img")!.getAttribute("alt")).toContain(AI_ILLUSTRATION_LABEL);
 });
+
+it("opens a diagram on one click or Enter, even right after focus was elsewhere and the tile art finished loading", async () => {
+  inRouter(<><button type="button">Other</button><DiagramsView topic="weather" /></>);
+  const first = diagramsForTopic("weather")[0]!;
+  const other = screen.getByRole("button", { name: "Other" });
+  other.focus();
+  expect(document.activeElement).toBe(other);
+  const tile = screen.getByRole("button", { name: first.title });
+  fireEvent.mouseDown(tile);
+  fireEvent.click(tile);
+  expect(await screen.findByRole("dialog", { name: first.title, hidden: true })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Zoom in", hidden: true })).toBeTruthy();
+});
