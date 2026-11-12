@@ -65,3 +65,19 @@ it("keeps Escape open until the owner finishes asynchronous cleanup", () => {
   expect(onClose).toHaveBeenCalledOnce();
   expect(dialog.open).toBe(true);
 });
+
+it("closes only the top dialog when Escape is pressed in a nested dialog", () => {
+  const outerClose = vi.fn();
+  const innerClose = vi.fn();
+  render(h(Dialog, {
+    open: true,
+    onClose: outerClose,
+    title: "Practice tests",
+    children: h(Dialog, { open: true, onClose: innerClose, title: "Practice by checkride topic", children: h("p", null, "Topics") }),
+  }));
+  const inner = screen.getByRole("heading", { name: "Practice by checkride topic" }).closest("dialog")!;
+
+  fireEvent(inner, new Event("cancel", { cancelable: true }));
+  expect(innerClose).toHaveBeenCalledTimes(1);
+  expect(outerClose).not.toHaveBeenCalled();
+});
