@@ -240,7 +240,7 @@ export function AppShell() {
                     className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
                   >
                     <span className="nav__icon">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span className="nav__label">{item.label}</span>
                     {count ? (
                       <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
                         {count.value}
