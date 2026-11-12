@@ -41,7 +41,7 @@
   /* ---- Text ---- */
   --text-primary: var(--palette-navy);
   --text-secondary: var(--palette-navy-muted);
-  --text-tertiary: #7d8598;
+  --text-tertiary: #646b7b; /* was #7d8598 (3.7:1); owner OK 11 Nov to reach AA */
   --text-on-accent: #ffffff;
 
   /* ---- Lines and edges ---- */
