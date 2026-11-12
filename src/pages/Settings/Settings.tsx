@@ -211,6 +211,7 @@ export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
   const { hash, key } = useLocation();
   const backupsFold = useRef<HTMLDetailsElement>(null);
+  const aboutFold = useRef<HTMLDetailsElement>(null);
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   // Already applied at startup (main.tsx); this only reflects the saved choice.
@@ -264,7 +265,8 @@ export function Settings() {
   useEffect(() => {
     // A result or problem inside a fold must never be hidden by a navigation (force-open rule).
     if (backupsFold.current) backupsFold.current.open = hash === "#settings-backups" || forceOpen.current.backups;
-    if (["#settings-backups", "#send-to-iphone", "#get-phone-progress", "#phone-progress", "#ai-provider"].includes(hash)) {
+    if (aboutFold.current) aboutFold.current.open = hash === "#settings-about";
+    if (["#settings-backups", "#send-to-iphone", "#get-phone-progress", "#phone-progress", "#ai-provider", "#settings-about"].includes(hash)) {
       document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: "start" });
     }
   }, [hash, key]);
@@ -1519,7 +1521,7 @@ export function Settings() {
         </details>
 
 
-        <details id="settings-about" className="card material-fold">
+        <details id="settings-about" className="card material-fold" ref={aboutFold}>
           <summary id="settings-about-summary">About &amp; legal</summary>
           <CardBody>
             <PlatformGuidance

@@ -22,7 +22,7 @@ export const LEGAL_POINTS = [
 ] as const;
 
 export const AGE_NOTE = "You need to be 13 or older to use this app, and 18 or older to use the AI features with your own key.";
-export const AFFILIATION_NOTE = "Not affiliated with the FAA, Google or Anthropic. FAA standards text comes from the FAA and is public domain.";
+export const AFFILIATION_NOTE = "This app is not affiliated with or endorsed by the FAA, Google or Anthropic. ACS and FAA handbook text shown here is FAA public-domain material.";
 
 /** The one short disclaimer line, shown in the sidebar/More note, Add study pack and the README. */
 export const DISCLAIMER_LINE = "Independent study aid. Not FAA-approved or endorsed. AI-assisted content can contain errors — check current FAA publications and your instructor.";
