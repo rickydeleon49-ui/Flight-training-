@@ -914,7 +914,7 @@ export function PracticeTestPanel({
   const revealed =
     !state.changingAnswer && state.draft === null && confirmedResponse !== undefined;
 
-  // Owner decision 11 Nov: she picks first, then presses "Check answer".
+  // Owner decision 11 Nov: pick an answer first, then press "Check answer".
   const [picked, setPicked] = useState<number | null>(null);
   useEffect(() => setPicked(null), [state.index, state.attempt?.attemptId]);
 
