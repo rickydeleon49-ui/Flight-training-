@@ -38,7 +38,6 @@ import {
 } from "@/domain/types";
 import { studyPacksAvailable } from "@/data/studyPack";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
-import { offlineStudyEnabled } from "@/services/offlineContent";
 import { searchText } from "@/logic/searchText";
 import { chapterCountLabel, groupChapterParts } from "@/logic/chapterGroups";
 import { exportableParts } from "@/logic/studyExport";
@@ -629,7 +628,7 @@ export function StudyLibrary() {
             <TextInput
               ref={searchBox}
               value={search}
-              placeholder={offlineStudyEnabled() ? "Search titles, PDFs, notes and homework" : "Search titles, notes and tags"}
+              placeholder={"Search your library"}
               aria-label="Search your library"
               autoComplete="off"
               autoCorrect="off"
