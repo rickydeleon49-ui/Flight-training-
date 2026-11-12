@@ -240,6 +240,8 @@ describe("GetStudyMaterialCard", () => {
       render(<GetStudyMaterialCard />);
       fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
       await screen.findByText(/From your Mac/);
+      // Wait for the unsaved-work check to settle, not just the panel (flaked on slow CI).
+      await screen.findByRole("button", { name: "Save my phone work first" });
     }
 
     it("saving first unblocks Replace but does not restore", async () => {
