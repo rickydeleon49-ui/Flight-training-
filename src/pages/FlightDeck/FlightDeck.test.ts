@@ -796,6 +796,20 @@ describe("FlightDeck practice-test line", () => {
     expect(screen.getByRole("link", { name: "See the 12 open areas" }).getAttribute("href")).toBe("/study");
   });
 
+  it("counts checkride areas from practice-question topic codes", async () => {
+    repositoriesMock = {
+      cardLibrary: emptyReviewRepo,
+      practiceSessions: { getRecentCompletedAttempts: vi.fn().mockResolvedValue([]) },
+    };
+    appData = { ...appData, practiceTests: [{
+      sourceMaterialId: "m1", title: "t", provider: "manual", model: "",
+      generatedAt: "2026-10-31T00:00:00Z", updatedAt: "2026-10-31T00:00:00Z",
+      questions: [{ question: "q", acsTask: "PA.I.H", sourcePage: null, options: ["a", "b", "c"], correctIndex: 0, explanation: "e" }],
+    }] };
+    render(h(MemoryRouter, null, h(FlightDeck)));
+    expect(await screen.findByText("1 of 12")).toBeTruthy();
+  });
+
   it("gently nudges when she has fewer than three recent attempts", async () => {
     repositoriesMock = {
       cardLibrary: emptyReviewRepo,
