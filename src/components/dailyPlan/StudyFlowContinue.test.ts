@@ -35,6 +35,12 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 import { DailyPlanCard } from "./DailyPlanCard";
 
+/** Skip and Move live in each row's "..." menu: open it, then press the button. */
+function clickInMenu(root: { getByRole: typeof screen.getByRole }, title: string, name: string) {
+  fireEvent.click(root.getByRole("button", { name: `More actions for ${title}` }));
+  fireEvent.click(root.getByRole("button", { name }));
+}
+
 let dbDir: string;
 let dbPath: string;
 let db: TestDatabase;
@@ -359,9 +365,7 @@ describe("STUDY-FLOW-01b: dependable next step in Daily Flight Plan", () => {
     expect(screen.getByText("Calculate magnetic course")).toBeTruthy();
 
     // Skip Item 1 for today
-    fireEvent.click(
-      screen.getByRole("button", { name: "Skip Calculate magnetic course for today" }),
-    );
+    clickInMenu(screen, "Calculate magnetic course", "Skip Calculate magnetic course for today");
 
     // Item 2 becomes prominent as the new first suggested item
     await waitFor(() => {
@@ -380,9 +384,7 @@ describe("STUDY-FLOW-01b: dependable next step in Daily Flight Plan", () => {
     expect(action2Row?.status).toBe("open");
 
     // Move Item 2 to tomorrow
-    fireEvent.click(
-      screen.getByRole("button", { name: "Move File flight plan with FSS to tomorrow" }),
-    );
+    clickInMenu(screen, "File flight plan with FSS", "Move File flight plan with FSS to tomorrow");
 
     await waitFor(async () => {
       const refreshed2 = await repos.actions.get(action2.id);

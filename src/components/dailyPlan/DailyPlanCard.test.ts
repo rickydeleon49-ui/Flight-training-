@@ -22,6 +22,12 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { DailyPlanCard } from "./DailyPlanCard";
 import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
+/** Skip and Move live in each row's "..." menu: open it, then press the button. */
+function clickInMenu(root: { getByRole: typeof screen.getByRole }, title: string, name: string) {
+  fireEvent.click(root.getByRole("button", { name: `More actions for ${title}` }));
+  fireEvent.click(root.getByRole("button", { name }));
+}
+
 const TODAY = "2026-09-25";
 const TOMORROW = "2026-09-26";
 const YESTERDAY = "2026-09-24";
@@ -156,6 +162,9 @@ describe("Daily Flight Plan card", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(4);
     expect(screen.getByRole("button", { name: "Start action: Alpha" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Why recommend Alpha?" })).toBeTruthy();
+    // Skip and Move are tucked behind the row's "..." menu.
+    expect(screen.queryByRole("button", { name: "Skip Alpha for today" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Alpha" }));
     expect(screen.getByRole("button", { name: "Skip Alpha for today" })).toBeTruthy();
     const moveBtn = screen.getByRole("button", { name: "Move Alpha to tomorrow" });
     expect(moveBtn).toBeTruthy();
@@ -276,8 +285,8 @@ describe("Daily Flight Plan card", () => {
       await waitFor(async () => expect((await stored())?.suggestedIds).toHaveLength(3));
 
       const release = hold();
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
-      fireEvent.click(screen.getByRole("button", { name: "Skip Bravo for today" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
+      clickInMenu(screen, "Bravo", "Skip Bravo for today");
       release();
 
       await waitFor(async () => {
@@ -296,7 +305,7 @@ describe("Daily Flight Plan card", () => {
 
       const release = hold();
       fireEvent.click(screen.getByRole("radio", { name: "10 min" }));
-      fireEvent.click(screen.getByRole("button", { name: "Move Bravo to tomorrow" }));
+      clickInMenu(screen, "Bravo", "Move Bravo to tomorrow");
       release();
 
       await waitFor(async () => {
@@ -312,9 +321,9 @@ describe("Daily Flight Plan card", () => {
       await mount();
       await waitFor(async () => expect((await stored())?.suggestedIds).toHaveLength(2));
 
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
       await waitFor(async () => expect((await stored())?.decisions[`action:${a.id}`]).toBeTruthy());
-      fireEvent.click(screen.getByRole("button", { name: "Skip Bravo for today" }));
+      clickInMenu(screen, "Bravo", "Skip Bravo for today");
       await waitFor(async () => expect((await stored())?.decisions[`action:${b.id}`]).toBeTruthy());
 
       const before = faults.writes;
@@ -332,7 +341,7 @@ describe("Daily Flight Plan card", () => {
       await settled([`action:${a.id}`]);
 
       faults.failWrites = true;
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
       await screen.findByText(/That change couldn't be saved/);
       expect((await stored())?.decisions).toEqual({});
       expect(suggestedTitles()).toEqual(["Alpha"]);
@@ -346,7 +355,7 @@ describe("Daily Flight Plan card", () => {
       await waitFor(async () => expect((await stored())?.suggestedIds).toHaveLength(2));
 
       faults.failSelect = "FROM next_actions";
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
       await waitFor(() => expect(context.lastError).toBeTruthy());
       expect((await stored())?.decisions[`action:${a.id}`]).toEqual({ type: "skip", date: TODAY });
       await waitFor(() => expect(suggestedTitles()).toEqual(["Bravo"]));
@@ -359,7 +368,7 @@ describe("Daily Flight Plan card", () => {
       await settled([`action:${a.id}`]);
 
       const release = hold();
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
       view.unmount();
       release();
       await waitFor(async () =>
@@ -373,8 +382,8 @@ describe("Daily Flight Plan card", () => {
       await mount();
       await waitFor(async () => expect((await stored())?.suggestedIds).toHaveLength(2));
 
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
-      fireEvent.click(screen.getByRole("button", { name: "Move Bravo to tomorrow" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
+      clickInMenu(screen, "Bravo", "Move Bravo to tomorrow");
       await waitFor(async () => expect(Object.keys((await stored())?.decisions ?? {})).toHaveLength(2));
 
       const dates = Object.fromEntries((await repos.actions.list()).map((x) => [x.id, x.dueDate]));
@@ -440,9 +449,9 @@ describe("Daily Flight Plan card", () => {
       const view = await mount(TODAY);
       await waitFor(async () => expect((await stored())?.suggestedIds).toHaveLength(2));
 
-      fireEvent.click(screen.getByRole("button", { name: "Skip Alpha for today" }));
+      clickInMenu(screen, "Alpha", "Skip Alpha for today");
       await waitFor(async () => expect((await stored())?.decisions[`action:${a.id}`]).toBeTruthy());
-      fireEvent.click(screen.getByRole("button", { name: "Move Bravo to tomorrow" }));
+      clickInMenu(screen, "Bravo", "Move Bravo to tomorrow");
       await waitFor(async () => expect((await stored())?.decisions[`action:${b.id}`]).toBeTruthy());
       await waitFor(() => expect(suggestedTitles()).toEqual([]));
 
@@ -503,7 +512,7 @@ describe("Daily Flight Plan card", () => {
       await mount();
       await waitFor(() => expect(suggestedTitles()).toEqual(["Preflight walkaround"]));
 
-      fireEvent.click(screen.getByRole("button", { name: "Skip Preflight walkaround for today" }));
+      clickInMenu(screen, "Preflight walkaround", "Skip Preflight walkaround for today");
       await waitFor(() => expect(suggestedTitles()).toEqual([]));
 
       expect(screen.getByText("All recommended work completed or postponed for today.")).toBeTruthy();
@@ -549,6 +558,7 @@ describe("Daily Flight Plan card", () => {
       expect(lower).not.toContain("timed item");
 
       // Buttons have plain title and aria-description
+      for (const toggle of screen.getAllByRole("button", { name: /^More actions for / })) fireEvent.click(toggle);
       const moveButtons = screen.getAllByRole("button", { name: /Move .* to tomorrow/ });
       expect(moveButtons.length).toBeGreaterThan(0);
       for (const btn of moveButtons) {

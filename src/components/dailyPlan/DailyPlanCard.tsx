@@ -127,6 +127,7 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
   } = useDailyPlan(today);
 
   const [openWhyId, setOpenWhyId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showRemaining, setShowRemaining] = useState<boolean>(false);
   const [startNote, setStartNote] = useState<string | null>(null);
   /** The budget the student just chose, shown as selected while it saves. */
@@ -434,26 +435,56 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
                         Why this
                       </button>
 
-                      <button
-                        type="button"
-                        className="button button--ghost button--small"
-                        onClick={() => void skipItem(item.id)}
-                        aria-label={`Skip ${item.title} for today`}
-                        title="Exclude from today's suggestions; eligible again tomorrow"
+                      <div
+                        className="daily-plan-menu"
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape" && openMenuId === item.id) {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            e.currentTarget.querySelector<HTMLButtonElement>(".daily-plan-menu__toggle")?.focus();
+                          }
+                        }}
                       >
-                        Skip today
-                      </button>
-
-                      <button
-                        type="button"
-                        className="button button--ghost button--small"
-                        onClick={() => void deferItem(item.id)}
-                        aria-label={`Move ${item.title} to tomorrow`}
-                        aria-description="Your due date stays the same"
-                        title="Your due date stays the same"
-                      >
-                        Move to tomorrow
-                      </button>
+                        <button
+                          type="button"
+                          className="button button--ghost button--small daily-plan-menu__toggle"
+                          onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                          aria-expanded={openMenuId === item.id}
+                          aria-haspopup="true"
+                          aria-label={`More actions for ${item.title}`}
+                        >
+                          <span aria-hidden="true">&hellip;</span>
+                        </button>
+                        {openMenuId === item.id ? (
+                          <div className="daily-plan-menu__panel">
+                            <button
+                              type="button"
+                              className="button button--ghost button--small"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                void skipItem(item.id);
+                              }}
+                              aria-label={`Skip ${item.title} for today`}
+                              title="Exclude from today's suggestions; eligible again tomorrow"
+                            >
+                              Skip today
+                            </button>
+                            <button
+                              type="button"
+                              className="button button--ghost button--small"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                void deferItem(item.id);
+                              }}
+                              aria-label={`Move ${item.title} to tomorrow`}
+                              aria-description="Your due date stays the same"
+                              title="Your due date stays the same"
+                            >
+                              Move to tomorrow
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
 

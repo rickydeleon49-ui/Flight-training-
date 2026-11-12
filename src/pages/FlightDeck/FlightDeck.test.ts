@@ -35,6 +35,7 @@ if (typeof window !== "undefined") {
 
 beforeEach(() => {
   sessionStorage.clear();
+  localStorage.clear();
   repositoriesMock = null;
   appData = {
     ...EMPTY_DATA,
@@ -307,7 +308,7 @@ describe("FlightDeck and reminders bound homework actions", () => {
     expect(screen.getByText("1 item is waiting. Choose a realistic new time for one of them.")).toBeTruthy();
   });
 
-  it("surfaces ACS material coverage disclosure collapsed by default and handles study focus presence and absence", async () => {
+  it("folds study focus behind More on your plan, keeps ACS coverage off Home, and handles study focus presence and absence", async () => {
     // 1. When material has ACS tags and is in Study Focus
     const acsMaterial = makeMaterial({
       id: "mat-acs-1",
@@ -321,24 +322,18 @@ describe("FlightDeck and reminders bound homework actions", () => {
 
     render(h(MemoryRouter, null, h(FlightDeck)));
 
-    // Study focus card should be visible
+    // Study focus is folded behind "More on your plan" until it is opened.
+    const more = await screen.findByRole("button", { name: /More on your plan/ });
+    expect(more.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Study focus")).toBeNull();
+    fireEvent.click(more);
+    expect(more.getAttribute("aria-expanded")).toBe("true");
+    expect(localStorage.getItem("fd.home.morePlanOpen")).toBe("1");
     expect(await screen.findByText("Study focus")).toBeTruthy();
     expect(screen.getByText("Navigation Log Prep")).toBeTruthy();
 
-    // ACS Area Material Coverage panel should be visible
-    expect(screen.getByText("ACS Area Material Coverage")).toBeTruthy();
-    const summaryHeading = screen.getByText("See counts by ACS area");
-    expect(summaryHeading).toBeTruthy();
-
-    const details = document.querySelector("details.acs-area-material-coverage-details") as HTMLDetailsElement;
-    expect(details).toBeTruthy();
-    expect(details.open).toBe(false);
-
-    // Opening disclosure shows details
-    fireEvent.click(summaryHeading);
-    expect(details.open).toBe(true);
-    expect(screen.getByTestId("acs-coverage-explanation")).toBeTruthy();
-    expect(screen.getByTestId("acs-coverage-area-I")).toBeTruthy();
+    // The ACS coverage panel now lives in the Study Library, not on Home.
+    expect(screen.queryByText("ACS Area Material Coverage")).toBeNull();
 
     cleanup();
 
@@ -360,21 +355,12 @@ describe("FlightDeck and reminders bound homework actions", () => {
 
     render(h(MemoryRouter, null, h(FlightDeck)));
 
-    // Study focus is absent
+    // Study focus is absent (and with nothing to fold, the row is not shown)
+    expect(screen.queryByRole("button", { name: /More on your plan/ })).toBeNull();
     expect(await screen.findByText("Today's plan")).toBeTruthy();
     expect(screen.queryByText("Study focus")).toBeNull();
 
-    // But ACS Area Material Coverage panel is still visible and collapsed by default
-    expect(screen.getByText("ACS Area Material Coverage")).toBeTruthy();
-    const detailsNoFocus = document.querySelector("details.acs-area-material-coverage-details") as HTMLDetailsElement;
-    expect(detailsNoFocus).toBeTruthy();
-    expect(detailsNoFocus.open).toBe(false);
-
-    // Opening it still reveals the coverage data
-    const summaryNoFocus = screen.getByText("See counts by ACS area");
-    fireEvent.click(summaryNoFocus);
-    expect(detailsNoFocus.open).toBe(true);
-    expect(screen.getByTestId("acs-coverage-area-I")).toBeTruthy();
+    expect(screen.queryByText("ACS Area Material Coverage")).toBeNull();
   });
 
   describe("NextFlightCard preparation navigation and preservation", () => {
@@ -738,6 +724,10 @@ describe("FlightDeck and reminders bound homework actions", () => {
   });
 });
 
+const emptyReviewRepo = {
+  readReviewDue: async () => ({ materials: [], nextCursor: null, issues: [], summary: {} }),
+};
+
 describe("FlightDeck practice-test line", () => {
   const attempt = (id: string, completedAt: string, scorePercent: number) => ({
     id,
@@ -779,6 +769,7 @@ describe("FlightDeck practice-test line", () => {
 
   it("shows her recent average and links to the Study Library", async () => {
     repositoriesMock = {
+      cardLibrary: emptyReviewRepo,
       practiceSessions: {
         getRecentCompletedAttempts: vi.fn().mockResolvedValue([
           attempt("a6", "2026-10-19T15:00:00", 90),
@@ -796,10 +787,18 @@ describe("FlightDeck practice-test line", () => {
       name: "Your last 5 practice tests averaged 78%, up from 60%.",
     });
     expect(link.getAttribute("href")).toBe("/study");
+    // The number sits in Today's review as a progress row with the pass mark.
+    expect(screen.getByText("Written test practice")).toBeTruthy();
+    expect(screen.getByText("78%")).toBeTruthy();
+    expect(screen.getByText("Pass mark 70%")).toBeTruthy();
+    expect(screen.getByText("Checkride areas with study material")).toBeTruthy();
+    expect(screen.getByText("0 of 12")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "See the 12 open areas" }).getAttribute("href")).toBe("/study");
   });
 
   it("gently nudges when she has fewer than three recent attempts", async () => {
     repositoriesMock = {
+      cardLibrary: emptyReviewRepo,
       practiceSessions: {
         getRecentCompletedAttempts: vi.fn().mockResolvedValue([
           attempt("a1", "2026-10-19T15:00:00", 90),
