@@ -2,11 +2,12 @@ import { useState } from "react";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { backupErrorMessage } from "@/services/backups";
+import { SyncRow } from "./SyncRow";
 import { choosePhoneProgressFile, importPhoneProgress, phoneProgressSentence } from "@/services/phoneProgress";
 import { useAppData } from "@/state/AppDataContext";
 
 /** One button that brings in work done on the iPhone, from the file the phone saved. */
-export function GetPhoneProgressCard() {
+export function GetPhoneProgressCard({ variant = "card" }: { variant?: "card" | "row" } = {}) {
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -36,6 +37,20 @@ export function GetPhoneProgressCard() {
       setBusy(false);
     }
   };
+
+  if (variant === "row") {
+    return (
+      <SyncRow
+        title="Get progress from my iPhone"
+        headingId="get-phone-progress"
+        meta="On your iPhone, open Settings → Send my progress to the Mac, then choose that file."
+        action={<Button variant="ghost" onClick={bringIn} disabled={busy}>{busy ? "Bringing in…" : "Choose the file from my iPhone"}</Button>}
+      >
+        {line ? <p className="small" role="status">{line}</p> : null}
+        {problem ? <p className="small" role="alert">{problem}</p> : null}
+      </SyncRow>
+    );
+  }
 
   return (
     <Card variant="grouped">
