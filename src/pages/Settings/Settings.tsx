@@ -200,7 +200,7 @@ const JUMPS: Array<[string, string]> = [
   ["About you", "settings-about-you"],
   ["Where you train", "settings-where-you-train"],
   ["Why you started", "settings-why-you-started"],
-  ["Look and feel", "settings-look-and-feel"],
+  ["Look and feel", "settings-appearance"],
   ["Career starter pack", "settings-career-pack"],
   ["Backups and data", "settings-backups-summary"],
   ["About & legal", "settings-about-summary"],
@@ -1220,7 +1220,7 @@ export function Settings() {
                 appearance="switch"
                 strikethrough={false}
                 label="Glass bars"
-                meta="Frosted tab bar and top bar. Still being tested on iPhone."
+                meta="Frosted-glass top and bottom bars. Turn off if text is hard to read."
                 checked={appearance === "glass"}
                 onChange={(on) => chooseAppearance(on ? "glass" : "classic")}
               />

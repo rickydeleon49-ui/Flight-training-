@@ -79,8 +79,9 @@ describe("Appearance setting in Settings", () => {
 
     expect(glass.checked).toBe(false);
     expect(
-      screen.getByText("Frosted tab bar and top bar. Still being tested on iPhone."),
+      screen.getByText("Frosted-glass top and bottom bars. Turn off if text is hard to read."),
     ).toBeTruthy();
+    expect(screen.queryByText(/until it's tested|Still being tested/)).toBeNull();
   await expectNoA11yViolations(document.body);
   });
 
