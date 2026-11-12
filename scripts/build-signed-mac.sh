@@ -165,8 +165,14 @@ notarize() {
   local file="$1"
   echo "Submitting $(basename "$file") to Apple notarization (this can take several minutes)..."
   set +e
-  SUBMIT_JSON="$(xcrun notarytool submit "$file" "${NOTARY_AUTH[@]}" --wait --output-format json)"
+  # Apple's queue can take a while: wait at most HFD_NOTARY_TIMEOUT (default 90m) and print a
+  # heartbeat every minute so log-based stall watchers see progress.
+  ( while sleep 60; do echo "  still waiting for notarization of $(basename "$file")..."; done ) &
+  local heartbeat=$!
+  SUBMIT_JSON="$(xcrun notarytool submit "$file" "${NOTARY_AUTH[@]}" --wait --timeout "${HFD_NOTARY_TIMEOUT:-90m}" --output-format json)"
   submit_status=$?
+  kill "$heartbeat" 2>/dev/null
+  wait "$heartbeat" 2>/dev/null
   set -e
   SUBMISSION_ID="$(read_field id)"
   NOTARY_STATUS="$(read_field status)"
