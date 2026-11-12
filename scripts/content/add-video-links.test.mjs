@@ -203,15 +203,45 @@ test('--check reports a missing link', t => {
   assert.match(r.stdout, /missing:/);
 });
 
-test('refuses a material with no identity row', t => {
+test('refuses a material with no identity row and no stored file', t => {
   const { home, dir } = setup(t);
   const db = new DatabaseSync(dbFile(dir));
   db.prepare('DELETE FROM material_content_identities WHERE material_id = ?').run(M1);
   db.close();
   const r = cli(home, dir, manifest(home, [entry()]));
   assert.notEqual(r.status, 0);
-  assert.match(r.stderr, /open this chapter once in the app/);
+  assert.match(r.stderr, /No checksum/);
   assert.equal(links(dir).length, 0);
+});
+
+test('no identity row: uses the stored file sha256 (match adds, mismatch refuses)', t => {
+  const { home, dir } = setup(t);
+  mkdirSync(path.join(dir, 'documents'));
+  writeFileSync(path.join(dir, 'documents', 'one.pdf'), 'hello');
+  const sum = createHash('sha256').update('hello').digest('hex');
+  const db = new DatabaseSync(dbFile(dir));
+  db.prepare('DELETE FROM material_content_identities WHERE material_id = ?').run(M1);
+  db.prepare('UPDATE study_materials SET file_path = ? WHERE id = ?').run('one.pdf', M1);
+  db.close();
+  const bad = cli(home, dir, manifest(home, [entry()]));
+  assert.notEqual(bad.status, 0);
+  assert.match(bad.stderr, /Checksum mismatch/);
+  assert.equal(links(dir).length, 0);
+  const ok = cli(home, dir, manifest(home, [entry({ sourceChecksum: sum })]));
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.equal(links(dir).length, 2);
+});
+
+test('a recorded identity wins over the stored file', t => {
+  const { home, dir } = setup(t);
+  mkdirSync(path.join(dir, 'documents'));
+  writeFileSync(path.join(dir, 'documents', 'one.pdf'), 'hello');
+  const db = new DatabaseSync(dbFile(dir));
+  db.prepare('UPDATE study_materials SET file_path = ? WHERE id = ?').run('one.pdf', M1);
+  db.close();
+  const r = cli(home, dir, manifest(home, [entry({ sourceChecksum: createHash('sha256').update('hello').digest('hex') })]));
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /Checksum mismatch/);
 });
 
 test('--print-checksums hashes the real file and flags a mismatch', t => {
