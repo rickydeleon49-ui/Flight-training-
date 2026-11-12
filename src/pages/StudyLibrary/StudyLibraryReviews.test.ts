@@ -8,6 +8,7 @@
  * network.
  */
 import { createElement as h, StrictMode } from "react";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate, type NavigateFunction } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -132,6 +133,7 @@ beforeEach(async () => {
     this.removeAttribute("open");
   };
   localStorage.clear();
+  setFourRatingButtons(true); // these tests cover the four-button row
   db = await createNodeSqliteDatabase();
   await createRepositories(db).app.set("airline_starter_pack", "skipped-for-test");
   vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "", choice: "standard" });

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { isIOS } from "@/services/platform";
 import { ratingKeyHint } from "@/services/phoneCopy";
 import { Button } from "@/components/ui";
+import { getFourRatingButtons, ratingLabels, ratingOrder } from "@/lib/ratingButtons";
 import type { HomeworkCardRun, HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
 import type { CardReviewSnapshot, CardRating, CardItemAction } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
@@ -12,15 +13,6 @@ import "./homework.css";
 import { useSavedVisual } from "./useSavedVisual";
 import { useStickyCardHeight } from "./useStickyCardHeight";
 import { VisualPicture } from "./VisualPicture";
-
-const RATING_LABELS: Record<CardRating, string> = {
-  again: "Again",
-  hard: "Hard",
-  good: "Good",
-  easy: "Easy",
-};
-
-const RATING_ORDER: CardRating[] = ["again", "hard", "good", "easy"];
 
 export function HomeworkCardRun({
   snapshot,
@@ -39,6 +31,9 @@ export function HomeworkCardRun({
   reload: (intent?: { activityId?: string; headingId?: string }) => void;
   reopen: () => void;
 }) {
+  const [four] = useState(getFourRatingButtons);
+  const RATING_ORDER = ratingOrder(four);
+  const RATING_LABELS = ratingLabels(four);
   const [cards, setCards] = useState<CardReviewSnapshot | null>(null);
   const [queue, setQueue] = useState<string[]>([]);
   const [revealed, setRevealed] = useState(false);
@@ -295,7 +290,7 @@ export function HomeworkCardRun({
     }
     const index = ["1", "2", "3", "4"].indexOf(event.key);
     if (index >= 0) {
-      if (!revealed) {
+      if (!revealed || index >= RATING_ORDER.length) {
         return;
       }
       event.preventDefault();
@@ -394,7 +389,7 @@ export function HomeworkCardRun({
                           </Button>
                         ))}
                       </div>
-                      {ratingKeyHint(isIOS(), true) ? <p className="tiny dim">{ratingKeyHint(isIOS(), true)}</p> : null}
+                      {ratingKeyHint(isIOS(), true, four) ? <p className="tiny dim">{ratingKeyHint(isIOS(), true, four)}</p> : null}
                     </>
                   ) : !item.visualRegionId ? (
                     <div>

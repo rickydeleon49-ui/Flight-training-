@@ -6,6 +6,7 @@
  * profile, provider, Gemini call or network.
  */
 import { createElement as h, StrictMode } from "react";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -124,6 +125,7 @@ async function revealAndRate(rating: "Again" | "Hard" | "Good" | "Easy") {
 }
 
 beforeEach(async () => {
+  setFourRatingButtons(true); // these tests cover the four-button row
   unhandled = [];
   process.on("unhandledRejection", onUnhandled);
   vi.useFakeTimers({ toFake: ["Date"] });

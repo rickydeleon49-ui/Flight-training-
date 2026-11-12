@@ -1,18 +1,20 @@
 // @vitest-environment jsdom
 import { createElement as h, act } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { validateHomeworkSnapshot, type HomeworkOperation, type HomeworkCardRun as HomeworkCardRunType } from "@/domain/homework";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import type { CardRating } from "@/domain/types";
 import { cardVersion } from "@/logic/cardIdentity";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { HomeworkCardRun } from "./HomeworkCardRun";
 
 const F = JSON.parse(
   readFileSync("src-tauri/fixtures/homework-validation/cases.json", "utf8"),
 ) as { operations: Record<string, HomeworkOperation> };
 
+beforeEach(() => setFourRatingButtons(true)); // these tests cover the four-button row
 afterEach(cleanup);
 
 async function setup(key = "card_create", empty = false) {
@@ -550,4 +552,20 @@ it("displays completed state when run is finished using canonical card_finished"
   expect(screen.queryByLabelText(/Card review session/i)).toBeNull();
   const status = await screen.findByRole("status");
   expect(status.textContent).toMatch(/2 card ratings saved/);
+});
+
+it("shows Again and Got it by default; Got it saves the Good rating, keys 3-4 do nothing", async () => {
+  setFourRatingButtons(false);
+  const { saveAction } = await setup("card_partial");
+  await screen.findByText("Two");
+  const region = screen.getByLabelText(/Card review session/i);
+  fireEvent.keyDown(region, { key: "Enter" });
+  await screen.findByText("Second");
+  const group = screen.getByRole("group", { name: "Rate this card" });
+  expect(Array.from(group.querySelectorAll("button")).map((b) => b.textContent)).toEqual(["Again", "Got it"]);
+  fireEvent.keyDown(region, { key: "4" });
+  expect(saveAction).not.toHaveBeenCalled();
+  fireEvent.keyDown(region, { key: "2" });
+  await waitFor(() => expect(saveAction).toHaveBeenCalledTimes(1));
+  expect(JSON.stringify(saveAction.mock.calls[0]![0])).toContain('"good"');
 });

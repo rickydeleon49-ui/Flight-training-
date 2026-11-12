@@ -38,6 +38,7 @@ import {
   getStoredAppearance,
   setStoredAppearance,
 } from "@/lib/appearance";
+import { getFourRatingButtons, setFourRatingButtons } from "@/lib/ratingButtons";
 import { applyTheme, getStoredTheme, setStoredTheme, type ThemeChoice } from "@/lib/theme";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
@@ -214,6 +215,7 @@ export function Settings() {
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   // Already applied at startup (main.tsx); this only reflects the saved choice.
   const [appearance, setAppearance] = useState<Appearance>(getStoredAppearance);
+  const [fourRatings, setFourRatings] = useState(getFourRatingButtons);
   const [theme, setTheme] = useState<ThemeChoice>(getStoredTheme);
   const [saved, setSaved] = useState(false);
   const [confirmGeminiDisconnect, setConfirmGeminiDisconnect] = useState(false);
@@ -964,6 +966,17 @@ export function Settings() {
                 meta={appearance === "glass" ? "Frosted-glass top and bottom bars." : "Plain bars. Turn on for frosted glass."}
                 checked={appearance === "glass"}
                 onChange={(on) => chooseAppearance(on ? "glass" : "classic")}
+              />
+              <Checkbox
+                appearance="switch"
+                strikethrough={false}
+                label="Show Hard and Easy buttons"
+                meta={fourRatings ? "Flashcards show Again, Hard, Good and Easy." : "Flashcards show Again and Got it. Turn on for four buttons."}
+                checked={fourRatings}
+                onChange={(on) => {
+                  setFourRatings(on);
+                  setFourRatingButtons(on);
+                }}
               />
             </div>
           </CardBody>

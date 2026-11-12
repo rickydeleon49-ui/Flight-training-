@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -89,6 +90,7 @@ vi.mock("@/state/navigation/useDocumentNavigation", () => ({
 let originalScrollIntoView: typeof Element.prototype.scrollIntoView;
 
 beforeEach(async () => {
+  setFourRatingButtons(true); // these tests cover the four-button row
   originalScrollIntoView = Element.prototype.scrollIntoView;
   Element.prototype.scrollIntoView = vi.fn();
 });

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { afterEach, beforeEach, it, expect, vi } from "vitest";
@@ -28,6 +29,7 @@ const picture = {
   url: `data:image/png;base64,${bytes.toString("base64")}`,
 };
 beforeEach(async () => {
+  setFourRatingButtons(true); // these tests cover the four-button row
   db = await createNodeSqliteDatabase();
   const r = createRepositories(db);
   await r.app.set("airline_starter_pack", "skipped-for-test");

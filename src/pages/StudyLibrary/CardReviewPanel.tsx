@@ -17,6 +17,7 @@ import { ReadAloudButton } from "@/components/ReadAloudButton";
 import type { AiStudySet, CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
+import { getFourRatingButtons, ratingLabels, ratingOrder } from "@/lib/ratingButtons";
 import { AppDataContext } from "@/state/AppDataContext";
 import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 import { reviewButtonLabel, reviewStatusLine } from "@/logic/cardReviewStatus";
@@ -42,8 +43,6 @@ export const MALFORMED_CARDS_MESSAGE =
 export const READ_FAILURE_MESSAGE = "Card reviews couldn't be loaded just now. Your cards are still here to browse.";
 export const RATING_NOT_A_SCORE = "Your rating only decides when this card comes back. It isn't a score.";
 
-const RATING_LABELS: Record<CardRating, string> = { again: "Again", hard: "Hard", good: "Good", easy: "Easy" };
-const RATING_ORDER: CardRating[] = ["again", "hard", "good", "easy"];
 const FLAG_LABELS: Record<CardFlagReason, string> = {
   wrong_answer: "Wrong answer",
   unclear: "Unclear",
@@ -417,6 +416,9 @@ export function SessionView({
   const item = shown ? items.find((candidate) => candidate.itemId === shown.itemId) : undefined;
   const visual = useSavedVisual(materialId, item?.visualRegionId);
   const [whole, setWhole] = useState<string | null>(null);
+  const [four] = useState(getFourRatingButtons);
+  const RATING_ORDER = ratingOrder(four);
+  const RATING_LABELS = ratingLabels(four);
   const visualReady = !item?.visualRegionId || Boolean(visual.loaded);
   const appData = useContext(AppDataContext);
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
@@ -499,7 +501,7 @@ export function SessionView({
       return;
     }
     const index = ["1", "2", "3", "4"].indexOf(event.key);
-    if (review.revealed && index >= 0) {
+    if (review.revealed && index >= 0 && index < RATING_ORDER.length) {
       event.preventDefault();
       rate(RATING_ORDER[index]!);
     }
@@ -598,7 +600,7 @@ export function SessionView({
               </Button>
             ))}
           </div>
-          {ratingKeyHint(isIOS(), false) ? <p className="tiny dim">{ratingKeyHint(isIOS(), false)}</p> : null}
+          {ratingKeyHint(isIOS(), false, four) ? <p className="tiny dim">{ratingKeyHint(isIOS(), false, four)}</p> : null}
           {!item.visualRegionId ? (
             <AskGeminiPanel
               materialId={materialId}
@@ -726,7 +728,7 @@ function RecentReviews({ review, zone }: { review: CardReviewController; zone: s
       <ul className="card-review__list">
         {rows.map((row) => (
           <li key={row.id} className="small">
-            <span>{row.front}</span> <span className="dim">· {RATING_LABELS[row.rating]} · {format.format(new Date(row.reviewedAt))}</span>
+            <span>{row.front}</span> <span className="dim">· {ratingLabels(true)[row.rating]} · {format.format(new Date(row.reviewedAt))}</span>
             {row.earlierVersion ? <span className="tiny dim"> · earlier version of these cards</span> : null}
           </li>
         ))}

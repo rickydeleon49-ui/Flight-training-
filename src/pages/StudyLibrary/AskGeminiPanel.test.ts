@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
+import { setFourRatingButtons } from "@/lib/ratingButtons";
 import { act, cleanup, fireEvent, render as baseRender, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -68,7 +69,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
   beforeEach(async () => {
     localStorage.clear();
-    vi.clearAllMocks();
+      vi.clearAllMocks();
     db = await createNodeSqliteDatabase();
     repos = createRepositories(db);
     await repos.documents.create({ id: sampleTest.sourceMaterialId, title: sampleTest.title });
@@ -845,6 +846,7 @@ describe("AskGeminiPanel request progress and cancellation", () => {
 describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
   beforeEach(async () => {
     localStorage.clear();
+    setFourRatingButtons(true); // these tests cover the four-button row
     vi.clearAllMocks();
     db = await createNodeSqliteDatabase();
     repos = createRepositories(db);
