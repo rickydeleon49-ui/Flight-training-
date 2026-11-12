@@ -28,6 +28,8 @@ import { focusRenderedAction } from "./startAction";
 import "./dailyPlan.css";
 
 interface DailyPlanCardProps {
+  /** The screen already has its one filled button; show the first Start as a secondary one. */
+  quietStart?: boolean;
   /** Fixed local date for tests; the live card follows the local clock. */
   customToday?: string;
   /**
@@ -104,7 +106,7 @@ function getSuggestedActionDetails(candidate: StudyFlowCandidate, isFirst: boole
   return { buttonText, ariaLabel };
 }
 
-export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps) {
+export function DailyPlanCard({ customToday, onStartAction, quietStart = false }: DailyPlanCardProps) {
   const liveToday = useLocalToday();
   const today = customToday ?? liveToday;
   const {
@@ -366,7 +368,7 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
               const isWhyOpen = openWhyId === item.id;
               const isFirst = index === 0;
               const { buttonText, ariaLabel } = getSuggestedActionDetails(candidate, isFirst);
-              const primaryBtnClass = isFirst
+              const primaryBtnClass = isFirst && !quietStart
                 ? "button button--primary daily-plan-item__action-primary"
                 : "button button--secondary button--small";
 
