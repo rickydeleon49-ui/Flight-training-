@@ -4,6 +4,8 @@ export const CLAUDE_MESSAGES: Readonly<Record<string, string>> = {
   "Gemini could not finish this section.": "Claude could not finish this section.",
   "Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.": "Ask Claude a question about this PDF. It answers from the pages and shows which pages it used.",
   "Ask Gemini for a study guide from this file, then review and save the draft on this Mac.": "Ask Claude for a study guide from this file, then review and save the draft on this Mac.",
+  "Ask Gemini for a study guide from this file, then review and save the draft on this computer.": "Ask Claude for a study guide from this file, then review and save the draft on this computer.",
+  "Ask Gemini for a study guide from this file, then review and save the draft on this phone.": "Ask Claude for a study guide from this file, then review and save the draft on this phone.",
   "Attach a study file before asking Gemini.": "Attach a study file before asking Claude.",
   "Cancelled before anything was sent to Google. Nothing was saved.": "Cancelled before anything was sent to Anthropic. Nothing was saved.",
   "Cancelling did not go through, so Gemini is still working on it. Try Cancel again.": "Cancelling did not go through, so Claude is still working on it. Try Cancel again.",

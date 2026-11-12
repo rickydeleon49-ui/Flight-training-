@@ -11,6 +11,13 @@ it("labels Claude and preserves historical model labels",()=>{
   const kept = "This draft was started with Gemini. Use Gemini in Settings to continue it.";
   expect(providerWording(kept, "claude-haiku-5-5")).toBe(kept);
 });
+it("translates the computer and phone study-guide prompts for Claude",()=>{
+  const computer="Ask Gemini for a study guide from this file, then review and save the draft on this computer.";
+  const phone="Ask Gemini for a study guide from this file, then review and save the draft on this phone.";
+  expect(providerWording(computer,"claude-haiku-5-5")).toBe(computer.replace("Gemini","Claude"));
+  expect(providerWording(phone,"claude-haiku-5-5")).toBe(phone.replace("Gemini","Claude"));
+  expect(providerWording(computer,"gemini-3.5-flash")).toBe(computer);
+});
 it("names Anthropic and its retention in the send confirmation",()=>{
   const company=providerCompany("claude-haiku-5-5");
   expect(`Send this file to ${company}?`).toBe("Send this file to Anthropic?");
