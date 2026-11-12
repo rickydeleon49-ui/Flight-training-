@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Unsaved answers and paging on the Questions page, through the real page,
+ * Unsaved answers and paging on the Ask my instructor page, through the real page,
  * AppDataProvider and SQLite. Order is deterministic: rows are listed newest
  * first by `created_at`, and fixtures set it explicitly.
  *
@@ -113,7 +113,7 @@ function startAnswer(text: string, typed: string) {
 const draftIn = (text: string) =>
   (rowFor(text) ? within(rowFor(text)!).queryByLabelText("Answer") as HTMLTextAreaElement | null : null)?.value;
 
-describe("unsaved answers on the Questions page", () => {
+describe("unsaved answers on the Ask my instructor page", () => {
   it("keep a draft when a new question pushes its row off the page, and restore it after Show more", async () => {
     await seed(QUESTION_PAGE_SIZE + 1); // q-100 newest … q-1 is the 100th row, q-0 the 101st
     await open();
@@ -477,4 +477,41 @@ describe("paging resets on every real filter change", () => {
     fireEvent.click(screen.getByRole("button", { name: "Everything" }));
     expect(rows()).toBe(200);
   }, LONG_LIST_TIMEOUT_MS);
+});
+
+describe("editing a saved question's own wording", () => {
+  it("saves the new question text with the answer, and will not save it empty", async () => {
+    await seed(2);
+    await open();
+    startAnswer("Question 1", "Kept answer");
+    const row = rowFor("Question 1")!;
+    const field = within(row).getByLabelText("Question");
+    fireEvent.change(field, { target: { value: "   " } });
+    expect((within(row).getByRole("button", { name: "Save answer" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(field, { target: { value: "Reworded question" } });
+    await act(async () => {
+      fireEvent.click(within(row).getByRole("button", { name: "Save answer" }));
+    });
+    await waitFor(async () => expect((await repos.questions.get("q-1"))?.text).toBe("Reworded question"));
+    expect((await repos.questions.get("q-1"))?.answer).toBe("Kept answer");
+    expect(await screen.findByText("Reworded question")).toBeTruthy();
+  });
+});
+
+describe("Save question button", () => {
+  it("is disabled while the question is empty and enabled once there is text", async () => {
+    await open();
+    const save = screen.getByRole("button", { name: "Save question" }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Why flaps?" } });
+    expect(save.disabled).toBe(false);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "  " } });
+    expect(save.disabled).toBe(true);
+  });
+
+  it("has a flat dark-theme disabled style in the shared button css", async () => {
+    const { readFileSync } = await import("node:fs");
+    const css = readFileSync("src/components/ui/ui.css", "utf8");
+    expect(css).toMatch(/data-theme="dark"\] \.button--primary:disabled/);
+  });
 });

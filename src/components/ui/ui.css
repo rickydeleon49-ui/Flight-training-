@@ -167,6 +167,21 @@ a.list-row:active, button.list-row:active { background: var(--surface-sunken); }
 
 .button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Dark theme: a bright accent at half opacity still looks pressable, so a
+   disabled primary button drops to a flat, muted fill. Light is unchanged. */
+:root[data-theme="dark"] .button--primary:disabled {
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .button--primary:disabled {
+    background: var(--surface-sunken);
+    color: var(--text-secondary);
+    border-color: var(--border-strong);
+  }
+}
+
 /* Main actions and tabs get a 15 px label; every full-size button is a
    44 px target. Small buttons stay compact for dense rows. */
 .button--primary {

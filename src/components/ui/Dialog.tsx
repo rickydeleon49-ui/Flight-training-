@@ -68,6 +68,9 @@ export function Dialog({
         tabIndex={modal.fallback ? -1 : undefined}
         style={modal.fallback ? { zIndex: modal.zIndex } : undefined}
         onCancel={(event) => {
+          // React passes a nested dialog's cancel up to this one; Escape closes
+          // only the dialog on top.
+          if (event.target !== event.currentTarget) return;
           // Keep the native dialog visible until the owner confirms the close.
           // An async cleanup can fail, in which case the error remains visible.
           event.preventDefault();
