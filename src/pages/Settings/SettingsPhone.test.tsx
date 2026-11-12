@@ -45,6 +45,12 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   expect(Boolean(screen.queryByRole("heading", { name: "Send to my iPhone" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Get progress from my iPhone" }))).toBe(!phone);
   expect(document.querySelector(".stack.stack--5 > .card h2")?.textContent).toBe("AI helper");
+  const firstJump = document.querySelector(".settings-jumps__link");
+  expect(firstJump?.textContent).toBe("AI helper");
+  expect(firstJump?.getAttribute("href")).toBe("#ai-provider");
+  const lookChip = Array.from(document.querySelectorAll(".settings-jumps__link")).find((a) => a.textContent === "Look and feel");
+  expect(lookChip?.getAttribute("href")).toBe("#settings-appearance");
+  expect(document.getElementById("settings-appearance")).toBeTruthy();
   if (phone) {
     expect(document.body.textContent).not.toMatch(/sync|manifest|archive/i);
     for (const name of ["Save complete backup", "Restore backup", "Open folder"]) {
