@@ -136,3 +136,20 @@ it("on the phone the More menu saves a handout or cards without an ellipsis", as
     expect(screen.queryByRole("button", { name: "Export handout or cards…" })).toBeNull();
   } finally { spy.mockRestore(); }
 });
+
+it("the More menu closes on Esc and on a click outside it", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false, sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, sendPhoneProgress: true, pictureFromPhoto: true, renderPdfPage: false });
+  try {
+    open();
+    const menu = screen.getByText("More").closest("details") as HTMLDetailsElement;
+    menu.open = true;
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(menu.open).toBe(false);
+    menu.open = true;
+    fireEvent.pointerDown(menu.querySelector("summary")!);
+    expect(menu.open).toBe(true);
+    fireEvent.pointerDown(document.body);
+    expect(menu.open).toBe(false);
+  } finally { spy.mockRestore(); }
+});

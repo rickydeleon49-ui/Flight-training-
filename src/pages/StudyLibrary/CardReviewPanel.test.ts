@@ -166,6 +166,7 @@ it("reads only card fronts, preserves reveal and rating keys, and stops on navig
   for (const key of [" ", "Enter"]) expect(fireEvent.keyDown(read, { key })).toBe(true);
   fireEvent.click(read, { detail: 0 });
   expect(speak.mock.lastCall![0].text).toBe(CARDS[0]!.front);
+  expect(sessionRegion().getByText(/Cards from this book only/)).toBeTruthy();
   expect(sessionRegion().queryByText(CARDS[0]!.back)).toBeNull();
   fireEvent.keyDown(screen.getByRole("heading", { name: "Card 1 of 3 · new" }), { key: " " });
   expect(sessionRegion().getByText(CARDS[0]!.back)).toBeTruthy();

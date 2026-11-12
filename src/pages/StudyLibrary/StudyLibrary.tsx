@@ -237,6 +237,25 @@ export function StudyLibrary() {
   const searchBox = useRef<HTMLInputElement>(null);
   const searchJustFocused = useRef(false);
   const moreMenu = useRef<HTMLDetailsElement>(null);
+  // Esc or a click outside closes the open "More" menu.
+  useEffect(() => {
+    const menu = moreMenu.current;
+    if (!menu) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !menu.open) return;
+      menu.open = false;
+      menu.querySelector("summary")?.focus();
+    };
+    const onPointer = (event: Event) => {
+      if (menu.open && event.target instanceof Node && !menu.contains(event.target)) menu.open = false;
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  });
   const fromMoreMenu = (open: () => void) => () => {
     if (moreMenu.current) moreMenu.current.open = false;
     open();

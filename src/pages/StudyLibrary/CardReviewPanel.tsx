@@ -557,6 +557,9 @@ export function SessionView({
       >
         <span style={{ width: `${total > 0 ? Math.min(100, Math.round((number / total) * 100)) : 0}%` }} />
       </div>
+      {!progress && !session.extra ? (
+        <p className="tiny dim">Cards from this book only.</p>
+      ) : null}
       {!item.visualRegionId || item.pageSource ? (
         <div className="row" style={{ justifyContent: "flex-end" }}>
           <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
