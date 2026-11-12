@@ -1228,12 +1228,19 @@ export function Settings() {
         </Card>
 
 
-        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
-        {deviceCan().sendToIphone ? <SendChangesToIphoneCard /> : null}
-        {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
-        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
-        {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
-        {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
+        {deviceCan().sendToIphone || deviceCan().getPhoneProgress || deviceCan().getStudyMaterial || deviceCan().sendPhoneProgress ? (
+          <Card variant="grouped">
+            <CardHeader title="iPhone and Mac" headingId="settings-iphone-mac" eyebrow="Study on the go" />
+            <CardBody>
+              {deviceCan().sendToIphone ? <SendToIphoneCard variant="row" repositories={repositories} /> : null}
+              {deviceCan().sendToIphone ? <SendChangesToIphoneCard variant="row" /> : null}
+              {deviceCan().getPhoneProgress ? <GetPhoneProgressCard variant="row" /> : null}
+              {deviceCan().getStudyMaterial ? <GetStudyMaterialCard variant="row" /> : null}
+              {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard variant="row" /> : null}
+              {deviceCan().sendPhoneProgress ? <PhoneProgressCard variant="row" /> : null}
+            </CardBody>
+          </Card>
+        ) : null}
 
         <Card variant="grouped">
           <CardHeader title="Career starter pack" headingId="settings-career-pack" eyebrow="Built-in guidance" />

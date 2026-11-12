@@ -140,3 +140,12 @@ details.material-fold > summary {
 .settings-gap-3 { gap: var(--space-3); }
 .settings-stack-top { margin-top: var(--space-3); }
 .settings-focus-result { outline: none; }
+
+/* "iPhone and Mac" group: one card, one quiet row per sync action. */
+.sync-row { display: grid; gap: var(--space-2); padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); }
+.sync-row:first-child { border-top: 0; }
+.sync-row__main { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; flex-wrap: wrap; }
+.sync-row__text { flex: 1; min-width: 12rem; }
+.sync-row__title { margin: 0; font-size: 1rem; font-weight: 600; }
+.sync-row__meta { margin: 0; }
+.sync-row .button { min-height: 44px; }

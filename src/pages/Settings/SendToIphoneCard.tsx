@@ -4,6 +4,7 @@ import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import type { LastIphoneSend } from "@/data/repositories/appRepository";
 import type { Repositories } from "@/data/repositories";
 import { backupErrorMessage, formatBytes } from "@/services/backups";
+import { SyncRow } from "./SyncRow";
 import { revealIphoneBackup, sendToIphone } from "@/services/iphone";
 
 const formatSentDate = (iso: string): string => {
@@ -13,7 +14,7 @@ const formatSentDate = (iso: string): string => {
 };
 
 /** One button that saves a copy the student's iPhone can open from the Files app. */
-export function SendToIphoneCard({ repositories }: { repositories: Repositories | null }) {
+export function SendToIphoneCard({ repositories, variant = "card" }: { repositories: Repositories | null; variant?: "card" | "row" }) {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<LastIphoneSend | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -55,6 +56,33 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
       setProblem(backupErrorMessage(error, "Finder could not show that file."));
     }
   };
+
+  if (variant === "row") {
+    return (
+      <SyncRow
+        title="Send to my iPhone"
+        headingId="send-to-iphone"
+        meta={last ? `Saved for your iPhone · ${formatBytes(last.bytes)} · ${formatSentDate(last.at)}` : "A full copy for the Files app."}
+        action={<Button variant="ghost" onClick={send} disabled={busy}>{busy ? "Saving…" : "Send to my iPhone"}</Button>}
+      >
+        {last && viaICloud ? (
+          <p className="small">
+            On your iPhone, open Files → iCloud Drive → Her Flight Deck and tap the newest file.
+            Your Flight Deck opens it and asks before replacing anything. A big file can take
+            several minutes to arrive on Wi-Fi. If it isn't there yet, wait and look again.
+          </p>
+        ) : null}
+        {last && !viaICloud ? (
+          <p className="small">
+            iCloud Drive isn't on for this Mac, so the file was saved where you chose. AirDrop it
+            to your iPhone from Finder.
+          </p>
+        ) : null}
+        {last && viaICloud ? <p className="small"><Button size="small" onClick={showInFinder}>Show in Finder</Button></p> : null}
+        {problem ? <p className="small" role="alert">{problem}</p> : null}
+      </SyncRow>
+    );
+  }
 
   return (
     <Card variant="grouped">

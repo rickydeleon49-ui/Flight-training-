@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { backupErrorMessage, formatBytes } from "@/services/backups";
+import { SyncRow } from "./SyncRow";
 import { macChangesCounts, sendChangesToIphone, type SentMacChanges } from "@/services/iphone";
 
 /** The sentence after a send: what is in the file, and where it is. */
@@ -15,7 +16,7 @@ export function sentChangesSentence(sent: SentMacChanges, viaICloud: boolean): s
 }
 
 /** After the first full copy: one button that saves only what changed on this Mac since. */
-export function SendChangesToIphoneCard() {
+export function SendChangesToIphoneCard({ variant = "card" }: { variant?: "card" | "row" } = {}) {
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -34,6 +35,20 @@ export function SendChangesToIphoneCard() {
       setBusy(false);
     }
   };
+
+  if (variant === "row") {
+    return (
+      <SyncRow
+        title="Send changes to my iPhone"
+        headingId="send-changes-to-iphone"
+        meta="Only what changed on this Mac since your last full copy."
+        action={<Button variant="ghost" onClick={send} disabled={busy}>{busy ? "Saving…" : "Send changes to my iPhone"}</Button>}
+      >
+        {line ? <p className="small" role="status">{line}</p> : null}
+        {problem ? <p className="small" role="alert">{problem}</p> : null}
+      </SyncRow>
+    );
+  }
 
   return (
     <Card variant="grouped">

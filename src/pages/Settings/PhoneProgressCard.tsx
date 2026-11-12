@@ -5,9 +5,10 @@ import {
   backupErrorMessage, savedPhoneWorkSentence, savePhoneWork, unsavedPhoneWork,
   unsavedPhoneWorkCounts, unsavedPhoneWorkTotal, type UnsavedPhoneWork,
 } from "@/services/backups";
+import { SyncRow } from "./SyncRow";
 import { sendPhoneProgress, sentPhoneProgressSentence } from "@/services/phoneProgress";
 
-export function PhoneProgressCard() {
+export function PhoneProgressCard({ variant = "card" }: { variant?: "card" | "row" } = {}) {
   const [work, setWork] = useState<UnsavedPhoneWork | null>(null);
   const [checkProblem, setCheckProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "send" | "save">(null);
@@ -52,6 +53,33 @@ export function PhoneProgressCard() {
   );
 
   const counts = work ? unsavedPhoneWorkCounts(work) : null;
+  if (variant === "row") {
+    const meta = checkProblem ? null : work
+      ? (unsavedPhoneWorkTotal(work) > 0 && counts
+        ? `This phone has ${counts} that ${unsavedPhoneWorkTotal(work) === 1 ? "isn't" : "aren't"} saved anywhere else yet.`
+        : "Everything you did on this phone is saved.")
+      : null;
+    return (
+      <>
+        <SyncRow
+          title="Send my progress to the Mac"
+          headingId="phone-progress"
+          meta={meta}
+          action={<Button variant="ghost" disabled={busy !== null} onClick={send}>{busy === "send" ? "Sending…" : "Send my progress to the Mac"}</Button>}
+        >
+          {checkProblem ? <p className="small" role="alert">{checkProblem}</p> : null}
+          <p role="status" className="live-region">{statusLine}</p>
+          {problem ? <p className="small" role="alert">{problem}</p> : null}
+        </SyncRow>
+        <SyncRow
+          title="Save a full copy"
+          meta="Everything on this phone, for safekeeping."
+          action={<Button variant="ghost" disabled={busy !== null} onClick={saveCopy}>{busy === "save" ? "Saving…" : "Save a full copy instead"}</Button>}
+        />
+      </>
+    );
+  }
+
   return (
     <Card variant="grouped">
       <CardHeader title="Send my progress to the Mac" eyebrow="What you did on this phone" headingId="phone-progress" />

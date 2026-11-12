@@ -7,6 +7,7 @@ import {
   unsavedPhoneWork, unsavedPhoneWorkSentence, unsavedPhoneWorkTotal,
   type ActivitySummary, type CompleteBackupInfo, type UnsavedPhoneWork,
 } from "@/services/backups";
+import { SyncRow } from "./SyncRow";
 import { fileCount } from "@/logic/dataSafety";
 import { isIOS } from "@/services/platform";
 
@@ -27,7 +28,7 @@ function activitySentence(activity: ActivitySummary): string {
   return `${last}; ${parts.join(" and ")} this week, across all your card sets and tests, will be replaced.`;
 }
 
-export function GetStudyMaterialCard() {
+export function GetStudyMaterialCard({ variant = "card" }: { variant?: "card" | "row" } = {}) {
   const [preview, setPreview] = useState<{ info: CompleteBackupInfo; activity: ActivitySummary; unsaved: UnsavedPhoneWork | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<"opening" | "copying" | null>(null);
@@ -105,14 +106,31 @@ export function GetStudyMaterialCard() {
     setStaged(true);
   }, "copying");
 
+  const stagedLine = ios
+    ? "Close Your Flight Deck (swipe it away) and open it again to see your study material."
+    : "All set. Your Flight Deck will close now; open it again and your study material is there.";
+
   return (
     <>
+      {variant === "row" ? (
+        <SyncRow
+          title={staged ? "All set" : "Get my study material"}
+          meta={staged ? null : "Replaces this phone's study material with the copy from your Mac."}
+          action={staged ? null : (
+            <Button variant="ghost" disabled={busy || preview !== null} onClick={pick}>
+              {busy ? "Opening…" : "Get my study material"}
+            </Button>
+          )}
+        >
+          <p role="status" className="live-region">{staged ? stagedLine : null}</p>
+          {progress === "opening" ? <WorkStatus className="" phase="Opening your file…" elapsed={elapsed} /> : null}
+          {!preview && problem ? <p role="alert">{problem}</p> : null}
+        </SyncRow>
+      ) : (
       <Card variant="grouped">
         <CardHeader title={staged ? "All set" : "Get my study material"} eyebrow="Study on the go" />
         <CardBody>
-          <p role="status" className="live-region">{staged ? (ios
-            ? "Close Your Flight Deck (swipe it away) and open it again to see your study material."
-            : "All set. Your Flight Deck will close now; open it again and your study material is there.") : null}</p>
+          <p role="status" className="live-region">{staged ? stagedLine : null}</p>
           {staged ? null : (
             <Button variant="primary" disabled={busy || preview !== null} onClick={pick}>
               {busy ? "Opening…" : "Get my study material"}
@@ -122,6 +140,7 @@ export function GetStudyMaterialCard() {
           {!preview && problem ? <p role="alert">{problem}</p> : null}
         </CardBody>
       </Card>
+      )}
       <Dialog
         open={preview !== null}
         title="Replace what's on this phone?"
