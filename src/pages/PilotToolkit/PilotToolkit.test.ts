@@ -250,3 +250,26 @@ it("opens on Checkride for an unknown ?tool= value", () => {
   render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=nope"] }, h(PilotToolkit)));
   expect(screen.getByRole("tab", { name: "Checkride" }).getAttribute("aria-selected")).toBe("true");
 });
+
+describe("Knowledge quiz history", () => {
+  it("says which list it shows, since material practice tests are counted elsewhere", () => {
+    render(h(MemoryRouter, null, h(PilotToolkit)));
+    fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
+    expect(screen.getByText(/No knowledge quiz attempts yet\./)).toBeTruthy();
+    expect(screen.getByText(/Practice tests on your study materials are kept in the Study Library/)).toBeTruthy();
+  });
+
+  it("lists a saved quiz attempt in Recent results", () => {
+    data = {
+      ...data,
+      toolkit: {
+        ...data.toolkit,
+        quizAttempts: [{ id: "a1", date: "2026-11-10T10:00:00Z", score: 6, total: 8, weakTopics: [] }],
+      },
+    } as unknown as AppData;
+    render(h(MemoryRouter, null, h(PilotToolkit)));
+    fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
+    expect(screen.getByText("6/8")).toBeTruthy();
+    expect(screen.queryByText(/No knowledge quiz attempts yet/)).toBeNull();
+  });
+});

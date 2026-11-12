@@ -1154,7 +1154,10 @@ function QuizTool({ state, save }: ToolProps) {
                 ))}
               </div>
             ) : (
-              <p className="small muted">No attempts yet.</p>
+              <p className="small muted">
+                No knowledge quiz attempts yet. Practice tests on your study
+                materials are kept in the Study Library.
+              </p>
             )}
           </CardBody>
         </Card>
