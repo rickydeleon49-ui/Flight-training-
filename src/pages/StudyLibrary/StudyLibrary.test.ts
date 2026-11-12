@@ -269,7 +269,8 @@ it("LIBRARY-CALM-01 shows her materials first and folds FAA references and the A
   expect(shelf.tagName).toBe("DETAILS");
   expect(shelf.open).toBe(false);
   const grid = screen.getByText("Material 0").closest(".material-grid")!;
-  expect(grid.compareDocumentPosition(screen.getByRole("button", { name: "Practice by checkride topic" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Practice test" }));
+  expect(screen.getByRole("button", { name: "Practice by checkride topic" })).toBeTruthy();
   expect(grid.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(shelf.contains(screen.getByRole("heading", { name: "FAA references" }))).toBe(true);
   expect(shelf.contains(screen.getByText("Find study materials for missed topics"))).toBe(true);
@@ -324,7 +325,24 @@ it("POLISH-04 search: focus selects the remembered words so typing replaces them
   expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
 });
 
-it("shows a plainly labelled Practice test link that opens the Pilot Toolkit quizzes", () => {
+it("Practice test opens a picker listing only materials with a saved test, sorted, linking to the test", () => {
+  const test = (id: string, n: number) => ({ sourceMaterialId: id, title: id, provider: "manual", model: "",
+    generatedAt: "2026-10-31T00:00:00Z", updatedAt: "2026-10-31T00:00:00Z",
+    questions: Array.from({ length: n }, (_, i) => ({ question: `Q${i}`, options: ["a", "b", "c"], correctIndex: 0, explanation: "", sourcePage: null })) });
+  data = { ...data, practiceTests: [test("material-5", 3), test("material-2", 1)] } as unknown as AppData;
   render(h(MemoryRouter, null, h(StudyLibrary)));
-  expect(screen.getByRole("link", { name: "Practice test" }).getAttribute("href")).toBe("/toolkit?tool=quiz");
+  expect(screen.queryByRole("dialog")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Practice test" }));
+  const list = screen.getByRole("list", { name: "Materials with a practice test" });
+  const links = within(list).getAllByRole("link");
+  expect(links.map((l) => l.textContent)).toEqual(["Material 2 · 1 question", "Material 5 · 3 questions"]);
+  expect(links.map((l) => l.getAttribute("href"))).toEqual(["/study/material-2#material-practice-test", "/study/material-5#material-practice-test"]);
+  expect(screen.getByRole("button", { name: "Mixed practice test" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Practice by checkride topic" })).toBeTruthy();
+});
+
+it("Practice test picker explains when no practice tests exist yet", () => {
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  fireEvent.click(screen.getByRole("button", { name: "Practice test" }));
+  expect(screen.getByText("No practice tests yet. Open a material and choose Create practice test.")).toBeTruthy();
 });

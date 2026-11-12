@@ -1,6 +1,5 @@
 import { deviceCan, isMacOS } from "@/services/platform";
-import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
-import { MixedPracticeTest } from "./MixedPracticeTest";
+import { PracticeTestPicker } from "./PracticeTestPicker";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
@@ -579,7 +578,7 @@ export function StudyLibrary() {
         action={
           <div className="row row--wrap">
             <Link to="/study/homework" className="button button--secondary">Homework</Link>
-            <Link to="/toolkit?tool=quiz" className="button button--secondary">Practice test</Link>
+            <PracticeTestPicker practiceTests={data.practiceTests} materials={data.materials} />
             {deviceCan().splitFiles || deviceCan().sharePrint ? <details ref={moreMenu} className="library__actions-more">
               <summary className="button button--secondary">More</summary>
               <div className="library__actions-menu">
@@ -915,11 +914,6 @@ export function StudyLibrary() {
       <MoveToast notice={arrange.notice} onUndo={() => void arrange.undo()} />
 
       <FreeStudyLinks />
-
-      <div style={{ marginBottom: "var(--space-4)", display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-        <CheckrideTopicPractice practiceTests={data.practiceTests} materials={data.materials} />
-        <MixedPracticeTest practiceTests={data.practiceTests} materials={data.materials} />
-      </div>
 
       {!search.trim() ? (
         <details
