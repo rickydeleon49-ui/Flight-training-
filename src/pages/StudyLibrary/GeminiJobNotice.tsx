@@ -158,7 +158,7 @@ export function GeminiJobNotice({
     return (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <p className="field__error" role="alert">
-          {job.error}
+          {job.error ? providerWording(job.error, helperModel) : job.error}
         </p>
         <div className="row row--wrap">
           {onReview ? (
@@ -185,7 +185,7 @@ export function GeminiJobNotice({
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         {job.phase === "discard-failed" ? (
           <p className="field__error" role="alert">
-            {job.error}
+            {job.error ? providerWording(job.error, helperModel) : job.error}
           </p>
         ) : (
           <p className="tiny dim" role="status">
