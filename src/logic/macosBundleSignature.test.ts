@@ -62,11 +62,12 @@ describe("macOS release bundle signing", () => {
     expect(JSON.parse(read("scripts/release-policy.json")).platformDistribution.macos.candidateVersion).toBe("0.5.9");
   });
 
-  it("adds checksum-first owner-assisted first-launch guidance only to the macOS-only notes", () => {
+  it("macOS-only notes say the app is notarized and never give Gatekeeper-bypass steps", () => {
     const workflow = read(".github/workflows/release.yml");
     const macOnly = workflow.slice(workflow.indexOf('if [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = false ]; then'), workflow.indexOf('elif [ "$HAS_MAC" = true ]'));
-    expect(macOnly).toContain("On first launch, macOS may say it can't verify the developer");
-    expect(macOnly).toContain("after the checksum matches, I'll help you open it through System Settings → Privacy & Security → Open Anyway.");
+    expect(macOnly).toContain("signed and notarized by Apple, so it opens normally");
+    expect(macOnly).toContain("don't open it");
+    expect(workflow).not.toMatch(/Open Anyway/);
   });
 
   it.each([".github/workflows/release.yml", ".github/workflows/build-desktop.yml", script])("%s contains no prohibited platform-protection commands", (path) => {

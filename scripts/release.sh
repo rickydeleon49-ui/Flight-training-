@@ -64,7 +64,10 @@ if [ "$NO_TAG" = false ]; then
     echo "Run with --no-tag, merge the release PR, then run this again on main to tag."
     exit 1
   fi
-  git fetch -q origin main 2>/dev/null || true
+  if ! git fetch -q origin main; then
+    echo "Could not fetch origin/main, so main's head cannot be confirmed. Check the network and run this again."
+    exit 1
+  fi
   if [ "$(git rev-parse HEAD)" != "$(git rev-parse -q --verify origin/main 2>/dev/null || true)" ]; then
     echo "HEAD is not origin/main. Tag only main's head: check out the merged main and run this again."
     exit 1

@@ -325,7 +325,7 @@ jobs:
               echo "## Your Flight Deck $VERSION (macOS)"
               echo
               echo "Download the file for your Mac with Apple silicon and open it."
-              echo "On first launch, macOS may say it can't verify the developer; after the checksum matches, I'll help you open it through System Settings → Privacy & Security → Open Anyway."
+              echo "The app is signed and notarized by Apple, so it opens normally. If macOS ever warns that it can't verify the app, don't open it; delete the download and ask for help."
               echo
               echo "| Computer | File |"
               echo "| --- | --- |"
