@@ -79,7 +79,7 @@ describe("Appearance setting in Settings", () => {
 
     expect(glass.checked).toBe(false);
     expect(
-      screen.getByText("Frosted-glass top and bottom bars. Turn off if text is hard to read."),
+      screen.getByText("Plain bars. Turn on for frosted glass."),
     ).toBeTruthy();
     expect(screen.queryByText(/until it's tested|Still being tested/)).toBeNull();
   await expectNoA11yViolations(document.body);
@@ -226,7 +226,7 @@ describe("Appearance setting in Settings", () => {
       isIOSMock.mockReturnValue(true);
       try {
         await open();
-        await screen.findByText("Appearance");
+        await screen.findByRole("heading", { name: "Look and feel" });
         expect(screen.queryByRole("radiogroup", { name: "Theme" })).toBeNull();
         expect(screen.getByText("Auto · Matches your iPhone")).toBeTruthy();
       } finally {

@@ -197,10 +197,10 @@ function MacNote({ children }: { children: ReactNode }) {
 
 const JUMPS: Array<[string, string]> = [
   ["AI helper", "ai-provider"],
+  ["Look and feel", "settings-appearance"],
   ["About you", "settings-about-you"],
   ["Where you train", "settings-where-you-train"],
   ["Why you started", "settings-why-you-started"],
-  ["Look and feel", "settings-appearance"],
   ["Career starter pack", "settings-career-pack"],
   ["Backups and data", "settings-backups-summary"],
   ["About & legal", "settings-about-summary"],
@@ -896,12 +896,84 @@ export function Settings() {
         </Card>
         ) : null}
 
-        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
-        {deviceCan().sendToIphone ? <SendChangesToIphoneCard /> : null}
-        {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
-        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
-        {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
-        {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
+        <Card variant="grouped">
+          <CardHeader title="Look and feel" headingId="settings-appearance" eyebrow="Theme, accent, glass" />
+          <CardBody>
+            <div className="stack stack--3">
+              {isIOS() ? (
+                <div className="row row--between">
+                  <span className="small">Theme</span>
+                  <span className="small muted">Auto · Matches your iPhone</span>
+                </div>
+              ) : (
+                <div className="stack stack--2">
+                  <span className="small" id="settings-theme-label">
+                    Theme
+                  </span>
+                  <div className="segmented" role="radiogroup" aria-labelledby="settings-theme-label">
+                    {THEME_OPTIONS.map((option) => (
+                      <label
+                        key={option.value}
+                        className={`segmented__option${theme === option.value ? " is-selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="theme"
+                          value={option.value}
+                          checked={theme === option.value}
+                          onChange={() => chooseTheme(option.value)}
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {theme === "auto" ? <p className="small muted">Matches your iPhone or Mac</p> : null}
+                </div>
+              )}
+            <div className="stack stack--2">
+              <span className="small" id="settings-accent-label">Accent</span>
+              <p className="small muted">Takes effect straight away.</p>
+              <div className="accent-picker" role="group" aria-labelledby="settings-accent-label">
+                {ACCENT_ORDER.map((accent) => {
+                  const selected = draft.accentColor === accent;
+                  return (
+                    <button
+                      type="button"
+                      key={accent}
+                      className={`accent-option${selected ? " is-selected" : ""}`}
+                      aria-pressed={selected}
+                      onClick={() => chooseAccent(accent)}
+                    >
+                      <span
+                        className="accent-option__swatch"
+                        style={{ background: `var(--accent-swatch-${accent})`, ...(selected ? { boxShadow: `0 0 0 2px var(--surface-card), 0 0 0 4px var(--accent-swatch-${accent})` } : null) }}
+                        aria-hidden="true"
+                      >
+                        {selected ? <CheckIcon size={15} /> : null}
+                      </span>
+                      {ACCENT_LABELS[accent]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+              <Checkbox
+                appearance="switch"
+                strikethrough={false}
+                label="Glass bars"
+                meta={appearance === "glass" ? "Frosted-glass top and bottom bars." : "Plain bars. Turn on for frosted glass."}
+                checked={appearance === "glass"}
+                onChange={(on) => chooseAppearance(on ? "glass" : "classic")}
+              />
+            </div>
+          </CardBody>
+        </Card>
+
+        <StudyReminderCard />
+
+        <CheckrideDateCard />
+
+        <StudyGuideNoticeCard />
 
         <Card variant="grouped">
           <CardHeader title="About you" headingId="settings-about-you" eyebrow="Greeting and focus" />
@@ -1138,95 +1210,17 @@ export function Settings() {
         </Card>
 
         <Card variant="grouped">
-          <CardHeader title="Look and feel" headingId="settings-look-and-feel" eyebrow="Accent colour" />
-          <CardBody>
-            <div className="stack stack--4">
-              <p className="small muted">
-                Changes the accent used across the application. Takes effect straight away.
-              </p>
-              <div className="accent-picker" role="group" aria-label="Accent colour">
-                {ACCENT_ORDER.map((accent) => {
-                  const selected = draft.accentColor === accent;
-                  return (
-                    <button
-                      type="button"
-                      key={accent}
-                      className={`accent-option${selected ? " is-selected" : ""}`}
-                      aria-pressed={selected}
-                      onClick={() => chooseAccent(accent)}
-                    >
-                      <span
-                        className="accent-option__swatch"
-                        style={{ background: `var(--accent-swatch-${accent})`, ...(selected ? { boxShadow: `0 0 0 2px var(--surface-card), 0 0 0 4px var(--accent-swatch-${accent})` } : null) }}
-                        aria-hidden="true"
-                      >
-                        {selected ? <CheckIcon size={15} /> : null}
-                      </span>
-                      {ACCENT_LABELS[accent]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card variant="grouped">
           <CardHeader title="Airport weather" />
           <CardBody><WeatherPreference /></CardBody>
         </Card>
 
-        <StudyGuideNoticeCard />
 
-        <StudyReminderCard />
-
-        <CheckrideDateCard />
-
-        <Card variant="grouped">
-          <CardHeader title="Appearance" headingId="settings-appearance" eyebrow="Visual style" />
-          <CardBody>
-            <div className="stack stack--3">
-              {isIOS() ? (
-                <div className="row row--between">
-                  <span className="small">Theme</span>
-                  <span className="small muted">Auto · Matches your iPhone</span>
-                </div>
-              ) : (
-                <div className="stack stack--2">
-                  <span className="small" id="settings-theme-label">
-                    Theme
-                  </span>
-                  <div className="segmented" role="radiogroup" aria-labelledby="settings-theme-label">
-                    {THEME_OPTIONS.map((option) => (
-                      <label
-                        key={option.value}
-                        className={`segmented__option${theme === option.value ? " is-selected" : ""}`}
-                      >
-                        <input
-                          type="radio"
-                          name="theme"
-                          value={option.value}
-                          checked={theme === option.value}
-                          onChange={() => chooseTheme(option.value)}
-                        />
-                        <span>{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {theme === "auto" ? <p className="small muted">Matches your iPhone or Mac</p> : null}
-                </div>
-              )}
-              <Checkbox
-                appearance="switch"
-                strikethrough={false}
-                label="Glass bars"
-                meta="Frosted-glass top and bottom bars. Turn off if text is hard to read."
-                checked={appearance === "glass"}
-                onChange={(on) => chooseAppearance(on ? "glass" : "classic")}
-              />
-            </div>
-          </CardBody>
-        </Card>
+        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
+        {deviceCan().sendToIphone ? <SendChangesToIphoneCard /> : null}
+        {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
+        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
+        {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
+        {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
 
         <Card variant="grouped">
           <CardHeader title="Career starter pack" headingId="settings-career-pack" eyebrow="Built-in guidance" />
