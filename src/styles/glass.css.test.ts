@@ -203,7 +203,7 @@ describe("Glass appearance styles (glass.css)", () => {
       return Math.min(...under.map((u) => contrastRatio(text, blendOver(bar, u))));
     };
     const lightContrast = worstOver(lightBar, lightPart, "#ffffff", "--palette-navy");
-    const darkContrast = worstOver(darkBar, darkPart, "#2c2c2e", "--text-primary");
+    const darkContrast = worstOver(darkBar, darkPart, "#1d2533", "--text-primary");
 
     // WCAG AA requirement: >= 4.5
     expect(lightContrast).toBeGreaterThanOrEqual(4.5);
