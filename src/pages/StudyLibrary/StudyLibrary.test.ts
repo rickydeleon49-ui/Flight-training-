@@ -323,3 +323,8 @@ it("POLISH-04 search: focus selects the remembered words so typing replaces them
   expect(screen.getByText("Material 0")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
 });
+
+it("shows a plainly labelled Practice test link that opens the Pilot Toolkit quizzes", () => {
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  expect(screen.getByRole("link", { name: "Practice test" }).getAttribute("href")).toBe("/toolkit?tool=quiz");
+});

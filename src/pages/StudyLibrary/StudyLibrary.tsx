@@ -579,6 +579,7 @@ export function StudyLibrary() {
         action={
           <div className="row row--wrap">
             <Link to="/study/homework" className="button button--secondary">Homework</Link>
+            <Link to="/toolkit?tool=quiz" className="button button--secondary">Practice test</Link>
             {deviceCan().splitFiles || deviceCan().sharePrint ? <details ref={moreMenu} className="library__actions-more">
               <summary className="button button--secondary">More</summary>
               <div className="library__actions-menu">
