@@ -89,7 +89,7 @@ html.is-ios .ios-tab-bar__tab.is-active { color: var(--accent-primary); }
 html.is-ios .ios-tab-bar__icon { display: inline-flex; transition: transform 200ms ease; }
 
 html.is-ios .ios-tab-bar__label {
-  font-size: min(0.625rem, 12px);
+  font-size: max(11px, min(0.6875rem, 12px));
   font-weight: 500;
   line-height: 1.1;
   max-width: 100%;

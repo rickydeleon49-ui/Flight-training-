@@ -42,3 +42,18 @@ it("the compact tab bar rules change only transform and opacity", () => {
     for (const prop of props) expect(["transform", "opacity"]).toContain(prop);
   }
 });
+
+it("tab labels are at least 11px and every tab is at least 44px tall", () => {
+  const css = readFileSync(new URL("./iosTabBar.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const label = css.match(/html\.is-ios \.ios-tab-bar__label\s*\{([^}]*)\}/)?.[1] ?? "";
+  expect(label).toMatch(/font-size:\s*max\(11px,/);
+  const bar = css.match(/html\.is-ios \.ios-tab-bar\s*\{([^}]*min-height[^}]*)\}/)?.[1] ?? "";
+  expect(bar).toMatch(/min-height:\s*49px/);
+});
+
+it("the phone icon button gets a 44px hit area (32px + 6px each side)", () => {
+  const ui = readFileSync(new URL("../ui/ui.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const phone = ui.slice(ui.indexOf("@media (pointer: coarse), (max-width: 700px)"));
+  expect(phone).toMatch(/\.icon-button::after\s*\{[^}]*inset:\s*-6px/);
+  expect(ui).toMatch(/\.icon-button\s*\{[^}]*width:\s*2rem;[^}]*height:\s*2rem/);
+});
