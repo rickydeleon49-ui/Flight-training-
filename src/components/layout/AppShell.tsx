@@ -40,6 +40,7 @@ import { TopBarContext } from "./topBarContext";
 
 import "./shell.css";
 import { DISCLAIMER_LINE } from "@/logic/legal";
+import { useClearLibrarySearchOnLeave } from "@/pages/StudyLibrary/librarySearchReset";
 
 interface NavItem {
   to: string;
@@ -161,6 +162,7 @@ export function AppShell() {
   }, [location.key, desktop]);
 
   useHistoryScroll();
+  useClearLibrarySearchOnLeave();
 
   useEffect(() => {
     if (desktop) {
