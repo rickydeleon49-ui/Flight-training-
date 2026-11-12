@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Button, Card } from "@/components/ui";
 import type { LibraryReviewMaterialEntry } from "@/domain/types";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
+import { practiceReadinessText, type PracticeReadiness } from "@/logic/practiceReadiness";
 import { estimateReviewMinutes } from "@/logic/reviewTime";
 import { useLibraryDueStream } from "@/pages/StudyLibrary/useLibraryReviews";
 
@@ -33,16 +34,88 @@ export function fromLine(rows: readonly Pick<LibraryReviewMaterialEntry, "title"
   return more > 0 ? `From ${a.title}, ${b.title} and ${more} more` : `From ${a.title} and ${b.title}`;
 }
 
+/** The written test pass mark, shown as a line on the practice bar. */
+export const PASS_MARK_PERCENT = 70;
+
+/** Checkride areas that have study material, out of all areas. */
+export interface AreaCoverage {
+  covered: number;
+  total: number;
+}
+
+function Bar({ percent, mark }: { percent: number; mark?: number }) {
+  return (
+    <span className="today-review__bar" aria-hidden="true">
+      <span className="today-review__bar-fill" style={{ width: `${Math.min(100, Math.max(0, percent))}%` }} />
+      {mark !== undefined ? <span className="today-review__bar-mark" style={{ left: `${mark}%` }} /> : null}
+    </span>
+  );
+}
+
+/** Two quiet progress rows; each number comes with a next step. */
+function ProgressRows({
+  readiness,
+  coverage,
+}: {
+  readiness: PracticeReadiness | null | undefined;
+  coverage: AreaCoverage | null | undefined;
+}) {
+  const text = readiness ? practiceReadinessText(readiness) : null;
+  const open = coverage ? coverage.total - coverage.covered : 0;
+  if (!text && !coverage) return null;
+  return (
+    <ul className="today-review__rows">
+      {text ? (
+        <li className="today-review__row">
+          {readiness?.kind === "summary" ? (
+            <>
+              <p className="today-review__row-head">
+                <span>Written test practice</span>
+                <span className="numeric strong">{readiness.recentAverage}%</span>
+              </p>
+              <Bar percent={readiness.recentAverage} mark={PASS_MARK_PERCENT} />
+              <p className="tiny muted">Pass mark {PASS_MARK_PERCENT}%</p>
+            </>
+          ) : null}
+          <p className="tiny muted practice-readiness">
+            <Link to="/study">{text}</Link>
+          </p>
+        </li>
+      ) : null}
+      {coverage ? (
+        <li className="today-review__row">
+          <p className="today-review__row-head">
+            <span>Checkride areas with study material</span>
+            <span className="numeric strong">
+              {coverage.covered} of {coverage.total}
+            </span>
+          </p>
+          <Bar percent={(coverage.covered / Math.max(1, coverage.total)) * 100} />
+          <p className="tiny muted">
+            <Link to="/study">{open > 0 ? `See the ${open} open ${open === 1 ? "area" : "areas"}` : "Open Study Library"}</Link>
+          </p>
+        </li>
+      ) : null}
+    </ul>
+  );
+}
+
 export function TodayReviewCard({
   repository,
   dataRevision,
   testsThisWeek = 0,
+  readiness,
+  coverage,
   onPrimaryChange,
 }: {
   repository: CardLibraryRepository | undefined;
   dataRevision: number;
   /** Practice tests finished in the last seven days. */
   testsThisWeek?: number;
+  /** Recent written-test practice, shown as a progress row. */
+  readiness?: PracticeReadiness | null;
+  /** Checkride areas that have study material. */
+  coverage?: AreaCoverage | null;
   /** Tells the page whether this card is showing its filled primary button. */
   onPrimaryChange?: (hasPrimary: boolean) => void;
 }) {
@@ -55,6 +128,8 @@ export function TodayReviewCard({
       repository={repository}
       dataRevision={dataRevision}
       testsThisWeek={testsThisWeek}
+      readiness={readiness}
+      coverage={coverage}
       onPrimaryChange={onPrimaryChange}
     />
   );
@@ -64,11 +139,15 @@ function TodayReviewBody({
   repository,
   dataRevision,
   testsThisWeek,
+  readiness,
+  coverage,
   onPrimaryChange,
 }: {
   repository: CardLibraryRepository;
   dataRevision: number;
   testsThisWeek: number;
+  readiness?: PracticeReadiness | null;
+  coverage?: AreaCoverage | null;
   onPrimaryChange?: (hasPrimary: boolean) => void;
 }) {
   const navigate = useNavigate();
@@ -88,6 +167,7 @@ function TodayReviewBody({
       <Card ariaLabel="Today's review" className="today-review">
         <p className="today-review__label">Today&rsquo;s review</p>
         <h2 className="today-review__title">Nothing due. Nice work.</h2>
+        <ProgressRows readiness={readiness} coverage={coverage} />
         <div className="today-review__actions">
           <Button variant="ghost" onClick={() => navigate("/study")}>
             Open Study Library
@@ -105,6 +185,7 @@ function TodayReviewBody({
       <p className="small muted today-review__note">
         {fromLine(rows)} &nbsp;·&nbsp; about {estimateReviewMinutes(dueCards)} min
       </p>
+      <ProgressRows readiness={readiness} coverage={coverage} />
       <div className="today-review__actions">
         <Button
           variant="primary"

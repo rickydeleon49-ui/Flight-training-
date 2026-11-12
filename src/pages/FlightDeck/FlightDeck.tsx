@@ -33,18 +33,19 @@ import {
 } from "@/domain/types";
 import { describeRelativeDate, formatLongDate, formatShortDate, formatTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
+import { summarizeAcsAreaMaterialCoverage } from "@/logic/acsAreaMaterialCoverage";
 import { checkrideLine } from "@/logic/checkride";
 import { buildDashboard } from "@/logic/dashboard";
 import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
 import {
   ATTEMPTS_TO_READ,
   buildPracticeReadiness,
-  practiceReadinessText,
+  type PracticeReadiness,
 } from "@/logic/practiceReadiness";
 import { useAppData, type AppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
+import { useLocalToday } from "@/state/useLocalToday";
 import { airportWeather } from "@/services/weather";
-import { AcsAreaMaterialCoveragePanel } from "@/pages/StudyLibrary/AcsAreaMaterialCoveragePanel";
 
 import { TodayReviewCard, useTestsThisWeek } from "./TodayReviewCard";
 import "./flightDeck.css";
@@ -58,6 +59,11 @@ export function FlightDeck() {
   );
   const testsThisWeek = useTestsThisWeek(readRecentTests, dataRevision);
   const operations = useActionOperations();
+  const readiness = usePracticeReadiness(data, dataRevision);
+  const coverage = useMemo(() => {
+    const areas = summarizeAcsAreaMaterialCoverage({ materials: data.materials });
+    return { covered: areas.filter((a) => a.distinctMaterialCount > 0).length, total: areas.length };
+  }, [data.materials]);
 
   // Quiet the daily plan's start button only while the review card has the filled one.
   const [reviewHasPrimary, setReviewHasPrimary] = useState(Boolean(repositories?.cardLibrary));
@@ -178,6 +184,8 @@ export function FlightDeck() {
             repository={repositories?.cardLibrary}
             dataRevision={dataRevision}
             testsThisWeek={testsThisWeek}
+            readiness={readiness}
+            coverage={coverage}
             onPrimaryChange={setReviewHasPrimary}
           />
           <DailyPlanCard onStartAction={startAction} quietStart={reviewHasPrimary} />
@@ -326,7 +334,6 @@ export function FlightDeck() {
                   ))}
                 </div>
               )}
-              <PracticeReadinessLine data={data} today={model.today} />
             </CardBody>
           </Card>
 
@@ -341,11 +348,8 @@ export function FlightDeck() {
         <div className="deck__column">
           <NextFlightCard model={model} />
           <FlightHoursCard entries={data.journalEntries} today={model.today} />
-          <MilestoneCard model={model} />
-          <StudyFocusCard model={model} />
-          <AcsAreaMaterialCoveragePanel materials={data.materials} />
           <KeyDatesCard model={model} />
-          <WhyCard model={model} />
+          <MoreOnYourPlan model={model} />
 
           {model.awaitingDebrief.length > 0 ? (
             <Card variant="grouped">
@@ -395,13 +399,14 @@ export function FlightDeck() {
 type Model = ReturnType<typeof buildDashboard>;
 
 /**
- * One quiet line about the student recent practice-test scores, or a gentle nudge to
- * take one. It reads the student's saved attempts only and never predicts a result.
+ * The student's recent practice-test scores, read from saved attempts only.
+ * Shown as a progress row in Today's review; it never predicts a result.
  */
-function PracticeReadinessLine({ data, today }: { data: AppData; today: IsoDate }) {
-  const { repositories, dataRevision } = useAppData();
+function usePracticeReadiness(data: AppData, dataRevision: number): PracticeReadiness | null {
+  const { repositories } = useAppData();
   const sessions = repositories?.practiceSessions;
   const [attempts, setAttempts] = useState<PracticeAttempt[] | null>(null);
+  const today = useLocalToday();
 
   useEffect(() => {
     if (!sessions) {
@@ -423,23 +428,16 @@ function PracticeReadinessLine({ data, today }: { data: AppData; today: IsoDate 
     };
   }, [sessions, dataRevision]);
 
-  if (attempts === null) return null;
-  const materialIds = new Set(data.materials.map((material) => material.id));
-  const text = practiceReadinessText(
-    buildPracticeReadiness({
+  return useMemo(() => {
+    if (attempts === null) return null;
+    const materialIds = new Set(data.materials.map((material) => material.id));
+    return buildPracticeReadiness({
       attempts,
       materialIds,
       hasPracticeTest: data.practiceTests.some((test) => materialIds.has(test.sourceMaterialId)),
       today,
-    }),
-  );
-  if (!text) return null;
-
-  return (
-    <p className="practice-readiness tiny muted">
-      <Link to="/study">{text}</Link>
-    </p>
-  );
+    });
+  }, [attempts, data.materials, data.practiceTests, today]);
 }
 
 function FlightHoursCard({
@@ -628,6 +626,54 @@ function NextFlightCard({ model }: { model: Model }) {
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+const MORE_KEY = "fd.home.morePlanOpen";
+
+function readMoreOpen(): boolean {
+  try {
+    return window.localStorage.getItem(MORE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Study focus, milestone and why you started, folded behind one quiet row. */
+function MoreOnYourPlan({ model }: { model: Model }) {
+  const [open, setOpen] = useState(readMoreOpen);
+  if (!model.studyFocus && !model.currentMilestone && !model.personal) return null;
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    try {
+      window.localStorage.setItem(MORE_KEY, next ? "1" : "0");
+    } catch {
+      // Remembering is a convenience only.
+    }
+  };
+  return (
+    <div>
+      <button
+        type="button"
+        className="deck-more"
+        aria-expanded={open}
+        aria-controls="deck-more-body"
+        onClick={toggle}
+      >
+        <span>More on your plan: study focus, milestones, why you started</span>
+        <span className="deck-more__chev" aria-hidden="true">
+          &#8964;
+        </span>
+      </button>
+      {open ? (
+        <div className="deck-more__body" id="deck-more-body">
+          <StudyFocusCard model={model} />
+          <MilestoneCard model={model} />
+          <WhyCard model={model} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

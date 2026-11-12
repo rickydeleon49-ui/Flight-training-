@@ -39,6 +39,12 @@ import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
+/** Skip and Move live in each row's "..." menu: open it, then press the button. */
+function clickInMenu(root: { getByRole: typeof screen.getByRole }, title: string, name: string) {
+  fireEvent.click(root.getByRole("button", { name: `More actions for ${title}` }));
+  fireEvent.click(root.getByRole("button", { name }));
+}
+
 let db: TestDatabase;
 vi.mock("@/data", () => ({
   getDatabase: () => Promise.resolve(db),
@@ -205,7 +211,7 @@ describe("M1 D7 acceptance: Daily Flight Plan and debrief workflow", () => {
     await waitFor(async () => expect((await repos.app.getDailyPlanState())?.timeBudget).toBe(30));
     fireEvent.click(within(card).getByRole("button", { name: "Why recommend Read the steep turn chapter?" }));
     expect(within(card).getByText("Reason")).toBeTruthy();
-    fireEvent.click(within(card).getByRole("button", { name: "Skip Update the logbook totals for today" }));
+    clickInMenu(within(card), "Update the logbook totals", "Skip Update the logbook totals for today");
     await waitFor(async () =>
       expect((await repos.app.getDailyPlanState())?.decisions[`action:${seed.skippable.id}`]?.type).toBe("skip"),
     );

@@ -289,3 +289,22 @@ html.is-ios .daily-plan-budget-btn {
     margin-top: var(--space-2);
   }
 }
+
+/* The "..." menu that holds Skip and Move. */
+.daily-plan-menu { position: relative; }
+
+.daily-plan-menu__toggle { min-width: var(--space-7); min-height: var(--space-7); }
+
+.daily-plan-menu__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.daily-plan-menu__panel .button { min-height: var(--space-7); justify-content: flex-start; }
