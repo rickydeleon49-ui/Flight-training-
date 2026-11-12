@@ -23,18 +23,18 @@
 }
 
 :root[data-appearance="glass"][data-theme="dark"] {
-  --glass-bar: rgba(40, 40, 44, 0.55);
+  --glass-bar: rgba(29, 37, 51, 0.55);
   --glass-bar-edge: rgba(255, 255, 255, 0.14);
   --glass-bar-highlight: rgba(255, 255, 255, 0.08);
-  --glass-surface-opaque: rgba(44, 44, 46, 0.97);
+  --glass-surface-opaque: rgba(29, 37, 51, 0.97);
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-appearance="glass"]:not([data-theme="light"]):not([data-theme="light-grey"]) {
-    --glass-bar: rgba(40, 40, 44, 0.55);
+    --glass-bar: rgba(29, 37, 51, 0.55);
     --glass-bar-edge: rgba(255, 255, 255, 0.14);
     --glass-bar-highlight: rgba(255, 255, 255, 0.08);
-    --glass-surface-opaque: rgba(44, 44, 46, 0.97);
+    --glass-surface-opaque: rgba(29, 37, 51, 0.97);
   }
 }
 
