@@ -103,6 +103,9 @@ jobs:
       - name: Signed Mac build script refusals
         run: node --test scripts/build-signed-mac.test.mjs
 
+      - name: Release version bookkeeping (file list, iOS agreement, dirty-tree guard)
+        run: node --test scripts/release-version.test.mjs
+
       - name: Third-party notices generator regressions
         run: node --test scripts/third-party-notices.test.mjs
 

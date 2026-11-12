@@ -2,7 +2,10 @@
 #
 # Cut a release.
 #
-#   scripts/release.sh 0.2.0
+#   scripts/release.sh 0.2.0 --no-tag   # on the release branch: bump + commit, no tag
+#   scripts/release.sh 0.2.0            # on merged main (HEAD = origin/main): checks + tag
+#
+# Tags are made only on main's head; tagging refuses when a bump is still needed.
 #
 # Bumps the version everywhere it is recorded, runs the checks, commits and
 # tags. Pushing the tag builds installers and prepares a private release draft
@@ -18,9 +21,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="${1:-}"
+VERSION=""
+NO_TAG=false
+for arg in "$@"; do
+  case "$arg" in
+    --no-tag) NO_TAG=true ;;
+    *) if [ -z "$VERSION" ]; then VERSION="$arg"; else VERSION="invalid"; fi ;;
+  esac
+done
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Usage: scripts/release.sh <version>    e.g. scripts/release.sh 0.2.0"
+  echo "Usage: scripts/release.sh <version> [--no-tag]    e.g. scripts/release.sh 0.2.0"
   exit 1
 fi
 
@@ -37,48 +47,44 @@ if git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
   exit 1
 fi
 
-VERSIONS_JSON="$(node -e '
-  const fs = require("node:fs");
-  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
-  const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8")).version;
-  const tauri = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
-  const cargoMatch = fs.readFileSync("src-tauri/Cargo.toml", "utf8").match(/^version\s*=\s*"([^"]+)"/m);
-  const cargo = cargoMatch ? cargoMatch[1] : "";
-  console.log(JSON.stringify({ pkg, lock, tauri, cargo }));
-')"
-
-PKG_VER="$(node -e "console.log(JSON.parse(process.argv[1]).pkg)" "$VERSIONS_JSON")"
-LOCK_VER="$(node -e "console.log(JSON.parse(process.argv[1]).lock)" "$VERSIONS_JSON")"
-TAURI_VER="$(node -e "console.log(JSON.parse(process.argv[1]).tauri)" "$VERSIONS_JSON")"
-CARGO_VER="$(node -e "console.log(JSON.parse(process.argv[1]).cargo)" "$VERSIONS_JSON")"
-
 BUMP=true
-if [ "$VERSION" = "$PKG_VER" ] && [ "$VERSION" = "$LOCK_VER" ] && [ "$VERSION" = "$TAURI_VER" ] && [ "$VERSION" = "$CARGO_VER" ]; then
+if node scripts/check-release-version.mjs "$VERSION" --agree >/dev/null 2>&1; then
   BUMP=false
-  echo "Repository is already prepared for the unreleased version $VERSION across all version files"
+  echo "Repository is already prepared for the unreleased version $VERSION across all version files (including the iOS marketing version)"
 else
-  echo "Releasing to $VERSION (current: package.json=$PKG_VER, lock=$LOCK_VER, tauri=$TAURI_VER, cargo=$CARGO_VER)"
+  echo "Releasing to $VERSION (current: package.json=$(node -p "require('./package.json').version"))"
 fi
 
+# The release workflow builds only a tag on main's head. A bump needs a commit
+# that is not on main yet, so it goes through a PR (--no-tag); the tag comes
+# afterwards, from a prepared checkout whose HEAD is origin/main.
+if [ "$NO_TAG" = false ]; then
+  if [ "$BUMP" = true ]; then
+    echo "The version files need a bump commit, which is not main's head yet."
+    echo "Run with --no-tag, merge the release PR, then run this again on main to tag."
+    exit 1
+  fi
+  git fetch -q origin main 2>/dev/null || true
+  if [ "$(git rev-parse HEAD)" != "$(git rev-parse -q --verify origin/main 2>/dev/null || true)" ]; then
+    echo "HEAD is not origin/main. Tag only main's head: check out the merged main and run this again."
+    exit 1
+  fi
+fi
+
+CHANGED_FILES=""
 if [ "$BUMP" = true ]; then
-  node scripts/bump-version.mjs "$VERSION"
+  BUMP_LOG="$(mktemp "${TMPDIR:-/tmp}/hfd-bump.XXXXXX")"
+  node scripts/bump-version.mjs "$VERSION" | tee "$BUMP_LOG"
+  CHANGED_FILES="$(sed -n 's/^CHANGED: //p' "$BUMP_LOG" | tail -n 1)"
+  rm -f "$BUMP_LOG"
+  if [ -z "$CHANGED_FILES" ]; then
+    echo "bump-version did not report the files it changed."
+    exit 1
+  fi
 fi
 
-node -e '
-  const fs = require("node:fs");
-  const version = process.argv[1];
-  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
-  const lock = JSON.parse(fs.readFileSync("package-lock.json", "utf8")).version;
-  const tauri = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
-  const cargoMatch = fs.readFileSync("src-tauri/Cargo.toml", "utf8").match(/^version\s*=\s*"([^"]+)"/m);
-  const cargo = cargoMatch ? cargoMatch[1] : "";
-  const lockMatch = fs.readFileSync("src-tauri/Cargo.lock", "utf8").match(/\[\[package\]\]\s+name\s*=\s*"her-flight-deck"\s+version\s*=\s*"([^"]+)"/);
-  const cargoLock = lockMatch ? lockMatch[1] : "";
-  if (pkg !== version || lock !== version || tauri !== version || cargo !== version || cargoLock !== version) {
-    console.error(`Version mismatch: expected=${version} package.json=${pkg} lock=${lock} tauri=${tauri} cargo=${cargo} Cargo.lock=${cargoLock}`);
-    process.exit(1);
-  }
-' "$VERSION"
+# Every version file (including the iOS marketing version) must say $VERSION.
+node scripts/check-release-version.mjs "$VERSION" --agree
 
 echo
 echo "Checks"
@@ -91,12 +97,28 @@ npm run test:cargo-lock
 
 echo
 if [ "$BUMP" = true ]; then
-  git add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+  # Stage exactly the files bump-version reported (no list here that can drift).
+  # shellcheck disable=SC2086
+  git add -- $CHANGED_FILES
   git commit -q -m "release: $VERSION"
+fi
+
+LEFTOVER="$(git status --porcelain)"
+if [ -n "$LEFTOVER" ]; then
+  echo "bump left uncommitted files: $(printf '%s\n' "$LEFTOVER" | sed 's/^...//' | tr '\n' ' ')"
+  exit 1
+fi
+
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$NO_TAG" = true ]; then
+  echo "Committed $VERSION without a tag (--no-tag). Make the tag on main's head after the merge:"
+  echo
+  echo "    git tag -a v$VERSION -m \"Your Flight Deck $VERSION\""
+  echo
+  exit 0
 fi
 git tag -a "v$VERSION" -m "Your Flight Deck $VERSION"
 
-BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 echo "Committed and tagged v$VERSION."
 echo
 echo "Push it to build installers and prepare a private release draft for owner review:"

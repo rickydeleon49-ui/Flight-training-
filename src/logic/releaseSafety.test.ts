@@ -312,7 +312,8 @@ describe("release version policy and validation", () => {
     const script = readFileSync(RELEASE_SH_PATH, "utf8");
     expect(script).toContain("node scripts/check-release-version.mjs");
     expect(script).toContain("node scripts/bump-version.mjs");
-    expect(script).toContain("Cargo.lock");
+    expect(script).toContain("--agree");
+    expect(script).toContain("CHANGED_FILES");
   });
 
   it("ensures release policy documents Mac-only active candidate and Windows distribution hold", () => {

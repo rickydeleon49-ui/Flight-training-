@@ -34,6 +34,14 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
     throw new Error(validation.error);
   }
 
+  const changed = [
+    "package.json",
+    "package-lock.json",
+    "src-tauri/tauri.conf.json",
+    "src-tauri/Cargo.toml",
+    "src-tauri/Cargo.lock",
+  ];
+
   // 1. package.json & tauri.conf.json
   const pkgPath = join(rootDir, "package.json");
   const pkgJson = JSON.parse(readFileSync(pkgPath, "utf8"));
@@ -91,6 +99,7 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
   if (existsSync(iosYml)) {
     const yml = readFileSync(iosYml, "utf8");
     writeFileSync(iosYml, yml.replace(/^(\s*CFBundleShortVersionString:\s*)\S+/m, `$1${version}`));
+    changed.push("src-tauri/gen/apple/project.yml");
   }
   const iosPlist = join(rootDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist");
   if (existsSync(iosPlist)) {
@@ -99,6 +108,7 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
       iosPlist,
       plist.replace(/(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]*(<\/string>)/, `$1${version}$2`),
     );
+    changed.push("src-tauri/gen/apple/her-flight-deck_iOS/Info.plist");
   }
 
   // 5. Verification: check all 5 sources strictly match
@@ -142,6 +152,7 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
   return {
     version,
     iosShortVersion,
+    files: changed,
     packageJson: verifiedPkg,
     packageLock: verifiedLockVer,
     tauriConf: verifiedTauri,
@@ -167,7 +178,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   }
   try {
     const result = bumpVersions(version);
-    console.log(`Successfully synchronized all 5 version locations to ${result.version}`);
+    console.log(`Successfully synchronized all version locations to ${result.version}`);
+    console.log(`CHANGED: ${result.files.join(" ")}`);
   } catch (err) {
     console.error(`::error::${err.message}`);
     exit(1);

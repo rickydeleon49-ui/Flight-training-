@@ -35,6 +35,7 @@ NOTARY_KEY="${HFD_NOTARY_KEY:-}"
 NOTARY_KEY_ID="${HFD_NOTARY_KEY_ID:-}"
 NOTARY_ISSUER="${HFD_NOTARY_ISSUER:-}"
 BUNDLE_ID="com.herflightdeck.app"
+APP_DIR="src-tauri/target/release/bundle/macos"
 DMG_DIR="src-tauri/target/release/bundle/dmg"
 
 fail() {
@@ -159,35 +160,29 @@ node -e '
   require("node:fs").writeFileSync(file, JSON.stringify({ bundle: { macOS: { signingIdentity: identity, hardenedRuntime: true } } }));
 ' "$IDENTITY" "$CONFIG"
 
-rm -rf "$DMG_DIR"
-echo "Building the signed DMG (HFD_OFFLINE_EXTRACTION=1)..."
-# Tauri may also notarize or import certificates when Apple account variables
-# are present; clear them so notarization happens exactly once, below, with
-# the notary credentials chosen above.
-env -u APPLE_ID -u APPLE_PASSWORD -u APPLE_TEAM_ID -u APPLE_API_KEY \
-  -u APPLE_API_ISSUER -u APPLE_API_KEY_PATH -u APPLE_CERTIFICATE -u APPLE_CERTIFICATE_PASSWORD \
-  HFD_OFFLINE_EXTRACTION=1 APPLE_SIGNING_IDENTITY="$IDENTITY" \
-  npm run tauri -- build --bundles dmg --config "$CONFIG"
-
-# The build must not change any committed file (tauri.conf.json keeps "-").
-if [[ -n "$(git status --porcelain)" ]]; then
-  git status --short >&2
-  fail "the build changed committed files."
-fi
-
-shopt -s nullglob
-dmgs=("$DMG_DIR"/*.dmg)
-shopt -u nullglob
-[[ ${#dmgs[@]} -eq 1 ]] || fail "expected exactly one DMG in $DMG_DIR, found ${#dmgs[@]}."
-DMG="${dmgs[0]}"
-echo "Built: $DMG"
-
-# --- Notarize and staple -------------------------------------------------------
-echo "Submitting to Apple notarization (this can take several minutes)..."
-set +e
-SUBMIT_JSON="$(xcrun notarytool submit "$DMG" "${NOTARY_AUTH[@]}" --wait --output-format json)"
-submit_status=$?
-set -e
+# notarize <file>: submit, wait, and refuse anything but Accepted.
+notarize() {
+  local file="$1"
+  echo "Submitting $(basename "$file") to Apple notarization (this can take several minutes)..."
+  set +e
+  SUBMIT_JSON="$(xcrun notarytool submit "$file" "${NOTARY_AUTH[@]}" --wait --output-format json)"
+  submit_status=$?
+  set -e
+  SUBMISSION_ID="$(read_field id)"
+  NOTARY_STATUS="$(read_field status)"
+  if [[ "$submit_status" -ne 0 || "$NOTARY_STATUS" != "Accepted" ]]; then
+    echo "Notarization result: ${NOTARY_STATUS:-unknown} (notarytool exit $submit_status)" >&2
+    if [[ -z "$SUBMIT_JSON" && -z "$NOTARY_KEY" ]]; then
+      echo "If notarytool said \"No Keychain password item found\", the Mac was probably locked; unlock it and rerun, or use HFD_NOTARY_KEY." >&2
+    fi
+    if [[ -n "$SUBMISSION_ID" ]]; then
+      echo "Submission id: $SUBMISSION_ID" >&2
+      echo "Details: xcrun notarytool log $SUBMISSION_ID ${NOTARY_AUTH[*]}" >&2
+    fi
+    fail "notarization was not Accepted. Do not upload $(basename "$file")."
+  fi
+  echo "Notarization Accepted (submission $SUBMISSION_ID)."
+}
 read_field() {
   node -e '
     let value = "";
@@ -195,21 +190,69 @@ read_field() {
     console.log(value);
   ' "$SUBMIT_JSON" "$1"
 }
-SUBMISSION_ID="$(read_field id)"
-NOTARY_STATUS="$(read_field status)"
-if [[ "$submit_status" -ne 0 || "$NOTARY_STATUS" != "Accepted" ]]; then
-  echo "Notarization result: ${NOTARY_STATUS:-unknown} (notarytool exit $submit_status)" >&2
-  if [[ -z "$SUBMIT_JSON" && -z "$NOTARY_KEY" ]]; then
-    echo "If notarytool said \"No Keychain password item found\", the Mac was probably locked; unlock it and rerun, or use HFD_NOTARY_KEY." >&2
-  fi
-  if [[ -n "$SUBMISSION_ID" ]]; then
-    echo "Submission id: $SUBMISSION_ID" >&2
-    echo "Details: xcrun notarytool log $SUBMISSION_ID ${NOTARY_AUTH[*]}" >&2
-  fi
-  fail "notarization was not Accepted. Do not upload this DMG."
-fi
-echo "Notarization Accepted (submission $SUBMISSION_ID)."
 
+# The build must not change any committed file (tauri.conf.json keeps "-").
+assert_tree_clean() {
+  if [[ -n "$(git status --porcelain)" ]]; then
+    git status --short >&2
+    fail "the build changed committed files."
+  fi
+}
+
+rm -rf "$APP_DIR" "$DMG_DIR"
+
+# Pass 1: build the signed app only. Tauri may also notarize or import
+# certificates when Apple account variables are present; clear them so
+# notarization happens exactly once per file, below, with the notary
+# credentials chosen above.
+echo "Building the signed app (HFD_OFFLINE_EXTRACTION=1)..."
+env -u APPLE_ID -u APPLE_PASSWORD -u APPLE_TEAM_ID -u APPLE_API_KEY \
+  -u APPLE_API_ISSUER -u APPLE_API_KEY_PATH -u APPLE_CERTIFICATE -u APPLE_CERTIFICATE_PASSWORD \
+  HFD_OFFLINE_EXTRACTION=1 APPLE_SIGNING_IDENTITY="$IDENTITY" \
+  npm run tauri -- build --bundles app --config "$CONFIG"
+assert_tree_clean
+
+shopt -s nullglob
+built_apps=("$APP_DIR"/*.app)
+shopt -u nullglob
+[[ ${#built_apps[@]} -eq 1 ]] || fail "expected exactly one app in $APP_DIR, found ${#built_apps[@]}."
+APP="${built_apps[0]}"
+echo "Built: $APP"
+
+# Notarize the app (zipped with ditto) and staple the ticket to the app itself,
+# so the app is trusted offline even when copied out of the DMG.
+APP_ZIP="$WORK/app.zip"
+ditto -c -k --keepParent "$APP" "$APP_ZIP"
+notarize "$APP_ZIP"
+xcrun stapler staple "$APP"
+xcrun stapler validate "$APP"
+
+# Pass 2: build the DMG around the stapled app. Tauri's dmg bundler would
+# rebuild the app (dropping the ticket), so the DMG is made from the stapled
+# app directly, with the same file name Tauri uses, then signed.
+mkdir -p "$DMG_DIR"
+ARCH="$(uname -m)"
+case "$ARCH" in
+  arm64) ARCH="aarch64" ;;
+esac
+APP_NAME="$(basename "$APP" .app)"
+DMG="$DMG_DIR/${APP_NAME}_${VERSION}_${ARCH}.dmg"
+STAGE="$WORK/dmg-stage"
+mkdir -p "$STAGE"
+ditto "$APP" "$STAGE/$(basename "$APP")"
+ln -s /Applications "$STAGE/Applications"
+hdiutil create -volname "Your Flight Deck" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
+codesign --force --sign "$IDENTITY" --timestamp "$DMG"
+assert_tree_clean
+
+shopt -s nullglob
+dmgs=("$DMG_DIR"/*.dmg)
+shopt -u nullglob
+[[ ${#dmgs[@]} -eq 1 ]] || fail "expected exactly one DMG in $DMG_DIR, found ${#dmgs[@]}."
+echo "Built: $DMG"
+
+# --- Notarize and staple the DMG ------------------------------------------------
+notarize "$DMG"
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
 
@@ -237,6 +280,7 @@ mountpoint="$(mktemp -d "${TMPDIR:-/tmp}/hfd-gatekeeper.XXXXXX")"
 hdiutil attach -nobrowse -readonly -mountpoint "$mountpoint" "$DMG" >/dev/null
 apps=("$mountpoint"/*.app)
 [[ ${#apps[@]} -eq 1 && -d "${apps[0]}" ]] || fail "expected exactly one app inside the DMG."
+xcrun stapler validate "${apps[0]}" || fail "the app inside the DMG has no valid stapled ticket."
 gatekeeper -a -vvv "${apps[0]}" || fail "Gatekeeper did not accept the app as Notarized Developer ID."
 details="$(codesign -dv "${apps[0]}" 2>&1)"
 [[ "$details" == *"Identifier=$BUNDLE_ID"* ]] || fail "bundle identifier is not $BUNDLE_ID."

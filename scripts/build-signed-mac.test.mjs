@@ -187,12 +187,25 @@ describe('build-signed-mac.sh source guarantees', () => {
     assert.doesNotMatch(source, /xattr|com\.apple\.quarantine|--master-disable|--add\b|--disable/);
   });
   it('signs via env and a temporary --config, builds the offline DMG, and verifies with the opt-in gate', () => {
-    for (const piece of ['HFD_OFFLINE_EXTRACTION=1', 'APPLE_SIGNING_IDENTITY="$IDENTITY"', 'npm run tauri -- build --bundles dmg --config "$CONFIG"',
+    for (const piece of ['HFD_OFFLINE_EXTRACTION=1', 'APPLE_SIGNING_IDENTITY="$IDENTITY"', 'npm run tauri -- build --bundles app --config "$CONFIG"',
       'hardenedRuntime: true', 'NOTARY_AUTH=(--keychain-profile "$NOTARY_PROFILE")', '"${NOTARY_AUTH[@]}" --wait', 'xcrun stapler staple', 'xcrun stapler validate',
       'HFD_EXPECT_DEVELOPER_ID_TEAM="$TEAM_ID" bash scripts/verify-macos-bundle-signature.sh', 'source=Notarized Developer ID', 'shasum -a 256',
       'BUNDLE_ID="com.herflightdeck.app"']) {
       assert.ok(source.includes(piece), piece);
     }
+  });
+  it('staples the app before the DMG is built, then signs, notarizes and staples the DMG', () => {
+    const order = ['--bundles app', 'ditto -c -k --keepParent "$APP" "$APP_ZIP"', 'notarize "$APP_ZIP"', 'xcrun stapler staple "$APP"',
+      'xcrun stapler validate "$APP"', 'hdiutil create -volname "Your Flight Deck"', 'codesign --force --sign "$IDENTITY" --timestamp "$DMG"',
+      'notarize "$DMG"', 'xcrun stapler staple "$DMG"', 'xcrun stapler validate "$DMG"', 'xcrun stapler validate "${apps[0]}"'];
+    let at = -1;
+    for (const piece of order) {
+      const next = source.indexOf(piece, at + 1);
+      assert.ok(next > at, `${piece} must come after the previous step`);
+      at = next;
+    }
+    assert.doesNotMatch(source, /--bundles dmg/);
+    assert.ok(source.includes('notarize() {') && source.includes('notarization was not Accepted'));
   });
   it('keeps the committed ad-hoc signingIdentity', () => {
     const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
