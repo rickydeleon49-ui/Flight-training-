@@ -29,3 +29,15 @@ it("shows the native draft-owner reason when a queued guide runs under another p
   render(h(GeminiJobNotice,{job,jobs,model:"claude-haiku-5-5"}));
   expect(screen.getByText(message)).toBeTruthy();
 });
+
+it.each([
+  ["claude-sonnet-x", "Claude"],
+  ["gemini-3.5-flash", "Gemini"],
+])("words the refusal and stage label for %s as %s", (model, name) => {
+  render(h(GeminiErrorText,{model,message:"Gemini is already working or checking earlier work. Try again in a moment."}));
+  expect(screen.getByRole("alert").textContent).toBe(`${name} is already working or checking earlier work. Try again in a moment.`);
+  cleanup();
+  const job={phase:"running",stage:"generating",attempt:1,progress:null,answer:null} as GeminiJob;
+  render(h(GeminiProgressView,{job,title:"Study aid",model,onCancel:vi.fn()}));
+  expect(screen.getByText(`${name}'s answer`, { exact: false })).toBeTruthy();
+});

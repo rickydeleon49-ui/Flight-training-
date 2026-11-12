@@ -363,7 +363,7 @@ function MaterialDetailPage() {
   const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
   // Job notices show failures with recovery actions; refusals belong to this page.
   const refusalFor = (kind: "study-aid" | "flashcards" | "practice-test") =>
-    startRefusal?.kind === kind ? startRefusal.message : null;
+    startRefusal?.kind === kind ? providerWording(startRefusal.message, gemini?.model) : null;
   const generationError = studyJob?.phase === "failed" ? null : refusalFor("study-aid");
   const cardGenerationError = cardJob?.phase === "failed" ? null : refusalFor("flashcards");
   const practiceGenerationError = practiceJob?.phase === "failed" ? null : refusalFor("practice-test");
