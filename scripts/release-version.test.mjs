@@ -74,7 +74,12 @@ const lock=require('node:path').join(dir,'Cargo.lock');fs.writeFileSync(lock,fs.
 function runRelease(ctx, ...args) {
   const r = spawnSync('bash', ['scripts/release.sh', ...args], {
     cwd: ctx.repo, encoding: 'utf8',
-    env: { ...process.env, PATH: `${ctx.bin}:${process.env.PATH}`, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' },
+    env: {
+      ...process.env, PATH: `${ctx.bin}:${process.env.PATH}`, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1',
+      // CI runners have no Git identity; release.sh commits and tags.
+      GIT_AUTHOR_NAME: 'Test', GIT_AUTHOR_EMAIL: 'test@example.invalid',
+      GIT_COMMITTER_NAME: 'Test', GIT_COMMITTER_EMAIL: 'test@example.invalid',
+    },
   });
   return { status: r.status, output: r.stdout + r.stderr };
 }
