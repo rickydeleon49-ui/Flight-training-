@@ -252,8 +252,20 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 
 .flashcard.is-revealed { background: var(--surface-card); }
 
+.practice-question {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
 .practice-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   width: 100%;
+  min-height: 44px;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--category-study-edge);
   border-radius: var(--radius-md);
@@ -266,17 +278,46 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 
 .practice-option:disabled { cursor: default; }
 
+.practice-option__letter {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.practice-option__text { flex: 1; min-width: 0; }
+.practice-option__tag {
+  flex: none;
+  align-self: flex-start;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.practice-option__tag--correct { color: var(--status-complete); }
+
 .practice-option--correct {
   border-color: var(--category-complete-edge);
-  background: var(--category-complete-fill);
-  color: var(--status-complete);
+  box-shadow: inset 0 0 0 1px var(--category-complete-edge);
+  background: var(--surface-card);
+  color: var(--text-primary);
 }
 
 .practice-option--incorrect {
-  border-color: var(--status-overdue-edge);
-  background: var(--status-overdue-fill);
-  color: var(--status-overdue);
+  background: var(--surface-tint-warn);
+  color: var(--text-primary);
 }
+
+.practice-explanation {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+.practice-source { margin: 0; }
+.practice-next { width: 100%; }
 
 @keyframes ai-pulse {
   0%, 100% { opacity: 0.35; transform: scale(0.85); }
