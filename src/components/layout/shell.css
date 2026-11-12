@@ -198,6 +198,11 @@
   letter-spacing: -0.015em;
 }
 
+/* iPhone screens are narrow, so page titles step down one size. */
+html.is-ios .page-header__title {
+  font-size: var(--text-xl);
+}
+
 .page-header__subtitle {
   margin-top: var(--space-1);
   color: var(--text-secondary);

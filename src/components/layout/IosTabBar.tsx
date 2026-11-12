@@ -49,11 +49,10 @@ const TABS: Tab[] = [
 
 interface Props {
   overdueCount: number;
-  questionsToAsk: number;
 }
 
 /** The iPhone's main navigation: five tabs at the bottom of the screen. */
-export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
+export function IosTabBar({ overdueCount }: Props) {
   const { pathname } = useLocation();
   const moreActive = isMoreRoute(pathname);
   const compact = useScrollDirection(pathname);
@@ -85,10 +84,10 @@ export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
               </span>
               <span className="ios-tab-bar__label">{tab.label}</span>
               {tab.to === "/" && overdueCount > 0 ? (
-                <span className="ios-tab-bar__badge">
-                  {overdueCount}
-                  <span className="visually-hidden"> overdue</span>
-                </span>
+                <>
+                  <span className="ios-tab-bar__dot" aria-hidden="true" />
+                  <span className="visually-hidden"> {overdueCount} overdue</span>
+                </>
               ) : null}
             </>
           )}
@@ -104,12 +103,6 @@ export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
           <MoreIcon size={26} strokeWidth={moreActive ? STROKE_ACTIVE : STROKE} />
         </span>
         <span className="ios-tab-bar__label">More</span>
-        {questionsToAsk > 0 ? (
-          <span className="ios-tab-bar__badge ios-tab-bar__badge--quiet">
-            {questionsToAsk}
-            <span className="visually-hidden"> to ask</span>
-          </span>
-        ) : null}
       </Link>
     </nav>
   );
