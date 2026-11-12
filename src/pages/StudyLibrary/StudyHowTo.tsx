@@ -145,7 +145,7 @@ export const PDF_PAGE_TOUR: HowToGroup[] = [
     tab: "Notes",
     items: [
       { label: "Personal notes", control: "heading", text: "write what you want to remember. Notes save as you type; watch for Saved." },
-      { label: "Questions for my instructor", control: "heading", text: "keep questions to ask later. They also appear on your Questions page." },
+      { label: "Questions for my instructor", control: "heading", text: "keep questions to ask later. They also appear on your Ask my instructor page." },
       { label: "Next steps for this material", control: "heading", text: "give this material a small next step, with a date if you like." },
     ],
   },

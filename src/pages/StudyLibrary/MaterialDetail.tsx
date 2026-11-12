@@ -2001,7 +2001,7 @@ function MaterialDetailPage() {
           </div><div className="detail__column">
           <Card>
             <CardHeader title="Questions for my instructor" />
-            {!tipsHidden ? <p className="tiny muted material-detail__intro">Keep questions here to ask later; they also appear on your Questions page.</p> : null}
+            {!tipsHidden ? <p className="tiny muted material-detail__intro">Keep questions here to ask later; they also appear on your Ask my instructor page.</p> : null}
             <CardBody>
               <div className="stack stack--3">
                 {questions.map((question) => (
