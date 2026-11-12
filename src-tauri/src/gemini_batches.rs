@@ -377,6 +377,10 @@ pub(super) async fn generate(
         })?;
         unchanged(root, source)?;
         ctx.budget.validation_checkpoint()?;
+        // A card batch that is only too long is cut to the limit, not thrown away.
+        if unit != 0 {
+            answer.flashcards.truncate(BATCH);
+        }
         validate(&answer, pages, if unit == 0 { 0 } else { BATCH })?;
         ctx.budget.validation_checkpoint()?;
         // Reload reservations so a checkpoint cannot erase the request ledger.
@@ -1229,7 +1233,16 @@ mod tests {
         }
         let r = Rig::new();
         r.begin();
-        r.script(vec![aid(0, 0), aid(0, 11)]);
+        // Too many cards alone is trimmed to the batch limit, not rejected.
+        r.script(vec![aid(0, 0), aid(0, 11), aid(10, 10)]);
+        let result = r.run(20).unwrap();
+        assert_eq!(result.flashcards.len(), 20);
+        // Any other problem in a batch still rejects it.
+        let r = Rig::new();
+        r.begin();
+        let mut blank = aid(0, 11);
+        blank["title"] = json!("  ");
+        r.script(vec![aid(0, 0), blank]);
         assert!(r.run(20).is_err());
     }
 

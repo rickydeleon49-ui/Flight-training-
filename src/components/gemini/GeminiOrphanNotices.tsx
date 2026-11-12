@@ -30,7 +30,7 @@ export function GeminiOrphanNotices() {
 function OrphanNotice({ job, onDismiss }: { job: GeminiJob; onDismiss: () => void }) {
   const jobs = useGeminiJobs();
   const helper = (job.answer?.model ?? job.sections?.model)?.startsWith("claude-") ? "Claude" : "Gemini";
-  const what = job.kind === "study-kit" ? "study kit" : job.kind === "flashcards" ? "flashcards" : job.kind === "study-aid" ? "study guide and cards" : "practice test";
+  const what = job.kind === "study-kit" ? "a study kit" : job.kind === "flashcards" ? "flashcards" : job.kind === "study-aid" ? "a study guide and cards" : "a practice test";
   const message =
     job.phase === "discard-failed"
       ? job.error
@@ -39,8 +39,8 @@ function OrphanNotice({ job, onDismiss }: { job: GeminiJob; onDismiss: () => voi
         : job.sectionGuide
           ? "This document was removed. Your finished sections are kept in a draft."
           : job.phase === "failed" || job.phase === "interrupted"
-            ? `Creating a ${what} for a document that has since been deleted did not finish. Nothing was saved.`
-            : `${helper} finished a ${what} for a document that has since been deleted, so it could not be saved. Your library is unchanged.`;
+            ? `Creating ${what} for a document that has since been deleted did not finish. Nothing was saved.`
+            : `${helper} finished ${what} for a document that has since been deleted, so it could not be saved. Your library is unchanged.`;
   return (
     <div className="stack stack--2">
       <div className="ai-disclaimer" role={job.phase === "discard-failed" ? "alert" : "status"}>

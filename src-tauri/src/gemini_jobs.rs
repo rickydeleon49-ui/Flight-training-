@@ -145,6 +145,19 @@ pub(crate) struct JobRecord {
     pub error: Option<String>,
 }
 
+/// A finished study kit that holds no answer in any part and no draft: there
+/// is nothing in it to save, so it must not hold a slot.
+fn is_dead_kit(j: &JobRecord) -> bool {
+    j.kind == JobKind::StudyKit
+        && j.stage == JobStage::Ready
+        && j.draft.is_none()
+        && !["guide", "cards", "questions"].iter().any(|part| {
+            j.result
+                .as_ref()
+                .is_some_and(|r| r["parts"][part].get("answer").is_some())
+        })
+}
+
 fn serialize_public_draft<S: serde::Serializer>(
     draft: &Option<Value>,
     serializer: S,
@@ -461,10 +474,11 @@ impl Journal {
                 .iter()
                 .enumerate()
                 .filter(|(_, j)| {
-                    matches!(
+                    (matches!(
                         j.stage,
                         JobStage::Failed | JobStage::Interrupted | JobStage::Cancelled
-                    ) && j.draft.is_none()
+                    ) && j.draft.is_none())
+                        || is_dead_kit(j)
                 })
                 .min_by_key(|(_, j)| j.updated_at)
                 .map(|(i, _)| i)
@@ -493,6 +507,25 @@ impl Journal {
         self.commit(next)?;
         self.live.insert(id.clone());
         Ok(id)
+    }
+
+    /// Frees slots that hold nothing worth keeping, once, before a request is
+    /// refused as full: failed or interrupted outcomes without a draft, study
+    /// kits whose parts all failed (nothing to save). A draft, a running or
+    /// live job, and any waiting answer are never touched.
+    fn make_room(&mut self) -> Result<(), String> {
+        let stale = |j: &JobRecord| {
+            if self.live.contains(&j.id) {
+                return false;
+            }
+            (matches!(j.stage, JobStage::Failed | JobStage::Interrupted) && j.draft.is_none())
+                || is_dead_kit(j)
+        };
+        if !self.jobs.iter().any(|j| stale(j)) {
+            return Ok(());
+        }
+        let next: Vec<JobRecord> = self.jobs.iter().filter(|j| !stale(j)).cloned().collect();
+        self.commit(next)
     }
 
     /// Local PDF work has its own slot and never enters provider admission.
@@ -541,7 +574,10 @@ impl Journal {
             });
         }
         if self.jobs.len() >= MAX_JOBS {
-            return Err(PdfKitBeginError::Full);
+            self.make_room().map_err(|_| PdfKitBeginError::Storage)?;
+            if self.jobs.len() >= MAX_JOBS {
+                return Err(PdfKitBeginError::Full);
+            }
         }
         if !valid_identity(material)
             || !valid_identity(path)
@@ -648,7 +684,10 @@ impl Journal {
             return Err(WAITING.into());
         }
         if self.jobs.len() >= MAX_JOBS {
-            return Err(FULL.into());
+            self.make_room()?;
+            if self.jobs.len() >= MAX_JOBS {
+                return Err(FULL.into());
+            }
         }
         if !valid_identity(material)
             || !valid_identity(path)

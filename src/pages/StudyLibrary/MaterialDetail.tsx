@@ -1,4 +1,5 @@
 import { MaterialVideoLinks } from "./MaterialVideoLinks";
+import { WaitingAnswerLinks } from "./WaitingAnswerLinks";
 import { inspectPdf } from "@/services/pdf";
 import { ScannedPdfNote } from "./ScannedPdfNote";
 import { providerCompany, providerWording } from "@/services/provider";
@@ -1048,6 +1049,7 @@ function MaterialDetailPage() {
         <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
         <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
         {kitMessage ? <p role="status">{kitMessage}</p> : null}
+        <WaitingAnswerLinks message={kitMessage} jobs={geminiJobs.jobs} materials={data.materials} exceptId={materialId} />
         {kitMessage && kitDraftAnchor ? (
           <div className="row row--wrap">
             <Button size="small" variant="secondary" onClick={() => jumpTo(kitDraftAnchor)}>Show me</Button>
@@ -1295,6 +1297,7 @@ function MaterialDetailPage() {
                   {generationError ? (
                     <div className="stack stack--3 material-detail__mt-3">
                       <GeminiErrorText model={gemini?.model} message={generationError} />
+                      <WaitingAnswerLinks message={generationError} jobs={geminiJobs.jobs} materials={data.materials} exceptId={materialId} />
                       {retryStudy ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryStudy}>
@@ -1566,6 +1569,7 @@ function MaterialDetailPage() {
                   {cardGenerationError ? (
                     <div className="stack stack--3 material-detail__mb-3">
                       <GeminiErrorText model={gemini?.model} message={cardGenerationError} />
+                      <WaitingAnswerLinks message={cardGenerationError} jobs={geminiJobs.jobs} materials={data.materials} exceptId={materialId} />
                       {retryFlashcards ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryFlashcards}>
@@ -1804,6 +1808,7 @@ function MaterialDetailPage() {
                   {practiceGenerationError ? (
                     <div className="stack stack--3 material-detail__mt-3">
                       <GeminiErrorText model={gemini?.model} message={practiceGenerationError} />
+                      <WaitingAnswerLinks message={practiceGenerationError} jobs={geminiJobs.jobs} materials={data.materials} exceptId={materialId} />
                       {retryPractice ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryPractice}>
