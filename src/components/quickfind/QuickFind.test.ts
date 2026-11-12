@@ -284,7 +284,7 @@ describe("content search findability", () => {
     await mountLibrary();
     act(() => nav?.("/study"));
     const box = await screen.findByRole("textbox", { name: "Search your library" });
-    expect(box.getAttribute("placeholder")).toBe("Search titles, PDFs, notes and homework");
+    expect(box.getAttribute("placeholder")).toBe("Search your library");
     fireEvent.change(box, { target: { value: "rudder" } });
     const hit = await screen.findByRole("button", { name: "Homework, Homework activity: open it" });
     const before = (a: Node, b: Node) => expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -306,7 +306,7 @@ describe("content search findability", () => {
     expect(row.textContent).not.toMatch(/PDF|homework/i);
     fireEvent.click(row);
     const box = await screen.findByRole("textbox", { name: "Search your library" });
-    expect(box.getAttribute("placeholder")).toBe("Search titles, notes and tags");
+    expect(box.getAttribute("placeholder")).toBe("Search your library");
     expect(screen.queryByText("In your documents")).toBeNull();
     expect(offline.search).not.toHaveBeenCalled();
   });
