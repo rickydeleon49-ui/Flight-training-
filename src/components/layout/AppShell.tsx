@@ -45,20 +45,38 @@ import { useClearLibrarySearchOnLeave } from "@/pages/StudyLibrary/librarySearch
 interface NavItem {
   to: string;
   label: string;
+  /** Visible label in the 700-999px rail; always part of `label`. */
+  short: string;
   icon: ReactElement;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Flight Deck", icon: <DeckIcon size={19} /> },
-  { to: "/flight-path", label: "Flight Path", icon: <RouteIcon size={19} /> },
-  { to: "/study", label: "Study Library", icon: <BookIcon size={19} /> },
-  { to: "/schedule", label: "Schedule", icon: <CalendarIcon size={19} /> },
-  { to: "/journal", label: "Flight Log", icon: <JournalIcon size={19} /> },
-  { to: "/questions", label: "Ask my instructor", icon: <QuestionIcon size={19} /> },
-  { to: "/notes", label: "Notes", icon: <NoteIcon size={19} /> },
-  { to: "/finances", label: "Finances", icon: <WalletIcon size={19} /> },
-  { to: "/toolkit", label: "Pilot Toolkit", icon: <TargetIcon size={19} /> },
+  { to: "/", label: "Flight Deck", short: "Deck", icon: <DeckIcon size={19} /> },
+  { to: "/flight-path", label: "Flight Path", short: "Path", icon: <RouteIcon size={19} /> },
+  { to: "/study", label: "Study Library", short: "Library", icon: <BookIcon size={19} /> },
+  { to: "/schedule", label: "Schedule", short: "Schedule", icon: <CalendarIcon size={19} /> },
+  { to: "/journal", label: "Flight Log", short: "Log", icon: <JournalIcon size={19} /> },
+  { to: "/questions", label: "Ask my instructor", short: "Ask", icon: <QuestionIcon size={19} /> },
+  { to: "/notes", label: "Notes", short: "Notes", icon: <NoteIcon size={19} /> },
+  { to: "/finances", label: "Finances", short: "Finances", icon: <WalletIcon size={19} /> },
+  { to: "/toolkit", label: "Pilot Toolkit", short: "Toolkit", icon: <TargetIcon size={19} /> },
 ];
+
+const RAIL_QUERY = "(min-width: 700px) and (max-width: 999px)";
+const SHORT_QUERY = "(max-height: 700px)";
+
+function useMedia(query: string, initial = false): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia?.(query).matches ?? initial);
+  useEffect(() => {
+    const media = window.matchMedia?.(query);
+    if (!media?.addEventListener) return;
+    const update = () => setMatches(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [query]);
+  return matches;
+}
 
 export function AppShell() {
   const { data } = useAppData();
@@ -69,15 +87,22 @@ export function AppShell() {
   const navigationRef = useRef<HTMLDivElement>(null);
   const [desktop, setDesktop] = useState(() => window.matchMedia?.("(min-width: 1000px)").matches ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const railMedia = useMedia(RAIL_QUERY);
+  const shortWindow = useMedia(SHORT_QUERY);
+  const [noteOpen, setNoteOpen] = useState(false);
   const resizeFocusRef = useRef<"search" | "menu" | null>(null);
   const [barTitle, setBarTitle] = useState("");
   const [barCollapsed, setBarCollapsed] = useState(false);
+
+  const rail = railMedia && !desktop;
+  const overlay = rail && menuOpen;
+  const railLabels = rail && !menuOpen;
 
   // Anchor destinations stay below the sticky header, including enlarged text.
   useLayoutEffect(() => {
     const sidebar = sidebarRef.current;
     const shell = sidebar?.parentElement;
-    if (!sidebar || !shell || desktop) return;
+    if (!sidebar || !shell || desktop || rail) return;
     const measure = () => shell.style.setProperty("--narrow-header-height", `${sidebar.getBoundingClientRect().height}px`);
     measure();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
@@ -86,7 +111,7 @@ export function AppShell() {
       observer?.disconnect();
       shell.style.removeProperty("--narrow-header-height");
     };
-  }, [desktop]);
+  }, [desktop, rail]);
 
   const overdueCount = overdueActions(data.actions, today).length;
   const questionsToAsk = data.questions.filter((q) => q.status === "to_ask").length;
@@ -113,6 +138,21 @@ export function AppShell() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+
+  // Rail overlay: close when the layout changes, move focus in on open, close on an outside press.
+  useEffect(() => { setMenuOpen(false); }, [rail]);
+  useEffect(() => {
+    if (!overlay) return;
+    navigationRef.current?.querySelector<HTMLElement>(".nav__search")?.focus();
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (navigationRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      if ((target as HTMLElement).closest?.("dialog, [role=dialog]")) return;
+      setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [overlay]);
 
   useEffect(() => {
     // Wait until the new layout has revealed the destination before focusing it.
@@ -210,8 +250,8 @@ export function AppShell() {
         <div
           id="app-navigation"
           ref={navigationRef}
-          className="sidebar__navigation"
-          hidden={!desktop && !menuOpen}
+          className={overlay ? "sidebar__navigation is-overlay" : "sidebar__navigation"}
+          hidden={!desktop && !rail && !menuOpen}
         >
           <button
             type="button"
@@ -222,7 +262,7 @@ export function AppShell() {
               <SearchIcon size={17} />
             </span>
             <span>Search</span>
-            {isIOS() ? null : <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>}
+            {isIOS() || railLabels ? null : <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>}
           </button>
 
           <div className="nav-wrapper">
@@ -236,11 +276,12 @@ export function AppShell() {
                     state={item.to === "/study" ? { scrollToTop: true } : undefined}
                     replace={item.to === "/study" ? false : undefined}
                     onClick={closeMenu}
+                    aria-label={railLabels ? item.label : undefined}
                     end={item.to === "/"}
                     className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
                   >
                     <span className="nav__icon">{item.icon}</span>
-                    <span className="nav__label">{item.label}</span>
+                    <span className="nav__label">{railLabels ? item.short : item.label}</span>
                     {count ? (
                       <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
                         {count.value}
@@ -266,9 +307,25 @@ export function AppShell() {
               </span>
               <span>Settings</span>
             </NavLink>
-            <p className="sidebar__note">
-              {DISCLAIMER_LINE}
-            </p>
+            {shortWindow ? (
+              <div className="sidebar__note sidebar__note--short">
+                <button
+                  type="button"
+                  className="sidebar__note-toggle"
+                  aria-expanded={noteOpen}
+                  aria-controls="sidebar-note-text"
+                  onClick={() => setNoteOpen((open) => !open)}
+                >
+                  Study aid only
+                  <span aria-hidden="true">{noteOpen ? " \u2212" : " +"}</span>
+                </button>
+                <p id="sidebar-note-text" hidden={!noteOpen}>{DISCLAIMER_LINE}</p>
+              </div>
+            ) : (
+              <p className="sidebar__note">
+                {DISCLAIMER_LINE}
+              </p>
+            )}
           </div>
         </div>
       </aside>

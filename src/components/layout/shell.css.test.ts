@@ -48,3 +48,12 @@ it("narrow menu keeps a top row and a full-width, independently scrolling list",
   expect(rule(".sidebar__menu")).toContain("min-height: 44px");
   expect(css).toContain(".sidebar__menu[hidden] { display: none; }");
 });
+
+it("700-999px rail is slim, stacks icon over label and keeps targets >= 44px; the menu is a fixed overlay", () => {
+  const rail = css.slice(css.indexOf("@media (min-width: 700px) and (max-width: 999px)"));
+  expect(rail).toContain("grid-template-columns: 76px minmax(0, 1fr)");
+  expect(rail).toMatch(/\.nav__link,[^{]*\{[^}]*flex-direction: column;[^}]*min-height: 56px/);
+  expect(rail).toMatch(/\.sidebar__navigation\.is-overlay\s*\{[^}]*position: fixed/);
+  expect(css).toContain(".sidebar__note-toggle");
+  expect(css).toMatch(/\.sidebar__note-toggle\s*\{[^}]*min-height: var\(--hit-min\)/);
+});

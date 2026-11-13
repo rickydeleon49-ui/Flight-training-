@@ -315,3 +315,98 @@ html.is-ios .page-header__title {
     padding-bottom: calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Short windows: the study-aid note folds to one line with a disclosure. */
+.sidebar__note--short { padding: 0; }
+.sidebar__note-toggle {
+  width: 100%;
+  min-height: var(--hit-min);
+  padding: 0 var(--space-3);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar__note--short p { padding: 0 var(--space-3) var(--space-3); }
+
+/* 700-999px: a slim labelled rail. Menu opens the full list as an overlay. */
+@media (min-width: 700px) and (max-width: 999px) {
+  .shell { display: grid; grid-template-columns: 76px minmax(0, 1fr); }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    height: 100vh;
+    max-height: none;
+    overflow: visible;
+    padding: var(--space-4) 6px;
+    border-right: 0.5px solid var(--border-subtle);
+    border-bottom: 0;
+  }
+  .brand { justify-content: center; position: relative; z-index: 2; }
+  .brand > div { display: none; }
+  .sidebar__menu {
+    width: 100%;
+    padding-inline: 0;
+    font-size: var(--text-xs);
+    position: relative;
+    z-index: 2;
+  }
+  .sidebar__navigation:not(.is-overlay) {
+    flex: 1;
+    gap: var(--space-2);
+    overflow-y: auto;
+  }
+  .sidebar__navigation:not(.is-overlay) .nav { gap: var(--space-1); }
+  .sidebar__navigation:not(.is-overlay) .nav__link,
+  .sidebar__navigation:not(.is-overlay) .nav__search {
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    min-height: 56px;
+    margin: 0;
+    padding: var(--space-1) 0;
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .sidebar__navigation:not(.is-overlay) .nav__label { white-space: nowrap; overflow-wrap: normal; }
+  .sidebar__navigation:not(.is-overlay) .nav__link.is-active { box-shadow: inset 3px 0 0 var(--nav-active-ink); }
+  .sidebar__navigation:not(.is-overlay) .nav__count {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    margin: 0;
+    min-width: 1.1rem;
+    height: 1.1rem;
+  }
+  .sidebar__footer { margin-top: 0; }
+  @media (max-height: 700px) {
+    .sidebar__navigation:not(.is-overlay) .nav__link,
+    .sidebar__navigation:not(.is-overlay) .nav__search { min-height: var(--hit-min); }
+  }
+  .sidebar__navigation.is-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1;
+    width: min(20rem, 100vw);
+    padding: 8rem var(--space-4) var(--space-4);
+    background: var(--surface-sidebar);
+    border-right: 0.5px solid var(--border-subtle);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+  }
+  .sidebar__navigation.is-overlay .sidebar__note { display: block; }
+  .content { padding-left: var(--space-5); padding-right: var(--space-5); }
+  .content.content--top-bar { --content-pad-x: var(--space-5); }
+}
