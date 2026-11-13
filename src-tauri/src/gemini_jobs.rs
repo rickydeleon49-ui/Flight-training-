@@ -521,7 +521,7 @@ impl Journal {
             (matches!(j.stage, JobStage::Failed | JobStage::Interrupted) && j.draft.is_none())
                 || is_dead_kit(j)
         };
-        if !self.jobs.iter().any(|j| stale(j)) {
+        if !self.jobs.iter().any(&stale) {
             return Ok(());
         }
         let next: Vec<JobRecord> = self.jobs.iter().filter(|j| !stale(j)).cloned().collect();
