@@ -485,6 +485,50 @@ pub const CARD_ASK_NO_TEXT_INSTRUCTION: &str =
      This is a study aid; remind her to check FAA guidance and her instructor for anything operational. \
      Write plain text with no Markdown: no asterisks or headings; separate paragraphs with a blank line.";
 
+/// Conservative repair of a page's read text before it is sent: rejoins a
+/// drop-cap letter alone on its line ("P\nilot") and a word broken at a line
+/// end with a hyphen ("air-\nspeed"). Hyphens elsewhere are left alone, so real
+/// compounds ("pre-flight") stay. The stored text is never changed.
+fn repair_split_words(text: &str) -> String {
+    let lines: Vec<&str> = text.lines().collect();
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+        let next = lines.get(i + 1).copied();
+        let next_starts_lower = next
+            .and_then(|n| n.chars().next())
+            .is_some_and(|c| c.is_lowercase());
+        let trimmed = line.trim();
+        let mut chars = trimmed.chars();
+        let lone_capital = matches!((chars.next(), chars.next()), (Some(c), None) if c.is_uppercase() && c != 'A' && c != 'I');
+        let prev_ends_block = i == 0
+            || lines[i - 1].trim().is_empty()
+            || lines[i - 1].trim_end().ends_with(['.', '!', '?', ':']);
+        if lone_capital && prev_ends_block && next_starts_lower {
+            // Drop cap: glue the capital onto the next line.
+            out.push_str(trimmed);
+            i += 1;
+            continue;
+        }
+        let mut rev = line.trim_end().chars().rev();
+        let hyphen_break = rev.next() == Some('-')
+            && rev.next().is_some_and(|c| c.is_lowercase())
+            && next_starts_lower;
+        if hyphen_break {
+            out.push_str(line.trim_end().trim_end_matches('-'));
+            i += 1;
+            continue;
+        }
+        out.push_str(line);
+        if i + 1 < lines.len() {
+            out.push('\n');
+        }
+        i += 1;
+    }
+    out
+}
+
 /// The read text around `cited`, nearest pages first, within
 /// [`MAX_WHY_PAGE_TEXT_CHARS`] (the farthest pages are left out first). Returns
 /// the pages used, in order, and the labelled text; None when no page has text.
@@ -495,7 +539,8 @@ pub fn why_page_text(
     if cited == 0 {
         return None;
     }
-    let label = |page: u32, text: &str| format!("PDF page {page}:\n{}", text.trim());
+    let label =
+        |page: u32, text: &str| format!("PDF page {page}:\n{}", repair_split_words(text).trim());
     let mut order = vec![cited];
     for d in 1..=WHY_PAGE_RADIUS {
         if cited > d {
@@ -1953,6 +1998,32 @@ mod tests {
         assert!(why_page_text(16, |_| None).is_none());
         assert!(why_page_text(16, |_| Some("   ".into())).is_none());
         assert!(why_page_text(0, pages).is_none());
+    }
+
+    #[test]
+    fn card_why_text_rejoins_split_words_but_keeps_real_compounds() {
+        let page = |_: u32| {
+            Some("P\nilot-in-command checks the air-\nspeed. A pre-flight check\nof the non-towered field. Use A\nand B.\nfoo-".to_string())
+        };
+        let (_, text) = why_page_text(5, page).unwrap();
+        assert!(text.contains("Pilot-in-command"), "{text}");
+        assert!(text.contains("airspeed."), "{text}");
+        assert!(
+            text.contains("pre-flight check\nof the non-towered"),
+            "{text}"
+        );
+        assert!(
+            text.contains("A\nand B"),
+            "mid-sentence capital kept: {text}"
+        );
+        assert!(text.ends_with("foo-"), "{text}");
+        assert_eq!(
+            repair_split_words("Well-known\n-5 deg"),
+            "Well-known\n-5 deg"
+        );
+        assert_eq!(repair_split_words("x-\nY"), "x-\nY");
+        // "A" and "I" are real words, never drop caps.
+        assert_eq!(repair_split_words("wind.\nA\nlarge"), "wind.\nA\nlarge");
     }
 
     #[test]
