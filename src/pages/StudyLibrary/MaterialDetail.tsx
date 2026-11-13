@@ -319,17 +319,25 @@ function MaterialDetailPage() {
   }, [confirmingPracticeTest, confirmingKit, repositories, materialId]);
   // A paused practice attempt: the row below says Continue, not Start.
   const [pausedPractice, setPausedPractice] = useState(false);
+  // Bumped when the panel's attempt changes (answer, abandon, finish) so the label re-checks.
+  const [practiceRevision, setPracticeRevision] = useState(0);
   const practiceQuestionCount = data.practiceTests.find((candidate) => candidate.sourceMaterialId === materialId)?.questions.length ?? 0;
   useEffect(() => {
     let live = true;
-    setPausedPractice(false);
     if (repositories?.practiceSessions && materialId && practiceQuestionCount > 0) {
       void Promise.resolve(repositories.practiceSessions.getCurrentAttempt(materialId)).then(attempt => {
-        if (live && attempt && attempt.responses.length > 0) setPausedPractice(true);
+        if (live) setPausedPractice(Boolean(attempt && attempt.responses.length > 0));
       }).catch(() => {});
-    }
+    } else setPausedPractice(false);
     return () => { live = false; };
-  }, [repositories, materialId, practiceQuestionCount]);
+  }, [repositories, materialId, practiceQuestionCount, practiceRevision]);
+  useEffect(() => { setPausedPractice(false); }, [materialId]);
+  const handlePracticeAttemptChange = useCallback((active: boolean, answered = 0) => {
+    setActivePracticeAttempt(active);
+    setPracticeRevision((n) => n + 1);
+    if (!active) setPausedPractice(false);
+    else if (answered > 0) setPausedPractice(true);
+  }, []);
   const waitingKitDraftKey = JSON.stringify([materialId, waitingKitDrafts.map((job) => [job.key, Boolean(job.studyKitPart)])]);
   // A saved/discarded draft can invalidate both the refusal and its destination.
   // Only the draft refusals go stale this way; other kit messages stay.
@@ -1925,7 +1933,7 @@ function MaterialDetailPage() {
                         practiceTest={practiceTest}
                         materialId={material.id}
                         key={practiceTest.updatedAt}
-                        onAttemptChange={setActivePracticeAttempt}
+                        onAttemptChange={handlePracticeAttemptChange}
                       />
                     </div>
                   ) : !generatingPractice && !hasImported && material.filePath && canOfferGemini ? (
