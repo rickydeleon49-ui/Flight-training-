@@ -38,7 +38,7 @@ export interface PracticeTestPanelProps {
   /** Shown instead of Start while study kit drafts wait above (no mis-tap beside Save). */
   startHeld?: string;
   /** Lets adjacent authoring controls follow this panel's live attempt state. */
-  onAttemptChange?: (active: boolean) => void;
+  onAttemptChange?: (active: boolean, answered?: number) => void;
   practiceTest: PracticeTest;
   materialId?: string;
   materialTitle?: string;
@@ -418,7 +418,8 @@ export function PracticeTestPanel({
   const [confirmingAbandon, setConfirmingAbandon] = useState(false);
   const [continuedOlderAttempt, setContinuedOlderAttempt] = useState<string | null>(null);
   useEffect(() => {
-    onAttemptChange?.(state.attempt !== null && state.completedResult === null);
+    const active = state.attempt !== null && state.completedResult === null;
+    onAttemptChange?.(active, active ? state.attempt?.responses.length ?? 0 : 0);
   }, [onAttemptChange, state.attempt, state.completedResult]);
 
   // Synchronous authority. React state cannot be read before the next render,

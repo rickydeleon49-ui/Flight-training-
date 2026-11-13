@@ -378,3 +378,24 @@ it("keeps the fresh PDF kit maker open at the top and omits it on iOS", async ()
   expect(screen.queryByText("Make a new study kit")).toBeNull();
   expect(screen.queryByRole("button", {name: "Make my study kit"})).toBeNull();
 });
+async function answerFirstQuestion() {
+  fireEvent.click(await screen.findByRole("button", { name: "Start practice test" }));
+  await screen.findByRole("heading", { name: "Question 1 of 3" });
+  fireEvent.click((await screen.findAllByRole("radio"))[0]!);
+  fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+  await screen.findByRole("button", { name: /Next question|Skip|Next/ });
+}
+it("the Practice test row flips to Continue after an answer, and back to Start after closing, without a reload", async () => {
+  await createRepositories(db).documents.savePracticeTest({ sourceMaterialId: "tips", provider: "gemini", title: "Synthetic test", model: "test",
+    questions: [1, 2, 3].map(n => ({ question: `Synthetic question ${n}?`, options: ["A", "B"], correctIndex: 0, explanation: "A", sourcePage: 1 })) });
+  await open();
+  const list = screen.getByRole("list", { name: "Next steps" });
+  expect(await within(list).findByRole("button", { name: "Start" })).toBeTruthy();
+  await answerFirstQuestion();
+  await waitFor(() => expect(within(list).getByRole("button", { name: "Continue" })).toBeTruthy());
+  fireEvent.click(await screen.findByRole("button", { name: "Close unfinished test" }));
+  const confirmButtons = await screen.findAllByRole("button", { name: "Close unfinished test" });
+  fireEvent.click(confirmButtons[confirmButtons.length - 1]!);
+  await waitFor(() => expect(within(list).getByRole("button", { name: "Start" })).toBeTruthy());
+  expect(within(list).queryByRole("button", { name: "Continue" })).toBeNull();
+});
