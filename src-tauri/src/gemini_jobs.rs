@@ -145,6 +145,38 @@ pub(crate) struct JobRecord {
     pub error: Option<String>,
 }
 
+/// The materials that still exist, read from the app database read-only.
+/// `None` (no database, open or query error) means "unknown": nothing is
+/// then treated as orphaned, so no answer is ever dropped on a doubt.
+struct Orphans(Option<std::collections::HashSet<String>>);
+
+impl Orphans {
+    fn load(root: &Path) -> Orphans {
+        let db = root.join("her-flight-deck.db");
+        if !db.is_file() {
+            return Orphans(None);
+        }
+        let ids = (|| -> Result<std::collections::HashSet<String>, rusqlite::Error> {
+            let conn = rusqlite::Connection::open_with_flags(
+                &db,
+                rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+            )?;
+            conn.busy_timeout(std::time::Duration::from_secs(2))?;
+            let mut stmt = conn.prepare("SELECT id FROM study_materials")?;
+            let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+            rows.collect()
+        })();
+        Orphans(ids.ok())
+    }
+
+    /// True only when the material row is definitely gone.
+    fn is_orphan(&self, j: &JobRecord) -> bool {
+        self.0
+            .as_ref()
+            .is_some_and(|ids| !ids.contains(&j.material_id))
+    }
+}
+
 /// A finished study kit that holds no answer in any part and no draft: there
 /// is nothing in it to save, so it must not hold a slot.
 fn is_dead_kit(j: &JobRecord) -> bool {
@@ -469,7 +501,9 @@ impl Journal {
         // Only failed or interrupted outcomes may make room. A waiting answer
         // is never given up without her deciding; if every slot holds one,
         // nothing is sent.
+        let mut orphans: Option<Orphans> = None;
         while next.len() >= MAX_JOBS {
+            let orphans = orphans.get_or_insert_with(|| Orphans::load(&self.root));
             let Some(victim) = next
                 .iter()
                 .enumerate()
@@ -479,6 +513,9 @@ impl Journal {
                         JobStage::Failed | JobStage::Interrupted | JobStage::Cancelled
                     ) && j.draft.is_none())
                         || is_dead_kit(j)
+                        || (j.stage != JobStage::Running
+                            && !self.live.contains(&j.id)
+                            && orphans.is_orphan(j))
                 })
                 .min_by_key(|(_, j)| j.updated_at)
                 .map(|(i, _)| i)
@@ -514,12 +551,14 @@ impl Journal {
     /// kits whose parts all failed (nothing to save). A draft, a running or
     /// live job, and any waiting answer are never touched.
     fn make_room(&mut self) -> Result<(), String> {
+        let orphans = Orphans::load(&self.root);
         let stale = |j: &JobRecord| {
             if self.live.contains(&j.id) {
                 return false;
             }
             (matches!(j.stage, JobStage::Failed | JobStage::Interrupted) && j.draft.is_none())
                 || is_dead_kit(j)
+                || (j.stage != JobStage::Running && orphans.is_orphan(j))
         };
         if !self.jobs.iter().any(&stale) {
             return Ok(());
