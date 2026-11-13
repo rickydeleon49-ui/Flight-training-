@@ -150,6 +150,7 @@ export function GeminiJobNotice({
           </Button>
           )}
         </div>
+        {!job.studyKitPart && job.answer ? <StudyKitPartPreview job={job} what={what} /> : null}
       </div>
     );
   }
@@ -262,7 +263,7 @@ function StudyKitPartPreview({ job, what }: { job: GeminiJob; what: string }) {
         {answer.sections.map((section, index) => <div key={index}>
           <p><strong>{section.heading}</strong></p><GuideBody text={section.body} />
         </div>)}
-        <p className="tiny muted">{answer.sourceNotes}</p>
+        {job.studyKitPart ? <p className="tiny muted">{answer.sourceNotes}</p> : null}
       </>}
       <p className="tiny muted">AI study aid. Check against current FAA material and your instructor.</p>
     </div>

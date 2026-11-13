@@ -86,7 +86,9 @@ export async function readPdfTextInBackground(
     const [row] = await offlineContentReadiness([materialId]);
     let readiness = row?.readiness;
     if (!readiness || !isCurrent()) return null;
+    let prepared = false;
     if (readiness.state === "notPrepared") {
+      prepared = true;
       onReading();
       readiness = (await prepareOfflineContent(materialId)).readiness;
     } else if (readiness.state === "preparing" || readiness.state === "checking") {
@@ -95,7 +97,15 @@ export async function readPdfTextInBackground(
       return readPages(readiness);
     }
     const started = Date.now();
-    while ((readiness.state === "preparing" || readiness.state === "checking") && Date.now() - started < AUTO_READ_MAX_MS) {
+    // A first "checking" can settle to "notPrepared": start the read once then.
+    while (Date.now() - started < AUTO_READ_MAX_MS) {
+      if (readiness.state === "notPrepared" && !prepared) {
+        prepared = true;
+        readiness = (await prepareOfflineContent(materialId)).readiness;
+        if (!isCurrent()) return null;
+        continue;
+      }
+      if (readiness.state !== "preparing" && readiness.state !== "checking") break;
       await wait(AUTO_READ_POLL_MS);
       if (!isCurrent()) return null;
       const [next] = await offlineContentReadiness([materialId]);
@@ -448,7 +458,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
                       </div>
                     ))}
                   </details>
-                ) : turn.textNotRead ? (
+                ) : turn.textNotRead && offlineStudyEnabled() ? (
                   <p className="small dim">
                     I couldn't check the supporting text — use{" "}
                     {document.getElementById(READ_TEXT_HEADING) ? (
@@ -507,7 +517,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
         {readingText && (
           <p className="small row ask-gemini__flat" role="status">
             <span className="spinner" aria-hidden="true" />
-            Reading this PDF on your Mac…
+            Checking sources on your Mac…
           </p>
         )}
         {isLoading && progress && (

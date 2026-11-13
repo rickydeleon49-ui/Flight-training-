@@ -63,7 +63,7 @@ describe("1: reading the PDF's text in the background", () => {
     mocks.ask.mockResolvedValue({ answer: "Not answered by these sources.", model: "gemini-3.5-flash", notAnswered: true, passages: [] });
     renderPanel({ evidenceMode: true });
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-    const reading = await screen.findByText("Reading this PDF on your Mac…");
+    const reading = await screen.findByText("Checking sources on your Mac…");
     expect(reading.getAttribute("role")).toBe("status");
     expect(reading.classList.contains("small")).toBe(true);
     expect(reading.classList.contains("dim")).toBe(false);
@@ -75,7 +75,7 @@ describe("1: reading the PDF's text in the background", () => {
     await act(async () => { finish(); });
     // The wait between checks is real; give it time.
     await waitFor(() => expect(mocks.ask).toHaveBeenCalledTimes(1), { timeout: 4000 });
-    expect(screen.queryByText("Reading this PDF on your Mac…")).toBeNull();
+    expect(screen.queryByText("Checking sources on your Mac…")).toBeNull();
     // 2: the page range comes from the read.
     expect(await screen.findByText(
       "That isn't in these pages (pages 1–32). This PDF covers: Magnetic compass; Compass errors; Attitude indicator. Try another chapter, or ask your instructor.",
@@ -87,7 +87,21 @@ describe("1: reading the PDF's text in the background", () => {
     fireEvent.click(screen.getByRole("button", { name: "Explain this" }));
     await waitFor(() => expect(mocks.readiness).toHaveBeenCalledTimes(1));
     expect(mocks.prepare).not.toHaveBeenCalled();
-    expect(screen.queryByText("Reading this PDF on your Mac…")).toBeNull();
+    expect(screen.queryByText("Checking sources on your Mac…")).toBeNull();
+  });
+
+  it("a second question does not start another read", async () => {
+    mocks.readiness.mockResolvedValueOnce(row({ state: "notPrepared" }))
+      .mockResolvedValue(row({ state: "searchable", pages: 32 }));
+    mocks.prepare.mockResolvedValue({ materialId: "mat-1", readiness: { state: "searchable", pages: 32 } });
+    mocks.ask.mockResolvedValue({ answer: "Fictional answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
+    renderPanel({ evidenceMode: true });
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    ask("Why does the compass lag in a turn?");
+    await waitFor(() => expect(mocks.ask).toHaveBeenCalledTimes(1));
+    ask("What causes compass dip errors?");
+    await waitFor(() => expect(mocks.ask).toHaveBeenCalledTimes(2));
+    expect(mocks.prepare).toHaveBeenCalledExactlyOnceWith("mat-1");
   });
 
   it("if the read fails, Ask behaves as before", async () => {
@@ -99,7 +113,7 @@ describe("1: reading the PDF's text in the background", () => {
     ask("Why does the compass lag in a turn?");
     expect(await screen.findByText("Fictional answer.")).toBeTruthy();
     expect(screen.getByText(/I couldn't check the supporting text/)).toBeTruthy();
-    expect(screen.queryByText("Reading this PDF on your Mac…")).toBeNull();
+    expect(screen.queryByText("Checking sources on your Mac…")).toBeNull();
   });
 
   it("does nothing when this build can't read text, or the file isn't a PDF", async () => {
@@ -108,6 +122,27 @@ describe("1: reading the PDF's text in the background", () => {
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(mocks.readiness).not.toHaveBeenCalled();
+  });
+
+  it("a read that first says checking, then not prepared, is started exactly once", async () => {
+    mocks.readiness.mockResolvedValueOnce(row({ state: "checking" }))
+      .mockResolvedValueOnce(row({ state: "notPrepared" }))
+      .mockResolvedValueOnce(row({ state: "searchable", pages: 32 }));
+    mocks.prepare.mockResolvedValue({ materialId: "mat-1", readiness: { state: "preparing" } });
+    const wait = vi.fn(async () => {});
+    expect(await readPdfTextInBackground("mat-1", vi.fn(), () => true, wait)).toBe(32);
+    expect(mocks.prepare).toHaveBeenCalledExactlyOnceWith("mat-1");
+  });
+
+  it("with text reading unavailable, the hint does not point to a missing control", async () => {
+    mocks.enabled.mockReturnValue(false);
+    mocks.ask.mockResolvedValue({ answer: "Fictional answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [], evidenceUnavailable: "text_not_read" });
+    renderPanel({ evidenceMode: true });
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    ask("Why does the compass lag in a turn?");
+    expect(await screen.findByText("Fictional answer.")).toBeTruthy();
+    expect(screen.getByText("I couldn't check the supporting text.")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("Read this PDF's text");
   });
 
   it("readPdfTextInBackground polls the same local read until it settles, and gives up quietly", async () => {

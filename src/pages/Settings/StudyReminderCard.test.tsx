@@ -33,7 +33,7 @@ describe("StudyReminderCard", () => {
   it("starts off at 19:00 and shows the Mac limit line", () => {
     render(<StudyReminderCard />);
     expect(box().checked).toBe(false);
-    expect(time().value).toBe("19:00");
+    expect(screen.queryByLabelText("Reminder time")).toBeNull();
     expect(screen.getByText(REMINDER_MAC_LINE)).toBeTruthy();
     expect(REMINDER_MAC_LINE).toBe("Your Flight Deck needs to be open (it can be minimized) for the reminder to show.");
   });
@@ -71,12 +71,19 @@ describe("StudyReminderCard", () => {
     expect(save.mock.calls[0]![0]).toMatchObject({ studyReminder: { enabled: false, time: "08:15" } });
   });
 
+  it("shows the time box only while reminders are on", () => {
+    reminder = { enabled: true, time: "08:15" };
+    render(<StudyReminderCard />);
+    expect(time().value).toBe("08:15");
+  });
+
   it("saves a new time, ignoring an empty one", async () => {
+    reminder = { enabled: true, time: "19:00" };
     render(<StudyReminderCard />);
     fireEvent.change(time(), { target: { value: "" } });
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(time(), { target: { value: "06:45" } });
     await waitFor(() => expect(save).toHaveBeenCalledOnce());
-    expect(save.mock.calls[0]![0]).toMatchObject({ studyReminder: { enabled: false, time: "06:45" } });
+    expect(save.mock.calls[0]![0]).toMatchObject({ studyReminder: { enabled: true, time: "06:45" } });
   });
 });
