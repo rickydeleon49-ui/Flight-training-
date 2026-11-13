@@ -316,6 +316,15 @@ describe("GeminiJobNotice frontend tests", () => {
       expect(jobs.saveAgain).toHaveBeenCalledWith("job-ready-guide");
     });
 
+    it("lets her read the unsaved guide before saving, without hiding Save or Discard", () => {
+      const job = ready({ key: "job-preview", sections: draft(3, 3) });
+      render(h(GeminiJobNotice, { job, jobs: createMockJobs([job]) }));
+      expect(screen.getByText("Read the new study guide")).toBeTruthy();
+      expect(screen.getByText("Airspace classes")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Save the new study guide" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Discard it" })).toBeTruthy();
+    });
+
     it.each([
       ["gemini-3.8-flash", "Gemini 3.8 Flash"],
       ["gemini-3.5-flash", "Gemini 3.5 Flash"],

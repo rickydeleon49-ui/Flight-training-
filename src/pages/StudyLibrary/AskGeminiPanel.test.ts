@@ -42,6 +42,13 @@ vi.mock("@/data", () => ({
   isTauri: () => false,
 }));
 
+// These tests are about the hint and sources, so text reading counts as available.
+vi.mock("@/services/offlineContent", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/offlineContent")>()),
+  offlineStudyEnabled: () => true,
+  offlineContentReadiness: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock("@/services/gemini", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/gemini")>();
   return {

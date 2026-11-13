@@ -38,19 +38,21 @@ export function StudyReminderCard() {
             strikethrough={false}
             label="Remind me to study every day"
           />
-          <Field label="Reminder time">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                type="time"
-                value={current.time}
-                onChange={(e) => {
-                  const time = e.target.value;
-                  if (time) void save({ ...current, time });
-                }}
-              />
-            )}
-          </Field>
+          {current.enabled ? (
+            <Field label="Reminder time">
+              {({ id }) => (
+                <TextInput
+                  id={id}
+                  type="time"
+                  value={current.time}
+                  onChange={(e) => {
+                    const time = e.target.value;
+                    if (time) void save({ ...current, time });
+                  }}
+                />
+              )}
+            </Field>
+          ) : null}
           {schedulesDailyReminder() ? null : <p className="small muted">{REMINDER_MAC_LINE}</p>}
           {denied ? <p className="small muted" role="status">{REMINDER_DENIED_LINE}</p> : null}
         </div>
