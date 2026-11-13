@@ -455,6 +455,32 @@ fn r6_a_waiting_answer_is_never_replaced_by_asking_again() {
 }
 
 #[test]
+fn a_ready_on_mac_kit_does_not_block_a_study_kit_but_a_ready_study_aid_does() {
+    let dir = TempDir::new("kit-no-block");
+    let mut journal = Journal::open(dir.path());
+    let pid = journal
+        .begin_pdf_kit("mat-a", "documents/a.pdf", SHA, json!({"candidates": null}))
+        .unwrap();
+    journal
+        .finish_pdf_kit(&pid, json!({"candidates": {}}))
+        .unwrap();
+    journal
+        .begin(JobKind::StudyKit, "mat-a", "documents/a.pdf", SHA, None)
+        .expect("local kit must not block");
+    assert!(journal.list().iter().any(|j| j.id == pid));
+    let dir = TempDir::new("aid-blocks");
+    let mut journal = Journal::open(dir.path());
+    let aid = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&aid, answer("Guide")).unwrap();
+    assert_eq!(
+        journal.begin(JobKind::StudyKit, "mat-a", "documents/a.pdf", SHA, None),
+        Err(WAITING.to_string())
+    );
+}
+
+#[test]
 fn r8_restoring_a_backup_forgets_every_job_of_the_replaced_library() {
     let dir = TempDir::new("r8");
     let mut journal = Journal::open(dir.path());

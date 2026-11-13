@@ -1363,7 +1363,6 @@ pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
         journal
             .list()
             .into_iter()
-            .filter(|r| r.kind != JobKind::PdfKit)
             .flat_map(study_kit::review_records)
             .collect()
     }))

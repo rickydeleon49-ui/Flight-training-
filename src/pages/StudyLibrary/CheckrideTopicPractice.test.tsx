@@ -90,3 +90,7 @@ it("drills only the chosen task across two PDFs, reveals sources, and writes not
 it("keeps the picker and drill UI free of assessment wording", () => {
   expect(drillSource).not.toMatch(/score|mastery|readiness|weak|strong|progress|%/i);
 });
+it("says plainly that a topic drill is not saved", () => {
+  render(h(CheckrideTopicPractice, { practiceTests: tests, materials })); open(); choose();
+  expect(screen.getByText("Quick topic drill: answers here are not saved, so closing starts it fresh.")).toBeTruthy();
+});

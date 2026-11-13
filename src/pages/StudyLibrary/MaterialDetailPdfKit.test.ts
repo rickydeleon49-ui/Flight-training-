@@ -275,6 +275,15 @@ it.each(["ready", "interrupted", "failed", "cancelled"])("same_pdf_kit_has_revie
   await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("earlier"));
 });
 
+it("continue_reviewing_stays_after_leaving_and_returning", async () => {
+  list.mockResolvedValue([{ id: "kit-job", materialId: material.id, stage: "ready", createdAt: 1 }]);
+  const first = open();
+  expect(await screen.findByRole("button", { name: "Continue reviewing your study kit" })).toBeTruthy();
+  first.unmount();
+  open();
+  expect(await screen.findByRole("button", { name: "Continue reviewing your study kit" })).toBeTruthy();
+});
+
 it("same_pdf_refusal_refreshes_actions_after_initial_empty_list", async () => {
   prepare.mockRejectedValueOnce({ code: "KIT_EXISTS_SAME", jobId: "earlier", materialId: material.id });
   open();
