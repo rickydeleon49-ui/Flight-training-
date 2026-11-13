@@ -12,6 +12,7 @@ import {
 import { buildMultiMaterialHandoutHtml } from "@/logic/studyHandout";
 import { buildFlashcardCsv, EXPORT_CARDS_CSV_LABEL } from "@/logic/flashcardCsv";
 import type { StudyMaterial } from "@/domain/types";
+import { SAVING_LINE } from "@/logic/studyPackText";
 import { chooseStudyPackDestination, exportStudyPack, studyPackErrorMessage, studyPacksAvailable } from "@/data/studyPack";
 import { chapterCountLabel } from "@/logic/chapterGroups";
 import { packFileTooLarge, packMaterialIds, packRowBlocked, packRows, packTooLargeNote } from "@/logic/studyPackSelection";
@@ -163,6 +164,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
       footer={(
         <>
           {error ? <p className="field__error" role="alert" style={{ flexBasis: "100%", margin: 0 }}>{error}</p> : null}
+          {working && output === "pack" ? <p className="small" role="status" style={{ flexBasis: "100%", margin: 0 }}>{SAVING_LINE}</p> : null}
           {saved ? <p className="small" role="status" style={{ flexBasis: "100%", margin: 0 }}>{saved}</p> : null}
           <Button variant="ghost" onClick={onClose} disabled={working}>{saved ? "Done" : "Cancel"}</Button>
           <Button variant="primary" onClick={() => void save()} disabled={working || (output === "pack" ? packIds.length === 0 : output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)}>
