@@ -511,9 +511,9 @@ export function StudyLibrary() {
     const card = arranging ? renderArrangeRow : renderCard;
     if (parts.length === 0) return card(material);
     return (
-      <div key={material.id} className="material-group" style={{ display: "contents" }}>
+      <div key={material.id} className="material-group">
         {card(material)}
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div className="library__book-toggle">
           <Button aria-expanded={open} onClick={() => toggleBook(material.id)}>
             {open ? "Hide" : "Show"} {chapterCountLabel(parts.length)} from {material.title}
           </Button>
@@ -553,7 +553,7 @@ export function StudyLibrary() {
   }), [data.materials, data.aiStudySets, data.practiceTests]);
 
   const topicPanels = (<>
-      <div style={{ marginBottom: "var(--space-5)" }}>
+      <div className="library__panel">
         <AcsCodeLookupPanel
           materials={data.materials}
           aiStudySets={data.aiStudySets}
@@ -562,7 +562,7 @@ export function StudyLibrary() {
         />
       </div>
 
-      <div style={{ marginBottom: "var(--space-5)" }}>
+      <div className="library__panel">
         <AcsAreaMaterialCoveragePanel
           materials={data.materials}
         />
@@ -683,43 +683,43 @@ export function StudyLibrary() {
             ) : null}
           </div>
           <Select
+            className="select library__select-auto"
             aria-label="Filter by topic"
             placeholder="Any topic"
             options={TOPIC_OPTIONS}
             value={topic}
             onChange={(value) => setTopic(value)}
-            style={{ width: "auto" }}
           />
           <Select
+            className="select library__select-auto"
             aria-label="Filter by material type"
             placeholder="Any type"
             options={MATERIAL_TYPE_OPTIONS}
             value={type}
             onChange={(value) => setType(value)}
-            style={{ width: "auto" }}
           />
           <Select
+            className="select library__select-auto"
             aria-label="View"
             options={VIEW_OPTIONS}
             value={view}
             onChange={(value) => setView(value)}
-            style={{ width: "auto" }}
           />
           {view === "folder" ? (
             <Select
+              className="select library__select-auto"
               aria-label="Sort materials"
               options={FOLDER_SORT_OPTIONS}
               value={folderSort}
               onChange={(value) => setFolderSort(value)}
-              style={{ width: "auto" }}
             />
           ) : (
             <Select
+              className="select library__select-auto"
               aria-label="Sort materials"
               options={MATERIAL_SORT_OPTIONS}
               value={sort}
               onChange={(value) => setSort(value)}
-              style={{ width: "auto" }}
             />
           )}
           <div className="library__layout" role="group" aria-label="Layout">
@@ -736,7 +736,7 @@ export function StudyLibrary() {
       ) : null}
 
       {hasAny ? (
-        <div className="filter-chips scroll-x" style={{ marginBottom: "var(--space-5)" }}>
+        <div className="filter-chips scroll-x library__chips">
           {STATUS_FILTERS.map((filter) => (
             <button
               type="button"
@@ -1018,9 +1018,9 @@ function MaterialCard({
         <span className="material-card__mark" aria-hidden="true">
           {material.filePath ? <DocumentIcon size={17} /> : <BookIcon size={17} />}
         </span>
-        <span style={{ minWidth: 0 }}>
+        <span className="material-card__text">
           <span className="material-card__title wrap-anywhere">{material.title}</span>
-          <span className="tiny dim" style={{ display: "block", marginTop: 2 }}>
+          <span className="tiny dim material-card__type">
             {MATERIAL_TYPE_LABELS[material.materialType]}
           </span>
         </span>
