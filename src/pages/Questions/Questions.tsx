@@ -235,9 +235,9 @@ export function Questions() {
         subtitle="Things you don't want to forget to ask."
       />
 
-      <div className="detail">
-        <div className="detail__column">
-          <Card>
+      <div className="questions-wrap"><div className="questions">
+        <div className="questions__form">
+          <Card className="questions__section">
             <CardHeader title="Add a question" />
             <CardBody>
               {/* Locked while it saves, so nothing the student types then is cleared with it. */}
@@ -277,8 +277,10 @@ export function Questions() {
               </fieldset>
             </CardBody>
           </Card>
+        </div>
 
-          <Card variant="grouped">
+        <div className="questions__list">
+          <Card variant="grouped" className="questions__section">
             <CardHeader
               title="Your questions"
               action={<span className="tiny dim">{data.questions.length} total</span>}
@@ -352,7 +354,7 @@ export function Questions() {
           </Card>
         </div>
 
-        <div className="detail__column">
+        <div className="questions__lesson">
           {lesson ? (
             <Card variant="accent">
               <CardHeader title="Before your next lesson" />
@@ -378,7 +380,7 @@ export function Questions() {
             </Card>
           ) : null}
         </div>
-      </div>
+      </div></div>
 
       <ConfirmDialog
         open={confirmingDelete !== null}
