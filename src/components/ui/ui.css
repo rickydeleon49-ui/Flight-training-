@@ -93,7 +93,10 @@
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   padding: 0.5rem 1.1rem;
-  font-size: var(--text-sm);
+  min-height: var(--control-h);
+  position: relative;
+  font-size: var(--control-text);
+  line-height: 1.25;
   font-weight: 500;
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition),
@@ -185,15 +188,19 @@ a.list-row:active, button.list-row:active { background: var(--surface-sunken); }
 /* Main actions and tabs get a 15 px label; every full-size button is a
    44 px target. Small buttons stay compact for dense rows. */
 .button--primary {
-  min-height: var(--space-7);
-  font-size: var(--text-base);
   background: var(--accent-primary);
   color: var(--text-on-accent);
 }
-.button--secondary, .button--danger { min-height: var(--space-7); }
 button[role="tab"] {
-  min-height: var(--space-7);
-  font-size: var(--text-base);
+  position: relative;
+  min-height: var(--control-h);
+  font-size: var(--control-text);
+}
+/* 40px capsule, 44px touch area (transparent extension, never changes layout). */
+.button::after, button[role="tab"]::after {
+  content: "";
+  position: absolute;
+  inset: -2px 0;
 }
 .button--primary:hover:not(:disabled) { background: var(--accent-primary-hover); }
 
@@ -211,6 +218,8 @@ button[role="tab"] {
   background: transparent;
   color: var(--text-secondary);
   padding: 0.35rem 0.7rem;
+  min-height: var(--hit-min);
+  min-width: var(--hit-min);
 }
 .button--ghost:hover:not(:disabled) {
   background: var(--surface-sunken);
@@ -224,7 +233,8 @@ button[role="tab"] {
 }
 .button--danger:hover:not(:disabled) { background: var(--status-overdue-fill); }
 
-.button--small { min-height: 0; padding: 0.3rem 0.75rem; font-size: var(--text-xs); }
+.button--small { min-height: var(--control-h-sm); padding: 0.3rem 0.75rem; font-size: var(--text-xs); }
+.button--small::after { inset: -4px 0; }
 .button--block { width: 100%; }
 
 .back-to-top {
@@ -401,6 +411,8 @@ button[role="tab"] {
 
 .textarea { resize: vertical; min-height: 5rem; line-height: var(--leading-normal); }
 
+/* Select text matches the buttons beside it; phones keep 16px so iOS never zooms. */
+.select { font-size: var(--control-text); }
 .select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23596276' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
@@ -905,7 +917,7 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   align-items: center;
   gap: 2px;
   padding: 2px;
-  min-height: 32px;
+  min-height: var(--control-h-sm);
   background: var(--surface-sunken);
   border-radius: var(--radius-pill);
 }
@@ -914,15 +926,17 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  margin: -6px 0;
+  min-width: var(--hit-min);
+  min-height: var(--control-h-sm);
+  margin: 0;
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
   cursor: pointer;
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: var(--control-text);
 }
+/* 36px pill, 44px+ touch row. */
+.segmented__option input { inset: -4px 0; }
 .segmented__option.is-selected {
   background: var(--surface-raised);
   box-shadow: var(--shadow-sm);
@@ -957,6 +971,10 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
 .filter-chip {
   position: relative;
   padding: 0.3rem 0.85rem;
+  min-height: var(--control-h-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   background: var(--surface-sunken);
@@ -970,11 +988,11 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   text-align: center;
   transition: background var(--transition), border-color var(--transition), color var(--transition);
 }
-/* 32px capsule with a 44px touch area. */
+/* 36px capsule with a 44px touch area. */
 .filter-chip::after {
   content: "";
   position: absolute;
-  inset: -6px -2px;
+  inset: -4px -2px;
 }
 .filter-chip:hover { border-color: var(--border-strong); }
 .filter-chip.is-active {
@@ -987,11 +1005,27 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
 /* Phone hit areas: 44 pt tappable box, visible art unchanged. */
 @media (pointer: coarse), (max-width: 700px) {
   .button--small { min-height: 44px; }
+  /* Touch: full-size buttons, tabs and segmented options are real 44px boxes. */
+  .button--primary, .button--secondary, .button--danger, button[role="tab"] { min-height: 44px; }
+  .segmented__option { min-height: 44px; }
   /* Real box height, not an overlay, so stacked rows never steal each other's taps. */
   .checkbox, .radio-row__option { min-height: 44px; }
   /* The 32px icon button keeps its look; a transparent extension makes the tap area 44px. */
   .icon-button { position: relative; }
   .icon-button::after { content: ""; position: absolute; inset: -6px; }
+  .input, .textarea, .select { font-size: max(16px, 1rem); }
+}
+
+/* 44px targets for small links and disclosures (F1). */
+.card__header > a.small {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hit-min);
+}
+.acs-area-material-coverage-details > summary {
+  min-height: var(--hit-min);
+  display: flex;
+  align-items: center;
 }
 
 /* Live regions stay mounted so screen readers announce text added later. While
