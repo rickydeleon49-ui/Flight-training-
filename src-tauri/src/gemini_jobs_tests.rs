@@ -1269,3 +1269,108 @@ fn asking_again_on_a_material_replaces_its_own_failed_draft_when_full() {
         1
     );
 }
+
+/* ---- r0712-slots: jobs of deleted materials do not hold slots ---- */
+
+fn write_materials_db(dir: &TempDir, present: &[&str]) {
+    let conn = rusqlite::Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    conn.execute("CREATE TABLE study_materials (id TEXT PRIMARY KEY)", [])
+        .unwrap();
+    for id in present {
+        conn.execute("INSERT INTO study_materials (id) VALUES (?1)", [id])
+            .unwrap();
+    }
+}
+
+fn fill_ready(journal: &mut Journal, n: usize) {
+    for i in 0..n {
+        let id = journal
+            .begin(JobKind::StudyAid, &format!("mat-{i}"), "d/x.pdf", SHA, None)
+            .unwrap();
+        journal.ready(&id, answer(&format!("Guide {i}"))).unwrap();
+    }
+}
+
+#[test]
+fn slots_held_by_deleted_materials_are_freed_when_full() {
+    let dir = TempDir::new("orphan-free");
+    let mut j = Journal::open(dir.path());
+    fill_ready(&mut j, MAX_JOBS);
+    write_materials_db(&dir, &[]);
+    assert!(j
+        .begin(JobKind::StudyAid, "mat-new", "d/n.pdf", SHA, None)
+        .is_ok());
+    // The local kit path frees orphans too.
+    let kd = TempDir::new("orphan-kit2");
+    let mut k2 = Journal::open(kd.path());
+    for i in 0..MAX_JOBS {
+        let id = k2
+            .begin_pdf_kit(&format!("m-{i}"), "p.pdf", SHA, json!({"runId": "r"}))
+            .unwrap();
+        k2.finish_pdf_kit(&id, json!({"runId": "r"})).unwrap();
+    }
+    write_materials_db(&kd, &[]);
+    assert!(k2
+        .begin_pdf_kit("new", "n.pdf", SHA, json!({"runId": "n"}))
+        .is_ok());
+}
+
+#[test]
+fn ready_answers_of_existing_materials_are_kept() {
+    let dir = TempDir::new("orphan-keep");
+    let mut j = Journal::open(dir.path());
+    fill_ready(&mut j, MAX_JOBS);
+    let all: Vec<String> = (0..MAX_JOBS).map(|i| format!("mat-{i}")).collect();
+    let refs: Vec<&str> = all.iter().map(String::as_str).collect();
+    write_materials_db(&dir, &refs);
+    assert_eq!(
+        j.begin(JobKind::StudyAid, "mat-new", "d/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+    assert_eq!(Journal::open(dir.path()).list().len(), MAX_JOBS);
+}
+
+#[test]
+fn no_database_or_unreadable_database_drops_nothing() {
+    let dir = TempDir::new("orphan-nodb");
+    let mut j = Journal::open(dir.path());
+    fill_ready(&mut j, MAX_JOBS);
+    assert_eq!(
+        j.begin(JobKind::StudyAid, "mat-new", "d/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+    std::fs::write(dir.path().join("her-flight-deck.db"), b"not a database").unwrap();
+    assert_eq!(
+        j.begin(JobKind::StudyAid, "mat-new", "d/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+    // A database without the materials table is also "unknown".
+    let dir2 = TempDir::new("orphan-notable");
+    let mut j2 = Journal::open(dir2.path());
+    fill_ready(&mut j2, MAX_JOBS);
+    rusqlite::Connection::open(dir2.path().join("her-flight-deck.db"))
+        .unwrap()
+        .execute("CREATE TABLE other (id TEXT)", [])
+        .unwrap();
+    assert_eq!(
+        j2.begin(JobKind::StudyAid, "mat-new", "d/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+    assert_eq!(Journal::open(dir2.path()).list().len(), MAX_JOBS);
+}
+
+#[test]
+fn a_running_job_of_a_deleted_material_is_never_evicted() {
+    let dir = TempDir::new("orphan-running");
+    let mut j = Journal::open(dir.path());
+    fill_ready(&mut j, MAX_JOBS);
+    j.jobs[0].stage = JobStage::Running;
+    let running = j.jobs[0].id.clone();
+    write_materials_db(&dir, &[]);
+    // The other seven orphans make room; the running one stays.
+    assert!(j
+        .begin_pdf_kit("new", "n.pdf", SHA, json!({"runId": "n"}))
+        .is_ok());
+    assert!(j.jobs.iter().any(|r| r.id == running));
+    assert_eq!(j.jobs.len(), 2);
+}
