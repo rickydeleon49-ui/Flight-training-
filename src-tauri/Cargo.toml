@@ -85,6 +85,20 @@ opt-level = 3
 opt-level = 3
 [profile.dev.package.flate2]
 opt-level = 3
+# Test speed (SPEED-A): crypto/db/zip hot paths dominate backup tests when
+# unoptimized; optimizing them changes no behavior.
+[profile.dev.package.sha2]
+opt-level = 3
+[profile.dev.package.zip]
+opt-level = 3
+[profile.dev.package.libsqlite3-sys]
+opt-level = 3
+[profile.dev.package.rusqlite]
+opt-level = 3
+[profile.dev.package.adler2]
+opt-level = 3
+[profile.dev.package.crc32fast]
+opt-level = 3
 # First-party plugin is workspace code, not a third-party notice entry.
 [workspace]
 members = ["plugins/ios-pdf-viewer"]
