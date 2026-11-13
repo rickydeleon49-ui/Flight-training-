@@ -501,8 +501,7 @@ fn repair_split_words(text: &str) -> String {
             .is_some_and(|c| c.is_lowercase());
         let trimmed = line.trim();
         let mut chars = trimmed.chars();
-        let lone_capital =
-            matches!((chars.next(), chars.next()), (Some(c), None) if c.is_uppercase());
+        let lone_capital = matches!((chars.next(), chars.next()), (Some(c), None) if c.is_uppercase() && c != 'A' && c != 'I');
         let prev_ends_block = i == 0
             || lines[i - 1].trim().is_empty()
             || lines[i - 1].trim_end().ends_with(['.', '!', '?', ':']);
@@ -2023,6 +2022,8 @@ mod tests {
             "Well-known\n-5 deg"
         );
         assert_eq!(repair_split_words("x-\nY"), "x-\nY");
+        // "A" and "I" are real words, never drop caps.
+        assert_eq!(repair_split_words("wind.\nA\nlarge"), "wind.\nA\nlarge");
     }
 
     #[test]
