@@ -9,6 +9,7 @@ function DiagramDialogBody({ diagram }: { diagram: Diagram }) {
   return (
     <>
       <div className="diagram-zoom-bar">
+        <p className="small muted diagram-source">{diagramSourceLine(diagram)}</p>
         <Button type="button" size="small" variant="secondary" aria-pressed={zoomed} onClick={() => setZoomed((z) => !z)}>
           {zoomed ? "Fit" : "Zoom in"}
         </Button>
@@ -19,7 +20,6 @@ function DiagramDialogBody({ diagram }: { diagram: Diagram }) {
         </div>
       </div>
       {diagram.aiIllustration ? <p className="small diagram-ai-label">{AI_ILLUSTRATION_LABEL}</p> : null}
-      <p className="small muted diagram-source">{diagramSourceLine(diagram)}</p>
     </>
   );
 }

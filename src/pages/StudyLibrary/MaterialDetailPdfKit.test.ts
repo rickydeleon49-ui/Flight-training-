@@ -65,23 +65,23 @@ function open() {
     h(Route, { path: "/study/:id", element: h("p", null, "Earlier PDF page") }),
   )));
 }
-async function preview() { open(); fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" })); return within(await screen.findByRole("dialog", { name: "Review your PDF study kit" })); }
+async function preview() { open(); fireEvent.click(await screen.findByRole("button", { name: "No internet? Make a quick set on this Mac instead" })); return within(await screen.findByRole("dialog", { name: "Review your PDF study kit" })); }
 async function saveKit() { fireEvent.click(screen.getByRole("button", { name: "Save to study set" })); }
 it("kit_button_desktop_only_works_without_gemini_key", async () => {
-  desktop = false; const view = open(); expect(screen.getByRole("button", { name: "Make a study kit from this PDF" })).toHaveProperty("disabled", true); expect(screen.getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy(); view.unmount(); desktop = true;
+  desktop = false; const view = open(); expect(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" })).toHaveProperty("disabled", true); expect(screen.getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy(); view.unmount(); desktop = true;
   await preview(); expect(prepare).toHaveBeenCalledWith(material.id); expect(save).not.toHaveBeenCalled();
 });
 it("kit_progress_cancel_keeps_saved_material", async () => {
-  get.mockRejectedValue({ code: "DRAFT_NOT_READY" }); open(); fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByText("Pulling study ideas from your PDF…"); fireEvent.click(screen.getByRole("button", { name: "Cancel" })); await screen.findByText("Stopped. Your saved work is still here."); expect(gemini.cancelGeminiJob).toHaveBeenCalledWith({ jobId: "kit-job" }); expect(save).not.toHaveBeenCalled();
+  get.mockRejectedValue({ code: "DRAFT_NOT_READY" }); open(); fireEvent.click(await screen.findByRole("button", { name: "No internet? Make a quick set on this Mac instead" })); await screen.findByText("Pulling study ideas from your PDF…"); fireEvent.click(screen.getByRole("button", { name: "Cancel" })); await screen.findByText("Stopped. Your saved work is still here."); expect(gemini.cancelGeminiJob).toHaveBeenCalledWith({ jobId: "kit-job" }); expect(save).not.toHaveBeenCalled();
 });
 it("cache_missing_offers_local_extraction_then_retry", async () => {
-  prepare.mockRejectedValueOnce({ code: "CACHE_MISSING" }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); fireEvent.click(await screen.findByRole("button", { name: "Read the text first" })); await waitFor(() => expect(offline.prepareOfflineContent).toHaveBeenCalledWith(material.id)); fireEvent.click(await screen.findByRole("button", { name: "Try making the kit again" })); await screen.findByRole("dialog", { name: "Review your PDF study kit" });
+  prepare.mockRejectedValueOnce({ code: "CACHE_MISSING" }); open(); fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" })); fireEvent.click(await screen.findByRole("button", { name: "Read the text first" })); await waitFor(() => expect(offline.prepareOfflineContent).toHaveBeenCalledWith(material.id)); fireEvent.click(await screen.findByRole("button", { name: "Try making the kit again" })); await screen.findByRole("dialog", { name: "Review your PDF study kit" });
 });
 it("source_changed_asks_before_rebuild_at_open_and_save", async () => {
-  get.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByRole("button", { name: "Rebuild study kit" }); expect(prepare).toHaveBeenCalledTimes(1); fireEvent.click(screen.getByRole("button", { name: "Rebuild study kit" })); await screen.findByRole("dialog", { name: "Review your PDF study kit" }); save.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); await saveKit(); await screen.findByText("The PDF or page choice changed since this kit was made. Rebuild it when you’re ready."); expect(save).toHaveBeenCalledTimes(1); expect(prepare).toHaveBeenCalledTimes(2);
+  get.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); open(); fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" })); await screen.findByRole("button", { name: "Rebuild study kit" }); expect(prepare).toHaveBeenCalledTimes(1); fireEvent.click(screen.getByRole("button", { name: "Rebuild study kit" })); await screen.findByRole("dialog", { name: "Review your PDF study kit" }); save.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); await saveKit(); await screen.findByText("The PDF or page choice changed since this kit was made. Rebuild it when you’re ready."); expect(save).toHaveBeenCalledTimes(1); expect(prepare).toHaveBeenCalledTimes(2);
 });
 it("no_text_pdf_shows_plain_message_no_items", async () => {
-  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], pagesUsed: [], pagesSkippedAmbiguous: 0 } }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByText("This PDF didn’t have text the kit could use. If it is pictures of pages, a text version from the FAA site works."); expect(screen.queryByRole("button", { name: "Save to study set" })).toBeNull(); expect(save).not.toHaveBeenCalled();
+  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], pagesUsed: [], pagesSkippedAmbiguous: 0 } }); open(); fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" })); await screen.findByText("This PDF didn’t have text the kit could use. If it is pictures of pages, a text version from the FAA site works."); expect(screen.queryByRole("button", { name: "Save to study set" })).toBeNull(); expect(save).not.toHaveBeenCalled();
 });
 it.each([
   { pagesUsed: [2], pagesSkippedAmbiguous: 0 },
@@ -230,7 +230,7 @@ it("discard_kit_confirms_keeps_saved_content_and_frees_slot", async () => {
 it("rebuild_after_source_changed_discards_then_prepares", async () => {
   prepare.mockRejectedValueOnce({ code: "SOURCE_CHANGED" });
   open();
-  fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(await screen.findByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByText(SOURCE_CHANGED);
   list.mockResolvedValue([{ id: "old-job", materialId: material.id, stage: "received", createdAt: 1 }]);
   prepare.mockResolvedValueOnce("new-kit-job");
@@ -242,7 +242,7 @@ it("rebuild_after_source_changed_discards_then_prepares", async () => {
 it("rebuild_does_not_prepare_when_discard_unconfirmed", async () => {
   prepare.mockRejectedValueOnce({ code: "SOURCE_CHANGED" });
   open();
-  fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(await screen.findByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByText(SOURCE_CHANGED);
   list.mockResolvedValue([{ id: "old-job", materialId: material.id, stage: "received", createdAt: 1 }]);
   acknowledge.mockRejectedValueOnce(new Error("failed discard"));
@@ -258,7 +258,7 @@ it.each([
 ])("journal_refusal_has_its_own_message (%s)", async (code, message) => {
   prepare.mockRejectedValueOnce({ code });
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   expect(await screen.findByText(message!)).toBeTruthy();
   expect(screen.queryByText(/earlier study kit first/)).toBeNull();
 });
@@ -287,7 +287,7 @@ it("continue_reviewing_stays_after_leaving_and_returning", async () => {
 it("same_pdf_refusal_refreshes_actions_after_initial_empty_list", async () => {
   prepare.mockRejectedValueOnce({ code: "KIT_EXISTS_SAME", jobId: "earlier", materialId: material.id });
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   fireEvent.click(await screen.findByRole("button", { name: "Continue reviewing your study kit" }));
   await screen.findByRole("dialog", { name: "Review your PDF study kit" });
   expect(get).toHaveBeenCalledWith("earlier");
@@ -298,7 +298,7 @@ it("settled_cancelled_same_pdf_can_start_a_replacement", async () => {
   list.mockResolvedValue([{ id: "cancelled", materialId: material.id, stage: "cancelled", createdAt: 1 }]);
   open();
   await screen.findByRole("button", { name: "Continue reviewing your study kit" });
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByRole("dialog", { name: "Review your PDF study kit" });
   expect(prepare).toHaveBeenCalledWith(material.id);
   expect(get).toHaveBeenCalledWith("kit-job");
@@ -315,7 +315,7 @@ it.each(["ready", "cancelled", "interrupted", "failed", "received"])("other_pdf_
   expect(screen.queryByRole("button", { name: "Discard that kit" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Continue reviewing your study kit" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Discard this kit" })).toBeNull();
-  expect(screen.getByRole("button", { name: "Make a study kit from this PDF" })).toHaveProperty("disabled", false);
+  expect(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" })).toHaveProperty("disabled", false);
   expect(acknowledge).not.toHaveBeenCalled();
 });
 
@@ -336,7 +336,7 @@ it("blocked_other_pdf_ready_kit_is_named_and_navigable", async () => {
   prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
   list.mockResolvedValueOnce([]).mockResolvedValue([earlierKit]);
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   expect(await screen.findByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
   const link = screen.getByRole("link", { name: "Open that PDF in the Study Library" });
@@ -351,7 +351,7 @@ it("other_pdf_kit_actions_survive_a_failed_journal_refresh", async () => {
   prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
   list.mockResolvedValueOnce([]).mockRejectedValue(new Error("unavailable"));
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   expect(await screen.findByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
   expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" })).toBeTruthy();
 });
@@ -362,7 +362,7 @@ it("other_pdf_discard_confirms_and_only_removes_that_kit", async () => {
   localStorage.setItem("hfd:pdf-kit-review:other-run", "other edits");
   localStorage.setItem("hfd:pdf-kit-review:keep-run", "keep edits");
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   fireEvent.click(await screen.findByRole("button", { name: "Discard that kit" }));
   const confirm = within(await screen.findByRole("dialog", { name: "Discard this study kit?" }));
@@ -407,7 +407,7 @@ it("cancel_after_kit_finished_keeps_continue_reviewing", async () => {
   vi.mocked(gemini.cancelGeminiJob).mockResolvedValueOnce({ cancelled: false, stage: "ready" });
   list.mockResolvedValue([{ id: "kit-job", materialId: material.id, stage: "ready", createdAt: 1 }]);
   open();
-  fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(await screen.findByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByText("Pulling study ideas from your PDF…");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(await screen.findByText("This kit has finished. You can continue reviewing it.")).toBeTruthy();
@@ -452,7 +452,7 @@ it.each(["throws", "still-running", "unknown"])("discard_cancel_failure_does_not
   if (failure === "throws") vi.mocked(gemini.cancelGeminiJob).mockRejectedValue(new Error("cancel unavailable"));
   else vi.mocked(gemini.cancelGeminiJob).mockResolvedValue({ cancelled: false, stage: failure === "still-running" ? "running" : null });
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByText("Pulling study ideas from your PDF…");
   // Exercise the discard callback while the native worker is still running.
   act(() => confirmDiscardKit());
@@ -485,7 +485,7 @@ it.each(["acknowledged", "journal-absent"])("discard_success_clears_mirrors_and_
   expect(screen.queryByRole("dialog", { name: "Review your PDF study kit" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Continue reviewing your study kit" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Discard this kit" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByRole("dialog", { name: "Review your PDF study kit" });
   expect(prepare).toHaveBeenCalledTimes(2);
   expect(save).not.toHaveBeenCalled();
@@ -494,13 +494,13 @@ it.each(["acknowledged", "journal-absent"])("discard_success_clears_mirrors_and_
 const UNAVAILABLE = "Making a study kit from your PDF isn't available in this version yet. It's coming in a later update.";
 function expectNoExtractionRetry() {
   expect(screen.queryByRole("button", { name: /Try again|Try making|Read this PDF/ })).toBeNull();
-  expect(screen.queryByRole("button", { name: "Make a study kit from this PDF" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "No internet? Make a quick set on this Mac instead" })).toBeNull();
   expect(document.body.textContent).not.toMatch(/EXTRACTION_UNAVAILABLE|offline_extraction_disabled/);
 }
 it("kit_shows_not_available_yet_without_retry", async () => {
   prepare.mockRejectedValue({ code: "EXTRACTION_UNAVAILABLE" });
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await screen.findByText(UNAVAILABLE);
   expectNoExtractionRetry();
   expect(prepare).toHaveBeenCalledTimes(1);
@@ -510,7 +510,7 @@ it.each(["offline_extraction_disabled", new Error("offline_extraction_disabled")
   prepare.mockRejectedValue({ code: "CACHE_MISSING" });
   vi.mocked(offline.prepareOfflineContent).mockRejectedValue(failure);
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   fireEvent.click(await screen.findByRole("button", { name: "Read the text first" }));
   await screen.findByText(UNAVAILABLE);
   expectNoExtractionRetry();
@@ -522,7 +522,7 @@ it.each(["offline_extraction_disabled", new Error("offline_extraction_disabled")
 it("extraction_enabled_success_never_shows_unavailable_message", async () => {
   prepare.mockRejectedValueOnce({ code: "CACHE_MISSING" });
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   fireEvent.click(await screen.findByRole("button", { name: "Read the text first" }));
   fireEvent.click(await screen.findByRole("button", { name: "Try making the kit again" }));
   await screen.findByRole("dialog", { name: "Review your PDF study kit" });
@@ -538,7 +538,7 @@ it("cancelled_other_worker_keeps_its_actions_even_with_newer_ready_kits", async 
   ]);
   prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
   open();
-  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead" }));
   await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   expect(screen.getByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
   expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" }).getAttribute("href")).toBe("/study/other%2Fpdf");

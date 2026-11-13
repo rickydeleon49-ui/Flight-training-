@@ -14,6 +14,9 @@ it("maps anchors to their mounted panel, leaving the search note outside", () =>
   for (const id of ["search-target-summary", "search-target-guide-2", "search-target-cards"]) expect(materialTabForAnchor(id)).toBe("study");
   for (const id of ["search-target-kit-cards", "read-pdf-text", "material-file-details", "material-backup-heading", "related-study"]) expect(materialTabForAnchor(id)).toBe("more");
   expect(materialTabForAnchor("search-target-guide-2", true)).toBe("more");
+  // The local "quick set" link lives in the kit maker on the Study tab (round f-C).
+  for (const id of ["material-pdf-kit", "material-pdf-kit-local"]) expect(materialTabForAnchor(id)).toBe("study");
+  expect(materialTabForAnchor("material-saved-pdf-kit")).toBe("more");
   expect(materialTabForAnchor("search-target-note")).toBeNull();
 });
 

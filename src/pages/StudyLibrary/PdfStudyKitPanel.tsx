@@ -2,7 +2,7 @@ import { openedPageMessage } from "@/services/pdfViewer";
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isTauri } from "@/data";
-import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, Dialog, Field, TextArea } from "@/components/ui";
+import { Button, Checkbox, ConfirmDialog, Dialog, Field, TextArea } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import { kitCandidates, kitHasNoUsableText, kitEditOrigin, kitItemEvidence, kitQuestionSeed, kitReviewItems, kitSources, type KitReviewItem, type PdfQuestionSeed } from "@/data/pdfStudyKitDraft";
 import { validateNextSet, type StoredSetRow, type StudySetSaveOperation } from "@/data/studySetTransaction";
@@ -546,11 +546,11 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
   const otherTitle = data.materials.find(m => m.id === otherKit?.materialId)?.title;
 
   return (
-    <Card>
-      <CardHeader title="A study kit from your PDF" eyebrow="On this Mac" />
-      <CardBody>
+    <div id="material-pdf-kit-local" tabIndex={-1}>
         <div className="stack stack--3">
           {!extractionUnavailable ? <Button
+            variant="ghost"
+            size="small"
             disabled={!desktop || running || saving || changed}
             onClick={() => {
               if (changed) return;
@@ -562,7 +562,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
               }
             }}
           >
-            Make a study kit from this PDF
+            No internet? Make a quick set on this Mac instead
           </Button> : null}
           {!desktop ? <p className="tiny muted">Making a PDF study kit works in the desktop app.</p> : null}
           {resume && !running && !open && !changed ? (
@@ -749,8 +749,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
             />
           ) : null}
         </div>
-      </CardBody>
-    </Card>
+    </div>
   );
 }
 
