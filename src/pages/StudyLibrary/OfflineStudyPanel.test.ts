@@ -19,7 +19,7 @@ vi.mock("@/services/offlineContent", async (original) => ({
   prepareOfflineContent: (id: string) => service.prepare(id),
 }));
 
-import { OfflineStudyPanel, RECHECK_MS } from "./OfflineStudyPanel";
+import { OfflineStudyPanel, PDF_TEXT_READ_EVENT, RECHECK_MS } from "./OfflineStudyPanel";
 import { useOfflineBadges } from "./useOfflineBadges";
 
 const pdf = makeMaterial({ id: "m1", title: "Handbook", filePath: "m1-handbook.pdf" });
@@ -42,6 +42,23 @@ describe("Offline study panel", () => {
     await act(async () => {});
     expect(container.innerHTML).toBe("");
     expect(service.readiness).not.toHaveBeenCalled();
+  });
+
+  it("re-checks when Ask reports reading this file's text, and only this file", async () => {
+    service.readiness.mockResolvedValueOnce([row({ state: "notPrepared" })]);
+    const view = render(h(OfflineStudyPanel, { material: pdf }));
+    expect(await screen.findByText("Not read yet")).toBeTruthy();
+    service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
+    const calls = service.readiness.mock.calls.length;
+    act(() => { window.dispatchEvent(new CustomEvent(PDF_TEXT_READ_EVENT, { detail: { materialId: "other" } })); });
+    await act(async () => {});
+    expect(service.readiness).toHaveBeenCalledTimes(calls);
+    act(() => { window.dispatchEvent(new CustomEvent(PDF_TEXT_READ_EVENT, { detail: { materialId: "m1" } })); });
+    await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(calls + 1));
+    view.unmount();
+    window.dispatchEvent(new CustomEvent(PDF_TEXT_READ_EVENT, { detail: { materialId: "m1" } }));
+    await act(async () => {});
+    expect(service.readiness).toHaveBeenCalledTimes(calls + 1);
   });
 
   it("renders nothing for a document that isn't a PDF", async () => {

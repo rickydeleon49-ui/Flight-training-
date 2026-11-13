@@ -1,4 +1,5 @@
 import { providerCompany } from "@/services/provider";
+import { PDF_TEXT_READ_EVENT } from "./OfflineStudyPanel";
 import { isTauri } from "@/data";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -196,8 +197,11 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
   };
 
   useEffect(() => {
-    if (isOpen) inputRef.current?.focus({ preventScroll: true });
-    else if (returnFocus.current) {
+    if (isOpen) {
+      inputRef.current?.focus({ preventScroll: true });
+      // In a small window the input can sit below the fold.
+      inputRef.current?.scrollIntoView?.({ block: "nearest" });
+    } else if (returnFocus.current) {
       returnFocus.current = false;
       openerRef.current?.focus({ preventScroll: true });
     }
@@ -315,6 +319,8 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
       });
       setQuestion("");
       setAnswerVersion((version) => version + 1);
+      // The PDF text may have just been read: let the offline panel re-check.
+      window.dispatchEvent(new CustomEvent(PDF_TEXT_READ_EVENT, { detail: { materialId } }));
     } catch (err: unknown) {
       if (requestRef.current !== request) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) {

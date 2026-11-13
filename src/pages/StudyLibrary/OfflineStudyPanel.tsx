@@ -14,6 +14,9 @@ import {
 /** How often a settling state (checking, preparing) is looked at again. */
 export const RECHECK_MS = 1500;
 
+/** Sent by Ask after an answer, so this panel re-checks whether the text was read. */
+export const PDF_TEXT_READ_EVENT = "hfd:pdf-text-read";
+
 /**
  * Reading a document's text on this Mac so it can be searched offline; nothing
  * is sent anywhere. Renders nothing unless this build opted in.
@@ -64,6 +67,16 @@ export function OfflineStudyPanel({ material, focusRequested = false }: { materi
       current.current = null;
     };
   }, [enabled, identity, refresh]);
+
+  // Ask may read this file's text in the background; look again when it says so.
+  useEffect(() => {
+    if (!enabled) return;
+    const onRead = (event: Event) => {
+      if ((event as CustomEvent<{ materialId?: string }>).detail?.materialId === material.id) void refresh();
+    };
+    window.addEventListener(PDF_TEXT_READ_EVENT, onRead);
+    return () => window.removeEventListener(PDF_TEXT_READ_EVENT, onRead);
+  }, [enabled, material.id, refresh]);
 
   const panel = useRef<HTMLDivElement>(null);
   const focused = useRef(false);
