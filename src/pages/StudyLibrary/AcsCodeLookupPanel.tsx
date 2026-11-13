@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Button, Card, CardBody, CardHeader, Field, TextArea } from "@/components/ui";
+import { Button, Field, TextArea } from "@/components/ui";
 import type { AiStudySet, PracticeTest, Question, StudyMaterial } from "@/domain/types";
 import { tokenizeAktrCodes } from "@/logic/aktrCodeInput";
 import {
@@ -80,9 +80,9 @@ export function AcsCodeLookupPanel({
   );
 
   return (
-    <Card className="acs-code-lookup-panel">
-      <CardHeader title="Find study materials for missed topics" />
-      <CardBody>
+    <section className="library-section acs-code-lookup-panel" aria-labelledby="acs-lookup-title">
+      <h2 className="library-section__title" id="acs-lookup-title">Find study materials for missed topics</h2>
+      <div>
         <form onSubmit={handleSubmit} className="stack">
           <Field
             label="Missed topic codes"
@@ -163,8 +163,8 @@ export function AcsCodeLookupPanel({
             )}
           </div>
         ) : null}
-      </CardBody>
-    </Card>
+      </div>
+    </section>
   );
 }
 

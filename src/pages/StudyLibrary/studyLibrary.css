@@ -1316,3 +1316,28 @@ details[open] > .video-links__summary { padding-bottom: 0; }
 @media (hover: hover) {
   .material-detail-header .material-actions-menu summary:hover { border-color: var(--border-subtle); }
 }
+
+/* S5: library panels read as sections (title + hairline, no box). */
+.library-section { margin: 0; }
+.library-section__title {
+  margin: 0 0 var(--space-3); padding-bottom: var(--space-2);
+  font-size: var(--text-title3); font-weight: 600; line-height: 1.3;
+  color: var(--text-primary); border-bottom: 1px solid var(--border-subtle);
+}
+.library-section__body { margin-top: var(--space-3); }
+.library__panel, .library__chips { margin-bottom: var(--space-5); }
+.library__book-toggle { grid-column: 1 / -1; }
+.library__select-auto { width: auto; }
+.material-group { display: contents; }
+.material-card__text { min-width: 0; }
+.material-card__type { display: block; margin-top: 2px; }
+.acs-coverage-list { list-style: none; padding: 0; margin: 0; }
+.acs-coverage-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); }
+.acs-coverage-row__area { font-weight: 600; }
+/* The "See counts" summary is the real control: 44px target, visible focus ring. */
+.acs-area-material-coverage-summary-heading {
+  /* list-item keeps the open/closed marker that display:flex would hide in WebKit */
+  display: list-item; min-height: var(--hit-min); line-height: var(--hit-min);
+  cursor: pointer; font-weight: 600; border-radius: var(--radius-sm);
+}
+.acs-area-material-coverage-summary-heading:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
