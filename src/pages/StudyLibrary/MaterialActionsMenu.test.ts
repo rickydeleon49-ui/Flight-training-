@@ -48,3 +48,11 @@ it("groups its buttons under a name and returns focus to the summary on Escape",
   expect(details.open).toBe(false);
   expect(document.activeElement).toBe(summary);
 });
+it("styles items as native rows with separated groups and a sticky danger group", () => {
+  const css = readFileSync("src/pages/StudyLibrary/studyLibrary.css", "utf8");
+  expect(css).toMatch(/\.material-actions-menu__items \.button\s*\{[^}]*min-height:\s*var\(--hit-min\)[^}]*border:\s*0/s);
+  expect(css).toMatch(/\.material-actions-menu__items \.button:hover[^{]*\{[^}]*background:\s*var\(--surface-sunken\)/s);
+  expect(css).toMatch(/\.material-actions-menu__group \+ \.material-actions-menu__group\s*\{[^}]*border-top/s);
+  expect(css).toMatch(/\.material-actions-menu__group--danger\s*\{[^}]*position:\s*sticky[^}]*bottom/s);
+  expect(css).toMatch(/\.material-actions-menu__items \.destructive-action\s*\{[^}]*color:\s*var\(--status-overdue\)/s);
+});

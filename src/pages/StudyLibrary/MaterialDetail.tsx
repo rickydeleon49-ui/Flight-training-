@@ -1117,23 +1117,31 @@ function MaterialDetailPage() {
           <div className="row row--wrap material-header-actions">
             {deviceCan().generate && isPdf && material.filePath ? <Button ref={askPdfButton} variant="secondary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
-              <Button onClick={() => setEditing(true)}>Edit</Button>
-              {deviceCan().splitFiles && canSplit ? <>
-                <Button onClick={() => setSplitting(true)}>Split automatically</Button>
-                <Button onClick={() => { setOpenError(null); setSplittingByChapter(true); }} disabled={splittingByChapter && !chapterOutline}>
-                  {splittingByChapter && !chapterOutline ? "Finding chapters\u2026" : "Split by chapter"}
-                </Button>
-                <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
-              </> : null}
-              {kitQueue && deviceCan().generate && gemini?.configured && chapterPartIds.length > 0 ? (
-                <Button onClick={() => kitQueue.offer(chapterPartIds)}>Make study kits</Button>
+              <div className="material-actions-menu__group" role="presentation">
+                <Button onClick={() => setEditing(true)}>Edit</Button>
+                {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
+                <MoveToFolderItem
+                  isChapter={!!material.lineage?.rootMaterialId && material.lineage.rootMaterialId !== material.id && data.materials.some(m => m.id === material.lineage?.rootMaterialId)}
+                  onMove={() => setMovingToFolder(true)}
+                />
+              </div>
+              {(deviceCan().splitFiles && canSplit) || (kitQueue && deviceCan().generate && gemini?.configured && chapterPartIds.length > 0) ? (
+                <div className="material-actions-menu__group" role="presentation">
+                  {deviceCan().splitFiles && canSplit ? <>
+                    <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                    <Button onClick={() => { setOpenError(null); setSplittingByChapter(true); }} disabled={splittingByChapter && !chapterOutline}>
+                      {splittingByChapter && !chapterOutline ? "Finding chapters\u2026" : "Split by chapter"}
+                    </Button>
+                    <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
+                  </> : null}
+                  {kitQueue && deviceCan().generate && gemini?.configured && chapterPartIds.length > 0 ? (
+                    <Button onClick={() => kitQueue.offer(chapterPartIds)}>Make study kits</Button>
+                  ) : null}
+                </div>
               ) : null}
-              {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
-              <MoveToFolderItem
-                isChapter={!!material.lineage?.rootMaterialId && material.lineage.rootMaterialId !== material.id && data.materials.some(m => m.id === material.lineage?.rootMaterialId)}
-                onMove={() => setMovingToFolder(true)}
-              />
-              <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
+              <div className="material-actions-menu__group material-actions-menu__group--danger" role="presentation">
+                <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
+              </div>
             </MaterialActionsMenu>
           </div>
         }
