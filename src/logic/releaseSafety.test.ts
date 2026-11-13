@@ -518,8 +518,13 @@ describe("release version policy and validation", () => {
     expect(checks).toContain("cargo clippy --locked");
     expect(checks).toContain("cargo test --locked");
 
+    // release.yml no longer re-runs the suites: it requires a successful Checks
+    // run on the exact commit, and any cargo command it still runs is --locked.
     const release = readFileSync(WORKFLOW_PATH, "utf8");
-    expect(release).toContain("cargo test --locked");
+    expect(release).toContain("actions/workflows/checks.yml/runs?head_sha=$SHA&status=success");
+    for (const line of release.split("\n").filter((l) => /^\s*(- run:\s*)?cargo (test|build|clippy|check)\b/.test(l))) {
+      expect(line).toContain("--locked");
+    }
   });
 
   it("reproduces asset filename vs manifest mismatch when filenames have spaces, and verifies normalization fix", () => {
