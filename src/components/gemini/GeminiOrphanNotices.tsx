@@ -18,12 +18,15 @@ export function markDeletedOnPurpose(materialId: string) {
 }
 
 export function GeminiOrphanNotices() {
-  const { data, status } = useAppData();
+  const { data, status, pendingDelete } = useAppData();
   const jobs = useGeminiJobs();
   const present = new Set(data.materials.map((material) => material.id));
-  // Answers for a document deleted on purpose are quietly cleared, no notice.
+  // Answers for a document deleted on purpose are quietly cleared, no notice,
+  // but only once the delete is final: during the Undo window they stay, so
+  // Undo brings the document back with its AI drafts.
+  const undoable = new Set(pendingDelete?.ids ?? []);
   const quiet = status !== "ready" ? [] : jobs.jobs.filter(
-    (job) => deletedOnPurpose.has(job.materialId) && !present.has(job.materialId) && job.phase !== "running" && job.phase !== "saving" && job.phase !== "discarding" && job.phase !== "discard-failed",
+    (job) => deletedOnPurpose.has(job.materialId) && !present.has(job.materialId) && !undoable.has(job.materialId) && job.phase !== "running" && job.phase !== "saving" && job.phase !== "discarding" && job.phase !== "discard-failed",
   );
   useEffect(() => {
     for (const job of quiet) void jobs.dismiss(job.key);
