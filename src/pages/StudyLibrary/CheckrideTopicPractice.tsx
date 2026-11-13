@@ -53,6 +53,7 @@ export function CheckrideTopicPractice({ practiceTests, materials }: {
           <p>New practice tests made from a PDF will be grouped by checkride topic.</p> : null}
         {question && current ? <>
           <h3 ref={heading} tabIndex={-1} className="ai-guide__title">Question {index + 1} of {drill!.length}</h3>
+          <p className="tiny dim">Quick topic drill: answers here are not saved, so closing starts it fresh.</p>
           <AcsTaskChip code={question.acsTask} showSources />
           <p className="small ai-copy">{question.question}</p>
           <p className="tiny dim">Use 1–3 to choose an answer, then Enter for the next question.</p>

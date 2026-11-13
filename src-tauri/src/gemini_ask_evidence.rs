@@ -66,9 +66,42 @@ fn normalized(text: &str) -> String {
     joined.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+// Whitespace-free form for PDFs whose text layer splits words ("P\nilot-").
+// A line-end hyphen between letters is dropped or kept. Same page only.
+fn squashed(text: &str, drop_line_end_hyphen: bool) -> String {
+    let chars: Vec<char> = expand_ligatures(text).chars().collect();
+    let mut out = String::new();
+    for (i, &ch) in chars.iter().enumerate() {
+        if ch == '\u{00ad}' || ch.is_whitespace() {
+            continue;
+        }
+        if drop_line_end_hyphen && ch == '-' && i > 0 && chars[i - 1].is_alphabetic() {
+            let mut end = i + 1;
+            let mut newline = false;
+            while end < chars.len() && chars[end].is_whitespace() {
+                newline |= matches!(chars[end], '\r' | '\n');
+                end += 1;
+            }
+            if newline && end < chars.len() && chars[end].is_alphabetic() {
+                continue;
+            }
+        }
+        out.extend(ch.to_lowercase());
+    }
+    out
+}
+
 pub(crate) fn quote_matches(page: &str, quote: &str) -> bool {
-    let quote = normalized(quote);
-    !quote.is_empty() && normalized(page).contains(&quote)
+    let exact = normalized(quote);
+    if exact.is_empty() {
+        return false;
+    }
+    if normalized(page).contains(&exact) {
+        return true;
+    }
+    let q = squashed(quote, false);
+    q.chars().count() >= 12
+        && (squashed(page, true).contains(&q) || squashed(page, false).contains(&q))
 }
 
 pub fn validated_evidence(
@@ -124,6 +157,29 @@ mod tests {
             _ => Some("The fictional glider has a blue wing.".into()),
         }
         })
+    }
+    #[test]
+    fn split_word_text_layer_quotes_match_on_the_same_page_only() {
+        let page = "P\nilot-\nin-command (PIC), \nA\nircraft, en\nV\nironment, and \nE\nxternal pressures (PAVE) ... decision-\nmaking";
+        let q = |quote: &str| quote_matches(page, quote);
+        assert!(q(
+            "Pilot-in-command (PIC), Aircraft, enVironment, and External pressures (PAVE)"
+        ));
+        assert!(q("and External pressures (PAVE)"));
+        assert!(q("decision-making"));
+        assert!(q("decisionmaking"));
+        assert!(!q("Pilot")); // short: no fallback
+        assert!(!quote_matches(
+            "The balloon is green and large.",
+            "and External pressures (PAVE)"
+        ));
+        let (_, p) = validated_evidence(
+            &reply(json!([{"page":2,"quote":"and External pressures (PAVE)"},{"page":1,"quote":"and External pressures (PAVE)"}])).to_string(),
+            Some(2),
+            |n| Some(if n == 1 { page.to_string() } else { "other text".into() }),
+        );
+        assert_eq!(p.len(), 1);
+        assert_eq!(p[0].page, 1);
     }
     #[test]
     fn valid_quotes_use_only_the_claimed_physical_page() {

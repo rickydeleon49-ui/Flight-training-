@@ -433,7 +433,7 @@ impl Journal {
                         kit_part_waits(j, part)
                     }
                 } else {
-                    j.kind == kind || kind == JobKind::StudyKit
+                    j.kind == kind || (kind == JobKind::StudyKit && j.kind != JobKind::PdfKit)
                 }
         }) {
             return Err(WAITING.to_string());
