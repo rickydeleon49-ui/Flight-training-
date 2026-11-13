@@ -398,3 +398,19 @@ describe("SchoolComparisonPanel and SchoolFormDialog", () => {
     expect(screen.getByLabelText("School name")).toBeTruthy();
   });
 });
+
+describe("S8 Finances polish", () => {
+  it("has one filled action per view and compact empty states", () => {
+    const { container } = renderWithContext(h(Finances), { transactions: [], flightSchools: [] });
+    expect(container.querySelectorAll(".button--primary")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /Add school/i }).className).not.toContain("button--primary");
+    expect(container.querySelectorAll(".empty-state--compact")).toHaveLength(2);
+    expect(screen.getByRole("region", { name: "Compare flight schools" })).toBeTruthy();
+  });
+
+  it("keeps one filled action once there are transactions", () => {
+    const txn = makeTransaction({ amount: 10000, description: "Fuel" });
+    const { container } = renderWithContext(h(Finances), { transactions: [txn], flightSchools: [] });
+    expect(container.querySelectorAll(".button--primary")).toHaveLength(1);
+  });
+});

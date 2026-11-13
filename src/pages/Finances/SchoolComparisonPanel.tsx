@@ -3,15 +3,13 @@ import { useState } from "react";
 import {
   Badge,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   ConfirmDialog,
   EditIcon,
   EmptyState,
   IconButton,
   PlaneIcon,
   PlusIcon,
+  Section,
   TrashIcon,
 } from "@/components/ui";
 import type { FlightSchool } from "@/domain/types";
@@ -72,16 +70,15 @@ export function SchoolComparisonPanel({ schools: propSchools }: Props) {
   };
 
   return (
-    <Card className="school-comparison-card">
-      <CardHeader
+    <div className="school-comparison-card">
+      <Section
         title="Compare flight schools"
-        action={
-          <Button onClick={handleOpenAdd} size="small" variant={schools.length === 0 ? "primary" : "secondary"}>
+        actions={
+          <Button onClick={handleOpenAdd} size="small" variant="secondary">
             <PlusIcon size={14} /> Add school
           </Button>
         }
-      />
-      <CardBody>
+      >
         <p className="school-comparison__note tiny dim">
           Keep each school’s quoted costs, aircraft and availability together. Hourly quotes may include different things, such as fuel or instructor time.
         </p>
@@ -91,6 +88,7 @@ export function SchoolComparisonPanel({ schools: propSchools }: Props) {
             icon={<PlaneIcon size={28} />}
             title="No flight schools added yet"
             body="Add a school when you’re ready. You only need its name."
+            compact
           />
         ) : (
           <div className="school-grid">
@@ -169,7 +167,7 @@ export function SchoolComparisonPanel({ schools: propSchools }: Props) {
             })}
           </div>
         )}
-      </CardBody>
+      </Section>
 
       <SchoolFormDialog
         open={formOpen}
@@ -191,6 +189,6 @@ export function SchoolComparisonPanel({ schools: propSchools }: Props) {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeletingSchool(null)}
       />
-    </Card>
+    </div>
   );
 }
