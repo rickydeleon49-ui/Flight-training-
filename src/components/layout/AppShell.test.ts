@@ -398,3 +398,60 @@ describe("AppShell search hint", () => {
     vi.restoreAllMocks();
   });
 });
+
+describe("AppShell 700-999px rail", () => {
+  const RAIL = "(min-width: 700px) and (max-width: 999px)";
+  let rail: MediaQueryList;
+  const short = (name: string) => ({ name, matches: false });
+  beforeEach(() => {
+    rail = { matches: true, addEventListener: () => {}, removeEventListener: () => {} } as unknown as MediaQueryList;
+    vi.stubGlobal("matchMedia", vi.fn((query) =>
+      query === "(min-width: 1000px)" ? media : query === RAIL ? rail : short(query)));
+    Object.defineProperty(media, "matches", { configurable: true, value: false });
+  });
+  const open = () => { render(h(MemoryRouter, { initialEntries: ["/"] }, h(Routes, null, h(Route, { path: "*", element: h(AppShell) })))); };
+
+  it("always shows every destination with a visible short label and keeps the full accessible name", () => {
+    open();
+    expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual(
+      ["Deck", "Path", "Library", "Schedule", "Log", "Ask", "Notes", "Finances", "Toolkit", "Settings"]);
+    expect(screen.getByRole("link", { name: "Study Library" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Flight Deck" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("button", { name: /^Search/ })).toBeTruthy();
+    expect(menu().getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("opens a full-label overlay with focus inside, closes on Escape and returns focus to Menu", () => {
+    open();
+    fireEvent.click(menu());
+    const panel = document.getElementById(menu().getAttribute("aria-controls")!)!;
+    expect(panel.classList.contains("is-overlay")).toBe(true);
+    expect(screen.getAllByRole("link").map((l) => l.textContent)).toEqual(sections);
+    expect(panel.contains(document.activeElement)).toBe(true);
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+    expect(menu().getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(menu());
+    expect(panel.classList.contains("is-overlay")).toBe(false);
+  });
+
+  it("closes the overlay on a press outside it", () => {
+    open();
+    fireEvent.click(menu());
+    fireEvent.pointerDown(document.body);
+    expect(menu().getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("AppShell short window disclaimer", () => {
+  it("collapses to a one-line disclosure whose text stays reachable", () => {
+    vi.stubGlobal("matchMedia", vi.fn((query) =>
+      query === "(min-width: 1000px)" ? media : { matches: query === "(max-height: 700px)" }));
+    Object.defineProperty(media, "matches", { configurable: true, value: true });
+    render(h(MemoryRouter, { initialEntries: ["/"] }, h(Routes, null, h(Route, { path: "*", element: h(AppShell) }))));
+    const toggle = screen.getByRole("button", { name: /Study aid only/ });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText(/Independent study aid/)).toBeTruthy();
+  });
+});
