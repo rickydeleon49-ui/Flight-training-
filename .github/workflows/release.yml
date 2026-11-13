@@ -51,9 +51,10 @@ jobs:
   check:
     permissions:
       contents: read
+      actions: read
     name: Check
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       tag: ${{ steps.resolve.outputs.tag }}
@@ -199,9 +200,24 @@ jobs:
           echo "matrix=$BUILD_MATRIX" >> "$GITHUB_OUTPUT"
           echo "create_draft=$CREATE_DRAFT" >> "$GITHUB_OUTPUT"
 
-      - run: npm test
+      # The full test suites already ran in the Checks workflow for this exact
+      # commit (they are required before anything reaches main). Re-running
+      # them here took the whole job past its limit, so confirm that a
+      # successful Checks run exists for this commit and fail closed if not.
+      - name: Checks workflow passed for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          n=$(gh api "repos/$REPO/actions/workflows/checks.yml/runs?head_sha=$SHA&status=success&per_page=100" --jq '.total_count')
+          echo "successful Checks runs for $SHA: $n"
+          if [ "${n:-0}" -lt 1 ]; then
+            echo "::error::No successful Checks run for $SHA. Run Checks on this commit first."
+            exit 1
+          fi
 
-      # Her backup and restore guards are Rust tests, and they need the same
+      # The lockfile check runs `cargo check --locked`, which needs the same
       # system libraries a desktop build does.
       - name: Linux desktop libraries
         run: |
@@ -220,8 +236,6 @@ jobs:
           workspaces: src-tauri
         timeout-minutes: 10
         continue-on-error: true
-
-      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
 
       - name: Cargo lockfile synchronization check
         run: npm run test:cargo-lock

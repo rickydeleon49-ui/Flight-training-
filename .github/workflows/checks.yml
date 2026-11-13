@@ -68,15 +68,30 @@ jobs:
               heavy=false
             fi
           fi
+          # The Rust job is the slow one. On a pull request it only runs when
+          # something it can notice changed; a push to main always runs it.
+          rust=$heavy
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$heavy" = "true" ]; then
+            if echo "$CHANGED" | grep -q -E '^(src-tauri/|src/data/|src/logic/|src/testing/|package(-lock)?\.json$|scripts/|\.github/)'; then
+              rust=true
+            else
+              echo "Nothing the Rust side can notice changed. Skipping the Rust job."
+              rust=false
+            fi
+          fi
           echo "web=$heavy" >> "$GITHUB_OUTPUT"
-          echo "rust=$heavy" >> "$GITHUB_OUTPUT"
+          echo "rust=$rust" >> "$GITHUB_OUTPUT"
 
   web:
-    name: App tests and build
+    name: App tests and build (shard ${{ matrix.shard }}/3)
     needs: scope
     if: needs.scope.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
@@ -92,26 +107,35 @@ jobs:
       - name: npm dependency advisories (shipped packages)
         run: npm audit --omit=dev --audit-level=high
 
-      - run: npm test
+      # The unit suite is split in three; every file runs in exactly one shard.
+      - name: Unit tests (shard ${{ matrix.shard }}/3)
+        run: npx vitest run --shard=${{ matrix.shard }}/3
 
+      # The one-off steps below run in shard 1 only.
       # The 1,000-card Study Library tier (src/perf) runs alone, after the unit
       # suite, so its long renders never compete with it for the runner's cores.
       - name: Study Library perf tier
+        if: matrix.shard == 1
         run: npm run test:perf
         timeout-minutes: 10
 
       - name: Signed Mac build script refusals
+        if: matrix.shard == 1
         run: node --test scripts/build-signed-mac.test.mjs
 
       - name: Release version bookkeeping (file list, iOS agreement, dirty-tree guard)
+        if: matrix.shard == 1
         run: node --test scripts/release-version.test.mjs
 
       - name: Third-party notices generator regressions
+        if: matrix.shard == 1
         run: node --test scripts/third-party-notices.test.mjs
 
       # `npm run build` typechecks first, then produces the real frontend
       # bundle — which is also what the Rust side compiles against.
-      - run: npm run build
+      - name: Typecheck and build
+        if: matrix.shard == 1
+        run: npm run build
 
 
   rust:
