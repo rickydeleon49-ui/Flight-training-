@@ -50,12 +50,13 @@ export function WaitingAnswerLinks({
   if (!isWaitingMsg && exceptId) waiting.delete(exceptId);
   const found = materials.filter((material) => waiting.has(material.id));
   if (found.length === 0) {
-    return <p className="tiny">Open Study Library &gt; Waiting answers to save or discard it.</p>;
+    return <p className="tiny">In your Study Library, open the document with a finished answer and save or discard it.</p>;
   }
   if (isWaitingMsg) {
+    const target = found.find((material) => material.id === exceptId) ?? found[0]!;
     return (
       <p className="tiny">
-        <Link to={`/study/${encodeURIComponent(found[0]!.id)}`}>Show me</Link>
+        <Link to={`/study/${encodeURIComponent(target.id)}`}>Show me</Link>
       </p>
     );
   }

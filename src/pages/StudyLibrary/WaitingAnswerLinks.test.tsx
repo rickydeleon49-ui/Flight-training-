@@ -84,6 +84,6 @@ describe("WaitingAnswerLinks", () => {
         <WaitingAnswerLinks message={FULL} jobs={[]} materials={materials} />
       </MemoryRouter>,
     );
-    expect(container.textContent).toContain("Waiting answers");
+    expect(container.textContent).toContain("open the document with a finished answer");
   });
 });
