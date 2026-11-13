@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, expect, it } from "vitest";
-import { AI_ILLUSTRATION_LABEL, diagramsForTopic } from "@/logic/diagrams";
+import { AI_ILLUSTRATION_LABEL, diagramSourceLine, diagramsForTopic } from "@/logic/diagrams";
 import { DiagramsStrip } from "./DiagramsStrip";
 import { DiagramsView } from "./DiagramsView";
 
@@ -61,4 +61,8 @@ it("opens a diagram on one click or Enter, even right after focus was elsewhere 
   fireEvent.click(tile);
   expect(await screen.findByRole("dialog", { name: first.title, hidden: true })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Zoom in", hidden: true })).toBeTruthy();
+  const dialog = screen.getByRole("dialog", { name: first.title, hidden: true });
+  const source = dialog.querySelector(".diagram-zoom-bar .diagram-source")!;
+  expect(source.textContent).toBe(diagramSourceLine(first));
+  expect(source.compareDocumentPosition(dialog.querySelector(".diagram-stage")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

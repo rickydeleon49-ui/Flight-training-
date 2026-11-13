@@ -71,7 +71,7 @@ it("More: Export, Related study and review status come before On this Mac", asyn
   const panel = screen.getByRole("tabpanel", { name: "More" });
   await within(panel).findByRole("heading", { name: "Read this PDF's text" });
   expect(within(panel).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual([
-    "More", "Details and review status", "File details", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details",
+    "More", "Details and review status", "File details", "On this Mac (backup)", "Read this PDF's text", "Details",
   ]);
   // Export and Related study retain their existing button and summary semantics.
   const ordered = [
@@ -291,12 +291,9 @@ it("offers the existing manual guide editor for an empty material and keeps an e
   expect(await screen.findByRole("button", { name: "Add a section" })).toBeTruthy();
 });
 
-it("offers a secondary Mac kit button that opens its destination", async () => {
+it("offers the Mac kit only as the quiet link under Make my study kit", async () => {
   await open();
-  const kit = screen.getByRole("button", { name: "or make a kit on this Mac" });
-  expect(kit.classList.contains("button--secondary")).toBe(true);
-  fireEvent.click(kit);
-  await waitFor(() => expect(screen.getByRole("tab", { name: "More" }).getAttribute("aria-selected")).toBe("true"));
+  expect(screen.queryByRole("button", { name: "or make a kit on this Mac" })).toBeNull();
 });
 
 it("offers file actions only in the header", async () => {

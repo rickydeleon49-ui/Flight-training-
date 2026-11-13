@@ -73,7 +73,7 @@ it("puts How to after History and Diagrams and shows the general steps from a de
   expect(PDF_STEPS.map(step => step.title)).toEqual(STEP_TITLES);
   expect(steps.textContent).not.toMatch(/section by section/);
   STEP_TITLES.forEach((title, index) => expect(items[index]!.textContent).toContain(title));
-  expect(within(panel).getByText(/No internet\?/).textContent).toContain("on-Mac study kit");
+  expect(within(panel).getByText(/No internet\? On a PDF/).textContent).toContain("on-Mac study kit");
   expect(within(panel).getByText(/Want to search a PDF without internet/).textContent).toContain("Read this PDF's text");
   // Generic: no per-material status and no buttons that need a material.
   expect(within(panel).queryByRole("button")).toBeNull();

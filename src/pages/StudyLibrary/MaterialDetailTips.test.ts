@@ -131,11 +131,13 @@ it("orders the PDF workflow inside its tab homes with both backup panels togethe
   // UX-01b: File details comes before the Mac backup tools.
   expect(file.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(await within(backup).findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
-  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "Details and review status", "File details", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details"]);
+  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "Details and review status", "File details", "On this Mac (backup)", "Read this PDF's text", "Details"]);
   expect(backup.contains(document.getElementById("material-offline-study"))).toBe(true);
-  expect(backup.contains(document.getElementById("material-pdf-kit"))).toBe(true);
-  expect(within(backup).getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();
-  expect(within(backup).getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy();
+  // Local kit is now a quiet link under the one primary "Make my study kit" button, not a second card.
+  expect(backup.contains(document.getElementById("material-pdf-kit"))).toBe(false);
+  expect(screen.queryByRole("heading", { name: "Make a study kit from this PDF" })).toBeNull();
+  expect(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead", hidden: true })).toBeTruthy();
+  expect(screen.getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy();
 });
 
 const selectSectionTab = (title: string) => fireEvent.click(screen.getByRole("tab", { name:
@@ -165,7 +167,7 @@ it("shows a short muted tip under every section header and Hide section tips hid
   expect(screen.queryByText("Save a named place so you can return to it later without remembering the page number.")).toBeNull();
   // Hiding guidance keeps the features and both backup panels usable.
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
-  expect(screen.getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "No internet? Make a quick set on this Mac instead", hidden: true })).toBeTruthy();
   fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
   expect(screen.getByRole("textbox", { name: "Personal notes" })).toBeTruthy();
   expect(localStorage.getItem("hfd:material-start-here:hidden")).toBe("1");

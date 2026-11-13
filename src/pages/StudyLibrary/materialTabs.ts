@@ -19,7 +19,7 @@ export function materialTabForAnchor(anchor: string, pdfProvenance = false): Mat
   if (pdfProvenance || anchor === "search-target-kit-cards" || anchor === "read-pdf-text" ||
       anchor === "related-study" || anchor.startsWith("material-file") ||
       anchor.startsWith("material-backup") || anchor.startsWith("material-mac") ||
-      anchor.startsWith("material-offline") || anchor.startsWith("material-pdf-kit") ||
+      anchor.startsWith("material-offline") ||
       anchor.startsWith("material-saved-pdf-kit")) return "more";
   return "study";
 }

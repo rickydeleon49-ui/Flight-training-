@@ -1071,6 +1071,7 @@ function MaterialDetailPage() {
       <div className="stack stack--3">
         <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
         <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
+        {material.filePath ? <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div> : null}
         {kitMessage ? <p role="status">{kitMessage}</p> : null}
         <WaitingAnswerLinks message={kitMessage} jobs={geminiJobs.jobs} materials={data.materials} exceptId={materialId} />
         {kitMessage && kitDraftAnchor ? (
@@ -1297,9 +1298,6 @@ function MaterialDetailPage() {
                   </p>
                 ) : null}
                 <CardBody>
-                  {deviceCan().pdfKit && isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
-                    <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
-                  </p> : null}
                   {deviceCan().generate && isOverLimit ? (
                     <div className="stack stack--3 material-detail__mb-4">
                       <div className="ai-disclaimer" role="alert">
@@ -2194,7 +2192,6 @@ function MaterialDetailPage() {
                 <CardBody><div className="stack stack--4">
                   {deviceCan().pdfKit && material.filePath ? <>
                     <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
-                    <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
                   </> : null}
                   {hasKitItems ? (
                     <div id="material-saved-pdf-kit" tabIndex={-1}>
