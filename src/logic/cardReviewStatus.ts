@@ -28,8 +28,12 @@ export function reviewStatusLine(dueNow: number, newCount: number): string {
   return [fresh, due].filter(Boolean).join(" · ");
 }
 
-/** "Start 10 new cards" when only new cards wait; otherwise "Review N cards". */
-export function reviewButtonLabel(dueNow: number, newCount: number): string {
+/**
+ * "Continue reviewing" when some cards were already reviewed some cards in this set;
+ * else "Start 10 new cards" when only new cards wait; otherwise "Review N cards".
+ */
+export function reviewButtonLabel(dueNow: number, newCount: number, startedCount = 0): string {
   const { due, fresh } = nextSessionSize(dueNow, newCount);
+  if (startedCount > 0 && due + fresh > 0) return "Continue reviewing";
   return due === 0 ? `Start ${plural(fresh, "new card")}` : `Review ${plural(due + fresh, "card")}`;
 }

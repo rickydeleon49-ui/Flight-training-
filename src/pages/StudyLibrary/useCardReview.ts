@@ -48,6 +48,8 @@ export const EXTRA_REVIEW_LIMIT = 10;
 export interface CardReviewSummary {
   total: number;
   newCount: number;
+  /** Cards already reviewed at least once (not paused or flagged). */
+  startedCount: number;
   dueNow: number;
   /** Again cards still waiting for their exact instant. */
   againLater: { count: number; nextAt: string | null };
@@ -64,6 +66,7 @@ export function summarizeCards(snapshot: CardReviewSnapshot, nowIso: string, bou
   const summary: CardReviewSummary = {
     total: 0,
     newCount: 0,
+    startedCount: 0,
     dueNow: 0,
     againLater: { count: 0, nextAt: null },
     nextDayAt: null,
@@ -80,7 +83,7 @@ export function summarizeCards(snapshot: CardReviewSnapshot, nowIso: string, bou
     }
     if (!state || state.dueAt === null) {
       summary.newCount += 1;
-    } else if (state.step < 0) {
+    } else if ((summary.startedCount += 1), state.step < 0) {
       if (state.dueAt <= nowIso) summary.dueNow += 1;
       else {
         summary.againLater.count += 1;

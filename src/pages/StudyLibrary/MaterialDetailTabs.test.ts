@@ -150,6 +150,41 @@ it("updates the top Flashcards row after the review session finishes", async () 
   await waitFor(() => expect(within(list).getByRole("button", { name: "Flashcards: Open" })).toBeTruthy());
   expect(within(list).queryByRole("button", { name: /^Flashcards: (Start|Review)/ })).toBeNull();
 });
+async function seedPractice(answered: number) {
+  await createRepositories(db).documents.savePracticeTest({ sourceMaterialId: "tips", provider: "gemini", title: "Synthetic test", model: "test",
+    questions: [1, 2, 3].map(n => ({ question: `Synthetic question ${n}?`, options: ["A", "B"], correctIndex: 0, explanation: "A", sourcePage: 1 })) });
+  const sessions = createRepositories(db).practiceSessions;
+  const active = (await sessions.getActiveVersion("tips"))!;
+  await sessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId: "tips", versionId: active.version.id });
+  for (const item of active.items.slice(0, answered)) {
+    const attempt = (await sessions.getCurrentAttempt("tips"))!;
+    await sessions.saveSessionAction({ action: "record_response", operationId: crypto.randomUUID(), attemptId: attempt.attemptId, itemId: item.id, expectedRevision: attempt.revision, selectedIndex: 0, isDontKnow: false });
+  }
+}
+it("the Practice test row says Continue when an attempt is paused", async () => {
+  await seedPractice(2);
+  await open();
+  const list = screen.getByRole("list", { name: "Next steps" });
+  await waitFor(() => expect(within(list).getByRole("button", { name: "Continue" })).toBeTruthy());
+  expect(within(list).queryByRole("button", { name: "Start" })).toBeNull();
+});
+it("the Practice test row says Start when nothing is paused", async () => {
+  await seedPractice(0);
+  await open();
+  const list = screen.getByRole("list", { name: "Next steps" });
+  expect(await within(list).findByRole("button", { name: "Start" })).toBeTruthy();
+});
+it("the Flashcards row says Continue reviewing once some cards were reviewed", async () => {
+  await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic saved cards", summary: "Synthetic guide", sections: [],
+    flashcards: [1, 2].map(n => ({ front: `Q${n}`, back: `A${n}`, sourcePage: null })), sourceNotes: "", model: "test" });
+  await open();
+  const list = screen.getByRole("list", { name: "Next steps" });
+  fireEvent.click(await within(list).findByRole("button", { name: /^Flashcards: Start 2 new cards/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Got it: again in/ }));
+  pick("Notes"); pick("Study");
+  await waitFor(() => expect(within(screen.getByRole("list", { name: "Next steps" })).queryByRole("button", { name: /^Flashcards: Continue reviewing/ })).toBeTruthy());
+});
 it("keeps all tabs for a material without a file and handles unknown URL tabs", async () => {
   await createRepositories(db).documents.update("tips", { filePath: null, originalFileName: null });
   await open("?tab=unknown");

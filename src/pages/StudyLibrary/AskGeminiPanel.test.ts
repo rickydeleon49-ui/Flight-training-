@@ -1021,7 +1021,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     // Start review session
-    const reviewBtn = await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ });
+    const reviewBtn = await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?|Continue reviewing)$/ });
     fireEvent.click(reviewBtn);
 
     await screen.findByRole("button", { name: "Show answer" });
@@ -1060,7 +1060,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     // Start review session and show answer
-    const reviewBtn = await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ });
+    const reviewBtn = await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?|Continue reviewing)$/ });
     fireEvent.click(reviewBtn);
     await screen.findByRole("button", { name: "Show answer" });
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));

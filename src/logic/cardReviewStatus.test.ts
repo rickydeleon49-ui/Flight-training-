@@ -25,3 +25,12 @@ describe("card review wording", () => {
     expect(reviewButtonLabel(25, 20)).toBe("Review 20 cards");
   });
 });
+
+describe("Continue reviewing", () => {
+  it("shows Continue reviewing once cards were reviewed and more are waiting", () => {
+    expect(reviewButtonLabel(0, 19, 1)).toBe("Continue reviewing");
+    expect(reviewButtonLabel(2, 0, 5)).toBe("Continue reviewing");
+    expect(reviewButtonLabel(0, 19, 0)).toBe("Start 10 new cards");
+    expect(reviewButtonLabel(0, 0, 3)).toBe("Start 0 new cards");
+  });
+});
