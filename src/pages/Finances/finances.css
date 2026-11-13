@@ -63,6 +63,8 @@
 
 .txn-row__amount {
   flex: none;
+  min-width: 5rem;
+  text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   font-size: var(--text-sm);
@@ -197,6 +199,7 @@
 
 /* Inline styles moved here (DESIGN-01 s23). */
 .fin-center { justify-content: center; }
+.fund__value, .insight__value, .month-table td, .school-item-card__rate { font-variant-numeric: tabular-nums; }
 .txn-row__meta { gap: var(--space-2); margin-top: 2px; }
 .fin-note-2 { margin-top: var(--space-2); }
 .fin-note-3 { margin-top: var(--space-3); }

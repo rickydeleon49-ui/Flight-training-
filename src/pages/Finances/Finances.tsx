@@ -81,6 +81,7 @@ export function Finances() {
         <PageHeader title="Finances" subtitle="What you have set aside, and what training is costing." />
         <Card variant="grouped">
           <EmptyState
+            compact
             icon={<WalletIcon size={30} />}
             title="Your Flight Fund starts here."
             body="Record what you have set aside for training and what you spend. Estimated lesson costs from your Schedule will show up as upcoming expenses."
