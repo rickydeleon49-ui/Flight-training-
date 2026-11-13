@@ -44,7 +44,7 @@ describe("Add study pack dialog", () => {
     open();
     await addButton();
     expect(screen.getByText("14 guides · 280 cards · 140 practice questions · 31 videos · 14 PDFs")).toBeTruthy();
-    expect(screen.getByText("3 are already in your library.")).toBeTruthy();
+    expect(screen.getByText("3 items (guides, PDFs and practice sets) are already in your library.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/hfdpack|pack\.|\/picked/);
   });
 

@@ -21,7 +21,7 @@ export function packContentsLine(p: StudyPackPreview): string {
 
 export function packAlreadyHaveLine(p: StudyPackPreview): string | null {
   if (p.alreadyInLibrary <= 0) return null;
-  return `${p.alreadyInLibrary} ${p.alreadyInLibrary === 1 ? "is" : "are"} already in your library.`;
+  return `${n(p.alreadyInLibrary, "item", "items")} (guides, PDFs and practice sets) ${p.alreadyInLibrary === 1 ? "is" : "are"} already in your library.`;
 }
 
 /** Title shown when nothing in the pack would be (or was) added. */
@@ -34,6 +34,12 @@ export function namedItemLines(items: readonly StudyPackNamedItem[] | undefined)
 
 /** Shown while a big pack is being read or added. */
 export const WAIT_LINE = "Large packs can take several minutes. Keep the app open.";
+
+/** Shown while a study pack is being saved (no step counts are reported for saving). */
+export const SAVING_LINE = "Saving study pack… this can take a few minutes for a big library. Keep the app open.";
+
+/** Shown while adding, before the first step is reported. */
+export const ADDING_LINE = "Adding study pack… this can take a few minutes.";
 
 /** "Copying PDFs… 3 of 14" while a pack is being added. */
 export function progressLine(p: StudyPackProgress | null): string | null {

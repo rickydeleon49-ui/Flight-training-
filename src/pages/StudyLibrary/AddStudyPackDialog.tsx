@@ -15,7 +15,7 @@ import {
   type StudyPackResult,
 } from "@/data/studyPack";
 import { newId } from "@/lib/id";
-import { ALREADY_TITLE, namedItemLines, WAIT_LINE, packAlreadyHaveLine, packContentsLine, progressLine, resultLines } from "@/logic/studyPackText";
+import { ALREADY_TITLE, namedItemLines, ADDING_LINE, WAIT_LINE, packAlreadyHaveLine, packContentsLine, progressLine, resultLines } from "@/logic/studyPackText";
 import { useAppData } from "@/state/AppDataContext";
 import { DISCLAIMER_LINE } from "@/logic/legal";
 
@@ -199,7 +199,7 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
           ) : null}
           {adding ? (
             <div className="stack stack--1" role="status">
-              {progressLine(progress) ? <p className="small"><strong>{progressLine(progress)}</strong></p> : null}
+              <p className="small"><strong>{progressLine(progress) ?? ADDING_LINE}</strong></p>
               <p className="small">{WAIT_LINE}</p>
             </div>
           ) : null}

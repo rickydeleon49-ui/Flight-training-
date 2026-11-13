@@ -19,8 +19,8 @@ describe("study pack sentences", () => {
 
   it("says 'already in your library' only when non-zero", () => {
     expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 0, skippedItems: [], labelledItems: [], nothingNew: false })).toBeNull();
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 3, skippedItems: [], labelledItems: [], nothingNew: false })).toBe("3 are already in your library.");
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 1, skippedItems: [], labelledItems: [], nothingNew: false })).toBe("1 is already in your library.");
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 3, skippedItems: [], labelledItems: [], nothingNew: false })).toBe("3 items (guides, PDFs and practice sets) are already in your library.");
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 1, skippedItems: [], labelledItems: [], nothingNew: false })).toBe("1 item (guides, PDFs and practice sets) is already in your library.");
   });
 
   it("builds the Added line from guides and PDFs only, dropping a zero part, never naming pictures", () => {
