@@ -356,8 +356,12 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       expect(close.classList.contains("button--ghost")).toBe(true);
       fireEvent.click(close);
       fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-      expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Ask a question" }));
-      expect(scroll).toHaveBeenCalledTimes(4);
+      const reopened = screen.getByRole("textbox", { name: "Ask a question" });
+      expect(document.activeElement).toBe(reopened);
+      // Opening scrolls the input into view (small windows).
+      expect(scroll).toHaveBeenCalledTimes(5);
+      expect(scrolled.at(-1)).toBe(reopened);
+      expect(scroll).toHaveBeenLastCalledWith({ block: "nearest" });
     } finally {
       Element.prototype.scrollIntoView = original;
       vi.unstubAllGlobals();
