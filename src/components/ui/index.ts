@@ -1,4 +1,5 @@
 export { Card, CardBody, CardHeader } from "./Card";
+export { Section } from "./Section";
 export { Button, IconButton } from "./Button";
 export { Badge, type BadgeTone } from "./Badge";
 export { Checkbox, Field, Select, TextArea, TextInput } from "./Form";
