@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 
 import { AlertIcon, RouteIcon } from "./Icons";
 
-export const Loading = ({ label = "Loading" }: { label?: string }) => (
-  <div className="loading" role="status">
+export const Loading = ({ label = "Loading", compact = false }: { label?: string; compact?: boolean }) => (
+  <div className={compact ? "loading loading--compact" : "loading"} role="status">
     <span className="spinner" aria-hidden="true" />
     <span>{label}…</span>
   </div>
@@ -21,15 +21,17 @@ interface EmptyStateProps {
   body?: string;
   action?: ReactNode;
   icon?: ReactNode;
+  /** Opt-in smaller padding. */
+  compact?: boolean;
 }
 
 /**
  * Empty states are invitations, never "No data found." They say what this
  * space is for and offer the first step.
  */
-export function EmptyState({ title, body, action, icon }: EmptyStateProps) {
+export function EmptyState({ title, body, action, icon, compact = false }: EmptyStateProps) {
   return (
-    <div className="empty-state">
+    <div className={compact ? "empty-state empty-state--compact" : "empty-state"}>
       <span className="empty-state__mark" aria-hidden="true">
         {icon ?? <RouteIcon size={28} />}
       </span>
