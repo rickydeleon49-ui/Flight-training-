@@ -15,6 +15,7 @@ import {
   IconButton,
   NoteIcon,
   PinIcon,
+  Section,
   TextArea,
   TextInput,
   TrashIcon,
@@ -160,9 +161,7 @@ export function Notes() {
       ) : null}
 
       <div className="stack stack--5">
-        <Card variant="grouped">
-          <CardHeader title="Write something down" />
-          <CardBody>
+        <Section title="Write something down">
             <div className="stack stack--3">
               <TextInput
                 value={draft.title}
@@ -199,8 +198,7 @@ export function Notes() {
                 </span>
               </div>
             </div>
-          </CardBody>
-        </Card>
+        </Section>
 
         <Card variant="grouped">
           <CardHeader
@@ -232,6 +230,7 @@ export function Notes() {
             ) : null}
             {visible.length === 0 ? (
               <EmptyState
+                compact
                 icon={<NoteIcon size={26} />}
                 title={
                   data.notes.length === 0

@@ -179,7 +179,7 @@ describe("Add study pack dialog", () => {
     fireEvent.click(await addButton());
     expect(await screen.findByText("Added 2 guides. Your own work wasn't changed.")).toBeTruthy();
     expect(mocks.result).toHaveBeenCalledWith(mocks.add.mock.calls[0]![0]);
-    expect(mocks.ack).toHaveBeenCalledWith("op");
+    await waitFor(() => expect(mocks.ack).toHaveBeenCalledWith("op"));
   });
 
   it("with a transport failure and no receipt, says the outcome is unknown, not 'nothing changed'", async () => {
