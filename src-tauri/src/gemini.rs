@@ -1359,13 +1359,19 @@ fn job_changed(app: &AppHandle) -> impl Fn(&JobRecord) + Sync + '_ {
 #[tauri::command]
 pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
     let root = app_root(&app)?;
-    Ok(gemini_jobs::with(&root, |journal| {
+    Ok(job_listing(&root))
+}
+
+/// The journal's records as the window sees them (local PDF kit drafts
+/// included; the window splits them by kind).
+fn job_listing(root: &Path) -> Vec<JobRecord> {
+    gemini_jobs::with(root, |journal| {
         journal
             .list()
             .into_iter()
             .flat_map(study_kit::review_records)
             .collect()
-    }))
+    })
 }
 
 /// She asked to cancel a running job (GEN-REL-04). The journal decides first:
@@ -2378,6 +2384,42 @@ enum RefusalContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn job_listing_keeps_pdf_kit_drafts_and_serialises_camel_case() {
+        let root =
+            std::env::temp_dir().join(format!("hfd-job-listing-0713d-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let sha = "0".repeat(64);
+        let id = gemini_jobs::with(&root, |j| {
+            let id = j
+                .begin_pdf_kit(
+                    "mat-a",
+                    "documents/a.pdf",
+                    &sha,
+                    serde_json::json!({"runId": "run-a"}),
+                )
+                .unwrap();
+            j.finish_pdf_kit(&id, serde_json::json!({"runId": "run-a", "candidates": {}}))
+                .unwrap();
+            id
+        });
+        let listing = job_listing(&root);
+        let json = serde_json::to_value(&listing).unwrap();
+        let kit = json
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["id"] == id.as_str())
+            .expect("the local PDF kit draft must be listed");
+        assert_eq!(kit["kind"], "pdf-kit");
+        assert_eq!(kit["materialId"], "mat-a");
+        assert_eq!(kit["stage"], "ready");
+        assert!(kit.get("material_id").is_none());
+        assert_eq!(kit["draft"]["runId"], "run-a");
+        let _ = std::fs::remove_dir_all(&root);
+    }
 
     #[test]
     fn status_distinguishes_an_unreadable_store_from_an_absent_key() {

@@ -4016,20 +4016,20 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-quinn-proto 0.11.18
+quinn-proto 0.11.19
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/quinn-proto/0.11.18
+Source: https://crates.io/crates/quinn-proto/0.11.19
 Repository: https://github.com/quinn-rs/quinn
 Copyright (c) 2018 The quinn Developers
 License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-quinn-udp 0.5.15
+quinn-udp 0.5.16
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/quinn-udp/0.5.15
+Source: https://crates.io/crates/quinn-udp/0.5.16
 Repository: https://github.com/quinn-rs/quinn
 Copyright (c) 2018 The quinn Developers
 License text: MIT standard text in Part 6.
