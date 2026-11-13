@@ -51,7 +51,7 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.7.0
+        CFBundleShortVersionString: 0.7.1
         CFBundleVersion: "21"
     entitlements:
       path: her-flight-deck_iOS/her-flight-deck_iOS.entitlements
