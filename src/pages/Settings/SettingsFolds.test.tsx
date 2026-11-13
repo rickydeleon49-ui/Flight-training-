@@ -130,6 +130,6 @@ it("POLISH-089: Jump to links are button-sized targets with space between them",
   expect(links.length).toBeGreaterThan(3);
   for (const link of links) expect(link.className).toContain("settings-jumps__link");
   const css = readFileSync("src/pages/Settings/settings.css", "utf8");
-  expect(css).toMatch(/\.settings-jumps__link\s*{[^}]*min-height:\s*36px/);
+  expect(css).toMatch(/\.settings-jumps__link\s*{[^}]*min-height:\s*(?:36px|var\(--hit-min\))/);
   expect(css).toMatch(/\.settings-jumps\s*{[^}]*gap:/);
 });

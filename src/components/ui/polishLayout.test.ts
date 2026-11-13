@@ -32,9 +32,9 @@ it("styles preparation example copy as a hint", () => {
   expect(schedule).toMatch(/\.inline-add \.input::placeholder\s*\{[^}]*font-style: italic/);
 });
 
-it("gives main buttons and tabs a 44 px target with a 15 px label, secondary and danger buttons 44 px, small buttons stay compact", () => {
-  expect(ui).toMatch(/\.button--primary\s*\{[^}]*min-height:\s*var\(--space-7\);[^}]*font-size:\s*var\(--text-base\);/);
-  expect(ui).toMatch(/button\[role="tab"\]\s*\{[^}]*min-height:\s*var\(--space-7\);[^}]*font-size:\s*var\(--text-base\);/);
-  expect(ui).toMatch(/\.button--secondary,\s*\.button--danger\s*\{[^}]*min-height:\s*var\(--space-7\);/);
-  expect(ui).toMatch(/\.button--small\s*\{[^}]*min-height:\s*0;/);
+it("buttons and tabs follow the control ladder (40px, 13px label) and become 44px on touch; small buttons stay compact", () => {
+  expect(ui).toMatch(/\.button\s*\{[^}]*min-height:\s*var\(--control-h\);[^}]*font-size:\s*var\(--control-text\);/);
+  expect(ui).toMatch(/button\[role="tab"\]\s*\{[^}]*min-height:\s*var\(--control-h\);[^}]*font-size:\s*var\(--control-text\);/);
+  expect(ui).toMatch(/\.button--primary,\s*\.button--secondary,\s*\.button--danger,\s*button\[role="tab"\]\s*\{\s*min-height:\s*44px;/);
+  expect(ui).toMatch(/\.button--small\s*\{[^}]*min-height:\s*var\(--control-h-sm\);/);
 });

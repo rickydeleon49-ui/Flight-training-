@@ -130,6 +130,11 @@
   --space-6: 2rem;
   --space-7: 2.75rem;
   --space-8: 3.5rem;
+  /* Control ladder (UI-ELEVATE-01 F1). */
+  --control-h: 40px;
+  --control-h-sm: 36px;
+  --hit-min: 44px;
+  --control-text: var(--text-sm);
 
   /* ---- Shape ---- */
   --radius-sm: 8px;

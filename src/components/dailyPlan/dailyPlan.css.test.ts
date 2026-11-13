@@ -17,9 +17,6 @@ it("budget options fill a wrapped row and keep their labels whole", () => {
   expect(btn).toContain("overflow-wrap: break-word");
 });
 
-it("budget options reach 44px only when iPhone text is larger than default", () => {
-  const big = rule("html.is-ios .daily-plan-budget-btn");
-  expect(big).toContain("--ios-system-font-size, 17px) - 17px");
-  expect(big).toContain("44px");
-  expect(rule(".daily-plan-budget-btn")).not.toContain("min-height");
+it("budget options are 44px targets", () => {
+  expect(rule(".daily-plan-budget-btn")).toContain("min-height: var(--hit-min)");
 });

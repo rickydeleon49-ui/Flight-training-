@@ -37,6 +37,7 @@
   border: none;
   border-radius: calc(var(--radius-md) - 2px);
   padding: var(--space-1) var(--space-3);
+  min-height: var(--hit-min);
   font-size: var(--text-xs);
   font-weight: 500;
   color: inherit;
@@ -50,12 +51,6 @@
   text-align: center;
   /* Fills its row when the group wraps; a single row keeps natural widths. */
   flex: 1 1 auto;
-}
-
-/* Larger iPhone text: every option reaches the 44 pt target. At the default size
-   (17px) this is 0, so the control looks as before. */
-html.is-ios .daily-plan-budget-btn {
-  min-height: clamp(0px, calc((var(--ios-system-font-size, 17px) - 17px) * 44), 44px);
 }
 
 .daily-plan-budget-btn:hover {
