@@ -8,8 +8,8 @@
 /* Ensure buttons and icon buttons in the Notes page meet 44px min touch/target dimensions */
 .notes-page .button,
 .notes-page .icon-button {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--hit-min);
+  min-width: var(--hit-min);
 }
 
 /* Recovery banner wrap and sizing */

@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   EmptyState,
+  Section,
   IconButton,
   ListRow,
   PlusIcon,
@@ -100,6 +101,7 @@ export function Schedule() {
             <CardBody flush>
               {upcoming.length === 0 ? (
                 <EmptyState
+                  compact
                   icon={<CalendarIcon size={26} />}
                   title="Nothing scheduled yet."
                   body="Add your next lesson, ground school session, or a deadline you need to keep in view."
@@ -127,10 +129,9 @@ export function Schedule() {
           ) : null}
         </div>
 
-        <Card>
-          <CardHeader
-            title={formatMonthYear(monthAnchor)}
-            action={
+        <Section
+          title={formatMonthYear(monthAnchor)}
+          actions={
               <div className="row schedule__month-nav">
                 <IconButton
                   label="Previous month"
@@ -145,9 +146,8 @@ export function Schedule() {
                   <ChevronRightIcon size={16} />
                 </IconButton>
               </div>
-            }
-          />
-          <CardBody>
+          }
+        >
             <div className="month">
               {WEEKDAY_INITIALS.map((initial, index) => (
                 <div className="month__weekday" key={index} aria-hidden="true">
@@ -188,8 +188,7 @@ export function Schedule() {
             <p className="tiny dim schedule__month-note">
               Dots mark days with something scheduled.
             </p>
-          </CardBody>
-        </Card>
+        </Section>
       </div>
 
       <EventFormDialog

@@ -19,6 +19,7 @@ import {
   TextInput,
   TypedDateField,
   type TypedDateFieldHandle,
+  Section,
 } from "@/components/ui";
 import {
   CREDENTIAL_TYPE_LABELS,
@@ -351,9 +352,7 @@ function InstructorReport() {
         </CardBody>
       </Card>
       <div className="toolkit-two-column">
-        <Card variant="grouped">
-          <CardHeader title="Current goals" />
-          <CardBody>
+        <Section title="Current goals">
             {activeGoals.length ? (
               <ul className="toolkit-list">
                 {activeGoals.map((goal) => (
@@ -368,11 +367,8 @@ function InstructorReport() {
             ) : (
               <p className="small muted">No goals marked In Progress.</p>
             )}
-          </CardBody>
-        </Card>
-        <Card variant="grouped">
-          <CardHeader title="Recent instructor feedback" />
-          <CardBody>
+        </Section>
+        <Section title="Recent instructor feedback">
             {feedback.length ? (
               <ul className="toolkit-list">
                 {feedback.map((entry) => (
@@ -387,18 +383,14 @@ function InstructorReport() {
                 No instructor feedback recorded yet.
               </p>
             )}
-          </CardBody>
-        </Card>
+        </Section>
       </div>
-      <Card variant="grouped">
-        <CardHeader title="Discussion notes" />
-        <CardBody>
+      <Section title="Discussion notes">
           <div
             className="report-writing-lines"
             aria-label="Blank lines for printed notes"
           />
-        </CardBody>
-      </Card>
+      </Section>
       <p className="tiny dim">
         Personal summary generated from Your Flight Deck. Confirm all flight time
         against the authoritative logbook.

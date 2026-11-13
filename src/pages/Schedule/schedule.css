@@ -106,3 +106,6 @@
 
 /* Example copy is a hint, never an existing checklist item. */
 .inline-add .input::placeholder { font-style: italic; }
+
+/* Month navigation keeps full-size targets beside the section title. */
+.schedule__month-nav .icon-button { min-height: var(--hit-min); min-width: var(--hit-min); }
