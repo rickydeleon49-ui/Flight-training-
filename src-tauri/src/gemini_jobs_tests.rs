@@ -1116,3 +1116,130 @@ fn only_the_five_newest_set_aside_files_are_kept_and_nothing_else_is_touched() {
         );
     }
 }
+
+fn kit_job(journal: &mut Journal, material: &str, result: Value) -> String {
+    let id = journal
+        .begin(JobKind::StudyKit, material, "documents/k.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&id, result).unwrap();
+    id
+}
+
+#[test]
+fn a_finished_kit_with_nothing_to_save_makes_room_in_all_three_places() {
+    let dead = json!({"parts": {"guide": {"error": "x"}, "cards": {"error": "x"}, "questions": {"error": "x"}}});
+    for place in 0..3 {
+        let dir = TempDir::new(&format!("dead-kit-{place}"));
+        let mut journal = Journal::open(dir.path());
+        for i in 0..MAX_JOBS - 1 {
+            let id = journal
+                .begin(
+                    JobKind::StudyAid,
+                    &format!("mat-{i}"),
+                    "documents/x.pdf",
+                    SHA,
+                    None,
+                )
+                .unwrap();
+            journal.ready(&id, answer(&format!("Guide {i}"))).unwrap();
+        }
+        kit_job(&mut journal, "mat-kit", dead.clone());
+        assert_eq!(journal.list().len(), MAX_JOBS);
+        match place {
+            0 => assert!(journal
+                .begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None)
+                .is_ok()),
+            1 => assert!(journal
+                .begin_pdf_kit("mat-new", "documents/n.pdf", SHA, json!({"runId": "r"}))
+                .is_ok()),
+            _ => assert!(journal
+                .queue_sections(
+                    "mat-new",
+                    "documents/n.pdf",
+                    SHA,
+                    None,
+                    None,
+                    json!({"x": 1})
+                )
+                .is_ok()),
+        }
+        // The seven waiting answers are all still there.
+        let waiting = Journal::open(dir.path())
+            .list()
+            .iter()
+            .filter(|j| j.stage == JobStage::Ready && j.kind == JobKind::StudyAid)
+            .count();
+        assert_eq!(waiting, MAX_JOBS - 1);
+    }
+}
+
+#[test]
+fn a_kit_with_an_answer_to_save_still_holds_its_slot() {
+    let dir = TempDir::new("live-kit");
+    let mut journal = Journal::open(dir.path());
+    for i in 0..MAX_JOBS - 1 {
+        let id = journal
+            .begin(
+                JobKind::StudyAid,
+                &format!("mat-{i}"),
+                "documents/x.pdf",
+                SHA,
+                None,
+            )
+            .unwrap();
+        journal.ready(&id, answer("G")).unwrap();
+    }
+    kit_job(
+        &mut journal,
+        "mat-kit",
+        json!({"parts": {"guide": {"answer": answer("Kit")}}}),
+    );
+    assert_eq!(
+        journal.begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+}
+
+#[test]
+fn asking_again_on_a_material_replaces_its_own_failed_draft_when_full() {
+    let dir = TempDir::new("own-failed");
+    let mut journal = Journal::open(dir.path());
+    for i in 0..MAX_JOBS - 1 {
+        let id = journal
+            .begin(
+                JobKind::StudyAid,
+                &format!("mat-{i}"),
+                "documents/x.pdf",
+                SHA,
+                None,
+            )
+            .unwrap();
+        journal.ready(&id, answer("G")).unwrap();
+    }
+    let id = journal
+        .begin(
+            JobKind::PracticeTest,
+            "mat-own",
+            "documents/o.pdf",
+            SHA,
+            None,
+        )
+        .unwrap();
+    journal.failed(&id, "It failed.").unwrap();
+    // The retry takes that material's own slot; the journal does not grow.
+    assert!(journal
+        .begin(
+            JobKind::PracticeTest,
+            "mat-own",
+            "documents/o.pdf",
+            SHA,
+            None
+        )
+        .is_ok());
+    let list = journal.list();
+    assert_eq!(list.len(), MAX_JOBS);
+    assert_eq!(
+        list.iter().filter(|j| j.material_id == "mat-own").count(),
+        1
+    );
+}
