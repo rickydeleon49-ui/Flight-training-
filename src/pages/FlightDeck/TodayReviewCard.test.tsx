@@ -89,6 +89,19 @@ describe("TodayReviewCard", () => {
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("/study"));
   });
 
+  it("folds nothing-due into one quiet line, not a card", async () => {
+    const { container } = show(repoWith([]));
+    await screen.findByText("Nothing due. Nice work.");
+    expect(container.querySelector(".card")).toBeNull();
+    expect(container.querySelector("h2")).toBeNull();
+  });
+
+  it("holds the card's height until the due count is known", () => {
+    const never = new Promise<LibraryReviewDueResult>(() => {});
+    const { container } = show({ readReviewDue: () => never } as unknown as CardLibraryRepository);
+    expect(container.querySelector(".today-review-reserve")).toBeTruthy();
+  });
+
   it("counts new cards as due, like the Review due tab", async () => {
     const newOnly = { ...row("m1", "Weather services", 0), newCount: 7 };
     show(repoWith([newOnly]));

@@ -19,6 +19,7 @@ import {
   EmptyState,
   PlaneIcon,
   PlusIcon,
+  Section,
   TargetIcon,
 } from "@/components/ui";
 import {
@@ -35,6 +36,7 @@ import { describeRelativeDate, formatLongDate, formatShortDate, formatTime } fro
 import { formatMoney } from "@/lib/money";
 import { summarizeAcsAreaMaterialCoverage } from "@/logic/acsAreaMaterialCoverage";
 import { checkrideLine } from "@/logic/checkride";
+import { normalizeStudyReminder } from "@/logic/toolkit";
 import { buildDashboard } from "@/logic/dashboard";
 import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
 import {
@@ -105,6 +107,7 @@ export function FlightDeck() {
   );
 
   const checkrideText = checkrideLine(data.toolkit.checkrideDate ?? null);
+  const reminder = normalizeStudyReminder(data.toolkit.studyReminder);
 
   // Start on a Flight Deck action: focus its own control where it is shown;
   // an action this page does not list (e.g. due later) opens in its editor.
@@ -180,7 +183,7 @@ export function FlightDeck() {
             aria-label="Add action"
             onClick={() => setCreating(true)}
           >
-            <PlusIcon size={16} /> <span className="deck-add__label">Add action</span>
+            <PlusIcon size={16} /> <span>Add action</span>
           </Button>
         }
       />
@@ -188,6 +191,14 @@ export function FlightDeck() {
       {checkrideText ? (
         <p className="small strong" data-testid="checkride-countdown" role="status">{checkrideText}</p>
       ) : null}
+
+      <p className="small deck-reminder-line" data-testid="reminder-status">
+        {reminder.enabled ? (
+          `Reminders on · ${formatTime(reminder.time)}`
+        ) : (
+          <>Reminders off · <Link to="/settings">Turn on</Link></>
+        )}
+      </p>
 
       <div className="deck">
         <div className="deck__column">
@@ -289,34 +300,30 @@ export function FlightDeck() {
             </Card>
           ) : null}
 
-          <Card variant="grouped">
-            <CardHeader
-              title="Today's plan"
-              action={
-                <span className="tiny dim">
-                  {model.planDoneCount > 0 ? `${model.planDoneCount} done · ` : ""}
-                  {model.planCount} left
-                </span>
-              }
-            />
-            <CardBody flush>
+          <Section
+            title="Today's plan"
+            actions={
+              <span className="tiny dim">
+                {model.planDoneCount > 0 ? `${model.planDoneCount} done · ` : ""}
+                {model.planCount} left
+              </span>
+            }
+          >
+            <div>
               {model.planGroups.length === 0 ? (
-                <EmptyState
-                  icon={<CheckIcon size={26} />}
-                  title={
-                    model.hasRecommendations
+                <p className="today-review-quiet__line">
+                  <span>
+                    {model.hasRecommendations
                       ? "Nothing else is scheduled today."
-                      : "Nothing is scheduled for today."
-                  }
-                  body={
-                    model.hasRecommendations
+                      : "Nothing is scheduled for today."}
+                  </span>
+                  <span className="muted">
+                    {model.hasRecommendations
                       ? "Your recommended items are above."
-                      : "A good moment to look at your Flight Path and choose the next step."
-                  }
-                  action={
-                    <Button onClick={() => setCreating(true)}>Add an action</Button>
-                  }
-                />
+                      : "A good moment to look at your Flight Path and choose the next step."}
+                  </span>
+                  <Button variant="ghost" onClick={() => setCreating(true)}>Add an action</Button>
+                </p>
               ) : (
                 <div className="deck-plan-groups">
                   {model.planGroups.map((group) => (
@@ -345,8 +352,8 @@ export function FlightDeck() {
                   ))}
                 </div>
               )}
-            </CardBody>
-          </Card>
+            </div>
+          </Section>
 
           {model.encouragement ? (
             <p className="encouragement">

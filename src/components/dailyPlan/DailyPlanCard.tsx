@@ -196,7 +196,7 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
         title="Recommended for today"
         eyebrow="Daily Flight Plan"
         action={
-          <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+          <div className="row daily-plan-header-actions">
             <span role="status" className="live-region tiny muted">{isSaving ? "Saving…" : null}</span>
             <button
               type="button"
@@ -278,9 +278,8 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
             {hasDecisionsToday ? (
               <button
                 type="button"
-                className="button button--ghost button--small"
+                className="button button--ghost button--small daily-plan-reset"
                 onClick={() => void resetToday()}
-                style={{ fontSize: "var(--text-xs)" }}
               >
                 Reset today's skips
               </button>
@@ -289,9 +288,9 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
 
           {saveError ? (
             <ErrorNote>
-              <div className="row row--between" style={{ width: "100%" }}>
+              <div className="row row--between daily-plan-error-row">
                 <span>{saveError}</span>
-                <span className="row" style={{ gap: "var(--space-1)" }}>
+                <span className="row daily-plan-tight-row">
                   {sessionUnsaved ? (
                     <button
                       type="button"
@@ -331,7 +330,7 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
                   : "Unfinished work exceeds your selected time budget. Choose a larger budget, select All / Untimed, or review and start remaining work below."
               }
               action={
-                <div className="row" style={{ gap: "var(--space-2)", flexWrap: "wrap", justifyContent: "center" }}>
+                <div className="row daily-plan-empty-actions">
                   {!showRemaining ? (
                     <Button size="small" onClick={() => setShowRemaining(true)}>
                       View remaining work ({plan.remaining.length})
@@ -362,7 +361,7 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
             />
           )
         ) : (
-          <div className="daily-plan-list" style={{ marginTop: "var(--space-4)" }}>
+          <div className="daily-plan-list">
             {candidates.map((candidate, index) => {
               const item = plan.suggested[index]!;
               const target = candidate.target;
@@ -388,7 +387,7 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
                           {precedenceLabel(item.precedence)}
                         </Badge>
                         {item.estimatedMinutes !== null ? (
-                          <span className="tiny muted row" style={{ gap: 3 }}>
+                          <span className="tiny muted row daily-plan-item__time">
                             <ClockIcon size={12} />
                             {item.estimatedMinutes} min
                           </span>
@@ -529,8 +528,8 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
                   const target = getStartTarget(item, sources);
                   return (
                     <div className="daily-plan-remaining-row" key={item.id}>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+                      <div className="daily-plan-remaining-row__main">
+                        <div className="row daily-plan-header-actions">
                           <Badge tone={precedenceTone(item.precedence)}>
                             {precedenceLabel(item.precedence)}
                           </Badge>
@@ -539,12 +538,12 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
                             <span className="tiny dim">({item.estimatedMinutes} min)</span>
                           ) : null}
                         </div>
-                        <p className="tiny muted truncate" style={{ marginTop: 2 }}>
+                        <p className="tiny muted truncate daily-plan-remaining-row__note">
                           {item.explanation}
                         </p>
                       </div>
 
-                      <div className="row" style={{ gap: "var(--space-1)" }}>
+                      <div className="row daily-plan-tight-row">
                         {target.isLocalAction ? (
                           <button
                             type="button"

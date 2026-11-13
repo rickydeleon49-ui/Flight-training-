@@ -391,19 +391,25 @@ html.is-ios .card--grouped .card__body { padding-top: var(--space-2); }
 
 .deck-more__body { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
 
-/* The header's Add action: a plain "+" button on iPhone. */
-html.is-ios .deck-add {
-  width: var(--space-7);
-  min-width: var(--space-7);
-  height: var(--space-7);
-  padding: 0;
-}
+/* The header's Add action keeps its text label (a lone "+" says nothing) and a full-size target. */
+.deck-add { min-height: var(--hit-min); }
 
-html.is-ios .deck-add__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+/* Today's review while it loads: holds the filled card's height. */
+.today-review-reserve { min-height: 11rem; }
+
+/* Nothing due: one quiet line, no card. */
+.today-review-quiet { display: grid; gap: var(--space-3); }
+.today-review-quiet__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
+.today-review-quiet__line .button { min-height: var(--hit-min); }
+
+/* Reminder status: one quiet line under the greeting. */
+.deck-reminder-line { margin: 0; color: var(--text-secondary); }
+.deck-reminder-line a { display: inline-flex; align-items: center; min-height: var(--hit-min); }
