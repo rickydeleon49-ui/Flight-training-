@@ -121,7 +121,7 @@ it("reads only the picture card question, including after revealing the label", 
   const { speak, cancel } = mockSpeechSynthesis();
   await seedManualSet([{ front: "Which fictional label?", back: "Secret synthetic answer", picture: true }]);
   const view = mount();
-  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?|Continue reviewing)$/ }));
   const reveal = await screen.findByRole("button", { name: /Covered label 1.*Reveal label/ });
   fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
   expect(speak.mock.lastCall![0].text).toBe("Which fictional label?");
@@ -279,7 +279,7 @@ it.each([
   const revealName = `Covered label 1. ${punctuated} Reveal label`;
   expect(screen.getByRole("button", { name: revealName })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?|Continue reviewing)$/ }));
   expect(await screen.findByRole("button", { name: revealName })).toBeTruthy();
   mounted.unmount();
 
@@ -348,7 +348,7 @@ it("retries an uncertain save with the exact operation and reviews with the exis
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(ids).toHaveLength(2);
   expect(ids[0]).toBe(ids[1]);
-  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?|Continue reviewing)$/ }));
   const reveal = await screen.findByRole("button", { name: /Covered label 1.*Reveal label/ });
   const session = screen.getByLabelText(/^Card review session/);
   expect(session.textContent).not.toContain("Bravo synthetic answer");
@@ -370,7 +370,7 @@ it("keeps a changed or missing picture unavailable with no answer or rating cont
   fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   vi.mocked(pictureService.readVisualPicture).mockRejectedValue(Error("This picture has changed."));
-  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?|Continue reviewing)$/ }));
   await screen.findByText("This picture has changed.");
   const session = screen.getByLabelText(/^Card review session/);
   expect(session.textContent).not.toContain("Bravo synthetic answer");

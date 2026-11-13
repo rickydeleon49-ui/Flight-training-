@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { SectionDraftDiscard } from "@/pages/StudyLibrary/GeminiJobNotice";
 import { AlertIcon, Button } from "@/components/ui";
 import { useAppData } from "@/state/AppDataContext";
@@ -9,13 +10,30 @@ import { useGeminiJobs, type GeminiJob } from "@/state/GeminiJobs";
  * shown here, on every screen, until the student dismisses it. Dismissing it frees
  * its place in the journal.
  */
+const deletedOnPurpose = new Set<string>();
+
+/** Documents the student deleted on purpose: AI answers for them are not worth a notice. */
+export function markDeletedOnPurpose(materialId: string) {
+  deletedOnPurpose.add(materialId);
+}
+
 export function GeminiOrphanNotices() {
-  const { data, status } = useAppData();
+  const { data, status, pendingDelete } = useAppData();
   const jobs = useGeminiJobs();
-  if (status !== "ready") return null;
   const present = new Set(data.materials.map((material) => material.id));
+  // Answers for a document deleted on purpose are quietly cleared, no notice,
+  // but only once the delete is final: during the Undo window they stay, so
+  // Undo brings the document back with its AI drafts.
+  const undoable = new Set(pendingDelete?.ids ?? []);
+  const quiet = status !== "ready" ? [] : jobs.jobs.filter(
+    (job) => deletedOnPurpose.has(job.materialId) && !present.has(job.materialId) && !undoable.has(job.materialId) && job.phase !== "running" && job.phase !== "saving" && job.phase !== "discarding" && job.phase !== "discard-failed",
+  );
+  useEffect(() => {
+    for (const job of quiet) void jobs.dismiss(job.key);
+  }, [quiet.map((job) => job.key).join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (status !== "ready") return null;
   const orphans = jobs.jobs.filter(
-    (job) => !present.has(job.materialId) && job.phase !== "running" && job.phase !== "saving",
+    (job) => !present.has(job.materialId) && !deletedOnPurpose.has(job.materialId) && job.phase !== "running" && job.phase !== "saving",
   );
   if (orphans.length === 0) return null;
   return (

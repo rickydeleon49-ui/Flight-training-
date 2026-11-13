@@ -225,7 +225,7 @@ function CardReviewPanelBody({ materialId, materialTitle, repository, materialFi
             disabled={!reviewable || review.blocked || review.starting}
             onClick={() => void review.startSession()}
           >
-            {review.starting ? "Opening…" : numberedAction && reviewable ? reviewButtonLabel(summary.dueNow, summary.newCount) : "Review cards"}
+            {review.starting ? "Opening…" : numberedAction && reviewable ? reviewButtonLabel(summary.dueNow, summary.newCount, summary.startedCount) : "Review cards"}
           </Button>
         )}
       </div>

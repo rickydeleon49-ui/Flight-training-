@@ -113,8 +113,8 @@ function deferred<T>() {
 }
 
 async function openSession() {
-  await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(false));
-  fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ }).hasAttribute("disabled")).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ }));
   // The session opens after a database read; its card's mount effects must run before the test clicks.
   return afterEffects(screen.findByRole("button", { name: "Show answer" }));
 }
@@ -686,7 +686,7 @@ describe("card reviews in MaterialDetail", () => {
     const paused = renderDetail();
     expect((await reviewHeading()).textContent).toBe("Nothing to review — all cards are paused or flagged.");
     // POLISH-089: nothing to review means no idle button.
-    expect(screen.queryByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ })).toBeNull();
     paused.unmount();
 
     await db.execute("UPDATE ai_study_sets SET flashcards_json = ? WHERE source_material_id = ?", [
@@ -699,7 +699,7 @@ describe("card reviews in MaterialDetail", () => {
         "These saved cards can't be reviewed because they're damaged. Your study guide is still here. Regenerating or re-importing creates a fresh set.",
       ),
     ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ })).toBeNull();
     damaged.unmount();
 
     await db.execute("UPDATE ai_study_sets SET flashcards_json = '[]' WHERE source_material_id = ?", [M]);
@@ -750,7 +750,7 @@ describe("card reviews in MaterialDetail", () => {
       }),
     );
     await reviewHeading();
-    const reviewBtn = screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ });
+    const reviewBtn = screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ });
     expect(reviewBtn.hasAttribute("disabled")).toBe(false);
 
     // Click Review cards -> enters starting state and reaches held getDueQueue
@@ -773,10 +773,10 @@ describe("card reviews in MaterialDetail", () => {
     await act(async () => queueHold.resolve([]));
 
     // Button is back to "Review cards" and enabled
-    await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(false));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ }).hasAttribute("disabled")).toBe(false));
 
     // Can start review session cleanly on v2
-    fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?|Continue reviewing)$/ }));
     expect(await screen.findByRole("button", { name: "Show answer" })).toBeTruthy();
   });
 

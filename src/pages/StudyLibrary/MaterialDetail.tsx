@@ -74,6 +74,7 @@ import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { CardReviewPanel } from "./CardReviewPanel";
 import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 import { nextLocalMidnightUtc } from "@/logic/localDay";
+import { markDeletedOnPurpose } from "@/components/gemini/GeminiOrphanNotices";
 import { reviewButtonLabel, reviewStatusLine } from "@/logic/cardReviewStatus";
 import { summarizeCards, useCardReview, type CardReviewController } from "./useCardReview";
 import { OralScenariosCard } from "./OralScenariosCard";
@@ -316,6 +317,19 @@ function MaterialDetailPage() {
     }
     return () => { live = false; };
   }, [confirmingPracticeTest, confirmingKit, repositories, materialId]);
+  // A paused practice attempt: the row below says Continue, not Start.
+  const [pausedPractice, setPausedPractice] = useState(false);
+  const practiceQuestionCount = data.practiceTests.find((candidate) => candidate.sourceMaterialId === materialId)?.questions.length ?? 0;
+  useEffect(() => {
+    let live = true;
+    setPausedPractice(false);
+    if (repositories?.practiceSessions && materialId && practiceQuestionCount > 0) {
+      void Promise.resolve(repositories.practiceSessions.getCurrentAttempt(materialId)).then(attempt => {
+        if (live && attempt && attempt.responses.length > 0) setPausedPractice(true);
+      }).catch(() => {});
+    }
+    return () => { live = false; };
+  }, [repositories, materialId, practiceQuestionCount]);
   const waitingKitDraftKey = JSON.stringify([materialId, waitingKitDrafts.map((job) => [job.key, Boolean(job.studyKitPart)])]);
   // A saved/discarded draft can invalidate both the refusal and its destination.
   // Only the draft refusals go stale this way; other kit messages stay.
@@ -1062,7 +1076,7 @@ function MaterialDetailPage() {
             <p className="tiny muted">Saves the study guide, flashcards and practice questions below. You can still save or discard each one on its own.</p>
           </div>
         ) : null}
-        {discardableKitDrafts.length >= 2 ? <Button disabled={geminiJobs.busy || savingKit || discardingAll} onClick={() => setConfirmingDiscardAll(true)}>Discard all drafts</Button> : null}
+        {discardableKitDrafts.length >= 2 && !savingKit ? <Button disabled={geminiJobs.busy || savingKit || discardingAll} onClick={() => setConfirmingDiscardAll(true)}>Discard all drafts</Button> : null}
         {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
       </div>
     </CardBody>
@@ -1187,6 +1201,7 @@ function MaterialDetailPage() {
             review={cardReview}
             hasCards={Boolean(studySet && studySet.flashcards.length > 0)}
             questionCount={practiceTest?.questions.length ?? 0}
+            pausedPractice={pausedPractice}
             onReview={() => { setCardStartSignal((n) => n + 1); jumpTo("material-flashcards"); }}
             onJump={jumpTo}
           /> : null}
@@ -2590,6 +2605,7 @@ function MaterialDetailPage() {
         }`}
         onConfirm={() => {
           setConfirmingDelete(false);
+          markDeletedOnPurpose(material.id);
           // Unmount flushes notes so Undo restores the latest typing too.
           deleteWithUndo({
             ids: [material.id],
@@ -2687,17 +2703,18 @@ function GenerationNoticeView({
 }
 
 /** Top of the Study tab: three rows, one obvious next step. */
-function StudyActionsList({ review, hasCards, questionCount, onReview, onJump }: {
+function StudyActionsList({ review, hasCards, questionCount, pausedPractice = false, onReview, onJump }: {
   review: CardReviewController; hasCards: boolean;
-  questionCount: number; onReview: () => void; onJump: (id: string) => void;
+  questionCount: number; pausedPractice?: boolean; onReview: () => void; onJump: (id: string) => void;
 }) {
   const { read, clock } = review;
   let due = 0;
   let fresh = 0;
+  let started = 0;
   if (read.phase === "ready" && read.snapshot.current.status === "ok") {
     const now = clock.now();
     const summary = summarizeCards(read.snapshot, now, nextLocalMidnightUtc(now, clock.timeZone()));
-    due = summary.dueNow; fresh = summary.newCount;
+    due = summary.dueNow; fresh = summary.newCount; started = summary.startedCount;
   }
   const ready = due + fresh > 0;
   return (
@@ -2707,13 +2724,13 @@ function StudyActionsList({ review, hasCards, questionCount, onReview, onJump }:
           <div><p className="study-actions__title">Flashcards</p>
             <p className="small muted">{ready ? reviewStatusLine(due, fresh) : "Nothing due"}</p></div>
           {ready
-            ? <Button variant="primary" aria-label={`Flashcards: ${reviewButtonLabel(due, fresh)}`} onClick={onReview}>{reviewButtonLabel(due, fresh)}</Button>
+            ? <Button variant="primary" aria-label={`Flashcards: ${reviewButtonLabel(due, fresh, started)}`} onClick={onReview}>{reviewButtonLabel(due, fresh, started)}</Button>
             : <Button variant="secondary" aria-label="Flashcards: Open" onClick={() => onJump("material-flashcards")}>Open ›</Button>}
         </li> : null}
         {questionCount > 0 ? <li className="study-actions__row">
           <div><p className="study-actions__title">Practice test</p>
             <p className="small muted">{questionCount} question{questionCount === 1 ? "" : "s"}</p></div>
-          <Button variant="secondary" onClick={() => onJump("material-practice-test")}>Start</Button>
+          <Button variant="secondary" onClick={() => onJump("material-practice-test")}>{pausedPractice ? "Continue" : "Start"}</Button>
         </li> : null}
         <li className="study-actions__row">
           <div><p className="study-actions__title">Oral questions</p></div>

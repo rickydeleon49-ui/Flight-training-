@@ -199,6 +199,7 @@ it("Save all three saves each part through its own save, in order",async()=>{
   expect(set?.flashcards).toHaveLength(1);
   expect(await repos.documents.listPracticeTests()).toHaveLength(1);
   expect(screen.queryByRole("button",{name:"Save all three"})).toBeNull();
+  expect(screen.queryByRole("button",{name:"Discard all drafts"})).toBeNull();
   // Gemini kit results do not carry the local PDF kit's verified provenance.
   expect(screen.queryByText("Pulled from your PDF on this Mac")).toBeNull();
   expect(screen.queryByText(/quote-checked/i)).toBeNull();
@@ -213,6 +214,7 @@ it("Save all three keeps the others saved when one part cannot be saved",async()
   expect((await repos.documents.listAiStudySets())[0]?.sections).toHaveLength(1);
   await waitFor(()=>expect(records.map(r=>r.id)).toEqual(["job-aaaaaaaaaaaaaaaaaaaaaaaa#questions"]));
   expect(await screen.findByText(/Something newer was saved/)).toBeTruthy();
+  expect(screen.queryByRole("button",{name:"Discard all drafts"})).toBeNull();
   expect((await repos.documents.listPracticeTests())[0]?.title).toBe("Saved practice test");
 });
 it("Save all three is not offered while a part failed",async()=>{
