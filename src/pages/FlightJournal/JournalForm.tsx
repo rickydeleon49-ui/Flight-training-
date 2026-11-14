@@ -737,6 +737,10 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   const lessons = data.events.filter((event) => event.eventType === "flight_lesson");
   const isDiscoveryPreset = !entryId && !existing && !recovered && searchParams.get("mode") === "discovery";
 
+  // "More details" opens when any of its fields has a value, then stays open (never snaps shut while typing).
+  const moreDetailsOpenRef = useRef(false);
+  if (draft.departureAirport || draft.arrivalAirport || draft.instructorName || (draft.schoolName ?? existing?.schoolName)) moreDetailsOpenRef.current = true;
+
   return (
     <>
       <PageHeader
@@ -1026,64 +1030,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                 )}
               </Field>
 
-              <Field label="Departure airport">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    disabled={isSaving}
-                    value={draft.departureAirport}
-                    placeholder="e.g. KABC"
-                    onChange={(e) => update("departureAirport", e.target.value)}
-                  />
-                )}
-              </Field>
-
-              <Field label="Arrival airport">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    disabled={isSaving}
-                    value={draft.arrivalAirport}
-                    placeholder="e.g. KABC"
-                    onChange={(e) => update("arrivalAirport", e.target.value)}
-                  />
-                )}
-              </Field>
-
-              <Field label="Instructor name">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    disabled={isSaving}
-                    value={draft.instructorName}
-                    placeholder="e.g. your CFI's name"
-                    onChange={(e) => update("instructorName", e.target.value)}
-                  />
-                )}
-              </Field>
-
-              <Field label="School" hint="Flight school or club (optional)">
-                {({ id, describedBy }) => (
-                  <>
-                    <TextInput
-                      id={id}
-                      aria-describedby={describedBy}
-                      list="school-suggestions"
-                      disabled={isSaving}
-                      value={draft.schoolName !== undefined ? draft.schoolName : (existing?.schoolName ?? "")}
-                      placeholder="Your flight school"
-                      onChange={(e) => update("schoolName", e.target.value)}
-                    />
-                    {schoolSuggestions.length > 0 ? (
-                      <datalist id="school-suggestions">
-                        {schoolSuggestions.map((name) => (
-                          <option key={name} value={name} />
-                        ))}
-                      </datalist>
-                    ) : null}
-                  </>
-                )}
-              </Field>
+              <h3 className="field--full" style={{ margin: 0, fontSize: "1rem" }}>Flight times (hours)</h3>
 
               <Field label="Total flight time" hint="Hours, e.g. 1.3">
                 {({ id, describedBy }) => (
@@ -1242,6 +1189,71 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                   />
                 )}
               </Field>
+
+              <details className="field--full" open={moreDetailsOpenRef.current}>
+                <summary style={{ minHeight: "var(--hit-min)", cursor: "pointer" }}>More details (airports, instructor, school)</summary>
+                <div className="form-grid" style={{ marginTop: "var(--space-3)" }}>
+                  <Field label="Departure airport">
+                    {({ id }) => (
+                      <TextInput
+                        id={id}
+                        disabled={isSaving}
+                        value={draft.departureAirport}
+                        placeholder="e.g. KABC"
+                        onChange={(e) => update("departureAirport", e.target.value)}
+                      />
+                    )}
+                  </Field>
+
+                  <Field label="Arrival airport">
+                    {({ id }) => (
+                      <TextInput
+                        id={id}
+                        disabled={isSaving}
+                        value={draft.arrivalAirport}
+                        placeholder="e.g. KABC"
+                        onChange={(e) => update("arrivalAirport", e.target.value)}
+                      />
+                    )}
+                  </Field>
+
+                  <Field label="Instructor name">
+                    {({ id }) => (
+                      <TextInput
+                        id={id}
+                        disabled={isSaving}
+                        value={draft.instructorName}
+                        placeholder="e.g. your CFI's name"
+                        onChange={(e) => update("instructorName", e.target.value)}
+                      />
+                    )}
+                  </Field>
+
+                  <Field label="School" hint="Flight school or club (optional)">
+                    {({ id, describedBy }) => (
+                      <>
+                        <TextInput
+                          id={id}
+                          aria-describedby={describedBy}
+                          list="school-suggestions"
+                          disabled={isSaving}
+                          value={draft.schoolName !== undefined ? draft.schoolName : (existing?.schoolName ?? "")}
+                          placeholder="Your flight school"
+                          onChange={(e) => update("schoolName", e.target.value)}
+                        />
+                        {schoolSuggestions.length > 0 ? (
+                          <datalist id="school-suggestions">
+                            {schoolSuggestions.map((name) => (
+                              <option key={name} value={name} />
+                            ))}
+                          </datalist>
+                        ) : null}
+                      </>
+                    )}
+                  </Field>
+
+                </div>
+              </details>
 
               <Field label="Today's mission" hint="What was this lesson for?" full>
                 {({ id, describedBy }) => (

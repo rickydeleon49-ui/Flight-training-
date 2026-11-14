@@ -150,27 +150,19 @@ details.material-fold > summary {
 .sync-row__meta { margin: 0; }
 .sync-row .button { min-height: 44px; }
 
-/* S3: Jump to is a quiet segmented row: one line, scrolls sideways on a phone. */
+/* S3/R15: Jump to is a quiet chip row that wraps, so the last chip is never cut off. */
 .settings-jumps {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md, 8px);
-  width: fit-content;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  width: auto;
   max-width: 100%;
 }
-.settings-jumps::-webkit-scrollbar { display: none; }
 .settings-jumps__link {
   flex: none;
-  border: 0;
-  border-radius: 0;
   white-space: nowrap;
   color: var(--text-secondary);
 }
-.settings-jumps__link + .settings-jumps__link { border-left: 1px solid var(--border-subtle); }
 .settings-jumps__link.is-current {
   color: var(--text-primary);
   font-weight: 600;

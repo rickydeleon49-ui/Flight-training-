@@ -134,10 +134,11 @@ it("POLISH-089: Jump to links are button-sized targets with space between them",
   expect(css).toMatch(/\.settings-jumps\s*{[^}]*gap:/);
 });
 
-it("S3: Jump to is one scrolling row and marks the current item", async () => {
+it("S3: Jump to wraps (last chip never cut off) and marks the current item", async () => {
   await open();
   const css = readFileSync("src/pages/Settings/settings.css", "utf8");
-  expect(css).toMatch(/\.settings-jumps\s*{[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto/);
+  expect(css).toMatch(/\.settings-jumps\s*{[^}]*flex-wrap:\s*wrap/);
+  expect(css).not.toMatch(/\.settings-jumps\s*{[^}]*overflow-x:\s*auto/);
   const nav = screen.getByRole("navigation", { name: "Jump to" });
   const link = Array.from(nav.querySelectorAll("a")).find((a) => a.textContent === "Look and feel")!;
   expect(link.getAttribute("aria-current")).toBeNull();
