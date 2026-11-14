@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Card, CardBody, CardHeader, Checkbox, Field, TextInput } from "@/components/ui";
+import { Card, CardBody, CardHeader, Checkbox, TextInput } from "@/components/ui";
 import { normalizeStudyReminder } from "@/logic/toolkit";
 import { askPermission } from "@/services/notify";
 import { schedulesDailyReminder } from "@/services/platform";
@@ -31,30 +31,30 @@ export function StudyReminderCard() {
     <Card variant="grouped">
       <CardHeader title="Daily study reminder" eyebrow="On this device" />
       <CardBody>
-        <div className="stack stack--3">
+        <div className="settings-rows">
           <Checkbox
+            appearance="switch"
             checked={current.enabled}
             onChange={(enabled) => void change(enabled)}
             strikethrough={false}
             label="Remind me to study every day"
           />
           {current.enabled ? (
-            <Field label="Reminder time">
-              {({ id }) => (
-                <TextInput
-                  id={id}
-                  type="time"
-                  value={current.time}
-                  onChange={(e) => {
-                    const time = e.target.value;
-                    if (time) void save({ ...current, time });
-                  }}
-                />
-              )}
-            </Field>
+            <div className="settings-row">
+              <label className="small" htmlFor="study-reminder-time">Reminder time</label>
+              <TextInput
+                id="study-reminder-time"
+                type="time"
+                value={current.time}
+                onChange={(e) => {
+                  const time = e.target.value;
+                  if (time) void save({ ...current, time });
+                }}
+              />
+            </div>
           ) : null}
-          {schedulesDailyReminder() ? null : <p className="small muted">{REMINDER_MAC_LINE}</p>}
-          {denied ? <p className="small muted" role="status">{REMINDER_DENIED_LINE}</p> : null}
+          {schedulesDailyReminder() ? null : <p className="small muted settings-row__note">{REMINDER_MAC_LINE}</p>}
+          {denied ? <p className="small muted settings-row__note" role="status">{REMINDER_DENIED_LINE}</p> : null}
         </div>
       </CardBody>
     </Card>
