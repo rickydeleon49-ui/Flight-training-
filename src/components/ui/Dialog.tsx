@@ -112,6 +112,8 @@ interface ConfirmDialogProps {
   details?: string;
   detailsSummary?: string;
   confirmLabel?: string;
+  /** Label of the button that dismisses the confirm; defaults to Cancel. */
+  cancelLabel?: string;
   destructive?: boolean;
   /**
    * A confirmed action whose outcome is not settled yet. While pending, the
@@ -140,6 +142,7 @@ export function ConfirmDialog({
   details,
   detailsSummary = "More details",
   confirmLabel = "Delete",
+  cancelLabel = "Cancel",
   destructive = true,
   pending = false,
   pendingLabel,
@@ -170,7 +173,7 @@ export function ConfirmDialog({
           {extraActions}
           <span className="dialog__footer-main">
             <Button onClick={onCancel} disabled={pending}>
-              Cancel
+              {cancelLabel}
             </Button>
             <Button
               variant={destructive ? "danger" : "primary"}
