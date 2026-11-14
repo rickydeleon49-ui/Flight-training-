@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Button, Dialog } from "@/components/ui";
+import { useCallback, useState } from "react";
+import { Button, ConfirmDialog, Dialog } from "@/components/ui";
 import type { PracticeAttempt, PracticeResponse, PracticeTestItem } from "@/domain/types";
 import { missedAgainQuestions, type MixedQuestion } from "@/logic/mixedPractice";
 import { QuickQuestionRun } from "./QuickQuestionRun";
@@ -18,9 +18,13 @@ export function TryMissedAgain({ attempt, items, responses, materialTitle, prima
   primary?: boolean;
 }) {
   const [run, setRun] = useState<MixedQuestion[] | null>(null);
+  const [progress, setProgress] = useState({ started: false, finished: false });
+  const [leaving, setLeaving] = useState(false);
+  const onProgress = useCallback((started: boolean, finished: boolean) => setProgress({ started, finished }), []);
   const missed = missedAgainQuestions(attempt.id, items, responses, attempt.sourceMaterialId ?? "", materialTitle);
   if (missed.length === 0) return null;
-  const close = () => setRun(null);
+  const close = () => { setRun(null); setProgress({ started: false, finished: false }); setLeaving(false); };
+  const requestClose = () => { if (run && progress.started && !progress.finished) setLeaving(true); else close(); };
 
   return <>
     <div className="row row--wrap row--gap-2">
@@ -28,12 +32,15 @@ export function TryMissedAgain({ attempt, items, responses, materialTitle, prima
         {primary ? `Review ${missed.length} missed questions` : `Try the ${missed.length} you missed again`}
       </Button>
     </div>
-    {run ? <Dialog open title="Try them again" onClose={close}>
+    {run ? <Dialog open title="Try them again" onClose={requestClose}>
       <div className="stack stack--3">
         <p className="tiny dim">No timer. This try is not saved, and your test result stays as it is.</p>
-        <QuickQuestionRun questions={run} resultLabel="Try again result" onDone={close} />
+        <QuickQuestionRun questions={run} resultLabel="Try again result" onDone={close} onProgress={onProgress} />
         <p className="tiny dim">Study aid — check it against FAA guidance and your instructor.</p>
       </div>
     </Dialog> : null}
+    <ConfirmDialog open={leaving} title="Leave this test?" message="Your answers in this try are not kept."
+      confirmLabel="Leave" cancelLabel="Keep going" destructive={true}
+      onConfirm={close} onCancel={() => setLeaving(false)} />
   </>;
 }

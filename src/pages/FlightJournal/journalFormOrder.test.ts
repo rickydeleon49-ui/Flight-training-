@@ -17,3 +17,9 @@ it("R15: Menu ring is suppressed only for pointer focus", () => {
   const css = readFileSync("src/components/layout/shell.css", "utf8");
   expect(css).toMatch(/\.sidebar__menu\[data-pointer\]:focus-visible\s*{\s*outline:\s*none/);
 });
+
+it("More details open state is state, not a ref written during render", () => {
+  const src = readFileSync(new URL("./JournalForm.tsx", import.meta.url), "utf8");
+  expect(src).not.toContain("moreDetailsOpenRef");
+  expect(src).toContain("open={moreDetailsOpen}");
+});

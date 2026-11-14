@@ -738,8 +738,10 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   const isDiscoveryPreset = !entryId && !existing && !recovered && searchParams.get("mode") === "discovery";
 
   // "More details" opens when any of its fields has a value, then stays open (never snaps shut while typing).
-  const moreDetailsOpenRef = useRef(false);
-  if (draft.departureAirport || draft.arrivalAirport || draft.instructorName || (draft.schoolName ?? existing?.schoolName)) moreDetailsOpenRef.current = true;
+  const moreDetailsHasValue = Boolean(draft.departureAirport || draft.arrivalAirport || draft.instructorName || (draft.schoolName ?? existing?.schoolName));
+  const [moreDetailsLatched, setMoreDetailsLatched] = useState(false);
+  useEffect(() => { if (moreDetailsHasValue) setMoreDetailsLatched(true); }, [moreDetailsHasValue]);
+  const moreDetailsOpen = moreDetailsHasValue || moreDetailsLatched;
 
   return (
     <>
@@ -1190,7 +1192,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                 )}
               </Field>
 
-              <details className="field--full" open={moreDetailsOpenRef.current}>
+              <details className="field--full" open={moreDetailsOpen}>
                 <summary style={{ minHeight: "var(--hit-min)", cursor: "pointer" }}>More details (airports, instructor, school)</summary>
                 <div className="form-grid" style={{ marginTop: "var(--space-3)" }}>
                   <Field label="Departure airport">
