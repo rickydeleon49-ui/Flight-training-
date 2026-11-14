@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { LibraryReviewDueResult } from "@/domain/types";
@@ -65,5 +66,22 @@ describe("Flight Deck daily plan start button", () => {
     render(h(MemoryRouter, null, h(FlightDeck)));
     await new Promise((r) => setTimeout(r, 100));
     expect(quietProps.at(-1)).toBe(true);
+  });
+});
+
+describe("Flight Deck header", () => {
+  it("shows reminder status in one line and a labelled Add action", async () => {
+    materials = [];
+    render(h(MemoryRouter, null, h(FlightDeck)));
+    expect((await screen.findByTestId("reminder-status")).textContent).toBe("Reminders off · Turn on");
+    const add = screen.getByRole("button", { name: "Add action" });
+    expect(add.textContent).toContain("Add action");
+  });
+});
+
+describe("DailyPlanCard", () => {
+  it("keeps layout in dailyPlan.css, not inline styles", () => {
+    const src = readFileSync("src/components/dailyPlan/DailyPlanCard.tsx", "utf8");
+    expect(src).not.toMatch(/style=\{\{/);
   });
 });

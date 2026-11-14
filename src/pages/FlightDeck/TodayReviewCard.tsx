@@ -160,20 +160,20 @@ function TodayReviewBody({
     if (known) onPrimaryChange?.(dueCards > 0);
   }, [known, dueCards, onPrimaryChange]);
   // Say "Nothing due" only once every page has been read.
-  if (!known) return null;
+  // Reserve the card's height so the page below does not jump when it arrives.
+  if (!known) return <div className="today-review-reserve" aria-hidden="true" />;
 
   if (dueCards === 0) {
     return (
-      <Card ariaLabel="Today's review" className="today-review">
-        <p className="today-review__label">Today&rsquo;s review</p>
-        <h2 className="today-review__title">Nothing due. Nice work.</h2>
-        <ProgressRows readiness={readiness} coverage={coverage} />
-        <div className="today-review__actions">
+      <section aria-label="Today's review" className="today-review-quiet">
+        <p className="today-review-quiet__line">
+          <span>Nothing due. Nice work.</span>
           <Button variant="ghost" onClick={() => navigate("/study")}>
             Open Study Library
           </Button>
-        </div>
-      </Card>
+        </p>
+        <ProgressRows readiness={readiness} coverage={coverage} />
+      </section>
     );
   }
 
