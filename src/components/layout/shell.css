@@ -220,6 +220,8 @@ html.is-ios .page-header__title {
 }
 
 .sidebar__menu[hidden] { display: none; }
+/* Pointer-chosen menu item: no leftover ring (keyboard focus keeps :focus-visible). */
+.sidebar__menu[data-pointer]:focus-visible { outline: none; box-shadow: none; }
 
 @media (max-width: 999px) {
   /* Normal flow gives the sticky bar the whole page as its containing block,

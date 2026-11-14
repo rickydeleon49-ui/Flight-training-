@@ -186,10 +186,15 @@ export function AppShell() {
     setMenuOpen(false);
   }, [desktop, tabs, menuOpen]);
 
-  const closeMenu = () => {
+  const closeMenu = (event?: { detail?: number }) => {
     if (!desktop) {
       setMenuOpen(false);
-      menuRef.current?.focus();
+      const button = menuRef.current;
+      if (button) {
+        // A mouse/touch choice keeps focus on Menu but shows no ring; keyboard keeps it.
+        if ((event?.detail ?? 0) > 0) button.dataset.pointer = "1";
+        button.focus();
+      }
     }
   };
 
@@ -243,6 +248,8 @@ export function AppShell() {
           aria-expanded={menuOpen}
           aria-controls="app-navigation"
           onClick={() => setMenuOpen((open) => !open)}
+          onKeyDown={(event) => { delete event.currentTarget.dataset.pointer; }}
+          onBlur={(event) => { delete event.currentTarget.dataset.pointer; }}
         >
           Menu
         </button>
