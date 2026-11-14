@@ -210,6 +210,7 @@ const JUMPS: Array<[string, string]> = [
 export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
   const { hash, key } = useLocation();
+  const [current, setCurrent] = useState<string | null>(null);
   const backupsFold = useRef<HTMLDetailsElement>(null);
   const aboutFold = useRef<HTMLDetailsElement>(null);
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
@@ -745,10 +746,15 @@ export function Settings() {
     <>
       <PageHeader title="Settings" subtitle="Your profile and how this application behaves." />
 
-      <nav aria-label="Jump to" className="row row--wrap small settings-jumps settings-jumps--spaced">
-        <span className="muted">Jump to:</span>
+      <nav aria-label="Jump to" className="small settings-jumps settings-jumps--spaced">
         {JUMPS.filter(([, id]) => id !== "ai-provider" || deviceCan().geminiKey).map(([label, id]) => (
-          <a key={id} className="settings-jumps__link" href={`#${id}`} onClick={(event) => jumpTo(event, id)}>{label}</a>
+          <a
+            key={id}
+            className={`settings-jumps__link${current === id ? " is-current" : ""}`}
+            href={`#${id}`}
+            aria-current={current === id ? "location" : undefined}
+            onClick={(event) => { setCurrent(id); jumpTo(event, id); }}
+          >{label}</a>
         ))}
       </nav>
 
@@ -903,14 +909,14 @@ export function Settings() {
         <Card variant="grouped">
           <CardHeader title="Look and feel" headingId="settings-appearance" eyebrow="Theme, accent, glass" />
           <CardBody>
-            <div className="stack stack--3">
+            <div className="settings-rows">
               {isIOS() ? (
-                <div className="row row--between">
+                <div className="settings-row">
                   <span className="small">Theme</span>
                   <span className="small muted">Auto · Matches your iPhone</span>
                 </div>
               ) : (
-                <div className="stack stack--2">
+                <div className="settings-row settings-row--wrap">
                   <span className="small" id="settings-theme-label">
                     Theme
                   </span>
@@ -931,12 +937,12 @@ export function Settings() {
                       </label>
                     ))}
                   </div>
-                  {theme === "auto" ? <p className="small muted">Matches your iPhone or Mac</p> : null}
+                  {theme === "auto" ? <p className="small muted settings-row__note">Matches your iPhone or Mac</p> : null}
                 </div>
               )}
-            <div className="stack stack--2">
+            <div className="settings-row settings-row--wrap">
               <span className="small" id="settings-accent-label">Accent</span>
-              <p className="small muted">Takes effect straight away.</p>
+              <p className="small muted settings-row__note">Takes effect straight away.</p>
               <div className="accent-picker" role="group" aria-labelledby="settings-accent-label">
                 {ACCENT_ORDER.map((accent) => {
                   const selected = draft.accentColor === accent;

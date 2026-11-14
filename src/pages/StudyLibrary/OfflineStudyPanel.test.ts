@@ -297,7 +297,7 @@ it("PACKS-04 focuses and scrolls to Read this PDF's text after status loads, onl
     service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
     const view = render(h(OfflineStudyPanel, { material: pdf, focusRequested: true }));
     const button = await screen.findByRole("button", { name: "Read it now" });
-    expect(document.activeElement).toBe(button);
+    await waitFor(() => expect(document.activeElement).toBe(button));
     expect(scroll).toHaveBeenCalledWith({ block: "center" });
     expect(scroll.mock.instances[0]).toBe(button);
     expect(service.prepare).not.toHaveBeenCalled();

@@ -149,3 +149,55 @@ details.material-fold > summary {
 .sync-row__title { margin: 0; font-size: 1rem; font-weight: 600; }
 .sync-row__meta { margin: 0; }
 .sync-row .button { min-height: 44px; }
+
+/* S3: Jump to is a quiet segmented row: one line, scrolls sideways on a phone. */
+.settings-jumps {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  width: fit-content;
+  max-width: 100%;
+}
+.settings-jumps::-webkit-scrollbar { display: none; }
+.settings-jumps__link {
+  flex: none;
+  border: 0;
+  border-radius: 0;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.settings-jumps__link + .settings-jumps__link { border-left: 1px solid var(--border-subtle); }
+.settings-jumps__link.is-current {
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 currentColor;
+}
+
+/* S3: grouped rows, label left and control right, hairlines between. */
+.settings-rows { display: flex; flex-direction: column; }
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  min-height: var(--hit-min);
+  padding: var(--space-2) 0;
+}
+.settings-row + .settings-row, .settings-rows > .checkbox--switch + .checkbox--switch { border-top: 1px solid var(--border-subtle); }
+.settings-row--wrap { flex-wrap: wrap; }
+.settings-row__note { flex-basis: 100%; margin: 0; }
+.settings-rows .checkbox--switch {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--hit-min);
+  padding: var(--space-2) 0;
+  box-sizing: border-box;
+  border-top: 1px solid var(--border-subtle);
+}
+.settings-rows > :first-child { border-top: 0; }

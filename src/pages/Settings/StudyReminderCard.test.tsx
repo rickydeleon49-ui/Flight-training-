@@ -26,10 +26,16 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-const box = () => screen.getByRole("checkbox", { name: "Remind me to study every day" }) as HTMLInputElement;
+const box = () => screen.getByRole("switch", { name: "Remind me to study every day" }) as HTMLInputElement;
 const time = () => screen.getByLabelText("Reminder time") as HTMLInputElement;
 
 describe("StudyReminderCard", () => {
+  it("is a switch with a visible label", () => {
+    render(<StudyReminderCard />);
+    expect(box().getAttribute("role")).toBe("switch");
+    expect(screen.getByText("Remind me to study every day")).toBeTruthy();
+  });
+
   it("starts off at 19:00 and shows the Mac limit line", () => {
     render(<StudyReminderCard />);
     expect(box().checked).toBe(false);
