@@ -221,6 +221,7 @@ html.is-ios .page-header__title {
 
 .sidebar__menu[hidden] { display: none; }
 /* Pointer-chosen menu item: no leftover ring (keyboard focus keeps :focus-visible). */
+html[data-input="pointer"] .sidebar__menu:focus-visible,
 .sidebar__menu[data-pointer]:focus-visible { outline: none; box-shadow: none; }
 
 @media (max-width: 999px) {

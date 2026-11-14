@@ -1348,3 +1348,6 @@ details[open] > .video-links__summary { padding-bottom: 0; }
 .library__actions-more:not([open]) > :not(summary) { display: none; }
 /* The video-link and name fields reach the 44px target. */
 .material-detail .field input:not([type="checkbox"]):not([type="radio"]) { min-height: var(--hit-min); }
+
+/* A review that opens scrolls to its top below the sticky header, not under it. */
+.card-review__session { scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5)); }

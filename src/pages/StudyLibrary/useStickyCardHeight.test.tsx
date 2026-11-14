@@ -31,3 +31,17 @@ it("with keepAcrossCards the tallest card stays the floor for the next card", ()
   height = 100; rerender({ k: 1, r: false });
   expect(el.style.minHeight).toBe("180px");
 });
+
+it("with keepAcrossCards the kept height resets on window resize only", () => {
+  const el = document.createElement("button");
+  let natural = 100;
+  Object.defineProperty(el, "offsetHeight", { get: () => Math.max(natural, parseFloat(el.style.minHeight || "0")) });
+  const ref = createRef<HTMLElement>() as { current: HTMLElement | null };
+  ref.current = el;
+  const { rerender } = renderHook(({ k, r }) => useStickyCardHeight(ref, k, r, true), { initialProps: { k: 0, r: false } });
+  natural = 180; rerender({ k: 0, r: true });
+  natural = 100; rerender({ k: 1, r: false });
+  expect(el.style.minHeight).toBe("180px");
+  window.dispatchEvent(new Event("resize"));
+  expect(el.style.minHeight).toBe("100px");
+});

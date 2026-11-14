@@ -44,3 +44,26 @@ describe("BL-36 phone tap targets reach 44px", () => {
     expect(css).toMatch(/\.ledger-pager \.button\.button--small\s*\{[^}]*min-width:\s*var\(--hit-min\)/);
   });
 });
+
+describe("Home jump anchor clears the sticky header", () => {
+  it("uses the real header height token, not a fixed 72px", () => {
+    const css = read("src/pages/FlightDeck/flightDeck.css");
+    expect(css).toMatch(/\.deck-more-anchor\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 44px\) \+ var\(--space-5\)\)/);
+    expect(css).not.toMatch(/scroll-margin-top:\s*72px/);
+  });
+});
+
+describe("BL-38/39/41 CSS contracts", () => {
+  it("the card review session clears the sticky header when scrolled into view", () => {
+    expect(read("src/pages/StudyLibrary/studyLibrary.css")).toMatch(/\.card-review__session\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 0px\) \+ var\(--space-5\)\)/);
+  });
+  it("Menu ring is suppressed after pointer input only", () => {
+    expect(read("src/components/layout/shell.css")).toMatch(/html\[data-input="pointer"\] \.sidebar__menu:focus-visible/);
+  });
+  it("quiz hover is border-only; only the selected choice is filled", () => {
+    const css = read("src/pages/PilotToolkit/pilotToolkit.css");
+    expect(css).toMatch(/\.quiz__choice\.is-selected\s*\{[^}]*background/);
+    expect(css).toMatch(/\.quiz__choice:hover:not\(:disabled\):not\(\.is-selected\)\s*\{[^}]*\}/);
+    expect(css).not.toMatch(/\.quiz__choice:hover:not\(:disabled\)[^{]*\{[^}]*background/);
+  });
+});

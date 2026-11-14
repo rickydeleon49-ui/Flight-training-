@@ -65,16 +65,22 @@ const startRun = (onFinished?: () => void) => {
   fireEvent.click(screen.getByLabelText(/Mat c/));
   fireEvent.click(screen.getByRole("button", { name: "Start mixed test" }));
 };
+// The leave confirm stays mounted (so focus can return); it is "shown" only while its dialog is open.
+const leaveOpen = () => {
+  const title = screen.queryByText("Leave this test?");
+  const dlg = title?.closest("dialog");
+  return Boolean(dlg && (dlg.hasAttribute("open") || dlg.getAttribute("aria-modal") === "true"));
+};
 const closeBtn = () => screen.getAllByRole("button", { name: /^close/i })[0]!;
 
 it("asks before leaving after an answer; Keep going stays, Leave closes", () => {
   startRun();
   fireEvent.click(screen.getByRole("button", { name: "2. Two" }));
   fireEvent.click(closeBtn());
-  expect(screen.getByText("Leave this test?")).toBeTruthy();
+  expect(leaveOpen()).toBe(true);
   expect(screen.getByText("Your answers in this mixed test are not kept.")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
-  expect(screen.queryByText("Leave this test?")).toBeNull();
+  expect(leaveOpen()).toBe(false);
   expect(screen.getByText(/Question 1 of/)).toBeTruthy();
   fireEvent.click(closeBtn());
   fireEvent.click(screen.getByRole("button", { name: "Leave" }));
@@ -85,7 +91,7 @@ it("asks before leaving after an answer; Keep going stays, Leave closes", () => 
 it("closes without a confirm before any answer", () => {
   startRun();
   fireEvent.click(closeBtn());
-  expect(screen.queryByText("Leave this test?")).toBeNull();
+  expect(leaveOpen()).toBe(false);
   expect(screen.queryByText(/Question 1 of/)).toBeNull();
 });
 
@@ -109,6 +115,17 @@ it("closing from the result screen asks nothing and does not close the parent", 
     fireEvent.click(screen.getByRole("button", { name: i === 17 ? "See score" : "Continue" }));
   }
   fireEvent.click(closeBtn());
-  expect(screen.queryByText("Leave this test?")).toBeNull();
+  expect(leaveOpen()).toBe(false);
   expect(finished).toBe(0);
+});
+
+it("returns focus to the close control after Keep going", () => {
+  startRun();
+  fireEvent.click(screen.getByRole("button", { name: "2. Two" }));
+  const trigger = closeBtn();
+  trigger.focus();
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
+  expect(leaveOpen()).toBe(false);
+  expect(document.activeElement).not.toBe(document.body);
 });

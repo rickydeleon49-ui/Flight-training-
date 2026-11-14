@@ -172,6 +172,18 @@ describe("Daily Flight Plan card", () => {
     expect(moveBtn.getAttribute("aria-description")).toBe("Your due date stays the same");
   });
 
+  it("Esc closes the ... menu even when focus is on the page, and returns focus to the toggle", async () => {
+    await action("Alpha", 5);
+    await mount();
+    await waitFor(() => expect(suggestedTitles()).toEqual(["Alpha"]));
+    const toggle = screen.getByRole("button", { name: "More actions for Alpha" });
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Skip Alpha for today" })).toBeTruthy();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.queryByRole("button", { name: "Skip Alpha for today" })).toBeNull();
+    expect(document.activeElement).toBe(toggle);
+  });
+
   it("says items have no time estimate instead of 'About 0 of your N minutes'", async () => {
     await action("Alpha", null);
     await mount();

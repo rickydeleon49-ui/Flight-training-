@@ -64,8 +64,8 @@ export function MixedPracticeTest({ practiceTests, materials, onFinished }: {
         <p className="tiny dim">Study aid — check it against FAA guidance and your instructor.</p>
       </div>
     </Dialog> : null}
-    {leaving ? <ConfirmDialog open title="Leave this test?" message="Your answers in this mixed test are not kept."
+    <ConfirmDialog open={leaving} title="Leave this test?" message="Your answers in this mixed test are not kept."
       confirmLabel="Leave" cancelLabel="Keep going" destructive={true}
-      onConfirm={close} onCancel={() => setLeaving(false)} /> : null}
+      onConfirm={close} onCancel={() => setLeaving(false)} />
   </>;
 }

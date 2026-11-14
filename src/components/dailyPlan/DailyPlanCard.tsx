@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -132,6 +132,17 @@ export function DailyPlanCard({ customToday, onStartAction, quietStart = false }
   const [startNote, setStartNote] = useState<string | null>(null);
   /** The budget the student just chose, shown as selected while it saves. */
   const [pendingBudget, setPendingBudget] = useState<{ value: number | null } | null>(null);
+  // Esc closes the "..." menu even when a mouse click left focus on the page (WebKit doesn't focus buttons on click).
+  useEffect(() => {
+    if (!openMenuId) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      setOpenMenuId(null);
+      document.querySelector<HTMLButtonElement>('.daily-plan-menu__toggle[aria-expanded="true"]')?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [openMenuId]);
   const budgetRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const shownBudget = pendingBudget ? pendingBudget.value : timeBudget;
