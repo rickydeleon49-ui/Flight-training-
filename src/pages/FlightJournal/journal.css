@@ -223,6 +223,14 @@
   color: var(--text-primary);
 }
 
+.flight-rhythm__quiet { margin: 0; }
+
+.flight-totals__unit {
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
 .flight-rhythm__value span {
   font-family: inherit;
   font-size: var(--text-xs);
@@ -233,21 +241,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-.hour-reference__track {
-  height: 0.45rem;
-  margin-top: var(--space-2);
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--surface-sunken);
-}
-
-.hour-reference__track span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--category-flight-ink);
 }
 
 .flight-reference-note {
@@ -315,7 +308,7 @@
   padding: var(--space-3) var(--space-5);
   border-bottom: 1px solid var(--border-subtle);
 }
-.ledger-pager .button { min-width: 2.75rem; min-height: 2.75rem; font-size: var(--text-base); }
+.ledger-pager .button { min-width: var(--hit-min); min-height: var(--hit-min); font-size: var(--text-base); }
 
 .flight-log-table tbody tr:last-child td { border-bottom: 1px solid var(--border-subtle); }
 .flight-log-table tbody tr:hover { background: var(--surface-sunken); }

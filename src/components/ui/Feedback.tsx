@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { AlertIcon, RouteIcon } from "./Icons";
 
@@ -49,18 +49,21 @@ interface MeterProps {
   endLabel: string;
   /** Describes what the meter measures, for assistive technology. */
   ariaLabel: string;
+  /** Optional number of evenly spaced decorative tick marks. */
+  ticks?: number;
 }
 
 /**
  * Progress meter. Deliberately rare: the product only permits a percentage
  * where it reflects real arithmetic against a user-chosen target.
  */
-export function Meter({ value, max, startLabel, endLabel, ariaLabel }: MeterProps) {
+export function Meter({ value, max, startLabel, endLabel, ariaLabel, ticks }: MeterProps) {
   const ratio = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   return (
     <div>
       <div
-        className="meter__track"
+        className={ticks && ticks > 1 ? "meter__track meter__track--ticks" : "meter__track"}
+        style={ticks && ticks > 1 ? ({ "--meter-ticks": ticks } as CSSProperties) : undefined}
         role="progressbar"
         aria-label={ariaLabel}
         aria-valuemin={0}
@@ -69,6 +72,7 @@ export function Meter({ value, max, startLabel, endLabel, ariaLabel }: MeterProp
         aria-valuetext={`${startLabel} of ${endLabel}`}
       >
         <div className="meter__fill" style={{ width: `${ratio * 100}%` }} />
+        {ticks && ticks > 1 ? <span className="meter__ticks" aria-hidden="true" /> : null}
       </div>
       <div className="meter__labels">
         <span className="numeric strong">{startLabel}</span>

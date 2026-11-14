@@ -9,6 +9,7 @@ import {
   CardHeader,
   EmptyState,
   JournalIcon,
+  Meter,
   PlusIcon,
   Select,
 } from "@/components/ui";
@@ -234,16 +235,19 @@ export function FlightJournal() {
         <div className="stack stack--5">
           <Card>
             <CardBody>
-              <div className="flight-totals">
+              <div className="flight-totals ledger-rule">
                 {(
                   [
-                    ["Total hours", formatHours(totals.totalTime)],
-                    ["Solo", formatHours(totals.soloTime)],
-                    ["Landings", String(totals.landings)],
+                    ["Total hours", formatHours(totals.totalTime), "h"],
+                    ["Solo", formatHours(totals.soloTime), "h"],
+                    ["Landings", String(totals.landings), ""],
                   ] as const
-                ).map(([label, value]) => (
+                ).map(([label, value, unit]) => (
                   <div key={label}>
-                    <p className="flight-totals__value numeric">{value}</p>
+                    <p className="flight-totals__value numeric">
+                      {value}
+                      {unit ? <span className="flight-totals__unit"> {unit}</span> : null}
+                    </p>
                     <p className="tiny dim">{label}</p>
                   </div>
                 ))}
@@ -315,6 +319,11 @@ export function FlightJournal() {
               <Card>
                 <CardHeader title="Training rhythm" eyebrow="Last 30 days" />
                 <CardBody>
+                  {activity.flightsLast30Days === 0 && activity.hoursLast30Days === 0 ? (
+                    <p className="small muted flight-rhythm__quiet">
+                      No flights in the last 30 days. Average flight: {formatHours(activity.averageFlightTime)} hr.
+                    </p>
+                  ) : (
                   <div className="flight-rhythm">
                     <div>
                       <p className="tiny dim">Recent time</p>
@@ -333,6 +342,7 @@ export function FlightJournal() {
                       </p>
                     </div>
                   </div>
+                  )}
                   <p className="small muted" style={{ marginTop: "var(--space-4)" }}>
                     {activity.lastFlightDate
                       ? `Last logged flight: ${formatLongDate(activity.lastFlightDate, today)}`
@@ -350,22 +360,15 @@ export function FlightJournal() {
                   <div className="hour-reference-list">
                     {privatePilotReference.map((item) => (
                       <div className="hour-reference" key={item.key}>
-                        <div className="row row--between">
-                          <span className="small">{item.label}</span>
-                          <span className="tiny dim numeric">
-                            {formatHours(item.logged)} / {item.reference} hr
-                          </span>
-                        </div>
-                        <div
-                          className="hour-reference__track"
-                          role="progressbar"
-                          aria-label={`${item.label}: ${formatHours(item.logged)} logged, compared with ${item.reference} hours`}
-                          aria-valuemin={0}
-                          aria-valuemax={item.reference}
-                          aria-valuenow={Math.min(item.logged, item.reference)}
-                        >
-                          <span style={{ width: `${item.percent}%` }} />
-                        </div>
+                        <span className="small">{item.label}</span>
+                        <Meter
+                          value={Math.min(item.logged, item.reference)}
+                          max={item.reference}
+                          startLabel={`${formatHours(item.logged)} hr`}
+                          endLabel={`of ${item.reference} hr`}
+                          ariaLabel={`${item.label}: ${formatHours(item.logged)} logged, compared with ${item.reference} hours`}
+                          ticks={5}
+                        />
                       </div>
                     ))}
                   </div>

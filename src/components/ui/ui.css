@@ -791,13 +791,40 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
   border-radius: var(--radius-pill);
   background: var(--surface-sunken);
   overflow: hidden;
+  position: relative;
 }
 
 .meter__fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+  background: var(--accent-primary);
   transition: width var(--transition);
+}
+
+/* Decorative tick marks (UI-ELEVATE-01 F4). Never carry the value. */
+.meter__track--ticks { --meter-ticks: 5; height: 0.625rem; }
+.meter__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(100% / var(--meter-ticks) - var(--rule-ledger-width)),
+    var(--border-strong) calc(100% / var(--meter-ticks) - var(--rule-ledger-width)),
+    var(--border-strong) calc(100% / var(--meter-ticks))
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter__fill { transition: none; }
+}
+
+/* Hairline under a totals row. */
+.ledger-rule {
+  border-bottom: var(--rule-ledger-width) solid var(--border-subtle);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .meter__labels {

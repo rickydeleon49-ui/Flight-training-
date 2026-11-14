@@ -35,7 +35,7 @@
   width: 2.1rem;
   height: 2.1rem;
   border-radius: var(--radius-md);
-  background: var(--brand-mark-fill);
+  background: var(--accent-primary);
   color: var(--text-on-accent);
   flex: none;
 }
