@@ -21,7 +21,7 @@ export function PracticeTestPicker({ practiceTests, materials }: {
       <div className="stack stack--3">
         <div className="row row--wrap">
           <CheckrideTopicPractice practiceTests={practiceTests} materials={materials} />
-          <MixedPracticeTest practiceTests={practiceTests} materials={materials} />
+          <MixedPracticeTest practiceTests={practiceTests} materials={materials} onFinished={() => setOpen(false)} />
         </div>
         {rows.length ? <ul className="stack stack--2" aria-label="Materials with a practice test">
           {rows.map(({ material, count }) => <li key={material.id}>

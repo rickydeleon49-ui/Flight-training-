@@ -57,3 +57,58 @@ it("dead end with no questions only offers Toolkit quizzes", () => {
   expect(screen.getByRole("link", { name: "Go to Toolkit quizzes" })).toBeTruthy();
   expect(screen.queryByRole("link", { name: /on its own/ })).toBeNull();
 });
+
+const startRun = (onFinished?: () => void) => {
+  render(h(MixedPracticeTest, { practiceTests: tests, materials, ...(onFinished ? { onFinished } : {}) }));
+  fireEvent.click(screen.getByRole("button", { name: "Mixed practice test" }));
+  fireEvent.click(screen.getByLabelText(/Mat a/));
+  fireEvent.click(screen.getByLabelText(/Mat c/));
+  fireEvent.click(screen.getByRole("button", { name: "Start mixed test" }));
+};
+const closeBtn = () => screen.getAllByRole("button", { name: /^close/i })[0]!;
+
+it("asks before leaving after an answer; Keep going stays, Leave closes", () => {
+  startRun();
+  fireEvent.click(screen.getByRole("button", { name: "2. Two" }));
+  fireEvent.click(closeBtn());
+  expect(screen.getByText("Leave this test?")).toBeTruthy();
+  expect(screen.getByText("Your answers in this mixed test are not kept.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
+  expect(screen.queryByText("Leave this test?")).toBeNull();
+  expect(screen.getByText(/Question 1 of/)).toBeTruthy();
+  fireEvent.click(closeBtn());
+  fireEvent.click(screen.getByRole("button", { name: "Leave" }));
+  expect(screen.queryByText(/Question 1 of/)).toBeNull();
+  expect(screen.getByRole("button", { name: "Mixed practice test" })).toBeTruthy();
+});
+
+it("closes without a confirm before any answer", () => {
+  startRun();
+  fireEvent.click(closeBtn());
+  expect(screen.queryByText("Leave this test?")).toBeNull();
+  expect(screen.queryByText(/Question 1 of/)).toBeNull();
+});
+
+it("Done on the result closes this and tells the parent; X on the result needs no confirm", () => {
+  let finished = 0;
+  startRun(() => { finished++; });
+  for (let i = 0; i < 18; i++) {
+    fireEvent.click(screen.getByRole("button", { name: "2. Two" }));
+    fireEvent.click(screen.getByRole("button", { name: i === 17 ? "See score" : "Continue" }));
+  }
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  expect(finished).toBe(1);
+  expect(screen.queryByText("18 of 18 correct")).toBeNull();
+});
+
+it("closing from the result screen asks nothing and does not close the parent", () => {
+  let finished = 0;
+  startRun(() => { finished++; });
+  for (let i = 0; i < 18; i++) {
+    fireEvent.click(screen.getByRole("button", { name: "2. Two" }));
+    fireEvent.click(screen.getByRole("button", { name: i === 17 ? "See score" : "Continue" }));
+  }
+  fireEvent.click(closeBtn());
+  expect(screen.queryByText("Leave this test?")).toBeNull();
+  expect(finished).toBe(0);
+});

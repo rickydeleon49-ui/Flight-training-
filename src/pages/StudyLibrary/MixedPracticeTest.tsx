@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Dialog } from "@/components/ui";
+import { Button, ConfirmDialog, Dialog } from "@/components/ui";
 import type { PracticeTest, StudyMaterial } from "@/domain/types";
 import {
   buildMixedTest,
@@ -14,19 +14,25 @@ import { QuickQuestionRun } from "./QuickQuestionRun";
  * One untimed practice test mixed from several of the student's own materials. It reuses
  * the saved questions as they are, and nothing is stored: the result is for today only.
  */
-export function MixedPracticeTest({ practiceTests, materials }: {
+export function MixedPracticeTest({ practiceTests, materials, onFinished }: {
   practiceTests: readonly PracticeTest[];
   materials: readonly StudyMaterial[];
+  /** Called when the student presses Done on the result, so a parent sheet can close too. */
+  onFinished?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const [run, setRun] = useState<MixedQuestion[] | null>(null);
+  const [progress, setProgress] = useState({ started: false, finished: false });
+  const [leaving, setLeaving] = useState(false);
   const choices = mixedChoices(practiceTests, materials);
-  const close = () => { setOpen(false); setPicked([]); setRun(null); };
+  const close = () => { setOpen(false); setPicked([]); setRun(null); setProgress({ started: false, finished: false }); setLeaving(false); };
+  const requestClose = () => { if (run && progress.started && !progress.finished) setLeaving(true); else close(); };
+  const onProgress = useCallback((started: boolean, finished: boolean) => setProgress({ started, finished }), []);
 
   return <>
     <Button variant="secondary" onClick={() => setOpen(true)}>Mixed practice test</Button>
-    {open ? <Dialog open title="Mixed practice test" onClose={close}>
+    {open ? <Dialog open title="Mixed practice test" onClose={requestClose}>
       <div className="stack stack--3">
         {!run ? <>
           {choices.length >= MIXED_MIN_MATERIALS ? <>
@@ -54,9 +60,12 @@ export function MixedPracticeTest({ practiceTests, materials }: {
             <p><Link className="small" onClick={close} to="/toolkit?tool=quiz">Go to Toolkit quizzes</Link></p>
           </div>}
         </> : null}
-        {run ? <QuickQuestionRun questions={run} resultLabel="Mixed practice result" onDone={close} /> : null}
+        {run ? <QuickQuestionRun questions={run} resultLabel="Mixed practice result" onDone={() => { close(); onFinished?.(); }} onProgress={onProgress} /> : null}
         <p className="tiny dim">Study aid — check it against FAA guidance and your instructor.</p>
       </div>
     </Dialog> : null}
+    {leaving ? <ConfirmDialog open title="Leave this test?" message="Your answers in this mixed test are not kept."
+      confirmLabel="Leave" cancelLabel="Keep going" destructive={true}
+      onConfirm={close} onCancel={() => setLeaving(false)} /> : null}
   </>;
 }

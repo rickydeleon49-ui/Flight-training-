@@ -8,11 +8,13 @@ import type { MixedQuestion } from "@/logic/mixedPractice";
  * for today only. Nothing here reads or writes the database: the caller owns
  * the questions and gets `onDone` when the student closes the result.
  */
-export function QuickQuestionRun({ questions, resultLabel, onDone }: {
+export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress }: {
   questions: readonly MixedQuestion[];
   /** Accessible name of the result section. */
   resultLabel: string;
   onDone: () => void;
+  /** Tells the caller whether an answer has been given and whether the result is showing. */
+  onProgress?: (started: boolean, finished: boolean) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
@@ -20,6 +22,8 @@ export function QuickQuestionRun({ questions, resultLabel, onDone }: {
   const heading = useRef<HTMLHeadingElement>(null);
 
   const finished = answers.length === questions.length;
+  const started = answer !== null || answers.length > 0;
+  useEffect(() => { onProgress?.(started, finished); }, [started, finished, onProgress]);
   useEffect(() => { heading.current?.focus(); }, [index, finished]);
 
   const next = () => {
