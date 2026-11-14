@@ -72,6 +72,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
+import { AccidentCaseDrill } from "./AccidentCaseDrill";
 import { RegCardDrill } from "./RegCardDrill";
 import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
@@ -256,7 +257,10 @@ export function PilotToolkit() {
         ) : null}
         {tool === "costs" ? <CostTool state={data.toolkit} save={save} /> : null}
         {tool === "safety" ? (
-          <SafetyTool state={data.toolkit} save={save} />
+          <>
+            <SafetyTool state={data.toolkit} save={save} />
+            <AccidentCaseDrill />
+          </>
         ) : null}
         {tool === "quiz" ? (
           <>
