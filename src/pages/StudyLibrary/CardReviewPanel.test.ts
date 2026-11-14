@@ -315,6 +315,20 @@ describe("card reviews in MaterialDetail", () => {
     expect(sessionRegion().queryByText("Card 2 of 3 · new")).toBeNull();
   });
 
+  it("clicking the card does not reveal while text is selected", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    const card = sessionRegion().getByText("Question").closest(".flashcard") as HTMLElement;
+    const spy = vi.spyOn(window, "getSelection").mockReturnValue({ toString: () => "selected words" } as unknown as Selection);
+    fireEvent.click(card);
+    expect(sessionRegion().getByText("Question")).toBeTruthy();
+    spy.mockRestore();
+    fireEvent.click(card);
+    expect(sessionRegion().getByText("Answer")).toBeTruthy();
+  });
+
   it("Show answer still reveals after the card click was added", async () => {
     await seed();
     renderDetail();

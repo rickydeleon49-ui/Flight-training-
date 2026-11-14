@@ -427,7 +427,7 @@ html.is-ios .card--grouped .card__body { padding-top: var(--space-2); }
   text-align: left;
   cursor: pointer;
 }
-.deck-more-anchor { scroll-margin-top: 72px; }
+.deck-more-anchor { scroll-margin-top: calc(var(--narrow-header-height, 44px) + var(--space-5)); }
 @media (max-width: 1080px) {
   .deck-jump-more { display: inline-flex; align-items: center; min-height: var(--hit-min); margin-bottom: var(--space-3); }
 }

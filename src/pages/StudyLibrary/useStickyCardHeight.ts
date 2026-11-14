@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 
 /**
  * Keeps a flashcard from changing height when it flips between question and
@@ -18,4 +18,21 @@ export function useStickyCardHeight(ref: RefObject<HTMLElement | null>, cardKey:
     seen.current.height = Math.max(seen.current.height, element.offsetHeight);
     element.style.minHeight = `${seen.current.height}px`;
   }, [ref, cardKey, revealed]);
+  // A kept height is only valid for the current width: drop it on resize or rotation, then re-measure.
+  useEffect(() => {
+    if (!keepAcrossCards) return;
+    const reset = () => {
+      const element = ref.current;
+      if (!element) return;
+      element.style.minHeight = "";
+      seen.current = { key: seen.current?.key ?? cardKey, height: element.offsetHeight };
+      element.style.minHeight = `${seen.current.height}px`;
+    };
+    window.addEventListener("resize", reset);
+    window.addEventListener("orientationchange", reset);
+    return () => {
+      window.removeEventListener("resize", reset);
+      window.removeEventListener("orientationchange", reset);
+    };
+  }, [ref, cardKey, keepAcrossCards]);
 }

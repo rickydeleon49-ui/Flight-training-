@@ -44,3 +44,11 @@ describe("BL-36 phone tap targets reach 44px", () => {
     expect(css).toMatch(/\.ledger-pager \.button\.button--small\s*\{[^}]*min-width:\s*var\(--hit-min\)/);
   });
 });
+
+describe("Home jump anchor clears the sticky header", () => {
+  it("uses the real header height token, not a fixed 72px", () => {
+    const css = read("src/pages/FlightDeck/flightDeck.css");
+    expect(css).toMatch(/\.deck-more-anchor\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 44px\) \+ var\(--space-5\)\)/);
+    expect(css).not.toMatch(/scroll-margin-top:\s*72px/);
+  });
+});

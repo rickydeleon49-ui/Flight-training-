@@ -611,6 +611,8 @@ export function SessionView({
           onClick={(event) => {
             // Pointer convenience only; the Show answer button stays the keyboard path.
             if (review.revealed || (event.target as HTMLElement).closest("a, button")) return;
+            // Selecting text to copy is not a request to flip the card.
+            if (window.getSelection?.()?.toString()) return;
             reveal();
           }}
         >
