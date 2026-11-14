@@ -2,23 +2,20 @@
 
 .path { position: relative; padding-left: var(--space-6); }
 
-/* The route line the waypoints sit on. */
+/* The route line the stages sit on: thin and quiet. Decoration only. */
 .path::before {
   content: "";
   position: absolute;
   left: 0.56rem;
   top: 0.9rem;
   bottom: 1.5rem;
-  width: 2px;
-  background: repeating-linear-gradient(
-    180deg,
-    var(--category-flight-edge) 0 6px,
-    transparent 6px 13px
-  );
+  width: 1px;
+  background: var(--border-strong);
 }
 
 .waypoint { position: relative; padding-bottom: var(--space-6); }
 
+/* Nodes: upcoming = hollow, done = filled, current = berry ring. */
 .waypoint__marker {
   position: absolute;
   left: calc(var(--space-6) * -1);
@@ -27,21 +24,21 @@
   height: 1.15rem;
   border-radius: 50%;
   background: var(--surface-page);
-  border: 2px solid var(--category-flight-edge);
+  border: 2px solid var(--border-strong);
   display: grid;
   place-items: center;
-  color: var(--text-on-accent);
+  color: var(--surface-page);
 }
 
 .waypoint--done .waypoint__marker {
-  background: var(--category-complete-ink);
-  border-color: var(--category-complete-ink);
+  background: var(--text-secondary);
+  border-color: var(--text-secondary);
 }
 
 .waypoint--current .waypoint__marker {
-  background: var(--accent-primary);
+  background: var(--surface-page);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px var(--accent-primary-fill);
+  box-shadow: 0 0 0 3px var(--accent-primary-fill);
 }
 
 .waypoint__title {
@@ -113,7 +110,7 @@
   border-radius: 50%;
   background: var(--border-strong);
 }
-.confidence__pip--on { background: var(--accent-primary); }
+.confidence__pip--on { background: var(--text-secondary); }
 
 .waypoint__tools {
   display: flex;
@@ -129,15 +126,19 @@
 
 .icon-button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Goals that belong to no stage still need somewhere to live. */
-.waypoint--unassigned .waypoint__marker {
-  border-style: dashed;
-  border-color: var(--border-strong);
-}
+/* Goals that belong to no stage are not an ordered step: no route node. */
 .waypoint--unassigned .waypoint__title { color: var(--text-secondary); }
 /* Room between the checklist and the stages below it (student run 30 Oct). */
 .enroll-card { margin-bottom: var(--space-6); }
 
+/* Readable measure and comfortable rows for checklists. */
+.goal-card__body .checklist-row {
+  max-width: 68ch;
+  padding: var(--space-3) 0;
+  min-height: var(--hit-min);
+  align-items: center;
+}
+.enroll-checklist { max-width: 68ch; }
 .enroll-checklist {
   list-style: none;
   margin: 0;
@@ -169,3 +170,7 @@
 .fp-lead { margin-bottom: var(--space-3); }
 .fp-note { margin-top: var(--space-3); }
 .fp-rot { transform: rotate(90deg); display: inline-flex; }
+
+@media (prefers-reduced-motion: reduce) {
+  .waypoint__tools { transition: none; }
+}

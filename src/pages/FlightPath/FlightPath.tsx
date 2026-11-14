@@ -179,7 +179,6 @@ export function FlightPath() {
 
         {unassignedGoals.length > 0 ? (
           <section className="waypoint waypoint--unassigned">
-            <span className="waypoint__marker" aria-hidden="true" />
             <div className="waypoint__head">
               <h2 className="waypoint__title">Not part of a stage</h2>
               <span className="tiny dim">
@@ -311,7 +310,7 @@ function MilestoneSection({
       <div className="waypoint__head">
         <h2 className="waypoint__title">{milestone.title}</h2>
         {isCurrent ? <Badge tone="berry">Current</Badge> : null}
-        {milestone.status === "completed" ? <Badge tone="complete">Completed</Badge> : null}
+        {milestone.status === "completed" ? <Badge tone="neutral">Completed</Badge> : null}
         {progress.total > 0 ? (
           <span className="tiny dim">
             {progress.completed.length} of {progress.total} goals comfortable or complete
@@ -405,12 +404,8 @@ function GoalCard({
   const actions = actionsFor(data.actions, "goal", goal.id);
   const materials = data.materials.filter((material) => material.goalId === goal.id);
 
-  const tone =
-    goal.status === "completed" || goal.status === "comfortable"
-      ? "complete"
-      : goal.status === "working_on"
-        ? "berry"
-        : "neutral";
+  // One berry accent per page (the current stage); goal status is text.
+  const tone = "neutral";
 
   const addChecklistItem = async () => {
     const title = newItem.trim();
