@@ -36,6 +36,7 @@ import {
 } from "@/domain/types";
 import { formatLongDate, formatShortDate, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
+import { densityAltitude, windComponents } from "@/logic/performanceAid";
 import { formatMoney } from "@/lib/money";
 import {
   flightActivity,
@@ -1035,7 +1036,68 @@ function SafetyTool({ state, save }: ToolProps) {
           )}
         </CardBody>
       </Card>
+      <PerformanceAidCard />
     </div>
+  );
+}
+
+function PerformanceAidCard() {
+  const [runway, setRunway] = useState("");
+  const [windDir, setWindDir] = useState("");
+  const [windSpeed, setWindSpeed] = useState("");
+  const [elevation, setElevation] = useState("");
+  const [altimeter, setAltimeter] = useState("29.92");
+  const [oat, setOat] = useState("");
+  const num = (v: string) => (v.trim() === "" ? NaN : Number(v));
+  const wind = windComponents(num(runway), num(windDir), num(windSpeed));
+  const density = densityAltitude(num(elevation), num(altimeter), num(oat));
+  const windText = wind
+    ? `${wind.crosswind === 0 ? "Crosswind 0 kt" : `Crosswind ${wind.crosswind} kt from the ${wind.side}`}, ${
+        wind.headwind < 0 ? `tailwind ${-wind.headwind} kt` : `headwind ${wind.headwind} kt`
+      }.`
+    : "Enter a runway (1-36), wind direction and wind speed.";
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  const densityText = density
+    ? `Pressure altitude ${fmt(density.pressureAltitude)} ft, density altitude about ${fmt(density.densityAltitude)} ft.`
+    : "Enter field elevation, altimeter setting and temperature.";
+  return (
+    <Card variant="grouped">
+      <CardHeader title="Crosswind & density altitude" />
+      <CardBody>
+        <div className="stack stack--3">
+          <div className="form-grid">
+            <Field label="Runway (1-36)">
+              <TextInput type="number" inputMode="numeric" min="1" max="360" value={runway} onChange={(e) => setRunway(e.target.value)} />
+            </Field>
+            <Field label="Wind direction (degrees)">
+              <TextInput type="number" inputMode="numeric" min="0" max="360" value={windDir} onChange={(e) => setWindDir(e.target.value)} />
+            </Field>
+            <Field label="Wind speed (kt)">
+              <TextInput type="number" inputMode="numeric" min="0" value={windSpeed} onChange={(e) => setWindSpeed(e.target.value)} />
+            </Field>
+          </div>
+          <p className="small" role="status">{windText}</p>
+          <div className="form-grid">
+            <Field label="Field elevation (ft)">
+              <TextInput type="number" inputMode="numeric" value={elevation} onChange={(e) => setElevation(e.target.value)} />
+            </Field>
+            <Field label="Altimeter (inHg)">
+              <TextInput type="number" inputMode="decimal" step="0.01" value={altimeter} onChange={(e) => setAltimeter(e.target.value)} />
+            </Field>
+            <Field label="Outside air temperature (°C)">
+              <TextInput type="number" value={oat} onChange={(e) => setOat(e.target.value)} />
+            </Field>
+          </div>
+          <p className="small" role="status">{densityText}</p>
+          <p className="small muted">
+            High density altitude means a longer takeoff run and a weaker climb.
+          </p>
+          <p className="tiny dim">
+            Study aid only. Use your POH performance charts and check with your instructor.
+          </p>
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 
