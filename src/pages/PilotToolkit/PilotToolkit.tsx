@@ -71,6 +71,7 @@ import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
+import { ChartSymbolDrill } from "./ChartSymbolDrill";
 import "./pilotToolkit.css";
 
 type Tool =
@@ -252,7 +253,12 @@ export function PilotToolkit() {
         {tool === "safety" ? (
           <SafetyTool state={data.toolkit} save={save} />
         ) : null}
-        {tool === "quiz" ? <QuizTool state={data.toolkit} save={save} /> : null}
+        {tool === "quiz" ? (
+          <>
+            <QuizTool state={data.toolkit} save={save} />
+            <ChartSymbolDrill />
+          </>
+        ) : null}
         {tool === "reminders" ? (
           <ReminderTool state={data.toolkit} save={save} />
         ) : null}

@@ -104,3 +104,22 @@
 /* Tool inputs and selects follow the F1 control scale; every target stays >= --hit-min. */
 .toolkit-row .input, .toolkit-row .select { min-height: var(--control-h); }
 .toolkit-row .button, .toolkit-row .icon-button, .toolkit-tabs [role="tab"] { min-height: var(--hit-min); }
+
+.chart-symbol-card {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 28rem;
+  margin: var(--space-4) 0;
+}
+.chart-symbol-svg {
+  width: 100%;
+  max-height: 14rem;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  color: var(--text-primary);
+}
+.chart-symbol-name { margin: 0 0 var(--space-2); }
+.chart-symbol-back { min-height: 6rem; }
+.chart-symbol-note { font-size: var(--text-sm, 0.875rem); margin: 0; }
+.chart-symbol-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
