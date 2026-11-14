@@ -14,22 +14,22 @@ function PracticeCalls() {
     setIndex((value) => (value + step + RADIO_DRILL.length) % RADIO_DRILL.length);
   };
   return (
-    <div role="group" aria-label="Practice calls">
+    <div role="group" aria-label="Practice calls" className="stack stack--3 radio-practice">
       <p className="small">{RADIO_DRILL_NOTE}</p>
       <p className="small">Call {index + 1} of {RADIO_DRILL.length}</p>
       <p><strong>Where you are:</strong> {item.situation}</p>
       <p><strong>Controller:</strong> {item.controllerCall}</p>
-      {item.controllerCall.startsWith("(") ? null : <ReadAloudButton text={item.controllerCall} label="Hear it" />}
+      {item.controllerCall.startsWith("(") ? null : <div className="row"><ReadAloudButton text={item.controllerCall} label="Hear it" /></div>}
       {revealed ? (
         <>
           <p><strong>You say:</strong> {item.modelReply}</p>
           <p className="small">{item.tip}</p>
         </>
       ) : (
-        <div><Button variant="primary" onClick={() => setRevealed(true)}>Show reply</Button></div>
+        <div className="row row--wrap"><Button variant="primary" onClick={() => setRevealed(true)}>Show reply</Button></div>
       )}
-      <div>
-        <Button variant="secondary" onClick={() => go(-1)}>Previous</Button>{" "}
+      <div className="row row--wrap">
+        <Button variant="secondary" onClick={() => go(-1)}>Previous</Button>
         <Button variant="secondary" onClick={() => go(1)}>Next</Button>
       </div>
     </div>
@@ -64,8 +64,8 @@ export function RadioWords() {
         )}
       />
       <CardBody>
-        <div role="group" aria-label="Radio mode">
-          <Button variant={mode === "words" ? "primary" : "secondary"} aria-pressed={mode === "words"} onClick={() => setMode("words")}>Words</Button>{" "}
+        <div role="group" aria-label="Radio mode" className="row row--wrap">
+          <Button variant={mode === "words" ? "primary" : "secondary"} aria-pressed={mode === "words"} onClick={() => setMode("words")}>Words</Button>
           <Button variant={mode === "calls" ? "primary" : "secondary"} aria-pressed={mode === "calls"} onClick={() => setMode("calls")}>Practice calls</Button>
         </div>
         {mode === "calls" ? <PracticeCalls /> : <p className="small">{RADIO_WORDS_NOTE}</p>}

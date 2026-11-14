@@ -129,7 +129,7 @@ export function E6bTrainer() {
               <Field label="Wind speed (knots)">{numInput(windSpeed, setWindSpeed)}</Field>
               <Field label="Variation (degrees, optional)">{numInput(variation, setVariation)}</Field>
               <Field label="Variation is">
-                <select value={side} onChange={(e) => setSide(e.target.value as "E" | "W")}>
+                <select className="select" value={side} onChange={(e) => setSide(e.target.value as "E" | "W")}>
                   <option value="E">East (east is least)</option>
                   <option value="W">West (west is best)</option>
                 </select>
