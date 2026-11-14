@@ -1542,6 +1542,8 @@ export function PracticeTestPanel({
             </p>
           )}
 
+          {question.unchecked ? <p className="tiny muted practice-unchecked">Not checked against the source</p> : null}
+
           <AskGeminiPanel
             key={`${state.version?.id}:${question.id}`}
             materialId={materialId}

@@ -1201,3 +1201,93 @@ fn acs_task_round_trip_history_hash_and_cascade() {
         0
     );
 }
+
+#[test]
+fn unchecked_flag_round_trips_survives_an_edit_and_stays_out_of_the_hash() {
+    let dir = TempDir::new("unchecked");
+    let conn = seeded_database(dir.path());
+    let q = q_json(
+        "fb000000-0000-4000-8000-0000000000e1",
+        "Synthetic unchecked question",
+        None,
+        None,
+    );
+    let mut flagged = q.clone();
+    flagged["unchecked"] = json!(true);
+    let plain = super::practice_authoring::decode_question(&q).unwrap();
+    let parsed = super::practice_authoring::decode_question(&flagged).unwrap();
+    assert!(parsed.unchecked && !plain.unchecked);
+    assert_eq!(
+        super::practice_authoring::practice_content_hash(&[plain]),
+        super::practice_authoring::practice_content_hash(&[parsed])
+    );
+    let mut false_flag = q.clone();
+    false_flag["unchecked"] = json!(false);
+    assert!(super::practice_authoring::decode_question(&false_flag).is_err());
+    save_practice_authoring_at(
+        dir.path(),
+        &op(
+            "fb000000-0000-4000-8000-0000000000e0",
+            "mat-a",
+            "create",
+            Value::Null,
+            Some(next_json("Flag", "gemini", vec![flagged.clone()], vec![])),
+        ),
+    )
+    .unwrap();
+    let before = snapshot_json(&conn, "mat-a");
+    assert_eq!(before["questions"][0]["unchecked"], json!(true));
+    assert_eq!(
+        count_rows(&conn, "SELECT COUNT(*) FROM practice_test_items WHERE unchecked = 1"),
+        1
+    );
+    // Editing the wording while the draft still carries the flag keeps it.
+    let mut edited = flagged.clone();
+    edited["question"] = json!("Synthetic unchecked question, reworded");
+    save_practice_authoring_at(
+        dir.path(),
+        &op(
+            "fb000000-0000-4000-8000-0000000000e2",
+            "mat-a",
+            "edit",
+            before,
+            Some(next_json("Flag", "gemini", vec![edited], vec![retirement_for(&flagged, "corrected")])),
+        ),
+    )
+    .unwrap();
+    let after = snapshot_json(&conn, "mat-a");
+    assert_eq!(after["questions"][0]["unchecked"], json!(true));
+    assert_eq!(after["questions"][0]["question"], "Synthetic unchecked question, reworded");
+}
+
+#[test]
+fn a_schema_38_library_opens_with_every_question_checked() {
+    let dir = TempDir::new("unchecked-old");
+    let conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+    for migration in crate::migrations().into_iter().filter(|m| m.version <= 38) {
+        conn.execute_batch(migration.sql).unwrap();
+    }
+    conn.execute(
+        "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m', 'Old', ?1, ?1)",
+        rusqlite::params![STAMP],
+    )
+    .unwrap();
+    conn.execute(
+        "INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, content_hash, created_at) VALUES ('v', 'm', 'k', 'Old', 'h', ?1)",
+        rusqlite::params![STAMP],
+    )
+    .unwrap();
+    conn.execute(
+        "INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index) VALUES ('i', 'v', 0, 'Old question', '[\"A\",\"B\"]', 0)",
+        [],
+    )
+    .unwrap();
+    for migration in crate::migrations().into_iter().filter(|m| m.version == 39) {
+        conn.execute_batch(migration.sql).unwrap();
+    }
+    let flag: i64 = conn
+        .query_row("SELECT unchecked FROM practice_test_items WHERE id = 'i'", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(flag, 0);
+}

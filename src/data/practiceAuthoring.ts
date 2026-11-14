@@ -149,7 +149,8 @@ export async function practiceContentHash(questions: readonly PracticeAuthoringQ
 
 function decodeQuestion(value: Json): PracticeAuthoringQuestion {
   if (!isRecord(value)) refuse("INVALID_ARGUMENT");
-  exactKeys(value, ["question", "options", "correctIndex", "explanation", "sourcePage", "identity"], ["origin", "replaces", "acsTask"]);
+  exactKeys(value, ["question", "options", "correctIndex", "explanation", "sourcePage", "identity"], ["origin", "replaces", "acsTask", "unchecked"]);
+  if (has(value, "unchecked") && value.unchecked !== true) refuse("INVALID_ARGUMENT");
   if (typeof value.question !== "string") refuse("INVALID_ARGUMENT");
   const questionLength = codePointLength(value.question);
   if (questionLength === 0 || questionLength > MAX_QUESTION_CHARS) refuse("INVALID_ARGUMENT");
@@ -177,6 +178,7 @@ function decodeQuestion(value: Json): PracticeAuthoringQuestion {
     explanation: value.explanation,
     sourcePage: sourcePage as number | null,
     ...(normalizeAcsTask(value.acsTask) ? { acsTask: normalizeAcsTask(value.acsTask) } : {}),
+    ...(value.unchecked === true ? { unchecked: true as const } : {}),
     identity,
   };
   if (has(value, "origin")) out.origin = originOf(value.origin);
@@ -482,6 +484,7 @@ export function buildSnapshotFromRows(rows: SnapshotSourceRows): PracticeSnapsho
       sourcePage: sourcePage === null || sourcePage === undefined ? null : Number(sourcePage),
       identity,
       ...(normalizeAcsTask(item["acs_task"]) ? { acsTask: normalizeAcsTask(item["acs_task"]) } : {}),
+      ...(Number(item["unchecked"]) === 1 ? { unchecked: true as const } : {}),
       ...(origin === "user" || origin === "instructor" ? { origin: origin as StudyItemOrigin } : {}),
       ...(origin && replaces ? { replaces } : {}),
     };
@@ -508,7 +511,7 @@ export function buildSnapshotFromRows(rows: SnapshotSourceRows): PracticeSnapsho
 const SNAPSHOT_SELECT = `
   SELECT v.id, v.version_number, v.title, v.provider, v.model, v.created_at,
          i.id AS item_id_row, i.ordinal, i.question_text, i.options_json, i.correct_index,
-         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin, a.acs_task
+         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin, a.acs_task, i.unchecked
     FROM practice_test_versions v
     JOIN practice_test_items i ON i.version_id = v.id
     LEFT JOIN practice_item_origins o ON o.item_id = i.id
@@ -534,6 +537,7 @@ export async function readCurrentSnapshot(query: Query, materialId: string): Pro
     replaces_id: row["replaces_id"],
     origin: row["origin"],
     acs_task: row["acs_task"],
+    unchecked: row["unchecked"],
   }));
   const [mirror] = await query("SELECT retired_json FROM practice_tests WHERE source_material_id = ?", [materialId]);
   return buildSnapshotFromRows({
@@ -913,8 +917,8 @@ async function applyOperation(
     await run(
       `INSERT INTO practice_test_items (
          id, version_id, ordinal, question_text, options_json,
-         correct_index, explanation, source_page, logical_id, replaces_id
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         correct_index, explanation, source_page, logical_id, replaces_id, unchecked
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         itemId,
         versionId,
@@ -926,6 +930,7 @@ async function applyOperation(
         question.sourcePage,
         question.identity,
         question.replaces ?? null,
+        question.unchecked ? 1 : 0,
       ],
     );
     if (question.acsTask) await run("INSERT INTO practice_item_acs_tasks (item_id, acs_task) VALUES (?, ?)", [itemId, question.acsTask]);

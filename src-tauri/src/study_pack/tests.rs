@@ -334,6 +334,7 @@ pub(super) fn seeded() -> (Lib, String) {
         .unwrap();
     let q_db =
         crate::practice_authoring::question_value(&crate::practice_authoring::AuthoringQuestion {
+            unchecked: false,
             acs_task: Some("PA.I.A".into()),
             question: "Q one?".into(),
             options: vec!["a".into(), "b".into()],

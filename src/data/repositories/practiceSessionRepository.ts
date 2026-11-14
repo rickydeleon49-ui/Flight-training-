@@ -389,10 +389,11 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         replaces_id: string | null;
         origin: string | null;
         acs_task: string | null;
+        unchecked: number | null;
       }>(
         `SELECT v.source_material_id AS material_id, v.history_key, i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
                 i.correct_index, i.explanation, i.source_page,
-                i.logical_id, i.replaces_id, o.origin, a.acs_task
+                i.logical_id, i.replaces_id, o.origin, a.acs_task, i.unchecked
          FROM practice_test_items i
          JOIN practice_test_versions v ON v.id = i.version_id
          LEFT JOIN practice_item_origins o ON o.item_id = i.id
@@ -415,6 +416,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         explanation: r.explanation,
         sourcePage: r.source_page !== null ? Number(r.source_page) : null,
         ...(r.acs_task ? { acsTask: r.acs_task } : {}),
+        ...(Number(r.unchecked) === 1 ? { unchecked: true as const } : {}),
         logicalId: r.logical_id,
         replaces: r.replaces_id,
         ...(r.origin === "user" || r.origin === "instructor" ? { origin: r.origin } : {}),

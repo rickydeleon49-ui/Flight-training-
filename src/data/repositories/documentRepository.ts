@@ -259,7 +259,7 @@ function withStoredQuestionMetadata(test: PracticeTest, snapshot: PracticeSnapsh
   if (!snapshot || snapshot.questions.length !== test.questions.length) return test;
   const questions = test.questions.map((question, index) => {
     const stored = snapshot.questions[index]!;
-    if (stored.origin === undefined && !stored.acsTask) return question;
+    if (stored.origin === undefined && !stored.acsTask && !stored.unchecked) return question;
     if (
       question.question !== stored.question ||
       question.correctIndex !== stored.correctIndex ||
@@ -270,7 +270,7 @@ function withStoredQuestionMetadata(test: PracticeTest, snapshot: PracticeSnapsh
     ) {
       return question;
     }
-    return { ...question, ...(stored.origin ? { origin: stored.origin } : {}), ...(stored.acsTask ? { acsTask: stored.acsTask } : {}) };
+    return { ...question, ...(stored.origin ? { origin: stored.origin } : {}), ...(stored.acsTask ? { acsTask: stored.acsTask } : {}), ...(stored.unchecked ? { unchecked: true as const } : {}) };
   });
   return { ...test, questions };
 }
@@ -687,6 +687,7 @@ export function documentRepository(db: SqlDatabase) {
         explanation: question.explanation,
         sourcePage: question.sourcePage,
         ...(question.acsTask ? { acsTask: question.acsTask } : {}),
+        ...(question.unchecked ? { unchecked: true as const } : {}),
         identity: newId(),
       }));
       const dropped: PracticeRetirementRecord[] = [];

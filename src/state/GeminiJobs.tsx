@@ -1,4 +1,4 @@
-import { MORE_CARDS_NOTE, savedCards as cardsToSave, withoutVerificationNotes } from "@/services/gemini";
+import { MORE_CARDS_NOTE, savedCards as cardsToSave, savedQuestions } from "@/services/gemini";
 import {
   createContext,
   useCallback,
@@ -709,7 +709,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             await repos.documents.savePracticeTest({
               sourceMaterialId: job.materialId,
               title: test.title,
-              questions: withoutVerificationNotes(test.questions),
+              questions: savedQuestions(test.questions),
               provider: "gemini",
               model: test.model,
             });

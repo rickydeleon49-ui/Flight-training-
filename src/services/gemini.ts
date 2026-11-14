@@ -63,9 +63,6 @@ export function geminiModelName(model: string): string {
 
 /** Transient review metadata, omitted from saved study content. */
 export interface DraftVerification { verificationNote?: string }
-export function withoutVerificationNotes<T extends DraftVerification>(items: T[]): Omit<T, "verificationNote">[] {
-  return items.map(({ verificationNote: _note, ...item }) => item);
-}
 
 /** Cards or questions a draft could not match to its page, as one plain line; null when none. */
 export function uncheckedLine(items: readonly DraftVerification[], noun: "card" | "question"): string | null {
@@ -77,6 +74,11 @@ export function uncheckedLine(items: readonly DraftVerification[], noun: "card" 
 /** Saved cards keep a small flag instead of the draft note, so review can still say they were not checked. */
 export function savedCards<T extends StudyFlashcard & DraftVerification>(items: T[]): (Omit<T, "verificationNote"> & { unchecked?: true })[] {
   return items.map(({ verificationNote, ...card }) => (verificationNote ? { ...card, unchecked: true as const } : card));
+}
+
+/** Saved questions keep the same small flag, so the editor and review can say they were not checked. */
+export function savedQuestions<T extends DraftVerification>(items: T[]): (Omit<T, "verificationNote"> & { unchecked?: true })[] {
+  return items.map(({ verificationNote, ...question }) => (verificationNote ? { ...question, unchecked: true as const } : question));
 }
 
 /** What the kit kept, from the checks that ran before the draft: generated vs kept and why. */

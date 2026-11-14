@@ -180,6 +180,8 @@ pub struct RetirementRecord {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthoringQuestion {
     pub acs_task: Option<String>,
+    /// BL-21: generated, but its source page could not be matched. Absent = checked.
+    pub unchecked: bool,
     pub question: String,
     pub options: Vec<String>,
     pub correct_index: i64,
@@ -318,7 +320,7 @@ pub fn decode_question(value: &Value) -> Check<AuthoringQuestion> {
             "sourcePage",
             "identity",
         ],
-        &["origin", "replaces", "acsTask"],
+        &["origin", "replaces", "acsTask", "unchecked"],
     )?;
     let Value::String(question) = &map["question"] else {
         return invalid();
@@ -371,7 +373,13 @@ pub fn decode_question(value: &Value) -> Check<AuthoringQuestion> {
     if !is_uuid_v4(identity) {
         return invalid();
     }
+    let unchecked = match map.get("unchecked") {
+        None => false,
+        Some(Value::Bool(true)) => true,
+        Some(_) => return invalid(),
+    };
     let mut out = AuthoringQuestion {
+        unchecked,
         acs_task: map
             .get("acsTask")
             .and_then(Value::as_str)
@@ -891,6 +899,9 @@ pub fn question_value(question: &AuthoringQuestion) -> Value {
     if let Some(task) = &question.acs_task {
         map.insert("acsTask".into(), json!(task));
     }
+    if question.unchecked {
+        map.insert("unchecked".into(), json!(true));
+    }
     map.insert("identity".into(), json!(question.identity));
     if let Some(origin) = &question.origin {
         map.insert("origin".into(), json!(origin));
@@ -972,6 +983,7 @@ struct VersionFields {
 /// The item columns of one `SnapshotSourceRows.items` entry.
 struct ItemFields {
     acs_task: Option<String>,
+    unchecked: bool,
     id: String,
     question_text: String,
     options_json: String,
@@ -1020,6 +1032,7 @@ pub fn build_snapshot_from_rows(rows: &SnapshotSourceRows) -> Check<Snapshot> {
         };
         let replaces = origin.as_ref().and_then(|_| item.replaces_id.clone());
         questions.push(AuthoringQuestion {
+            unchecked: item.unchecked,
             acs_task: item.acs_task.clone(),
             question: item.question_text.clone(),
             options: parse_options(&item.options_json)?,
@@ -1057,7 +1070,8 @@ pub fn build_snapshot_from_rows(rows: &SnapshotSourceRows) -> Check<Snapshot> {
 const SNAPSHOT_SELECT: &str = "
   SELECT v.id, v.version_number, v.title, v.provider, v.model, v.created_at,
          i.id AS item_id_row, i.ordinal, i.question_text, i.options_json, i.correct_index,
-         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin, a.acs_task
+         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin, a.acs_task,
+         i.unchecked
     FROM practice_test_versions v
     JOIN practice_test_items i ON i.version_id = v.id
     LEFT JOIN practice_item_origins o ON o.item_id = i.id
@@ -1075,6 +1089,19 @@ pub fn read_current_snapshot(conn: &Connection, material_id: &str) -> Check<Opti
             "    LEFT JOIN practice_item_acs_tasks a ON a.item_id = i.id\n",
             "",
         )
+    };
+    // A library that has not reached schema 39 yet has no `unchecked` column: read it as checked.
+    let has_unchecked: bool = conn
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM pragma_table_info('practice_test_items') WHERE name = 'unchecked')",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(storage)?;
+    let select = if has_unchecked {
+        select
+    } else {
+        select.replace("i.unchecked", "NULL")
     };
     let mut statement = conn.prepare(&select).map_err(storage)?;
     let rows = statement
@@ -1102,6 +1129,7 @@ pub fn read_current_snapshot(conn: &Connection, material_id: &str) -> Check<Opti
                     logical_id: row.get(13)?,
                     replaces_id: row.get(14)?,
                     origin: row.get(15)?,
+                    unchecked: row.get::<_, Option<i64>>(17)?.unwrap_or(0) == 1,
                 },
             ))
         })
@@ -1234,6 +1262,15 @@ pub(crate) fn insert_version_rows(
             ],
         )
         .map_err(storage)?;
+        // Only flagged questions write the column (the default is 0), so an
+        // unflagged save also works on a library that has not migrated yet.
+        if question.unchecked {
+            tx.execute(
+                "UPDATE practice_test_items SET unchecked = 1 WHERE id = ?1",
+                params![item_id],
+            )
+            .map_err(storage)?;
+        }
         if let Some(task) = &question.acs_task {
             tx.execute(
                 "INSERT INTO practice_item_acs_tasks (item_id, acs_task) VALUES (?1, ?2)",

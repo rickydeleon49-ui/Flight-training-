@@ -117,3 +117,24 @@ it("validates task metadata and permits an older backup without the table", asyn
   await validatePracticeAcsTasks(query, query);
   await expect(validatePracticeAcsTasks(query, query, true)).rejects.toThrow("Missing practice ACS task table.");
 });
+
+describe("BL-21 not-checked flag on questions", () => {
+  it("saves the flag, round-trips it, and keeps it when she edits the wording", async () => {
+    const flagged = { ...question(), unchecked: true as const };
+    await db.savePracticeAuthoringAtomically!({
+      operationId: crypto.randomUUID(), sourceMaterialId: "mat", reason: "create", expected: null,
+      next: { title: "Test", provider: "gemini", model: "synthetic", questions: [flagged, question()], retired: [] },
+    });
+    const first = (await read())!;
+    expect(first.questions.map((q) => q.unchecked)).toEqual([true, undefined]);
+    const draft = draftFromSnapshot(first);
+    expect(draft[0]!.unchecked).toBe(true);
+    draft[0] = { ...draft[0]!, question: "Reworded question" };
+    const { snapshot } = await save(first, draft);
+    expect(snapshot.questions[0]!.question).toBe("Reworded question");
+    expect(snapshot.questions[0]!.unchecked).toBe(true);
+    expect(snapshot.questions[1]!.unchecked).toBeUndefined();
+    const rows = await db.select("SELECT unchecked FROM practice_test_items WHERE unchecked = 1", []);
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+  });
+});
