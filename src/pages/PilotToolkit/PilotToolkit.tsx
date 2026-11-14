@@ -49,7 +49,7 @@ import {
   makeQuizAttempt,
   medicalDateConflict,
   type MedicalDateChoice,
-  QUIZ_QUESTIONS,
+  selectQuizQuestions,
   readinessSummary,
   reconcileMedicalDates,
   reminderLeadDays,
@@ -1115,12 +1115,14 @@ function QuizTool({ state, save }: ToolProps) {
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-  const question = QUIZ_QUESTIONS[index]!;
+  const [questions, setQuestions] = useState(() => selectQuizQuestions(Date.now()));
+  const question = questions[index]!;
   const best = state.quizAttempts.length
     ? Math.max(...state.quizAttempts.map((item) => item.score / item.total))
     : null;
 
   const start = () => {
+    setQuestions(selectQuizQuestions(Date.now()));
     setResult(null);
     setRunning(true);
     setIndex(0);
@@ -1134,10 +1136,10 @@ function QuizTool({ state, save }: ToolProps) {
   const next = async () => {
     if (selected === null || finishing.current) return;
     const nextAnswers = [...answers, selected];
-    if (index === QUIZ_QUESTIONS.length - 1) {
+    if (index === questions.length - 1) {
       finishing.current = true;
       setFinishBusy(true);
-      const attempt = makeQuizAttempt(nextAnswers, nowIso(), newId());
+      const attempt = makeQuizAttempt(nextAnswers, nowIso(), newId(), questions);
       try {
         await save((current) => ({
           ...current,
@@ -1209,6 +1211,9 @@ function QuizTool({ state, save }: ToolProps) {
             >
               Start quiz
             </Button>
+            <p className="small muted">
+              Practice questions in the style of the FAA knowledge test. A study aid; check against FAA guidance and your instructor.
+            </p>
           </CardBody>
         </Card>
         <Card variant="grouped">
@@ -1257,7 +1262,7 @@ function QuizTool({ state, save }: ToolProps) {
   return (
     <Card variant="grouped">
       <CardHeader
-        title={`Question ${index + 1} of ${QUIZ_QUESTIONS.length}`}
+        title={`Question ${index + 1} of ${questions.length}`}
         eyebrow={TOPIC_LABELS[question.topic]}
       />
       <CardBody>
@@ -1304,7 +1309,7 @@ function QuizTool({ state, save }: ToolProps) {
               <Button variant="primary" onClick={() => void next()} disabled={finishBusy}>
                 {finishBusy
                   ? "Saving…"
-                  : index === QUIZ_QUESTIONS.length - 1
+                  : index === questions.length - 1
                   ? "Finish quiz"
                   : "Next question"}
               </Button>

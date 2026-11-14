@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeEvent } from "@/testing/factories";
 import { todayIso } from "@/lib/dates";
-import { DEFAULT_TOOLKIT_STATE, QUIZ_QUESTIONS } from "@/logic/toolkit";
+import { DEFAULT_TOOLKIT_STATE, QUIZ_LENGTH, QUIZ_QUESTIONS } from "@/logic/toolkit";
 import type { AppData } from "@/state/AppDataContext";
 
 let data: AppData;
@@ -280,20 +280,22 @@ describe("Knowledge quiz result", () => {
     fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
     fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
   };
-  const answerAll = (pick: (i: number) => string) => {
-    QUIZ_QUESTIONS.forEach((_, i) => {
-      fireEvent.click(screen.getByRole("button", { name: pick(i) }));
+  // The quiz draws a random set, so find each question by the prompt on screen.
+  const onScreen = () => QUIZ_QUESTIONS.find((q) => screen.queryByText(q.prompt))!;
+  const answerAll = (pick: (i: number, q: (typeof QUIZ_QUESTIONS)[number]) => string) => {
+    for (let i = 0; i < QUIZ_LENGTH; i++) {
+      fireEvent.click(screen.getByRole("button", { name: pick(i, onScreen()) }));
       fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
-      fireEvent.click(screen.getByRole("button", { name: i === QUIZ_QUESTIONS.length - 1 ? "Finish quiz" : "Next question" }));
-    });
+      fireEvent.click(screen.getByRole("button", { name: i === QUIZ_LENGTH - 1 ? "Finish quiz" : "Next question" }));
+    }
   };
 
   it("shows the score, a Review line, and returns to the start card", async () => {
     openQuiz();
-    answerAll((i) => (i === 0 ? "I don't know" : QUIZ_QUESTIONS[i]!.choices[QUIZ_QUESTIONS[i]!.correct]!));
-    const heading = await screen.findByRole("heading", { name: `${QUIZ_QUESTIONS.length - 1} of ${QUIZ_QUESTIONS.length} right.` });
+    answerAll((i, q) => (i === 0 ? "I don't know" : q.choices[q.correct]!));
+    const heading = await screen.findByRole("heading", { name: `${QUIZ_LENGTH - 1} of ${QUIZ_LENGTH} right.` });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(screen.getByText(/Review:\s*Weather/)).toBeTruthy();
+    expect(screen.getByText(/Review:/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Try another quiz" }));
     expect(screen.getByRole("button", { name: "Start quiz" })).toBeTruthy();
   });
@@ -302,7 +304,7 @@ describe("Knowledge quiz result", () => {
     openQuiz();
     fireEvent.click(screen.getByRole("button", { name: "I don't know" }));
     fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
-    const q = QUIZ_QUESTIONS[0]!;
+    const q = onScreen();
     expect(screen.getByText(new RegExp(`Not quite\\. The answer is: ${q.choices[q.correct]}`))).toBeTruthy();
   });
 });

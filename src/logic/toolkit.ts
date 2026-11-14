@@ -345,16 +345,61 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   { id: "navigation-diversion", topic: "navigation", prompt: "After deciding to divert, the first priority is to:", choices: ["Maintain aircraft control", "Calculate exact fuel burn", "Call the destination FBO"], correct: 0, explanation: "Aircraft control remains the first priority while organizing navigation and communication tasks." },
   { id: "airport-windsock", topic: "airports", prompt: "The small end of a windsock points generally:", choices: ["Into the wind", "Downwind", "Toward magnetic north"], correct: 1, explanation: "The open end faces the wind; the narrow end streams downwind." },
   { id: "emergency-aviate", topic: "emergency_procedures", prompt: "In an abnormal situation, the enduring priority order begins with:", choices: ["Communicate", "Navigate", "Aviate"], correct: 2, explanation: "Maintain aircraft control first, then navigate and communicate as circumstances permit." },
+  { id: "weather-fog", topic: "weather", prompt: "Fog is most likely to form when:", choices: ["Temperature and dew point are close together", "The wind is strong and gusty", "The air is very dry"], correct: 0, explanation: "Fog forms when air cools to its dew point, so a small and shrinking temperature-dew point spread is a warning sign." },
+  { id: "weather-tstorm-mature", topic: "weather", prompt: "Which thunderstorm stage has strong updrafts and downdrafts together, with rain beginning to fall?", choices: ["Cumulus stage", "Mature stage", "Dissipating stage"], correct: 1, explanation: "The mature stage has both updrafts and downdrafts, and precipitation starts at the surface." },
+  { id: "weather-inversion", topic: "weather", prompt: "A temperature inversion is a layer where air temperature:", choices: ["Falls faster than normal with altitude", "Increases with altitude", "Stays the same at every altitude"], correct: 1, explanation: "In an inversion the air gets warmer as you climb, which often traps haze and fog near the ground." },
+  { id: "systems-carb-ice", topic: "aircraft_systems", prompt: "Carburetor ice can form:", choices: ["Only when the outside air is below freezing", "Even when the outside air is well above freezing, if humidity is high", "Only while flying in cloud"], correct: 1, explanation: "Fuel vaporization and air expansion cool the carburetor, so ice can form on a mild, humid day." },
+  { id: "systems-magneto", topic: "aircraft_systems", prompt: "If the battery and alternator both fail, a piston engine with magnetos will:", choices: ["Keep running", "Stop at once", "Run on one cylinder bank only"], correct: 0, explanation: "Magnetos make their own spark and do not depend on the aircraft electrical system." },
+  { id: "systems-static-block", topic: "aircraft_systems", prompt: "If the static port becomes blocked in flight, the altimeter will:", choices: ["Keep reading correctly", "Stay at the altitude where the blockage happened", "Read zero"], correct: 1, explanation: "The trapped static pressure no longer changes, so the altimeter stays frozen at that altitude." },
+  { id: "aero-load-60", topic: "aerodynamics", prompt: "In a coordinated, level turn at 60 degrees of bank, the load factor is about:", choices: ["1 G", "2 G", "3 G"], correct: 1, explanation: "At 60 degrees of bank the wings carry about twice the airplane's weight." },
+  { id: "aero-bank-stall", topic: "aerodynamics", prompt: "As the bank angle of a level turn increases, the stall speed:", choices: ["Decreases", "Increases", "Stays the same"], correct: 1, explanation: "A steeper bank raises the load factor, which raises stall speed." },
+  { id: "aero-ground-effect", topic: "aerodynamics", prompt: "Flying close to the ground (ground effect) generally:", choices: ["Increases induced drag", "Reduces induced drag", "Has no effect on drag"], correct: 1, explanation: "Near the surface the wingtip vortices are disrupted, which reduces induced drag and can make the airplane float." },
+  { id: "comm-mayday", topic: "communications", prompt: "Which call is used for a distress situation, meaning grave and imminent danger?", choices: ["MAYDAY", "PAN-PAN", "SECURITE"], correct: 0, explanation: "MAYDAY is for distress. PAN-PAN is for urgency, a serious situation that is not yet a distress." },
+  { id: "comm-121-5", topic: "communications", prompt: "The international aviation emergency frequency is:", choices: ["118.0 MHz", "121.5 MHz", "126.7 MHz"], correct: 1, explanation: "121.5 MHz is monitored as the emergency frequency." },
+  { id: "comm-ctaf", topic: "communications", prompt: "At an airport with no operating control tower, pilots announce their position and intentions on:", choices: ["The CTAF", "The ATIS", "The ground control frequency"], correct: 0, explanation: "The Common Traffic Advisory Frequency is used to self-announce at non-towered airports." },
+  { id: "perf-headwind", topic: "performance", prompt: "Compared with calm wind, a headwind on takeoff generally:", choices: ["Lengthens the ground roll", "Shortens the ground roll", "Does not change the ground roll"], correct: 1, explanation: "A headwind lowers the ground speed needed to reach flying speed, so the ground roll is shorter." },
+  { id: "perf-da-climb", topic: "performance", prompt: "At a high density altitude, an airplane's climb performance generally:", choices: ["Decreases", "Increases", "Stays the same"], correct: 0, explanation: "Thinner air reduces both engine power and propeller and wing efficiency." },
+  { id: "perf-aft-cg", topic: "performance", prompt: "Moving the center of gravity aft generally makes the airplane:", choices: ["More stable", "Less stable", "No different in stability"], correct: 1, explanation: "An aft center of gravity reduces pitch stability, and an airplane loaded too far aft can be hard to recover from a stall." },
+  { id: "nav-latitude", topic: "navigation", prompt: "Lines of latitude measure distance:", choices: ["East or west of the prime meridian", "North or south of the equator", "Above mean sea level"], correct: 1, explanation: "Latitude is measured in degrees north or south of the equator." },
+  { id: "nav-variation", topic: "navigation", prompt: "Applying magnetic variation to a true course gives:", choices: ["Magnetic course", "Compass course", "Ground track"], correct: 0, explanation: "True course corrected for variation is magnetic course; deviation is then applied to get compass course." },
+  { id: "nav-dead-reckoning", topic: "navigation", prompt: "Dead reckoning navigation relies on:", choices: ["Computed heading, airspeed and elapsed time", "Radio navigation signals only", "Satellite signals only"], correct: 0, explanation: "Dead reckoning predicts position from a known start point using course, speed and time." },
+  { id: "airport-runway-number", topic: "airports", prompt: "Runway 27 is lined up with a magnetic heading of about:", choices: ["027 degrees", "270 degrees", "072 degrees"], correct: 1, explanation: "The runway number is the magnetic heading rounded to the nearest 10 degrees, with the last zero dropped." },
+  { id: "airport-pattern", topic: "airports", prompt: "Unless otherwise indicated, traffic pattern turns are made to the:", choices: ["Left", "Right", "Side with less traffic"], correct: 0, explanation: "Standard traffic patterns use left turns unless the airport says otherwise." },
+  { id: "airport-displaced", topic: "airports", prompt: "Pavement before a displaced threshold (marked with arrows) may be used for:", choices: ["Touchdown", "Takeoff, taxiing and landing rollout, but not touchdown", "Nothing; it is closed"], correct: 1, explanation: "The displaced threshold marks where landing may begin; the earlier pavement is still usable for other movements." },
+  { id: "emerg-glide", topic: "emergency_procedures", prompt: "After an engine failure in a single-engine airplane, the first action is to:", choices: ["Start the restart checklist", "Pitch for the best glide speed", "Turn back to the departure airport"], correct: 1, explanation: "Establish best glide speed first so you keep the most time and distance to choose a landing spot and run the checklist." },
+  { id: "emerg-disorientation", topic: "emergency_procedures", prompt: "If you feel spatially disoriented in clouds, you should:", choices: ["Trust your body sensations", "Rely on the flight instruments", "Look for the horizon through gaps"], correct: 1, explanation: "The inner ear can give false signals; the instruments tell the true attitude." },
+  { id: "emerg-co", topic: "emergency_procedures", prompt: "Headache and drowsiness, with a faint exhaust smell while the cabin heater is on, suggest:", choices: ["Hypoxia from altitude", "Carbon monoxide poisoning", "Normal fatigue"], correct: 1, explanation: "A leaking exhaust can send carbon monoxide into the cabin heat. Shut off the heater, open fresh air and land as soon as practical." },
 ];
 
-export function makeQuizAttempt(answers: number[], date: string, id: string): QuizAttempt {
+/** Questions in one quiz attempt. */
+export const QUIZ_LENGTH = 8;
+
+/** Seeded (mulberry32) Fisher-Yates pick: the same seed always gives the same unique set. */
+export function selectQuizQuestions(seed: number, count: number = QUIZ_LENGTH, pool: QuizQuestion[] = QUIZ_QUESTIONS): QuizQuestion[] {
+  let state = seed >>> 0;
+  const random = () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const copy = [...pool];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  }
+  return copy.slice(0, Math.min(count, copy.length));
+}
+
+export function makeQuizAttempt(answers: number[], date: string, id: string, questions: QuizQuestion[] = QUIZ_QUESTIONS): QuizAttempt {
   const weakTopics: Topic[] = [];
   let score = 0;
-  QUIZ_QUESTIONS.forEach((question, index) => {
+  questions.forEach((question, index) => {
     if (answers[index] === question.correct) score += 1;
     else if (!weakTopics.includes(question.topic)) weakTopics.push(question.topic);
   });
-  return { id, date, score, total: QUIZ_QUESTIONS.length, weakTopics };
+  return { id, date, score, total: questions.length, weakTopics };
 }
 
 export function daysUntil(date: IsoDate, today: IsoDate = todayIso()): number {

@@ -10,7 +10,9 @@ import {
   normalizeToolkitState,
   reconcileMedicalDates,
   reminderLeadDays,
+  QUIZ_LENGTH,
   QUIZ_QUESTIONS,
+  selectQuizQuestions,
   readinessSummary,
   trainingCostForecast,
 } from "./toolkit";
@@ -203,5 +205,43 @@ describe("reminderLeadDays", () => {
     expect(state.estimatedHourlyCost).toBe(220_00);
     expect(state.additionalTrainingCosts).toBe(1_500_00);
     expect(buildReminders({ actions: [], events: [], credentials: [], profile: makeProfile(), leadDays: state.reminderLeadDays, today: "2026-10-14" })).toEqual([]);
+  });
+});
+
+describe("quiz question pool", () => {
+  it("has unique ids, valid correct indexes and three choices", () => {
+    expect(new Set(QUIZ_QUESTIONS.map((q) => q.id)).size).toBe(QUIZ_QUESTIONS.length);
+    expect(QUIZ_QUESTIONS.length).toBeGreaterThanOrEqual(32);
+    for (const q of QUIZ_QUESTIONS) {
+      expect(q.choices).toHaveLength(3);
+      expect(q.correct).toBeGreaterThanOrEqual(0);
+      expect(q.correct).toBeLessThan(q.choices.length);
+      expect(q.explanation.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("covers every quiz topic with at least three questions", () => {
+    const topics = ["weather", "aircraft_systems", "aerodynamics", "communications", "performance", "navigation", "airports", "emergency_procedures"];
+    for (const topic of topics) {
+      expect(QUIZ_QUESTIONS.filter((q) => q.topic === topic).length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("selects the same 8 unique questions for the same seed", () => {
+    const a = selectQuizQuestions(42);
+    expect(a.map((q) => q.id)).toEqual(selectQuizQuestions(42).map((q) => q.id));
+    expect(a).toHaveLength(QUIZ_LENGTH);
+    expect(new Set(a.map((q) => q.id)).size).toBe(QUIZ_LENGTH);
+    expect(selectQuizQuestions(43).map((q) => q.id)).not.toEqual(a.map((q) => q.id));
+  });
+
+  it("scores an attempt against the drawn set", () => {
+    const set = selectQuizQuestions(7);
+    const answers = set.map((q) => q.correct);
+    answers[0] = -1;
+    const attempt = makeQuizAttempt(answers, "2026-09-05T12:00:00Z", "q3", set);
+    expect(attempt.total).toBe(QUIZ_LENGTH);
+    expect(attempt.score).toBe(QUIZ_LENGTH - 1);
+    expect(attempt.weakTopics).toEqual([set[0]!.topic]);
   });
 });
