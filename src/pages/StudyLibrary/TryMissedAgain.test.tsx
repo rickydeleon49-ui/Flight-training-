@@ -73,3 +73,24 @@ it("retries just the missed questions with explanation and source, then a today-
   fireEvent.click(screen.getByRole("button", { name: "Try the 2 you missed again" }));
   expect(screen.getByText("Question 1 of 2")).toBeTruthy();
 });
+
+it("asks before leaving after an answer; closes directly before any answer", () => {
+  const leaveOpen = () => {
+    const dlg = screen.queryByText("Leave this test?")?.closest("dialog");
+    return Boolean(dlg && (dlg.hasAttribute("open") || dlg.getAttribute("aria-modal") === "true"));
+  };
+  render(h(TryMissedAgain, { attempt, items, responses, materialTitle: "Weather book" }));
+  fireEvent.click(screen.getByRole("button", { name: "Try the 2 you missed again" }));
+  fireEvent.click(screen.getAllByRole("button", { name: /^close/i })[0]!);
+  expect(screen.queryByText("Question 1 of 2")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Try the 2 you missed again" }));
+  fireEvent.click(screen.getByRole("button", { name: "1. Right 2" }));
+  fireEvent.click(screen.getAllByRole("button", { name: /^close/i })[0]!);
+  expect(leaveOpen()).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
+  expect(leaveOpen()).toBe(false);
+  expect(screen.getByText("Question 1 of 2")).toBeTruthy();
+  fireEvent.click(screen.getAllByRole("button", { name: /^close/i })[0]!);
+  fireEvent.click(screen.getByRole("button", { name: "Leave" }));
+  expect(screen.queryByText("Question 1 of 2")).toBeNull();
+});

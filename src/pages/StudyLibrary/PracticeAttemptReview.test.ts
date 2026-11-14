@@ -1732,7 +1732,7 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
     const questionInputEl = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
     questionInputEl.focus();
     expect(document.activeElement).toBe(questionInputEl);
-    const dialogEl = document.querySelector("dialog");
+    const dialogEl = questionInputEl.closest("dialog");
     if (!dialogEl) throw new Error("Expected dialog element");
     fireEvent(dialogEl, new Event("cancel", { bubbles: true, cancelable: true }));
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());

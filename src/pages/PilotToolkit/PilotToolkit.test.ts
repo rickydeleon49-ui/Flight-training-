@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -292,7 +292,7 @@ describe("Knowledge quiz result", () => {
     openQuiz();
     answerAll((i) => (i === 0 ? "I don't know" : QUIZ_QUESTIONS[i]!.choices[QUIZ_QUESTIONS[i]!.correct]!));
     const heading = await screen.findByRole("heading", { name: `${QUIZ_QUESTIONS.length - 1} of ${QUIZ_QUESTIONS.length} right.` });
-    expect(document.activeElement).toBe(heading);
+    await waitFor(() => expect(document.activeElement).toBe(heading));
     expect(screen.getByText(/Review:\s*Weather/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Try another quiz" }));
     expect(screen.getByRole("button", { name: "Start quiz" })).toBeTruthy();

@@ -249,7 +249,7 @@ html[data-input="pointer"] .sidebar__menu:focus-visible,
     padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
   }
   .sidebar__menu { min-width: 44px; min-height: 44px; }
-  .shell .section-jump-target, .shell .material-fold, .shell .material-fold > summary, .shell #material-practice-test {
+  .shell .section-jump-target, .shell .material-fold, .shell .material-fold > summary, .shell #material-practice-test, .shell #material-oral {
     scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5));
   }
   .brand { padding: 0; }
