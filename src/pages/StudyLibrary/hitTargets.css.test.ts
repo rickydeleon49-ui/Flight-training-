@@ -30,3 +30,17 @@ describe("BL-01 jump targets clear the sticky top bar", () => {
     expect(read("src/components/layout/shell.css")).toMatch(/\.shell #material-practice-test\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 0px\) \+ var\(--space-5\)\)/);
   });
 });
+
+describe("BL-36 phone tap targets reach 44px", () => {
+  const phone = (css: string) => css.slice(css.lastIndexOf("@media (pointer: coarse)"));
+  it("daily plan overflow and remaining toggles", () => {
+    const css = phone(read("src/components/dailyPlan/dailyPlan.css"));
+    expect(css).toMatch(/\.daily-plan-menu__toggle\s*\{[^}]*min-width:\s*var\(--hit-min\)[^}]*min-height:\s*var\(--hit-min\)/);
+    expect(css).toMatch(/\.daily-plan-remaining__toggle\s*\{[^}]*min-height:\s*var\(--hit-min\)/);
+  });
+  it("journal confidence options and pager arrows", () => {
+    const css = phone(read("src/pages/FlightJournal/journal.css"));
+    expect(css).toMatch(/\.confidence-picker__option\s*\{[^}]*width:\s*var\(--hit-min\)[^}]*height:\s*var\(--hit-min\)/);
+    expect(css).toMatch(/\.ledger-pager \.button\.button--small\s*\{[^}]*min-width:\s*var\(--hit-min\)/);
+  });
+});

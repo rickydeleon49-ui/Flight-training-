@@ -590,3 +590,9 @@
   .flight-totals { gap: var(--space-3); }
   .flight-totals__value { font-size: var(--text-xl); }
 }
+
+/* BL-36: phone tap targets. Confidence options and pager arrows are 44px boxes. */
+@media (pointer: coarse), (max-width: 700px) {
+  .confidence-picker__option { width: var(--hit-min); height: var(--hit-min); }
+  .ledger-pager .button.button--small { min-width: var(--hit-min); min-height: var(--hit-min); }
+}

@@ -314,3 +314,9 @@
 .daily-plan-item__time { gap: 3px; }
 .daily-plan-remaining-row__main { min-width: 0; flex: 1; }
 .daily-plan-remaining-row__note { margin-top: 2px; }
+
+/* BL-36: phone tap targets, 44px real boxes with the same look. */
+@media (pointer: coarse), (max-width: 700px) {
+  .daily-plan-menu__toggle { min-width: var(--hit-min); min-height: var(--hit-min); }
+  .daily-plan-remaining__toggle { min-height: var(--hit-min); }
+}
