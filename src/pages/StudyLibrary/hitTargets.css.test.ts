@@ -17,6 +17,10 @@ describe("polish-r15c target size and overlap", () => {
     expect(read("src/pages/FlightPath/flightPath.css")).toMatch(/\.enroll-checklist li > a\.small\s*\{[^}]*min-height:\s*var\(--hit-min\)/);
     expect(read("src/pages/FlightPath/skills/skills.css")).toMatch(/\.skills-topic__item \.stack > a\s*\{[^}]*min-height:\s*var\(--hit-min\)/);
   });
+  it("bookmark actions wrap with Remove pushed to the row end", () => {
+    expect(study).toMatch(/\.bookmark-row__actions\s*\{[^}]*flex-wrap:\s*wrap/);
+    expect(study).toMatch(/\.bookmark-row__actions \.destructive-action\s*\{[^}]*margin-inline-start:\s*auto/);
+  });
 });
 
 describe("BL-01 jump targets clear the sticky top bar", () => {
