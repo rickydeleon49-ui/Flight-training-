@@ -72,6 +72,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
+import { RegCardDrill } from "./RegCardDrill";
 import { RadioWords } from "./RadioWords";
 import "./pilotToolkit.css";
 
@@ -260,6 +261,7 @@ export function PilotToolkit() {
           <>
             <QuizTool state={data.toolkit} save={save} />
             <ChartSymbolDrill />
+            <RegCardDrill />
           </>
         ) : null}
         {tool === "reminders" ? (
