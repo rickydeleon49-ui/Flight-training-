@@ -619,7 +619,8 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   max-width: 100%;
 }
 .bookmark-row__actions .destructive-action {
-  margin-inline-start: var(--space-3);
+  /* BL-06: Remove sits at the row end, so a wrapped row reads as deliberate, not a stray button. */
+  margin-inline-start: auto;
 }
 
 /* Flashcards section (#material-flashcards) safeguards */

@@ -603,7 +603,17 @@ export function SessionView({
           </div>
         )
       ) : (
-        <div ref={question} className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
+        <div
+          ref={question}
+          className={`flashcard${review.revealed ? " is-revealed" : ""}`}
+          aria-live="polite"
+          style={review.revealed ? undefined : { cursor: "pointer" }}
+          onClick={(event) => {
+            // Pointer convenience only; the Show answer button stays the keyboard path.
+            if (review.revealed || (event.target as HTMLElement).closest("a, button")) return;
+            reveal();
+          }}
+        >
           <span className="tiny dim">{review.revealed ? "Answer" : "Question"}</span>
           <span>{item.front}</span>
           {review.revealed ? <span className="card-review__answer">{item.back}</span> : null}

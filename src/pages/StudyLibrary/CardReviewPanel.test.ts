@@ -297,6 +297,33 @@ describe("card reviews in MaterialDetail", () => {
     expect(await counts()).toEqual(before);
   });
 
+  it("clicking the card face shows the answer once; a second click changes nothing", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    const card = sessionRegion().getByText("Question").closest(".flashcard") as HTMLElement;
+    const face = () => card;
+    expect(face().style.cursor).toBe("pointer");
+    fireEvent.click(face());
+    expect(sessionRegion().getByText("Answer")).toBeTruthy();
+    expect(sessionRegion().getByRole("group", { name: "Rate this card" })).toBeTruthy();
+    expect(face().style.cursor).toBe("");
+    fireEvent.click(face());
+    expect(sessionRegion().getByText("Answer")).toBeTruthy();
+    expect(sessionRegion().getByRole("group", { name: "Rate this card" })).toBeTruthy();
+    expect(sessionRegion().queryByText("Card 2 of 3 · new")).toBeNull();
+  });
+
+  it("Show answer still reveals after the card click was added", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    fireEvent.click(button("Show answer"));
+    expect(sessionRegion().getByText("Answer")).toBeTruthy();
+  });
+
   it("updates the shortcut hint after reveal and restores it for the next card", async () => {
     await seed();
     renderDetail();

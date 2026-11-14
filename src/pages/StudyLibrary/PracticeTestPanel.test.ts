@@ -100,12 +100,13 @@ describe("PracticeTestPanel", () => {
     checkAnswer(1);
     await screen.findByText("Correct");
     expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
+    expect(screen.queryByText(/Your answers are kept\. Pick up where you left off\./)).toBeNull();
     const progress = screen.getByRole("status", {name:"Practice progress"});
     expect(progress.classList.contains("ai-disclaimer")).toBe(false);
     await waitFor(async () => expect((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.responses).toHaveLength(1));
     view.unmount();
     await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
-    expect(await screen.findByText(/Resuming your attempt — 1 of 2 answered/)).toBeTruthy();
+    expect(await screen.findByText(/Resuming your attempt — 1 of 2 answered\. Your answers are kept\. Pick up where you left off\./)).toBeTruthy();
   });
 
   it("uses calm progress when a newly started unanswered attempt is reopened after regeneration", async () => {

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeEvent } from "@/testing/factories";
 import { todayIso } from "@/lib/dates";
-import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
+import { DEFAULT_TOOLKIT_STATE, QUIZ_QUESTIONS } from "@/logic/toolkit";
 import type { AppData } from "@/state/AppDataContext";
 
 let data: AppData;
@@ -271,5 +271,38 @@ describe("Knowledge quiz history", () => {
     fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
     expect(screen.getByText("6/8")).toBeTruthy();
     expect(screen.queryByText(/No knowledge quiz attempts yet/)).toBeNull();
+  });
+});
+
+describe("Knowledge quiz result", () => {
+  const openQuiz = () => {
+    render(h(MemoryRouter, null, h(PilotToolkit)));
+    fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
+  };
+  const answerAll = (pick: (i: number) => string) => {
+    QUIZ_QUESTIONS.forEach((_, i) => {
+      fireEvent.click(screen.getByRole("button", { name: pick(i) }));
+      fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+      fireEvent.click(screen.getByRole("button", { name: i === QUIZ_QUESTIONS.length - 1 ? "Finish quiz" : "Next question" }));
+    });
+  };
+
+  it("shows the score, a Review line, and returns to the start card", async () => {
+    openQuiz();
+    answerAll((i) => (i === 0 ? "I don't know" : QUIZ_QUESTIONS[i]!.choices[QUIZ_QUESTIONS[i]!.correct]!));
+    const heading = await screen.findByRole("heading", { name: `${QUIZ_QUESTIONS.length - 1} of ${QUIZ_QUESTIONS.length} right.` });
+    expect(document.activeElement).toBe(heading);
+    expect(screen.getByText(/Review:\s*Weather/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Try another quiz" }));
+    expect(screen.getByRole("button", { name: "Start quiz" })).toBeTruthy();
+  });
+
+  it("I don't know shows the correct answer like a wrong answer", () => {
+    openQuiz();
+    fireEvent.click(screen.getByRole("button", { name: "I don't know" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+    const q = QUIZ_QUESTIONS[0]!;
+    expect(screen.getByText(new RegExp(`Not quite\\. The answer is: ${q.choices[q.correct]}`))).toBeTruthy();
   });
 });
