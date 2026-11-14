@@ -289,7 +289,7 @@
 
   --text-primary: #eef1f7;
   --text-secondary: rgba(226, 232, 244, 0.74);
-  --text-tertiary: rgba(226, 232, 244, 0.64);
+  --text-tertiary: rgba(226, 232, 244, 0.72);
   --text-on-accent: #000000;
 
   --border-subtle: rgba(128, 146, 180, 0.22);
@@ -389,7 +389,7 @@
 
     --text-primary: #eef1f7;
     --text-secondary: rgba(226, 232, 244, 0.74);
-    --text-tertiary: rgba(226, 232, 244, 0.64);
+    --text-tertiary: rgba(226, 232, 244, 0.72);
     --text-on-accent: #000000;
 
     --border-subtle: rgba(128, 146, 180, 0.22);

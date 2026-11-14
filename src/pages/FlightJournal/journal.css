@@ -243,6 +243,11 @@
   gap: var(--space-3);
 }
 
+/* BL-25: hour meters use the neutral secondary ink, not the berry accent. */
+.hour-reference-list .meter__fill {
+  background: var(--text-secondary);
+}
+
 .flight-reference-note {
   margin-top: var(--space-4);
   line-height: 1.5;
