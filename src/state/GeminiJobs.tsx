@@ -424,7 +424,7 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
   }
   const s = saved as PracticeTest;
   const a = answer as GeneratedPracticeTest;
-  return canonical([s.title, s.questions, s.model]) === canonical([a.title, a.questions, a.model]);
+  return canonical([s.title, s.questions, s.model]) === canonical([a.title, savedQuestions(a.questions), a.model]);
 }
 
 async function savedContent(repos: Repositories, kind: GeminiJobKind, materialId: string) {
