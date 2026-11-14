@@ -1418,7 +1418,7 @@ export function PracticeTestPanel({
 
       {beforeStart ? null : <p className="tiny muted" role="status" aria-label="Practice progress">
         {state.attempt && resumedAttempt.current === state.attempt.attemptId
-          ? `Resuming your attempt — ${answeredCount} of ${totalQuestions} answered. Feedback appears after each answer is saved.`
+          ? `Resuming your attempt — ${answeredCount} of ${totalQuestions} answered. Your answers are kept. Pick up where you left off.`
           : <>Question <span>{state.index + 1}</span> of <span>{totalQuestions}</span></>}
       </p>}
 
