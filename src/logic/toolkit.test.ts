@@ -96,6 +96,16 @@ describe("pilot toolkit", () => {
   });
 });
 
+describe("quiz I don't know", () => {
+  it("scores the not-a-choice value as a miss and flags the topic", () => {
+    const answers = QUIZ_QUESTIONS.map((question) => question.correct);
+    answers[0] = -1;
+    const attempt = makeQuizAttempt(answers, "2026-09-05T12:00:00Z", "q2");
+    expect(attempt.score).toBe(QUIZ_QUESTIONS.length - 1);
+    expect(attempt.weakTopics).toEqual(["weather"]);
+  });
+});
+
 describe("medical reminders", () => {
   const medical = (expiresOn: string) => ({
     id: "c1", type: "medical" as const, title: "Third class medical", identifier: "", issuedOn: null,

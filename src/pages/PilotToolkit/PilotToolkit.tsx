@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
 import { Item } from "react-stately/Item";
@@ -28,6 +28,7 @@ import {
   TOPIC_LABELS,
   type CredentialRecord,
   type CredentialType,
+  type QuizAttempt,
   type ReadinessStatus,
   type SafetyCheck,
   type SafetyDecision,
@@ -1038,8 +1039,16 @@ function SafetyTool({ state, save }: ToolProps) {
   );
 }
 
+// Not a valid choice index, so makeQuizAttempt scores it as a miss.
+const QUIZ_DONT_KNOW = -1;
+
 function QuizTool({ state, save }: ToolProps) {
   const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<QuizAttempt | null>(null);
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (result) resultHeading.current?.focus();
+  }, [result]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -1050,6 +1059,7 @@ function QuizTool({ state, save }: ToolProps) {
     : null;
 
   const start = () => {
+    setResult(null);
     setRunning(true);
     setIndex(0);
     setAnswers([]);
@@ -1075,6 +1085,7 @@ function QuizTool({ state, save }: ToolProps) {
         finishing.current = false;
         setFinishBusy(false);
       }
+      setResult(attempt);
       setRunning(false);
       return;
     }
@@ -1083,6 +1094,31 @@ function QuizTool({ state, save }: ToolProps) {
     setSelected(null);
     setChecked(false);
   };
+
+  if (!running && result)
+    return (
+      <Card variant="accent">
+        <CardHeader title="Quiz finished" eyebrow="Knowledge quiz" />
+        <CardBody>
+          <h3 ref={resultHeading} tabIndex={-1} className="display">
+            {result.score} of {result.total} right.
+          </h3>
+          {result.weakTopics.length ? (
+            <p className="small muted">
+              Review:{" "}
+              {result.weakTopics.map((topic) => TOPIC_LABELS[topic]).join(", ")}
+            </p>
+          ) : null}
+          <Button
+            variant="primary"
+            className="toolkit-mt-5"
+            onClick={() => setResult(null)}
+          >
+            Try another quiz
+          </Button>
+        </CardBody>
+      </Card>
+    );
 
   if (!running)
     return (
@@ -1176,9 +1212,20 @@ function QuizTool({ state, save }: ToolProps) {
               {choice}
             </button>
           ))}
+          <button
+            type="button"
+            disabled={checked}
+            className={`quiz__choice${selected === QUIZ_DONT_KNOW ? " is-selected" : ""}`}
+            onClick={() => setSelected(QUIZ_DONT_KNOW)}
+          >
+            I don't know
+          </button>
           {checked ? (
             <p className="quiz__explanation small">
               {selected === question.correct ? "Correct. " : "Not quite. "}
+              {selected === QUIZ_DONT_KNOW
+                ? `The answer is: ${question.choices[question.correct]}. `
+                : null}
               {question.explanation}
             </p>
           ) : null}
