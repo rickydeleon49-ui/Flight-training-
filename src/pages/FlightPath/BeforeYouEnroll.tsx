@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Card, CardBody, CardHeader, Checkbox } from "@/components/ui";
+import { Checkbox, Section } from "@/components/ui";
 import { isTauri } from "@/data";
 import type { Profile } from "@/domain/types";
 import { useAppData } from "@/state/AppDataContext";
@@ -87,11 +87,10 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
   }
 
   return (
-    <Card variant="quiet" className="enroll-card">
-      <CardHeader title="Before you enroll" action={
+    <div className="enroll-card">
+      <Section title="Before you enroll" actions={
         <button type="button" className="enroll-hide small" onClick={() => remember({ hidden: true, done: [] })}>Hide</button>
-      } />
-      <CardBody>
+      }>
         <ul className="enroll-checklist stack stack--3">
           {steps.map((step) => (
             <li key={step.id} className="row row--wrap">
@@ -111,7 +110,7 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
         <p className="tiny muted">FAA pages last checked: 31 October 2026.</p>
         {saveError ? <p role="alert" className="small muted">Your ticks could not be saved just now. Please try again.</p> : null}
         {linkError ? <p role="alert" className="small muted">Could not open the FAA page. Please try again.</p> : null}
-      </CardBody>
-    </Card>
+      </Section>
+    </div>
   );
 }
