@@ -71,7 +71,9 @@
   cursor: pointer;
   min-height: var(--hit-min);
 }
-.quiz__choice:hover:not(:disabled), .quiz__choice.is-selected { border-color: var(--accent-primary); background: var(--accent-primary-fill); }
+.quiz__choice.is-selected { border-color: var(--accent-primary); background: var(--accent-primary-fill); }
+/* Hover is a hint only (border), so just the chosen answer reads as filled. */
+.quiz__choice:hover:not(:disabled):not(.is-selected) { border-color: var(--border-focus, var(--accent-primary)); }
 .quiz__choice.is-correct { border-color: var(--status-complete); background: var(--surface-tint-mint); }
 .quiz__choice.is-wrong { border-color: var(--status-overdue); }
 .quiz__explanation { padding: var(--space-4); border-radius: var(--radius-md); background: var(--surface-sunken); }

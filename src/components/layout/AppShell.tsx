@@ -206,6 +206,20 @@ export function AppShell() {
     }
   }, [location.key, desktop]);
 
+  // Track the last input kind so a mouse-chosen Menu item leaves no ring on Menu after the page changes.
+  useEffect(() => {
+    const root = document.documentElement;
+    const pointer = () => { root.dataset.input = "pointer"; };
+    const key = () => { root.dataset.input = "keyboard"; };
+    document.addEventListener("pointerdown", pointer, true);
+    document.addEventListener("keydown", key, true);
+    return () => {
+      document.removeEventListener("pointerdown", pointer, true);
+      document.removeEventListener("keydown", key, true);
+      delete root.dataset.input;
+    };
+  }, []);
+
   useHistoryScroll();
   useClearLibrarySearchOnLeave();
 
