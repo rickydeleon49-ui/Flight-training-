@@ -44,6 +44,16 @@ export class PracticeStateValidationError extends Error {
   }
 }
 
+async function validatePracticeUnchecked(query: ValidationQuery): Promise<void> {
+  const rows = await query(`SELECT type, "notnull" AS required FROM pragma_table_info('practice_test_items') WHERE name = 'unchecked'`, []);
+  if (rows.length !== 1) refuse("Table practice_test_items is missing required column: unchecked");
+  const row = rows[0]!;
+  if (text(row, "type").toLowerCase() !== "integer" || int(row, "required") !== 1) refuse("Table practice_test_items column unchecked type mismatch.");
+  if ((await count(query, "SELECT COUNT(*) AS n FROM practice_test_items WHERE unchecked NOT IN (0, 1)", [])) !== 0) {
+    refuse("Table practice_test_items has an invalid unchecked value.");
+  }
+}
+
 function refuse(message: string): never {
   throw new PracticeStateValidationError(message);
 }
@@ -259,6 +269,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 36) await validateKitQueue(query, reference);
   if (newest >= 37) await validateStudyPackState(query, reference);
   if (newest >= 38) await validateLibraryFolders(query, reference);
+  if (newest >= 39) await validatePracticeUnchecked(query);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -284,6 +295,8 @@ export async function validatePracticeState(query: ValidationQuery, reference: V
       // databases are checked against their own version, and databases that
       // have them are checked by the schema-17 gate below.
       if (table === "practice_test_items" && (name === "logical_id" || name === "replaces_id")) continue;
+      // 0039 adds the "not checked" flag; checked by the schema-39 gate below.
+      if (table === "practice_test_items" && name === "unchecked") continue;
       const column = actual.get(name);
       if (!column) refuse(`Table ${table} is missing required column: ${name}`);
       if (text(column, "type").toLowerCase() !== text(ref, "type").toLowerCase()) refuse(`Table ${table} column ${name} type mismatch.`);

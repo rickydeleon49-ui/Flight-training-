@@ -347,7 +347,7 @@ export function withoutSchema16And17Columns(rows: Record<string, unknown[]>): Re
   if ("ai_study_sets" in rows) out.ai_study_sets = strip("ai_study_sets", { summary_origin: null, retired_json: "[]" });
   if ("material_bookmarks" in rows) out.material_bookmarks = strip("material_bookmarks", { quote: null });
   if ("practice_tests" in rows) out.practice_tests = strip("practice_tests", { retired_json: "[]" });
-  if ("practice_test_items" in rows) out.practice_test_items = strip("practice_test_items", { logical_id: null, replaces_id: null });
+  if ("practice_test_items" in rows) out.practice_test_items = strip("practice_test_items", { logical_id: null, replaces_id: null, unchecked: 0 });
   if ("journal_entries" in rows) out.journal_entries = strip("journal_entries", { school_name: null });
   return out;
 }
