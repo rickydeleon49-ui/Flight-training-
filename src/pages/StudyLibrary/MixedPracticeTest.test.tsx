@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, expect, it } from "vitest";
 import { makeMaterial } from "@/testing/factories";
 import type { PracticeQuestion, PracticeTest } from "@/domain/types";
@@ -41,4 +42,18 @@ it("picker needs two materials, lists only ones with questions, and shows a resu
   }
   expect(screen.getByText("18 of 18 correct")).toBeTruthy();
   expect(screen.getByText(/Not an official FAA knowledge test score/)).toBeTruthy();
+});
+
+it("dead end offers Toolkit quizzes and the one material that has questions", () => {
+  render(h(MemoryRouter, null, h(MixedPracticeTest, { practiceTests: [t("a", 5)], materials })));
+  fireEvent.click(screen.getByRole("button", { name: "Mixed practice test" }));
+  expect(screen.getByRole("link", { name: "Go to Toolkit quizzes" }).getAttribute("href")).toBe("/toolkit?tool=quiz");
+  expect(screen.getByRole("link", { name: /Practise Mat a on its own/ }).getAttribute("href")).toBe("/study/a#material-practice-test");
+});
+
+it("dead end with no questions only offers Toolkit quizzes", () => {
+  render(h(MemoryRouter, null, h(MixedPracticeTest, { practiceTests: [], materials })));
+  fireEvent.click(screen.getByRole("button", { name: "Mixed practice test" }));
+  expect(screen.getByRole("link", { name: "Go to Toolkit quizzes" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: /on its own/ })).toBeNull();
 });

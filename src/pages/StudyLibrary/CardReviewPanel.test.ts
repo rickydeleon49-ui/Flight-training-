@@ -208,7 +208,7 @@ describe("card reviews in MaterialDetail", () => {
     const ordinaryView = renderDetail();
     await reviewHeading();
     await openSession();
-    expect(scroll).not.toHaveBeenCalled();
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reducedMotion ? "auto" : "smooth" });
     ordinaryView.unmount();
   });
 
@@ -248,7 +248,7 @@ describe("card reviews in MaterialDetail", () => {
     renderDetail();
     await reviewHeading();
     await openSession();
-    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockClear();
     fireEvent.click(button("Show answer"));
     fireEvent.click(button("Explain this"));
     fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Explain?" } });
@@ -315,7 +315,7 @@ describe("card reviews in MaterialDetail", () => {
     expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
   });
 
-  it("keeps the card at its tallest height when flipping and resets on the next card", async () => {
+  it("keeps the card at its tallest height when flipping and carries it to the next card", async () => {
     await seed();
     let tall = 100;
     const desc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
@@ -337,7 +337,7 @@ describe("card reviews in MaterialDetail", () => {
       tall = 100;
       fireEvent.click(button(/^Good: again in/));
       await screen.findByText(/^Card 2 of 3 · new/);
-      expect(face().style.minHeight).toBe("100px");
+      expect(face().style.minHeight).toBe("180px");
     } finally {
       if (desc) Object.defineProperty(HTMLElement.prototype, "offsetHeight", desc);
       else delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetHeight;
