@@ -413,3 +413,21 @@ html.is-ios .card--grouped .card__body { padding-top: var(--space-2); }
 /* Reminder status: one quiet line under the greeting. */
 .deck-reminder-line { margin: 0; color: var(--text-secondary); }
 .deck-reminder-line a { display: inline-flex; align-items: center; min-height: var(--hit-min); }
+
+/* Phone: a quiet jump to the folded plan row, which sits far down the single column. */
+.deck-jump-more {
+  display: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+}
+.deck-more-anchor { scroll-margin-top: 72px; }
+@media (max-width: 1080px) {
+  .deck-jump-more { display: inline-flex; align-items: center; min-height: var(--hit-min); margin-bottom: var(--space-3); }
+}

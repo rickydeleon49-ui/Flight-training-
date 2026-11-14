@@ -200,6 +200,21 @@ export function FlightDeck() {
         )}
       </p>
 
+      {model.studyFocus || model.currentMilestone || model.personal ? (
+        <button
+          type="button"
+          className="deck-jump-more"
+          onClick={() => {
+            const target = document.getElementById("deck-more");
+            const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+            target?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+            target?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+          }}
+        >
+          Jump to study focus and milestones
+        </button>
+      ) : null}
+
       <div className="deck">
         <div className="deck__column">
           <TodayReviewCard
@@ -671,7 +686,7 @@ function MoreOnYourPlan({ model }: { model: Model }) {
     }
   };
   return (
-    <div>
+    <div id="deck-more" className="deck-more-anchor">
       <button
         type="button"
         className="deck-more"
