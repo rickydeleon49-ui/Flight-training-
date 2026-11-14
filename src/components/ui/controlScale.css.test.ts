@@ -34,5 +34,5 @@ it("small targets reach 44px", () => {
   ] as const) {
     expect(rule(read(file), sel), sel).toMatch(/min-height:\s*(?:var\(--hit-min\)|44px)/);
   }
-  expect(rule(read("../../pages/FlightJournal/journal.css"), ".ledger-pager .button")).toMatch(/min-height:\s*2\.75rem/);
+  expect(rule(read("../../pages/FlightJournal/journal.css"), ".ledger-pager .button")).toMatch(/min-height:\s*var\(--hit-min\)/);
 });

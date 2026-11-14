@@ -29,7 +29,7 @@ const RAW_COLOUR_ALLOWLIST = new Map<string, string>([
 const RAW_COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/;
 
 // Type, space, shape and layout tokens are shared by both themes.
-const SHARED = /^--(font-|text-(2xs|xs|sm|base|callout|md|title3|lg|xl|2xl|hero)$|leading-|space-|control-|hit-min|radius-|sidebar-width|content-max|transition)/;
+const SHARED = /^--(font-|text-(2xs|xs|sm|base|callout|md|title3|lg|xl|2xl|hero)$|leading-|space-|control-|hit-min|rule-|radius-|sidebar-width|content-max|transition)/;
 
 describe("dark twins", () => {
   const raw = readFileSync(join(__dirname, "tokens.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");

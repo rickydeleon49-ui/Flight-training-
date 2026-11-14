@@ -134,6 +134,8 @@
   --control-h: 40px;
   --control-h-sm: 36px;
   --hit-min: 44px;
+  /* Motif (UI-ELEVATE-01 F4). */
+  --rule-ledger-width: 1px;
   --control-text: var(--text-sm);
 
   /* ---- Shape ---- */
