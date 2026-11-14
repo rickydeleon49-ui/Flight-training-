@@ -82,7 +82,7 @@ export function Finances() {
         <Card variant="grouped">
           <EmptyState
             compact
-            icon={<WalletIcon size={30} />}
+            icon={<WalletIcon size={26} />}
             title="Your Flight Fund starts here."
             body="Record what you have set aside for training and what you spend. Estimated lesson costs from your Schedule will show up as upcoming expenses."
             action={
