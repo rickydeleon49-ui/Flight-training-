@@ -88,3 +88,10 @@
   gap: var(--space-3);
   flex-wrap: wrap;
 }
+
+/* Skill name is a standalone row link: a 44px tall hit area, same text size. */
+.skills-topic__item .stack > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hit-min);
+}

@@ -174,3 +174,10 @@
 @media (prefers-reduced-motion: reduce) {
   .waypoint__tools { transition: none; }
 }
+
+/* Checklist links (Study Library, Finances) get a full-height hit area; the text size stays the same. */
+.enroll-checklist li > a.small {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hit-min);
+}
