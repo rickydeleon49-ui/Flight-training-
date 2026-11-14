@@ -73,6 +73,7 @@ import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepositor
 
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
 import { RegCardDrill } from "./RegCardDrill";
+import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
 import "./pilotToolkit.css";
 
@@ -1100,6 +1101,7 @@ function SafetyTool({ state, save }: ToolProps) {
         </CardBody>
       </Card>
       <PerformanceAidCard />
+      <E6bTrainer />
     </div>
     <WeightBalancePractice />
     </>
