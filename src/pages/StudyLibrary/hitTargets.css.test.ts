@@ -26,8 +26,8 @@ describe("polish-r15c target size and overlap", () => {
 describe("BL-01 jump targets clear the sticky top bar", () => {
   it("desktop scroll-margin-top is the 44px bar plus a gap, practice test included", () => {
     const ui = read("src/components/ui/ui.css");
-    expect(ui).toMatch(/\.section-jump-target,[^{]*#material-practice-test\s*\{\s*scroll-margin-top:\s*calc\(44px \+ var\(--space-5\)\)/);
-    expect(read("src/components/layout/shell.css")).toMatch(/\.shell #material-practice-test\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 0px\) \+ var\(--space-5\)\)/);
+    expect(ui).toMatch(/\.section-jump-target,[^{]*#material-practice-test[^{]*\{\s*scroll-margin-top:\s*calc\(44px \+ var\(--space-5\)\)/);
+    expect(read("src/components/layout/shell.css")).toMatch(/\.shell #material-practice-test[^{]*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 0px\) \+ var\(--space-5\)\)/);
   });
 });
 
