@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button, Dialog } from "@/components/ui";
 import type { PracticeTest, StudyMaterial } from "@/domain/types";
 import {
@@ -43,7 +44,15 @@ export function MixedPracticeTest({ practiceTests, materials }: {
               setRun(buildMixedTest(practiceTests, materials, picked));
             }}>Start mixed test</Button>
             {picked.length < MIXED_MIN_MATERIALS ? <p className="tiny dim">Choose {MIXED_MIN_MATERIALS - picked.length} more to start.</p> : null}
-          </> : <p>Mixed practice needs at least two materials that already have practice questions.</p>}
+          </> : <div className="stack stack--2">
+            <p>Mixed practice needs at least two materials that already have practice questions.</p>
+            {choices.length === 1 ? <p>
+              <Link className="small" onClick={close} to={`/study/${encodeURIComponent(choices[0]!.materialId)}#material-practice-test`}>
+                Practise {choices[0]!.title} on its own
+              </Link>
+            </p> : null}
+            <p><Link className="small" onClick={close} to="/toolkit?tool=quiz">Go to Toolkit quizzes</Link></p>
+          </div>}
         </> : null}
         {run ? <QuickQuestionRun questions={run} resultLabel="Mixed practice result" onDone={close} /> : null}
         <p className="tiny dim">Study aid — check it against FAA guidance and your instructor.</p>

@@ -446,7 +446,7 @@ export function SessionView({
   const appData = useContext(AppDataContext);
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
   const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
-  useStickyCardHeight(question, shown?.itemId ?? "", review.revealed);
+  useStickyCardHeight(question, shown?.itemId ?? "", review.revealed, true);
 
   // Extra review keeps its place unless the next question would be clipped.
   const extraCardOffScreen = () => {
@@ -464,6 +464,9 @@ export function SessionView({
       heading.current?.focus({ preventScroll: true });
       onEntryShown();
     } else {
+      // A review that opens starts at its top, never mid-page.
+      const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (!session.extra) region.current?.scrollIntoView?.({ block: "start", behavior });
       region.current?.focus({ preventScroll: true });
     }
   }, []);
