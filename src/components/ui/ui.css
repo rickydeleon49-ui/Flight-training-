@@ -893,7 +893,8 @@ html.is-ios .dialog.modal-fallback[open]:has(input, textarea, select) {
 /* Keep destructive controls last, with breathing room from everyday actions. */
 .destructive-action { margin-inline-start: var(--space-5); }
 
-.section-jump-target, .material-fold, .material-fold > summary { scroll-margin-top: var(--space-5); }
+/* Jump targets land below the 44px sticky top bar (narrow shells override with the header height in shell.css). */
+.section-jump-target, .material-fold, .material-fold > summary, #material-practice-test { scroll-margin-top: calc(44px + var(--space-5)); }
 .section-jump-target:focus {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
