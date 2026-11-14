@@ -72,6 +72,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
+import { RadioWords } from "./RadioWords";
 import "./pilotToolkit.css";
 
 type Tool =
@@ -83,7 +84,8 @@ type Tool =
   | "quiz"
   | "reminders"
   | "career"
-  | "metar";
+  | "metar"
+  | "radio";
 
 type ToolChoice = { id: Tool; label: string };
 const TOOLS: ToolChoice[] = [
@@ -93,9 +95,10 @@ const TOOLS: ToolChoice[] = [
   { id: "costs", label: "Cost Forecast" },
   { id: "safety", label: "Safety Check" },
   { id: "quiz", label: "Quizzes" },
+  { id: "metar", label: "METAR" },
+  { id: "radio", label: "Radio words" },
   { id: "reminders", label: "Reminders" },
   { id: "career", label: "Career Portfolio" },
-  { id: "metar", label: "METAR" },
 ];
 
 /** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else is Checkride. */
@@ -262,6 +265,7 @@ export function PilotToolkit() {
         {tool === "reminders" ? (
           <ReminderTool state={data.toolkit} save={save} />
         ) : null}
+        {tool === "radio" ? <RadioWords /> : null}
         {tool === "career" ? (
           <CareerTool state={data.toolkit} save={save} />
         ) : null}
