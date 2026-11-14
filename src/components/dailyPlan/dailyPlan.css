@@ -317,6 +317,8 @@
 
 /* BL-36: phone tap targets, 44px real boxes with the same look. */
 @media (pointer: coarse), (max-width: 700px) {
-  .daily-plan-menu__toggle { min-width: var(--hit-min); min-height: var(--hit-min); }
+  /* html.is-ios .button sets min-width: 0 on phones; this must out-rank it. */
+  .daily-plan-menu__toggle,
+  html.is-ios .button.daily-plan-menu__toggle { min-width: var(--hit-min); min-height: var(--hit-min); }
   .daily-plan-remaining__toggle { min-height: var(--hit-min); }
 }

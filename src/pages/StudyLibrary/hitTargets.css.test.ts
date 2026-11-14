@@ -35,7 +35,7 @@ describe("BL-36 phone tap targets reach 44px", () => {
   const phone = (css: string) => css.slice(css.lastIndexOf("@media (pointer: coarse)"));
   it("daily plan overflow and remaining toggles", () => {
     const css = phone(read("src/components/dailyPlan/dailyPlan.css"));
-    expect(css).toMatch(/\.daily-plan-menu__toggle\s*\{[^}]*min-width:\s*var\(--hit-min\)[^}]*min-height:\s*var\(--hit-min\)/);
+    expect(css).toMatch(/html\.is-ios \.button\.daily-plan-menu__toggle\s*\{[^}]*min-width:\s*var\(--hit-min\)[^}]*min-height:\s*var\(--hit-min\)/);
     expect(css).toMatch(/\.daily-plan-remaining__toggle\s*\{[^}]*min-height:\s*var\(--hit-min\)/);
   });
   it("journal confidence options and pager arrows", () => {
