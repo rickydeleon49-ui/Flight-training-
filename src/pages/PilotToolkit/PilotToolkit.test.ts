@@ -65,7 +65,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
 
     const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(8);
+    expect(tabs).toHaveLength(9);
 
     const activeTab = screen.getByRole("tab", { selected: true });
     expect(activeTab.id).toBe("toolkit-tab-readiness");
@@ -85,7 +85,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
 
     expect(activeTabs).toHaveLength(1);
     expect(activeTabs[0]!.getAttribute("aria-selected")).toBe("true");
-    expect(inactiveTabs).toHaveLength(7);
+    expect(inactiveTabs).toHaveLength(8);
     for (const tab of inactiveTabs) {
       expect(tab.getAttribute("aria-selected")).toBe("false");
     }
@@ -128,7 +128,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
 
     const tabs = screen.getAllByRole("tab");
     const firstTab = tabs[0]!;
-    const lastTab = tabs[tabs.length - 1]!; // Career Portfolio / career
+    const lastTab = tabs[tabs.length - 1]!; // METAR Explainer / metar
 
     firstTab.focus();
 
@@ -140,8 +140,8 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
     expect(document.activeElement).toBe(lastTab);
 
     const lastPanel = screen.getByRole("tabpanel");
-    expect(lastPanel.id).toBe("toolkit-panel-career");
-    expect(lastPanel.getAttribute("aria-labelledby")).toBe("toolkit-tab-career");
+    expect(lastPanel.id).toBe("toolkit-panel-metar");
+    expect(lastPanel.getAttribute("aria-labelledby")).toBe("toolkit-tab-metar");
 
     // ArrowRight from last wraps to first
     fireEvent.keyDown(lastTab, { key: "ArrowRight" });
@@ -170,7 +170,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
     expect(lastTab.getAttribute("aria-selected")).toBe("true");
     expect(lastTab.tabIndex).toBe(0);
     expect(document.activeElement).toBe(lastTab);
-    expect(screen.getByRole("tabpanel").id).toBe("toolkit-panel-career");
+    expect(screen.getByRole("tabpanel").id).toBe("toolkit-panel-metar");
 
     // Home key moves to first tab
     fireEvent.keyDown(lastTab, { key: "Home" });

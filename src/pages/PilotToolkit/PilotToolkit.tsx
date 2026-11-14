@@ -66,6 +66,7 @@ import {
   reminderLeadDays,
   trainingCostForecast,
 } from "@/logic/toolkit";
+import { explainMetar } from "@/logic/metarExplain";
 import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
@@ -80,7 +81,8 @@ type Tool =
   | "safety"
   | "quiz"
   | "reminders"
-  | "career";
+  | "career"
+  | "metar";
 
 type ToolChoice = { id: Tool; label: string };
 const TOOLS: ToolChoice[] = [
@@ -92,11 +94,47 @@ const TOOLS: ToolChoice[] = [
   { id: "quiz", label: "Quizzes" },
   { id: "reminders", label: "Reminders" },
   { id: "career", label: "Career Portfolio" },
+  { id: "metar", label: "METAR" },
 ];
 
 /** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else is Checkride. */
 export function toolFrom(value: string | null): Tool {
   return TOOLS.find((choice) => choice.id === value)?.id ?? "readiness";
+}
+
+function MetarTool() {
+  const [text, setText] = useState("");
+  const result = useMemo(() => explainMetar(text), [text]);
+  return (
+    <Card variant="grouped">
+      <CardHeader
+        title="METAR Explainer"
+      />
+      <CardBody>
+        <p className="small muted">Study aid. Check official weather briefings and your instructor.</p>
+        <Field label="Paste or type a METAR">
+          <TextArea
+            rows={3}
+            value={text}
+            placeholder="METAR KJFK 141651Z 28015G25KT 10SM FEW040 08/M02 A2992"
+            onChange={(event) => setText(event.target.value)}
+          />
+        </Field>
+        {result.tokens.length ? (
+          <div className="stack stack--3" aria-label="Decoded groups">
+            <ul className="stack stack--2">
+              {result.tokens.map((token, index) => (
+                <li key={index}>
+                  <strong>{token.raw}</strong>: {token.meaning}
+                </li>
+              ))}
+            </ul>
+            <p>{result.categoryNote}</p>
+          </div>
+        ) : null}
+      </CardBody>
+    </Card>
+  );
 }
 
 function PilotToolTab({ choice, state }: { choice: ToolChoice; state: TabListState<ToolChoice> }) {
@@ -221,6 +259,7 @@ export function PilotToolkit() {
         {tool === "career" ? (
           <CareerTool state={data.toolkit} save={save} />
         ) : null}
+        {tool === "metar" ? <MetarTool /> : null}
       </div>
     </>
   );
