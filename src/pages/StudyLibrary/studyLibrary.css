@@ -1341,3 +1341,9 @@ details[open] > .video-links__summary { padding-bottom: 0; }
   cursor: pointer; font-weight: 600; border-radius: var(--radius-sm);
 }
 .acs-area-material-coverage-summary-heading:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+/* Closed disclosures never lay out their contents, so a hidden control can't sit under the next card. */
+.material-detail details:not([open]) > :not(summary),
+.library__actions-more:not([open]) > :not(summary) { display: none; }
+/* The video-link and name fields reach the 44px target. */
+.material-detail .field input:not([type="checkbox"]):not([type="radio"]) { min-height: var(--hit-min); }
