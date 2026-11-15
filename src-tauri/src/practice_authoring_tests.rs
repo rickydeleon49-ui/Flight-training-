@@ -1238,7 +1238,10 @@ fn unchecked_flag_round_trips_survives_an_edit_and_stays_out_of_the_hash() {
     let before = snapshot_json(&conn, "mat-a");
     assert_eq!(before["questions"][0]["unchecked"], json!(true));
     assert_eq!(
-        count_rows(&conn, "SELECT COUNT(*) FROM practice_test_items WHERE unchecked = 1"),
+        count_rows(
+            &conn,
+            "SELECT COUNT(*) FROM practice_test_items WHERE unchecked = 1"
+        ),
         1
     );
     // Editing the wording while the draft still carries the flag keeps it.
@@ -1251,13 +1254,21 @@ fn unchecked_flag_round_trips_survives_an_edit_and_stays_out_of_the_hash() {
             "mat-a",
             "edit",
             before,
-            Some(next_json("Flag", "gemini", vec![edited], vec![retirement_for(&flagged, "corrected")])),
+            Some(next_json(
+                "Flag",
+                "gemini",
+                vec![edited],
+                vec![retirement_for(&flagged, "corrected")],
+            )),
         ),
     )
     .unwrap();
     let after = snapshot_json(&conn, "mat-a");
     assert_eq!(after["questions"][0]["unchecked"], json!(true));
-    assert_eq!(after["questions"][0]["question"], "Synthetic unchecked question, reworded");
+    assert_eq!(
+        after["questions"][0]["question"],
+        "Synthetic unchecked question, reworded"
+    );
 }
 
 #[test]
@@ -1287,7 +1298,11 @@ fn a_schema_38_library_opens_with_every_question_checked() {
         conn.execute_batch(migration.sql).unwrap();
     }
     let flag: i64 = conn
-        .query_row("SELECT unchecked FROM practice_test_items WHERE id = 'i'", [], |r| r.get(0))
+        .query_row(
+            "SELECT unchecked FROM practice_test_items WHERE id = 'i'",
+            [],
+            |r| r.get(0),
+        )
         .unwrap();
     assert_eq!(flag, 0);
 }

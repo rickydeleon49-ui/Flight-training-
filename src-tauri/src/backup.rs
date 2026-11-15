@@ -19434,12 +19434,20 @@ mod practice_unchecked_backup_tests {
         for m in crate::migrations().into_iter().filter(|m| m.version > 38) {
             restored.execute_batch(m.sql).unwrap();
             restored
-                .execute("INSERT INTO schema_migrations (version) VALUES (?1)", [m.version])
+                .execute(
+                    "INSERT INTO schema_migrations (version) VALUES (?1)",
+                    [m.version],
+                )
                 .unwrap();
         }
         verify_schema_39_practice_unchecked(&restored).unwrap();
         assert_eq!(
-            m3_count(&restored, "SELECT COUNT(*) FROM practice_test_items WHERE unchecked = 0", &[]).unwrap(),
+            m3_count(
+                &restored,
+                "SELECT COUNT(*) FROM practice_test_items WHERE unchecked = 0",
+                &[]
+            )
+            .unwrap(),
             1
         );
     }
