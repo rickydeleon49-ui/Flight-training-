@@ -48,7 +48,7 @@ import {
 } from "@/logic/weightBalance";
 import { formatLongDate, formatShortDate, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
-import { densityAltitude, windComponents } from "@/logic/performanceAid";
+import { densityAltitude, windComponents, type DensityResult } from "@/logic/performanceAid";
 import { formatMoney } from "@/lib/money";
 import {
   flightActivity,
@@ -1240,6 +1240,26 @@ function WeightBalancePractice() {
   );
 }
 
+export function windSteps(runway: number, dir: number, speed: number): string[] {
+  const heading = runway <= 36 ? runway * 10 : runway;
+  const angle = (((dir - heading) % 360) + 360) % 360;
+  const a = angle > 180 ? 360 - angle : angle;
+  const rad = (a * Math.PI) / 180;
+  return [
+    `Study aid, worked steps. Runway heading ${heading}°, wind from ${dir}° at ${speed} kt, so the angle is ${a}°.`,
+    `Crosswind = ${speed} × sin(${a}°) = ${Math.round(Math.abs(speed * Math.sin(rad)))} kt.`,
+    `Headwind = ${speed} × cos(${a}°) = ${Math.round(speed * Math.cos(rad))} kt (negative means tailwind).`,
+  ];
+}
+
+export function densitySteps(elev: number, alt: number, oat: number, d: DensityResult): string[] {
+  return [
+    `Study aid, worked steps. Pressure altitude = ${elev} + (29.92 − ${alt}) × 1,000 = ${d.pressureAltitude.toLocaleString("en-US")} ft.`,
+    `ISA temperature = 15 − 2 × (${d.pressureAltitude.toLocaleString("en-US")} ÷ 1,000) = ${d.isaTemp} °C.`,
+    `Density altitude = ${d.pressureAltitude.toLocaleString("en-US")} + 120 × (${oat} − ${d.isaTemp}) = about ${d.densityAltitude.toLocaleString("en-US")} ft (rounded to 10).`,
+  ];
+}
+
 function PerformanceAidCard() {
   const [runway, setRunway] = useState("");
   const [windDir, setWindDir] = useState("");
@@ -1280,6 +1300,13 @@ function PerformanceAidCard() {
             </Field>
           </div>
           <p className="small" role="status">{windText}</p>
+          {wind && !runwayBad ? (
+            <ul className="small muted" aria-label="Worked steps for crosswind">
+              {windSteps(runwayNum, num(windDir), num(windSpeed)).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : null}
           <div className="form-grid">
             <Field label="Field elevation (ft)">
               <TextInput type="number" inputMode="numeric" value={elevation} onChange={(e) => setElevation(e.target.value)} />
@@ -1292,6 +1319,13 @@ function PerformanceAidCard() {
             </Field>
           </div>
           <p className="small" role="status">{densityText}</p>
+          {density ? (
+            <ul className="small muted" aria-label="Worked steps for density altitude">
+              {densitySteps(num(elevation), num(altimeter), num(oat), density).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          ) : null}
           <p className="small muted">
             High density altitude means a longer takeoff run and a weaker climb.
           </p>
@@ -1302,6 +1336,11 @@ function PerformanceAidCard() {
       </CardBody>
     </Card>
   );
+}
+
+/** Ask before Exit only once an answer has been given. */
+export function quizNeedsLeaveConfirm(answered: number, checkedNow: boolean): boolean {
+  return answered > 0 || checkedNow;
 }
 
 // Not a valid choice index, so makeQuizAttempt scores it as a miss.
@@ -1318,6 +1357,7 @@ function QuizTool({ state, save }: ToolProps) {
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [questions, setQuestions] = useState(() => selectQuizQuestions(Date.now()));
   const question = questions[index]!;
   const best = state.quizAttempts.length
@@ -1520,10 +1560,26 @@ function QuizTool({ state, save }: ToolProps) {
                   : "Next question"}
               </Button>
             )}
-            <Button variant="ghost" onClick={() => setRunning(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => (quizNeedsLeaveConfirm(answers.length, checked) ? setLeaving(true) : setRunning(false))}
+            >
               Exit
             </Button>
           </div>
+          <ConfirmDialog
+            open={leaving}
+            title="Leave this quiz?"
+            message="Your answers in this quiz are not kept."
+            confirmLabel="Leave"
+            cancelLabel="Keep going"
+            destructive={true}
+            onConfirm={() => {
+              setLeaving(false);
+              setRunning(false);
+            }}
+            onCancel={() => setLeaving(false)}
+          />
         </div>
       </CardBody>
     </Card>

@@ -4,7 +4,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { densityAltitude as densityAltForSteps } from "@/logic/performanceAid";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
+
+import { densitySteps, quizNeedsLeaveConfirm, windSteps } from "./PilotToolkit";
 
 vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({
@@ -32,5 +35,24 @@ describe("performance aid card", () => {
     expect(screen.getByText("Crosswind 10 kt from the right, headwind 17 kt.")).toBeTruthy();
     expect(screen.getByText(/density altitude about 8,000 ft/)).toBeTruthy();
     expect(screen.getByText(/Study aid only\. Use your POH performance charts/)).toBeTruthy();
+  });
+});
+
+describe("worked steps and quiz exit (BL-57, BL-61)", () => {
+  it("shows crosswind steps with her numbers", () => {
+    const steps = windSteps(36, 90, 10).join(" ");
+    expect(steps).toContain("sin(90°) = 10 kt");
+    expect(steps).toContain("cos(90°) = 0 kt");
+  });
+  it("shows density altitude steps", () => {
+    const d = densityAltForSteps(0, 29.92, 15)!;
+    const steps = densitySteps(0, 29.92, 15, d).join(" ");
+    expect(steps).toContain("Pressure altitude");
+    expect(steps).toContain("ISA temperature");
+  });
+  it("asks before Exit only after an answer", () => {
+    expect(quizNeedsLeaveConfirm(0, false)).toBe(false);
+    expect(quizNeedsLeaveConfirm(0, true)).toBe(true);
+    expect(quizNeedsLeaveConfirm(3, false)).toBe(true);
   });
 });
