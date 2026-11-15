@@ -39,7 +39,8 @@ function Probe() {
   context = useAppData();
   nav = useNavigate();
   const location = useLocation();
-  return h("output", { "aria-label": "Location" }, location.pathname);
+  const scrollToTop = Boolean((location.state as { scrollToTop?: boolean } | null)?.scrollToTop);
+  return h("output", { "aria-label": "Location", "data-scroll-top": String(scrollToTop) }, location.pathname);
 }
 
 async function mount() {
@@ -134,6 +135,8 @@ describe("Quick Find without native modal support", () => {
     };
     expect(Object.keys(routes)).toContain(label);
     expect(location()).toBe(routes[label!]);
+    // BL-66: a jump starts at the top of the page, even within the page already open.
+    expect(screen.getByLabelText("Location").getAttribute("data-scroll-top")).toBe("true");
     expect(document.querySelector("main")!.closest("[aria-hidden='true'], [inert]")).toBeNull();
   });
 
