@@ -196,3 +196,27 @@ describe("TypedDateField keeps what she must see in view (batch-1029 re-check)",
     }
   });
 });
+
+describe("BL-60: first press on a button after typing", () => {
+  it("keeps the layout still until the press is released, so one click works", () => {
+    vi.useFakeTimers();
+    const onSave = vi.fn();
+    function Page() {
+      return h("div", null,
+        h(TypedDateField, { label: "Date", value: "", onChange: () => {} }),
+        h("button", { type: "button", onClick: onSave }, "Save"));
+    }
+    render(h(Page));
+    const input = screen.getByLabelText("Date");
+    fireEvent.change(input, { target: { value: "13/45/2026" } });
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Save" }));
+    fireEvent.blur(input);
+    expect(screen.queryByRole("alert")).toBeNull();
+    fireEvent.pointerUp(screen.getByRole("button", { name: "Save" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    act(() => { vi.advanceTimersByTime(200); });
+    expect(screen.getByRole("alert")).toBeTruthy();
+    vi.useRealTimers();
+  });
+});

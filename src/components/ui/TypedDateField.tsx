@@ -82,6 +82,19 @@ export function TypedDateField({
   // A click into the box selects what is there, so typing replaces the date
   // (student run polish-064: the caret landed mid-date and garbled it).
   const clickedIn = useRef(false);
+  const pointerHeld = useRef(false);
+  useEffect(() => {
+    const down = () => { pointerHeld.current = true; };
+    const up = () => { pointerHeld.current = false; };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("pointerup", up, true);
+    document.addEventListener("pointercancel", up, true);
+    return () => {
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("pointerup", up, true);
+      document.removeEventListener("pointercancel", up, true);
+    };
+  }, []);
 
   // A day set from outside (a reset, a quick choice) replaces the text.
   useEffect(() => {
@@ -90,6 +103,24 @@ export function TypedDateField({
     setText(formatTypedDate(value));
     setRevealed(false);
   }, [value]);
+
+  // BL-60: a mouse press on a button blurs the box first. Showing the message
+  // then pushes the button down before mouse-up, and WebKit drops the click
+  // (a second press was needed). While a press is held, wait until it is released and its click has run.
+  const revealAfterPress = () => {
+    const pressed = pointerHeld.current;
+    if (!pressed) {
+      setRevealed(true);
+      return;
+    }
+    const done = () => {
+      document.removeEventListener("pointerup", done, true);
+      document.removeEventListener("pointercancel", done, true);
+      window.setTimeout(() => setRevealed(true), 100);
+    };
+    document.addEventListener("pointerup", done, true);
+    document.addEventListener("pointercancel", done, true);
+  };
 
   const problem = typedDateProblem(text, rules);
   useImperativeHandle(ref, () => ({
@@ -156,7 +187,7 @@ export function TypedDateField({
           if (clickedIn.current && event.currentTarget.value) event.preventDefault();
           clickedIn.current = false;
         }}
-        onBlur={() => setRevealed(true)}
+        onBlur={revealAfterPress}
       />
       {readBack ? (
         <p className="field__hint" id={readBackId}>
