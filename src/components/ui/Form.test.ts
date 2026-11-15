@@ -48,3 +48,19 @@ it("keeps every form input at 16px or larger with a 44px target", () => {
   expect(block).toMatch(/font-size:\s*var\(--text-callout\)/);
   expect(block).toMatch(/min-height:\s*44px/);
 });
+
+it("turns off macOS autocorrect in search boxes so the next click is not swallowed (R23)", () => {
+  render(h("div", null,
+    h(TextInput, { type: "search", "aria-label": "Find" }),
+    h(TextInput, { type: "search", "aria-label": "Spelled", spellCheck: true }),
+    h(TextInput, { "aria-label": "Title" }),
+  ));
+  const find = screen.getByRole("searchbox", { name: "Find" });
+  expect(find.getAttribute("autocorrect")).toBe("off");
+  expect(find.getAttribute("autocapitalize")).toBe("off");
+  expect(find.getAttribute("autocomplete")).toBe("off");
+  expect(find.getAttribute("spellcheck")).toBe("false");
+  expect(find.className).toBe("input");
+  expect(screen.getByRole("searchbox", { name: "Spelled" }).getAttribute("spellcheck")).toBe("true");
+  expect(screen.getByRole("textbox", { name: "Title" }).hasAttribute("autocorrect")).toBe(false);
+});

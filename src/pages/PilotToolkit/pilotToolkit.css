@@ -140,9 +140,12 @@
 }
 .e6b-check__item { display: flex; flex-direction: column; gap: var(--space-2); }
 .e6b-check__label { font-size: var(--text-sm); font-weight: 600; }
-.e6b-check__row { display: flex; gap: var(--space-2); align-items: center; }
+/* The answer box may shrink and the row may wrap, so L/R never slides under the next box. */
+.e6b-check__row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.e6b-check__input { flex: 1 1 5rem; min-width: 0; }
 .e6b-check__side {
   display: flex;
+  flex: none;
   padding: 3px;
   border-radius: var(--radius-pill);
   background: var(--surface-sunken);

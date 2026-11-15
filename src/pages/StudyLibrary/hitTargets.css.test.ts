@@ -57,6 +57,9 @@ describe("BL-38/39/41 CSS contracts", () => {
   it("the card review session clears the sticky header when scrolled into view", () => {
     expect(read("src/pages/StudyLibrary/studyLibrary.css")).toMatch(/\.card-review__session\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 0px\) \+ var\(--space-5\)\)/);
   });
+  it("the next card's heading also clears the sticky header after a rating (R23)", () => {
+    expect(read("src/pages/StudyLibrary/studyLibrary.css")).toMatch(/\.card-review__session h4\[tabindex="-1"\]\s*\{\s*scroll-margin-top:\s*calc\(var\(--narrow-header-height, 0px\) \+ var\(--space-5\)\)/);
+  });
   it("Menu ring is suppressed after pointer input only", () => {
     expect(read("src/components/layout/shell.css")).toMatch(/html\[data-input="pointer"\] \.sidebar__menu:focus-visible/);
   });

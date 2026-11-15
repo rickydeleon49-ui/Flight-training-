@@ -1351,3 +1351,5 @@ details[open] > .video-links__summary { padding-bottom: 0; }
 
 /* A review that opens scrolls to its top below the sticky header, not under it. */
 .card-review__session { scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5)); }
+/* The next card scrolls its "Card n of N" heading into view; keep it below the sticky header too. */
+.card-review__session h4[tabindex="-1"] { scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5)); }
