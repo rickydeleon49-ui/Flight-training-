@@ -156,7 +156,7 @@ export const DIAGRAMS: readonly Diagram[] = [
   d("wx-reports", "05-weather-charts.svg", "Weather charts and flight categories", "weather", "PHAK ch. 13"),
   d("weather-3", "01-standard-atmosphere-isa.svg", "The standard atmosphere (ISA): temperature and pressure by altitude", "weather", "PHAK ch. 12"),
   d("weather-3", "02-how-air-is-lifted-to-form-cloud.svg", "Four ways air is lifted to form cloud", "weather", "PHAK ch. 12"),
-  d("weather-3", "03-turbulence-causes-and-intensity.svg", "Turbulence: three causes and four intensities", "weather", "PHAK ch. 12"),
+  d("weather-3", "03-turbulence-causes-and-intensity.svg", "Turbulence: three causes and four intensities", "weather", "AIM ch. 7"),
   d("weather-3", "04-mountain-wave-and-rotor.svg", "Mountain wave, lenticular clouds and rotor", "weather", "PHAK ch. 12"),
   d("weather-3", "05-freezing-rain-and-ice-pellets.svg", "Freezing rain and ice pellets: why they form", "weather", "PHAK ch. 12"),
   d("airport", "01-traffic-pattern.svg", "Left-hand traffic pattern", "airports", "PHAK ch. 14"),

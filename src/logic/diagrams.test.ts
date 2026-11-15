@@ -109,6 +109,13 @@ describe("shipped SVG files", () => {
   });
 });
 
+describe("diagram display CSS", () => {
+  it("keeps text legible on phones by scrolling inside the figure, not the page", () => {
+    const css = readFileSync(join(__dirname, "..", "pages", "StudyLibrary", "diagrams.css"), "utf8");
+    expect(css).toMatch(/@media \(max-width: 40rem\)\s*\{[^@]*\.diagram-stage \{ overflow-x: auto; \}[^@]*\.diagram-stage__inner \{ min-width: 36rem; \}/);
+  });
+});
+
 describe("scopeDiagramSvg", () => {
   const stripStyle = (svg: string) => {
     let out = svg;
