@@ -25,3 +25,9 @@ it("unassigned goals get no route node", () => {
   const block = tsx.slice(tsx.indexOf("waypoint--unassigned"), tsx.indexOf("Not part of a stage"));
   expect(block).not.toContain("waypoint__marker");
 });
+
+it("flight path click targets are at least 24px (checkbox, FAA links) and 40px (icon buttons)", () => {
+  expect(css).toMatch(/\.checkbox input,?[^{]*\{[^}]*width:\s*1\.5rem[^}]*height:\s*1\.5rem/);
+  expect(css).toMatch(/a\.small\s*\{[^}]*min-height:\s*24px/);
+  expect(css).toMatch(/\.waypoint__tools \.icon-button\s*\{[^}]*min-width:\s*40px[^}]*min-height:\s*40px/);
+});
