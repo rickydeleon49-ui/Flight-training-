@@ -1956,7 +1956,7 @@ pub async fn generate_practice_test(
 
 /// A practice test from the selected source; the same prepared PDF a study
 /// guide used is referred to again, not re-sent.
-async fn practice_test_with(
+pub(crate) async fn practice_test_with(
     ctx: &GenContext<'_>,
     source: &LoadedSource,
 ) -> Result<GeneratedPracticeTest, String> {
@@ -3028,6 +3028,8 @@ mod tests {
         ));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
+        // These tests are about Gemini; a student who never picked now starts on Claude.
+        std::fs::write(dir.join("ai-provider"), "gemini").unwrap();
         dir
     }
 
