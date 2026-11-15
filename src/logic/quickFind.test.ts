@@ -32,6 +32,10 @@ const data: AppData = {
 const labels = (query: string) => quickFind(data, query, TODAY).map((result) => result.label);
 
 describe("quickFind", () => {
+  it("finds the E6B trainer", () => {
+    expect(labels("e6b")).toContain("E6B trainer");
+  });
+
   it("ranks the METAR explainer above an oral-question note that mentions metar (BL-63)", () => {
     const records: AppData = {
       ...EMPTY_DATA,

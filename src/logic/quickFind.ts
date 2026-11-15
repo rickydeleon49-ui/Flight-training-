@@ -57,6 +57,7 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
   { label: "Finances", to: "/finances", detail: "Spending and funds" },
   { label: "Pilot Toolkit", to: "/toolkit", detail: "Checkride readiness" },
   { label: "METAR explainer", to: "/toolkit?tool=metar", detail: "Pilot Toolkit: read a weather report" },
+  { label: "E6B trainer", to: "/toolkit?tool=e6b", detail: "Pilot Toolkit: practise wind and fuel math" },
   { label: "Settings", to: "/settings", detail: "Profile and preferences" },
 ];
 

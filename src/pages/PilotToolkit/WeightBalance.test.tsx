@@ -6,7 +6,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import type { AppData } from "@/state/AppDataContext";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
 import { makeProfile } from "@/testing/factories";
-import { PilotToolkit } from "./PilotToolkit";
+import { PilotToolkit, toolFrom } from "./PilotToolkit";
 
 vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({
@@ -61,4 +61,12 @@ it("decodes a TAF and fills examples on the METAR tab", () => {
   fireEvent.click(screen.getByRole("button", { name: "Try an example METAR" }));
   expect(screen.getByText(/Station KSFO/)).toBeTruthy();
   expect(screen.queryByRole("heading", { name: "Temporary (TEMPO)" })).toBeNull();
+});
+
+it("shows the E6B trainer on its own tab, not in Safety Check", () => {
+  expect(toolFrom("e6b")).toBe("e6b");
+  render(<MemoryRouter initialEntries={["/?tool=e6b"]}><PilotToolkit /></MemoryRouter>);
+  expect(screen.getByText("E6B practice")).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
+  expect(screen.queryByText("E6B practice")).toBeNull();
 });
