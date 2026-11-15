@@ -9,12 +9,13 @@ export interface PracticeDraftQuestion {
   explanation: string;
   sourcePage: number | null;
   acsTask?: string | null;
+  unchecked?: true;
   instructor: boolean;
 }
 
 export function draftFromSnapshot(snapshot: PracticeSnapshot): PracticeDraftQuestion[] {
-  return snapshot.questions.map(({ identity, question, options, correctIndex, explanation, sourcePage, origin, acsTask }) => ({
-    identity, question, options: [...options], correctIndex, explanation, sourcePage, ...(acsTask ? { acsTask } : {}), instructor: origin === "instructor",
+  return snapshot.questions.map(({ identity, question, options, correctIndex, explanation, sourcePage, origin, acsTask, unchecked }) => ({
+    identity, question, options: [...options], correctIndex, explanation, sourcePage, ...(acsTask ? { acsTask } : {}), ...(unchecked ? { unchecked } : {}), instructor: origin === "instructor",
   }));
 }
 

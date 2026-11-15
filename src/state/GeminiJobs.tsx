@@ -1,4 +1,4 @@
-import { MORE_CARDS_NOTE, savedCards as cardsToSave, withoutVerificationNotes } from "@/services/gemini";
+import { MORE_CARDS_NOTE, savedCards as cardsToSave, savedQuestions } from "@/services/gemini";
 import {
   createContext,
   useCallback,
@@ -424,7 +424,7 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
   }
   const s = saved as PracticeTest;
   const a = answer as GeneratedPracticeTest;
-  return canonical([s.title, s.questions, s.model]) === canonical([a.title, a.questions, a.model]);
+  return canonical([s.title, s.questions, s.model]) === canonical([a.title, savedQuestions(a.questions), a.model]);
 }
 
 async function savedContent(repos: Repositories, kind: GeminiJobKind, materialId: string) {
@@ -709,7 +709,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             await repos.documents.savePracticeTest({
               sourceMaterialId: job.materialId,
               title: test.title,
-              questions: withoutVerificationNotes(test.questions),
+              questions: savedQuestions(test.questions),
               provider: "gemini",
               model: test.model,
             });

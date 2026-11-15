@@ -510,6 +510,7 @@ fn insert_practice(
         .questions
         .iter()
         .map(|q| pa::AuthoringQuestion {
+            unchecked: false,
             acs_task: q.acs_tasks.first().cloned(),
             question: q.question.clone(),
             options: q.options.clone(),

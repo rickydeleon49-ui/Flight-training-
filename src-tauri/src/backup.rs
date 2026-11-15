@@ -725,6 +725,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 38 {
         verify_schema_38_library_folders(connection)?;
     }
+    if newest_migration >= 39 {
+        verify_schema_39_practice_unchecked(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -1066,6 +1069,35 @@ pub(crate) fn verify_schema_38_library_folders(connection: &Connection) -> Resul
         )?
     {
         return Err("Damaged library folders schema.".into());
+    }
+    Ok(())
+}
+
+/// BL-21: `practice_test_items.unchecked` exactly as migrated (INTEGER NOT NULL DEFAULT 0,
+/// only 0 or 1). A hand-edited or damaged value fails the backup instead of loading.
+pub(crate) fn verify_schema_39_practice_unchecked(connection: &Connection) -> Result<(), String> {
+    let damaged = || "Damaged practice question check flag.".to_string();
+    let found: Option<(String, i64, Option<String>)> = connection
+        .query_row(
+            "SELECT type, [notnull], dflt_value FROM pragma_table_info('practice_test_items') WHERE name = 'unchecked'",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()
+        .map_err(|e| format!("Failed to read practice_test_items columns: {e}"))?;
+    let Some((kind, notnull, default)) = found else {
+        return Err("Table practice_test_items missing required column: unchecked".to_string());
+    };
+    if !kind.eq_ignore_ascii_case("INTEGER") || notnull != 1 || default.as_deref() != Some("0") {
+        return Err(damaged());
+    }
+    if m3_count(
+        connection,
+        "SELECT COUNT(*) FROM practice_test_items WHERE unchecked NOT IN (0, 1)",
+        &[],
+    )? != 0
+    {
+        return Err(damaged());
     }
     Ok(())
 }
@@ -3107,6 +3139,9 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), 
                 && ["logical_id", "replaces_id"].contains(&col_name.as_str())
             {
                 continue; // added by 0017; required by verify_schema_17_practice_authoring_semantics
+            }
+            if table == "practice_test_items" && col_name == "unchecked" {
+                continue; // added by 0039; required by verify_schema_39_practice_unchecked
             }
             let Some((actual_type, actual_notnull, actual_pk)) = conn_cols.get(&col_name) else {
                 return Err(format!("Table {table} missing required column: {col_name}"));
@@ -19348,6 +19383,71 @@ mod library_folders_backup_tests {
         );
         assert_eq!(
             m3_count(&restored, "SELECT COUNT(*) FROM study_materials", &[]).unwrap(),
+            1
+        );
+    }
+}
+
+#[cfg(test)]
+mod practice_unchecked_backup_tests {
+    use super::*;
+
+    #[test]
+    fn schema_39_requires_the_unchecked_column_and_its_check() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_39_practice_unchecked(&connection).unwrap();
+        connection
+            .execute_batch(
+                "INSERT INTO study_materials (id, title, material_type, topic, created_at, updated_at) VALUES ('m', 'T', 'study_guide', 'other', 'now', 'now');
+                 INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, content_hash, created_at, is_active) VALUES ('v', 'm', 'k', 'T', 'h', 'now', 0);
+                 INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index, unchecked) VALUES ('i', 'v', 0, 'Q', '[\"A\",\"B\"]', 0, 7);",
+            )
+            .unwrap();
+        assert!(verify_schema_39_practice_unchecked(&connection)
+            .unwrap_err()
+            .contains("check flag"));
+    }
+
+    #[test]
+    fn schema_38_backup_restores_and_migrates_with_every_question_checked() {
+        let connection = get_reference_schema_connection_through(38).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY);
+                 INSERT INTO schema_migrations (version) VALUES (38);
+                 PRAGMA foreign_keys=ON;
+                 INSERT INTO study_materials (id, title, material_type, topic, created_at, updated_at) VALUES
+                   ('m-old', 'Old Book', 'study_guide', 'other', 'now', 'now');
+                 INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, content_hash, created_at, is_active)
+                   VALUES ('v', 'm-old', 'k', 'Old Book', 'h', 'now', 0);
+                 INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index)
+                   VALUES ('i', 'v', 0, 'Old question', '[\"A\",\"B\"]', 0);",
+            )
+            .unwrap();
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(&connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+        // A schema-38 backup has no column and still passes verification.
+        verify_application_connection(&restored).unwrap();
+        for m in crate::migrations().into_iter().filter(|m| m.version > 38) {
+            restored.execute_batch(m.sql).unwrap();
+            restored
+                .execute(
+                    "INSERT INTO schema_migrations (version) VALUES (?1)",
+                    [m.version],
+                )
+                .unwrap();
+        }
+        verify_schema_39_practice_unchecked(&restored).unwrap();
+        assert_eq!(
+            m3_count(
+                &restored,
+                "SELECT COUNT(*) FROM practice_test_items WHERE unchecked = 0",
+                &[]
+            )
+            .unwrap(),
             1
         );
     }

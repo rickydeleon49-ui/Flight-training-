@@ -365,6 +365,9 @@ it("saves a kit card's unchecked flag and shows the note in review; old cards wi
   expect(set.flashcards[0]!.unchecked).toBe(true);
   const { savedCards, uncheckedLine, droppedLine } = service;
   expect(savedCards([{ front: "a", back: "b", sourcePage: 1 }])[0]).not.toHaveProperty("unchecked");
+  const { savedQuestions } = service;
+  expect(savedQuestions([{ q: 1, verificationNote: "x" } as { verificationNote?: string }])[0]).toEqual({ q: 1, unchecked: true });
+  expect(savedQuestions([{ q: 1 } as { verificationNote?: string }])[0]).not.toHaveProperty("unchecked");
   expect(uncheckedLine([{}, {}], "question")).toBeNull();
   expect(droppedLine({ generated: 2, kept: 2, droppedByChoices: 0, droppedByQuote: 0, droppedOther: 0 }, "card", "Gemini")).toBeNull();
 });

@@ -186,6 +186,24 @@ describe("practice question authoring on the material page", () => {
     expect((await snapshot())?.retired).toMatchObject([{ reason: "corrected" }]);
   });
 
+  it("shows the not-checked note only on flagged questions, and keeps it after an edit", async () => {
+    await repos.documents.savePracticeAuthoring({
+      operationId: crypto.randomUUID(), sourceMaterialId: materialId, reason: "create", expected: null,
+      next: { title: "Synthetic questions", provider: "gemini", model: "synthetic", retired: [], questions: [0, 1].map((index) => ({
+        identity: crypto.randomUUID(), question: `Synthetic question ${index + 1}`, options: ["First", "Second"], correctIndex: 0,
+        explanation: "Private answer explanation", sourcePage: null, ...(index === 0 ? { unchecked: true as const } : {}),
+      })) },
+    });
+    await open(`/study/${materialId}`);
+    const edit = await editor();
+    expect(edit.getAllByText("Not checked against the source")).toHaveLength(1);
+    await fill(edit, "Question 1 wording", "Reworded flagged question");
+    await saveAndClose(edit);
+    const saved = await snapshot();
+    expect(saved?.questions[0]?.unchecked).toBe(true);
+    expect(saved?.questions[1]?.unchecked).toBeUndefined();
+  });
+
   it("keeps the instructor mark checked and disabled after saving", async () => {
     await seed();
     await open(`/study/${materialId}`);

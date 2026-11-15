@@ -50,6 +50,7 @@ import cardReviewEventFolds from "../../src-tauri/migrations/0035_card_review_ev
 import kitQueue from "../../src-tauri/migrations/0036_kit_queue.sql?raw";
 import studyPackProvenance from "../../src-tauri/migrations/0037_study_pack_provenance.sql?raw";
 import libraryFolders from "../../src-tauri/migrations/0038_library_folders.sql?raw";
+import practiceUnchecked from "../../src-tauri/migrations/0039_practice_unchecked.sql?raw";
 
 export interface Migration {
   version: number;
@@ -96,6 +97,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 36, description: "kit_queue", sql: kitQueue },
   { version: 37, description: "study_pack_provenance", sql: studyPackProvenance },
   { version: 38, description: "library_folders", sql: libraryFolders },
+  { version: 39, description: "practice_unchecked", sql: practiceUnchecked },
 ];
 
 /**

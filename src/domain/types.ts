@@ -450,6 +450,8 @@ export interface AiStudySet {
 
 export interface PracticeQuestion {
   acsTask?: string | null;
+  /** BL-21: generated, but its source page could not be matched. Absent = checked. */
+  unchecked?: true;
   pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   question: string;
   /** At least two choices; `correctIndex` always points inside this array. */
@@ -483,6 +485,7 @@ export interface PracticeTest {
 /** One question with its stable logical identity and optional provenance. */
 export interface PracticeAuthoringQuestion {
   acsTask?: string | null;
+  unchecked?: true;
   question: string;
   options: string[];
   correctIndex: number;
@@ -576,6 +579,7 @@ export interface PracticeTestVersion {
 
 export interface PracticeTestItem {
   acsTask?: string | null;
+  unchecked?: true;
   pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   /** The page note this exact saved item was made from, if any. */
   pageSource?: import("@/data/studyPageSources").PageSource;

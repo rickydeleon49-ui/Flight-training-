@@ -10999,7 +10999,7 @@ mod edit_carry {
              DROP TABLE kit_queue_item; DROP TABLE kit_queue;
              DROP TABLE study_pack_acks; DROP TABLE study_pack_items; DROP TABLE study_pack_imports;
              DROP TABLE library_placements; DROP TABLE library_folders;
-             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38);",
+             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38, 39);",
         )
         .unwrap();
         crate::backup::verify_application_connection(conn).unwrap();
