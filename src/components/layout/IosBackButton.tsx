@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
+import { useGuardedNavigate } from "@/state/leaveGuard";
 import { backTarget } from "./iosBack";
 
 const clean = (path: string) => path.replace(/\/+$/, "") || "/";
@@ -8,7 +9,7 @@ const clean = (path: string) => path.replace(/\/+$/, "") || "/";
 /** iPhone only: a back button at the top left of every page that isn't a tab's first page. */
 export function IosBackButton() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
   const current = useRef(pathname);
   const previous = useRef<string | null>(null);
 

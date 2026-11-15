@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import { SearchIcon } from "@/components/ui";
 import { useModalDialog } from "@/components/ui/useModalDialog";
@@ -9,6 +9,7 @@ import { isIOS } from "@/services/platform";
 import { todayIso } from "@/lib/dates";
 import { quickFind, type QuickFindResult } from "@/logic/quickFind";
 import { useAppData } from "@/state/AppDataContext";
+import { useGuardedNavigate } from "@/state/leaveGuard";
 
 import "./quickFind.css";
 
@@ -63,7 +64,7 @@ function isOpenShortcut(event: KeyboardEvent): boolean {
 export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) {
   const { data } = useAppData();
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate = useGuardedNavigate();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const previousLocation = useRef(location);

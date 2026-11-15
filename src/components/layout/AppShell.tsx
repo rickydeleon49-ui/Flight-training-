@@ -15,6 +15,7 @@ import { CheckrideNotifications } from "@/components/reminders/CheckrideNotifica
 import { DailyStudyReminder } from "@/components/reminders/DailyStudyReminder";
 import { ReminderNotifications } from "@/components/reminders/ReminderNotifications";
 import { UndoBar } from "@/components/undo/UndoBar";
+import { useGuardedLinkClick } from "@/state/leaveGuard";
 import { useAppData } from "@/state/AppDataContext";
 import { overdueActions } from "@/logic/actions";
 import { todayIso } from "@/lib/dates";
@@ -81,6 +82,7 @@ function useMedia(query: string, initial = false): boolean {
 export function AppShell() {
   const { data } = useAppData();
   const location = useLocation();
+  const guardClick = useGuardedLinkClick();
   const today = todayIso();
   const menuRef = useRef<HTMLButtonElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -296,7 +298,10 @@ export function AppShell() {
                     to={item.to}
                     state={item.to === "/study" ? { scrollToTop: true } : undefined}
                     replace={item.to === "/study" ? false : undefined}
-                    onClick={closeMenu}
+                    onClick={(event) => {
+                      guardClick(event, item.to, item.to === "/study" ? { state: { scrollToTop: true } } : undefined);
+                      closeMenu();
+                    }}
                     aria-label={railLabels ? item.label : undefined}
                     end={item.to === "/"}
                     className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
@@ -320,7 +325,10 @@ export function AppShell() {
           <div className="sidebar__footer stack stack--3">
             <NavLink
               to="/settings"
-              onClick={closeMenu}
+              onClick={(event) => {
+                guardClick(event, "/settings");
+                closeMenu();
+              }}
               className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
             >
               <span className="nav__icon">

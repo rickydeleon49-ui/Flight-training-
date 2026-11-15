@@ -6,6 +6,7 @@ import { DataRecovery } from "@/components/recovery/DataRecovery";
 import { LegalAcknowledgement } from "@/components/legal/AboutLegal";
 import { Card, EmptyState, ErrorNote, Loading } from "@/components/ui";
 import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
+import { LeaveGuardProvider } from "@/state/leaveGuard";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 // Keep the first screen small; each section loads when it is first opened.
@@ -134,7 +135,9 @@ export function App() {
     <AppDataProvider>
       {/* Hash routing keeps deep links working from a file:// desktop build. */}
       <HashRouter>
-        <Gate />
+        <LeaveGuardProvider>
+          <Gate />
+        </LeaveGuardProvider>
       </HashRouter>
     </AppDataProvider>
   );
