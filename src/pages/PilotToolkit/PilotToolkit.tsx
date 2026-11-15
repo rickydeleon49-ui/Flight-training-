@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
 import { Item } from "react-stately/Item";
@@ -34,8 +34,21 @@ import {
   type SafetyDecision,
   type ToolkitState,
 } from "@/domain/types";
+import {
+  AVGAS_LB_PER_GAL,
+  WB_PRACTICE,
+  describeWbPractice,
+  WB_ROW_KEYS,
+  WB_ROW_LABELS,
+  calculateWeightBalance,
+  emptyWbInput,
+  type WbInput,
+  type WbPractice,
+  type WbRowKey,
+} from "@/logic/weightBalance";
 import { formatLongDate, formatShortDate, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
+import { densityAltitude, windComponents } from "@/logic/performanceAid";
 import { formatMoney } from "@/lib/money";
 import {
   flightActivity,
@@ -48,16 +61,23 @@ import {
   makeQuizAttempt,
   medicalDateConflict,
   type MedicalDateChoice,
-  QUIZ_QUESTIONS,
+  selectQuizQuestions,
   readinessSummary,
   reconcileMedicalDates,
   reminderLeadDays,
   trainingCostForecast,
 } from "@/logic/toolkit";
+import { explainMetar } from "@/logic/metarExplain";
+import { explainTaf, looksLikeTaf } from "@/logic/tafExplain";
 import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
+import { ChartSymbolDrill } from "./ChartSymbolDrill";
+import { AccidentCaseDrill } from "./AccidentCaseDrill";
+import { RegCardDrill } from "./RegCardDrill";
+import { E6bTrainer } from "./E6bTrainer";
+import { RadioWords } from "./RadioWords";
 import "./pilotToolkit.css";
 
 type Tool =
@@ -68,7 +88,9 @@ type Tool =
   | "safety"
   | "quiz"
   | "reminders"
-  | "career";
+  | "career"
+  | "metar"
+  | "radio";
 
 type ToolChoice = { id: Tool; label: string };
 const TOOLS: ToolChoice[] = [
@@ -78,6 +100,8 @@ const TOOLS: ToolChoice[] = [
   { id: "costs", label: "Cost Forecast" },
   { id: "safety", label: "Safety Check" },
   { id: "quiz", label: "Quizzes" },
+  { id: "metar", label: "METAR" },
+  { id: "radio", label: "Radio words" },
   { id: "reminders", label: "Reminders" },
   { id: "career", label: "Career Portfolio" },
 ];
@@ -85,6 +109,69 @@ const TOOLS: ToolChoice[] = [
 /** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else is Checkride. */
 export function toolFrom(value: string | null): Tool {
   return TOOLS.find((choice) => choice.id === value)?.id ?? "readiness";
+}
+
+const METAR_EXAMPLE = "METAR KSFO 141756Z 28012G20KT 10SM FEW008 BKN015 16/11 A3002 RMK AO2 SLP168";
+const TAF_EXAMPLE =
+  "TAF KSFO 141120Z 1412/1518 28012KT P6SM FEW008 BKN015 FM141800 29015G25KT P6SM SCT035 TEMPO 1420/1424 3SM -RA BKN012 BECMG 1500/1502 VRB03KT 2SM BR OVC006";
+
+function TokenList({ tokens }: { tokens: { raw: string; meaning: string }[] }) {
+  return (
+    <ul className="stack stack--2">
+      {tokens.map((token, index) => (
+        <li key={index}>
+          <strong>{token.raw}</strong>: {token.meaning}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MetarTool() {
+  const [text, setText] = useState("");
+  const isTaf = looksLikeTaf(text);
+  const result = useMemo(() => explainMetar(text), [text]);
+  const taf = useMemo(() => (isTaf ? explainTaf(text) : null), [isTaf, text]);
+  return (
+    <Card variant="grouped">
+      <CardHeader
+        title="METAR & TAF Explainer"
+      />
+      <CardBody>
+        <p className="small muted">Study aid. Check official weather briefings and your instructor.</p>
+        <Field label="Paste or type a METAR or TAF">
+          <TextArea
+            rows={3}
+            value={text}
+            placeholder="METAR KJFK 141651Z 28015G25KT 10SM FEW040 08/M02 A2992"
+            onChange={(event) => setText(event.target.value)}
+          />
+        </Field>
+        <div className="row">
+          <Button variant="secondary" onClick={() => setText(METAR_EXAMPLE)}>Try an example METAR</Button>
+          <Button variant="secondary" onClick={() => setText(TAF_EXAMPLE)}>Try an example TAF</Button>
+        </div>
+        {taf ? (
+          <div className="stack stack--3" aria-label="Decoded forecast">
+            <TokenList tokens={taf.header} />
+            {taf.periods.map((period, index) => (
+              <section key={index} className="stack stack--2" aria-label={period.label}>
+                <h3>{period.label}</h3>
+                <p>{period.meaning}:</p>
+                <TokenList tokens={period.tokens} />
+                <p>{period.categoryNote}</p>
+              </section>
+            ))}
+          </div>
+        ) : result.tokens.length ? (
+          <div className="stack stack--3" aria-label="Decoded groups">
+            <TokenList tokens={result.tokens} />
+            <p>{result.categoryNote}</p>
+          </div>
+        ) : null}
+      </CardBody>
+    </Card>
+  );
 }
 
 function PilotToolTab({ choice, state }: { choice: ToolChoice; state: TabListState<ToolChoice> }) {
@@ -200,15 +287,26 @@ export function PilotToolkit() {
         ) : null}
         {tool === "costs" ? <CostTool state={data.toolkit} save={save} /> : null}
         {tool === "safety" ? (
-          <SafetyTool state={data.toolkit} save={save} />
+          <>
+            <SafetyTool state={data.toolkit} save={save} />
+            <AccidentCaseDrill />
+          </>
         ) : null}
-        {tool === "quiz" ? <QuizTool state={data.toolkit} save={save} /> : null}
+        {tool === "quiz" ? (
+          <>
+            <QuizTool state={data.toolkit} save={save} />
+            <ChartSymbolDrill />
+            <RegCardDrill />
+          </>
+        ) : null}
         {tool === "reminders" ? (
           <ReminderTool state={data.toolkit} save={save} />
         ) : null}
+        {tool === "radio" ? <RadioWords /> : null}
         {tool === "career" ? (
           <CareerTool state={data.toolkit} save={save} />
         ) : null}
+        {tool === "metar" ? <MetarTool /> : null}
       </div>
     </>
   );
@@ -938,6 +1036,7 @@ function SafetyTool({ state, save }: ToolProps) {
     }
   };
   return (
+    <>
     <div className="toolkit-two-column">
       <Card variant="grouped">
         <CardHeader
@@ -1035,7 +1134,173 @@ function SafetyTool({ state, save }: ToolProps) {
           )}
         </CardBody>
       </Card>
+      <PerformanceAidCard />
+      <E6bTrainer />
     </div>
+    <WeightBalancePractice />
+    </>
+  );
+}
+
+function WeightBalancePractice() {
+  const [input, setInput] = useState<WbInput>(emptyWbInput);
+  const [showAnswer, setShowAnswer] = useState<string | null>(null);
+  const [practice, setPractice] = useState<WbPractice | null>(null);
+  const result = useMemo(() => calculateWeightBalance(input), [input]);
+  const untouched = WB_ROW_KEYS.every((k) => input.rows[k].amount.trim() === "" && input.rows[k].arm.trim() === "");
+  const setRow = (key: WbRowKey, field: "amount" | "arm", value: string) =>
+    setInput((cur) => ({ ...cur, rows: { ...cur.rows, [key]: { ...cur.rows[key], [field]: value } } }));
+  return (
+    <Card variant="grouped">
+      <CardHeader title="Weight & balance practice" eyebrow="Study aid only" />
+      <CardBody>
+        <div className="stack stack--3">
+          <p>Study aid only. Use your airplane's POH and check with your instructor.</p>
+          <p>Fuel is entered in gallons and counted at {AVGAS_LB_PER_GAL} lb per gallon (avgas).</p>
+          {practice ? <p><strong>{practice.title}.</strong> {describeWbPractice(practice.input)}</p> : null}
+          <div className="form-grid">
+            {WB_ROW_KEYS.map((key) => (
+              <Fragment key={key}>
+                <Field label={`${WB_ROW_LABELS[key]}${key === "fuel" ? "" : " (lb)"}`}>
+                  <TextInput
+                    value={input.rows[key].amount}
+                    onChange={(e) => setRow(key, "amount", e.target.value)}
+                  />
+                </Field>
+                <Field label={`${WB_ROW_LABELS[key].replace(" (gallons)", "")} arm (in)`}>
+                  <TextInput
+                    value={input.rows[key].arm}
+                    onChange={(e) => setRow(key, "arm", e.target.value)}
+                  />
+                </Field>
+              </Fragment>
+            ))}
+            <Field label="Max gross weight (lb, optional)">
+              <TextInput value={input.maxGross} onChange={(e) => setInput({ ...input, maxGross: e.target.value })} />
+            </Field>
+            <Field label="Forward CG limit (in, optional)">
+              <TextInput value={input.forwardLimit} onChange={(e) => setInput({ ...input, forwardLimit: e.target.value })} />
+            </Field>
+            <Field label="Aft CG limit (in, optional)">
+              <TextInput value={input.aftLimit} onChange={(e) => setInput({ ...input, aftLimit: e.target.value })} />
+            </Field>
+          </div>
+          <div aria-live="polite" style={{ overflowX: "auto" }}>
+            {untouched ? (
+              <p>Enter your numbers, or fill in a practice problem below.</p>
+            ) : result.ok ? (
+              <>
+                <table>
+                  <thead>
+                    <tr><th scope="col">Item</th><th scope="col">Weight (lb)</th><th scope="col">Arm (in)</th><th scope="col">Moment</th></tr>
+                  </thead>
+                  <tbody>
+                    {result.rows.map((r) => (
+                      <tr key={r.key}><th scope="row">{WB_ROW_LABELS[r.key].replace(" (gallons)", "")}</th><td>{r.weight}</td><td>{r.arm}</td><td>{r.moment}</td></tr>
+                    ))}
+                    <tr><th scope="row">Total</th><td>{result.totalWeight}</td><td>{result.cg}</td><td>{result.totalMoment}</td></tr>
+                  </tbody>
+                </table>
+                <p>Center of gravity: {result.cg} in. {result.verdict}</p>
+              </>
+            ) : (
+              <p>{result.error}</p>
+            )}
+          </div>
+          <h3>Try this</h3>
+          <p>Practice numbers, not a real airplane.</p>
+          <div className="stack stack--3">
+            {WB_PRACTICE.map((p) => (
+              <div key={p.id}>
+                <strong>{p.title}</strong>
+                <div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setInput(JSON.parse(JSON.stringify(p.input)));
+                      setPractice(p);
+                      setShowAnswer(null);
+                    }}
+                  >
+                    Fill in {p.title.split(":")[0]}
+                  </Button>{" "}
+                  {practice?.id === p.id ? (
+                    <Button variant="ghost" onClick={() => setShowAnswer(showAnswer === p.id ? null : p.id)}>
+                      {showAnswer === p.id ? "Hide answer" : "Show answer"}
+                    </Button>
+                  ) : null}
+                </div>
+                {showAnswer === p.id ? <p>{p.answer}</p> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
+function PerformanceAidCard() {
+  const [runway, setRunway] = useState("");
+  const [windDir, setWindDir] = useState("");
+  const [windSpeed, setWindSpeed] = useState("");
+  const [elevation, setElevation] = useState("");
+  const [altimeter, setAltimeter] = useState("29.92");
+  const [oat, setOat] = useState("");
+  const num = (v: string) => (v.trim() === "" ? NaN : Number(v));
+  const runwayNum = num(runway);
+  const runwayBad = runway.trim() !== "" && !(Number.isInteger(runwayNum) && runwayNum >= 1 && runwayNum <= 36);
+  const wind = runwayBad ? null : windComponents(runwayNum, num(windDir), num(windSpeed));
+  const density = densityAltitude(num(elevation), num(altimeter), num(oat));
+  const windText = runwayBad
+    ? "Runway numbers are whole numbers from 1 to 36. Try again."
+    : wind
+    ? `${wind.crosswind === 0 ? "Crosswind 0 kt" : `Crosswind ${wind.crosswind} kt from the ${wind.side}`}, ${
+        wind.headwind < 0 ? `tailwind ${-wind.headwind} kt` : `headwind ${wind.headwind} kt`
+      }.`
+    : "Enter a runway (1-36), wind direction and wind speed.";
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  const densityText = density
+    ? `Pressure altitude ${fmt(density.pressureAltitude)} ft, density altitude about ${fmt(density.densityAltitude)} ft.`
+    : "Enter field elevation, altimeter setting and temperature.";
+  return (
+    <Card variant="grouped">
+      <CardHeader title="Crosswind & density altitude" />
+      <CardBody>
+        <div className="stack stack--3">
+          <div className="form-grid">
+            <Field label="Runway (1-36)">
+              <TextInput type="number" inputMode="numeric" min="1" max="36" step="1" value={runway} onChange={(e) => setRunway(e.target.value)} />
+            </Field>
+            <Field label="Wind direction (degrees)">
+              <TextInput type="number" inputMode="numeric" min="0" max="360" value={windDir} onChange={(e) => setWindDir(e.target.value)} />
+            </Field>
+            <Field label="Wind speed (kt)">
+              <TextInput type="number" inputMode="numeric" min="0" value={windSpeed} onChange={(e) => setWindSpeed(e.target.value)} />
+            </Field>
+          </div>
+          <p className="small" role="status">{windText}</p>
+          <div className="form-grid">
+            <Field label="Field elevation (ft)">
+              <TextInput type="number" inputMode="numeric" value={elevation} onChange={(e) => setElevation(e.target.value)} />
+            </Field>
+            <Field label="Altimeter (inHg)">
+              <TextInput type="number" inputMode="decimal" step="0.01" value={altimeter} onChange={(e) => setAltimeter(e.target.value)} />
+            </Field>
+            <Field label="Outside air temperature (°C)">
+              <TextInput type="number" value={oat} onChange={(e) => setOat(e.target.value)} />
+            </Field>
+          </div>
+          <p className="small" role="status">{densityText}</p>
+          <p className="small muted">
+            High density altitude means a longer takeoff run and a weaker climb.
+          </p>
+          <p className="tiny dim">
+            Study aid only. Use your POH performance charts and check with your instructor.
+          </p>
+        </div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -1053,12 +1318,14 @@ function QuizTool({ state, save }: ToolProps) {
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-  const question = QUIZ_QUESTIONS[index]!;
+  const [questions, setQuestions] = useState(() => selectQuizQuestions(Date.now()));
+  const question = questions[index]!;
   const best = state.quizAttempts.length
     ? Math.max(...state.quizAttempts.map((item) => item.score / item.total))
     : null;
 
   const start = () => {
+    setQuestions(selectQuizQuestions(Date.now()));
     setResult(null);
     setRunning(true);
     setIndex(0);
@@ -1072,10 +1339,10 @@ function QuizTool({ state, save }: ToolProps) {
   const next = async () => {
     if (selected === null || finishing.current) return;
     const nextAnswers = [...answers, selected];
-    if (index === QUIZ_QUESTIONS.length - 1) {
+    if (index === questions.length - 1) {
       finishing.current = true;
       setFinishBusy(true);
-      const attempt = makeQuizAttempt(nextAnswers, nowIso(), newId());
+      const attempt = makeQuizAttempt(nextAnswers, nowIso(), newId(), questions);
       try {
         await save((current) => ({
           ...current,
@@ -1147,6 +1414,9 @@ function QuizTool({ state, save }: ToolProps) {
             >
               Start quiz
             </Button>
+            <p className="small muted">
+              Practice questions in the style of the FAA knowledge test. A study aid; check against FAA guidance and your instructor.
+            </p>
           </CardBody>
         </Card>
         <Card variant="grouped">
@@ -1195,37 +1465,40 @@ function QuizTool({ state, save }: ToolProps) {
   return (
     <Card variant="grouped">
       <CardHeader
-        title={`Question ${index + 1} of ${QUIZ_QUESTIONS.length}`}
+        title={`Question ${index + 1} of ${questions.length}`}
         eyebrow={TOPIC_LABELS[question.topic]}
       />
       <CardBody>
         <div className="quiz">
           <p className="display quiz__prompt">{question.prompt}</p>
-          {question.choices.map((choice, choiceIndex) => (
-            <button
-              type="button"
-              disabled={checked}
-              className={`quiz__choice${selected === choiceIndex ? " is-selected" : ""}${checked && choiceIndex === question.correct ? " is-correct" : ""}${checked && selected === choiceIndex && choiceIndex !== question.correct ? " is-wrong" : ""}`}
-              onClick={() => setSelected(choiceIndex)}
-              key={choice}
-            >
-              {choice}
-            </button>
-          ))}
-          <button
-            type="button"
-            disabled={checked}
-            className={`quiz__choice${selected === QUIZ_DONT_KNOW ? " is-selected" : ""}`}
-            onClick={() => setSelected(QUIZ_DONT_KNOW)}
-          >
-            I don't know
-          </button>
+          <div role="radiogroup" aria-label="Answer choices" className="stack stack--2">
+            {[...question.choices, "I don't know"].map((choice, position) => {
+              const choiceIndex = position < question.choices.length ? position : QUIZ_DONT_KNOW;
+              return (
+                <label
+                  key={choice}
+                  className={`quiz__choice${selected === choiceIndex ? " is-selected" : ""}${checked && choiceIndex === question.correct ? " is-correct" : ""}${checked && selected === choiceIndex && choiceIndex !== question.correct ? " is-wrong" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name={`quiz-question-${index}`}
+                    className="quiz__radio"
+                    disabled={checked}
+                    checked={selected === choiceIndex}
+                    onChange={() => setSelected(choiceIndex)}
+                  />
+                  {choice}
+                </label>
+              );
+            })}
+          </div>
           {checked ? (
             <p className="quiz__explanation small">
-              {selected === question.correct ? "Correct. " : "Not quite. "}
-              {selected === QUIZ_DONT_KNOW
-                ? `The answer is: ${question.choices[question.correct]}. `
-                : null}
+              {selected === question.correct
+                ? "Correct. "
+                : selected === QUIZ_DONT_KNOW
+                  ? `No problem, here is the answer: ${question.choices[question.correct]}. `
+                  : `Not quite. The correct answer is: ${question.choices[question.correct]}. `}
               {question.explanation}
             </p>
           ) : null}
@@ -1242,7 +1515,7 @@ function QuizTool({ state, save }: ToolProps) {
               <Button variant="primary" onClick={() => void next()} disabled={finishBusy}>
                 {finishBusy
                   ? "Saving…"
-                  : index === QUIZ_QUESTIONS.length - 1
+                  : index === questions.length - 1
                   ? "Finish quiz"
                   : "Next question"}
               </Button>

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { canReadAloud, readAloud, stopReading } from "@/services/readAloud";
 
-export function ReadAloudButton({ text }: { text: string }) {
+export function ReadAloudButton({ text, label = "Read aloud" }: { text: string; label?: string }) {
   const [speaking, setSpeaking] = useState(false);
   const current = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -39,5 +39,5 @@ export function ReadAloudButton({ text }: { text: string }) {
     }
   };
 
-  return <Button size="small" variant="secondary" onClick={toggle}>{speaking ? "Stop" : "Read aloud"}</Button>;
+  return <Button size="small" variant="secondary" onClick={toggle}>{speaking ? "Stop" : label}</Button>;
 }

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeEvent } from "@/testing/factories";
 import { todayIso } from "@/lib/dates";
-import { DEFAULT_TOOLKIT_STATE, QUIZ_QUESTIONS } from "@/logic/toolkit";
+import { DEFAULT_TOOLKIT_STATE, QUIZ_LENGTH, QUIZ_QUESTIONS } from "@/logic/toolkit";
 import type { AppData } from "@/state/AppDataContext";
 
 let data: AppData;
@@ -65,7 +65,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
 
     const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(8);
+    expect(tabs).toHaveLength(10);
 
     const activeTab = screen.getByRole("tab", { selected: true });
     expect(activeTab.id).toBe("toolkit-tab-readiness");
@@ -85,7 +85,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
 
     expect(activeTabs).toHaveLength(1);
     expect(activeTabs[0]!.getAttribute("aria-selected")).toBe("true");
-    expect(inactiveTabs).toHaveLength(7);
+    expect(inactiveTabs).toHaveLength(9);
     for (const tab of inactiveTabs) {
       expect(tab.getAttribute("aria-selected")).toBe("false");
     }
@@ -280,29 +280,41 @@ describe("Knowledge quiz result", () => {
     fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
     fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
   };
-  const answerAll = (pick: (i: number) => string) => {
-    QUIZ_QUESTIONS.forEach((_, i) => {
-      fireEvent.click(screen.getByRole("button", { name: pick(i) }));
+  // The quiz draws a random set, so find each question by the prompt on screen.
+  const onScreen = () => QUIZ_QUESTIONS.find((q) => screen.queryByText(q.prompt))!;
+  const answerAll = (pick: (i: number, q: (typeof QUIZ_QUESTIONS)[number]) => string) => {
+    for (let i = 0; i < QUIZ_LENGTH; i++) {
+      fireEvent.click(screen.getByRole("radio", { name: pick(i, onScreen()) }));
       fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
-      fireEvent.click(screen.getByRole("button", { name: i === QUIZ_QUESTIONS.length - 1 ? "Finish quiz" : "Next question" }));
-    });
+      fireEvent.click(screen.getByRole("button", { name: i === QUIZ_LENGTH - 1 ? "Finish quiz" : "Next question" }));
+    }
   };
 
   it("shows the score, a Review line, and returns to the start card", async () => {
     openQuiz();
-    answerAll((i) => (i === 0 ? "I don't know" : QUIZ_QUESTIONS[i]!.choices[QUIZ_QUESTIONS[i]!.correct]!));
-    const heading = await screen.findByRole("heading", { name: `${QUIZ_QUESTIONS.length - 1} of ${QUIZ_QUESTIONS.length} right.` });
+    answerAll((i, q) => (i === 0 ? "I don't know" : q.choices[q.correct]!));
+    const heading = await screen.findByRole("heading", { name: `${QUIZ_LENGTH - 1} of ${QUIZ_LENGTH} right.` });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(screen.getByText(/Review:\s*Weather/)).toBeTruthy();
+    expect(screen.getByText(/Review:/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Try another quiz" }));
     expect(screen.getByRole("button", { name: "Start quiz" })).toBeTruthy();
   });
 
   it("I don't know shows the correct answer like a wrong answer", () => {
     openQuiz();
-    fireEvent.click(screen.getByRole("button", { name: "I don't know" }));
+    fireEvent.click(screen.getByRole("radio", { name: "I don't know" }));
     fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
-    const q = QUIZ_QUESTIONS[0]!;
-    expect(screen.getByText(new RegExp(`Not quite\\. The answer is: ${q.choices[q.correct]}`))).toBeTruthy();
+    const q = onScreen();
+    expect(screen.getByText(new RegExp(`No problem, here is the answer: ${q.choices[q.correct]}`))).toBeTruthy();
+  });
+
+  it("names the correct option after a wrong answer and groups options as radios", () => {
+    openQuiz();
+    expect(screen.getByRole("radiogroup")).toBeTruthy();
+    const q = onScreen();
+    const wrong = q.choices.findIndex((_, i) => i !== q.correct);
+    fireEvent.click(screen.getByRole("radio", { name: q.choices[wrong]! }));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+    expect(document.querySelector(".quiz__explanation")?.textContent).toContain(`Not quite. The correct answer is: ${q.choices[q.correct]}`);
   });
 });
