@@ -56,6 +56,7 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
   { label: "Notes", to: "/notes", detail: "Anything you wrote down" },
   { label: "Finances", to: "/finances", detail: "Spending and funds" },
   { label: "Pilot Toolkit", to: "/toolkit", detail: "Checkride readiness" },
+  { label: "METAR explainer", to: "/toolkit?tool=metar", detail: "Pilot Toolkit: read a weather report" },
   { label: "Settings", to: "/settings", detail: "Profile and preferences" },
 ];
 
@@ -191,7 +192,14 @@ export function quickFind(data: AppData, query: string, today: string, limit = 1
     if (score !== null) scored.push({ candidate, score });
   }
 
-  scored.sort((a, b) => a.score - b.score || a.candidate.label.localeCompare(b.candidate.label));
+  // At the same rank a section or tool name comes before one of the student's own records.
+  const goFirst = (c: Candidate) => (c.section === "Go to" ? 0 : 1);
+  scored.sort(
+    (a, b) =>
+      a.score - b.score ||
+      goFirst(a.candidate) - goFirst(b.candidate) ||
+      a.candidate.label.localeCompare(b.candidate.label),
+  );
 
   return scored.slice(0, limit).map(({ candidate }) => ({
     key: candidate.key,
