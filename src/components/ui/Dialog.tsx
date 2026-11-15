@@ -16,6 +16,8 @@ interface DialogProps {
   narrow?: boolean;
   dismissible?: boolean;
   className?: string;
+  /** Extra controls in the header, between the title and the close button. */
+  headerActions?: ReactNode;
   /** Where focus goes on opening; defaults to the first focusable element. */
   initialFocus?: () => HTMLElement | null;
 }
@@ -38,6 +40,7 @@ export function Dialog({
   narrow = false,
   dismissible = true,
   className,
+  headerActions,
   initialFocus,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -89,6 +92,7 @@ export function Dialog({
             </h2>
             {description ? <p className="dialog__description">{description}</p> : null}
           </div>
+          {headerActions}
           <IconButton label="Close" onClick={onClose} disabled={!dismissible}>
             <CloseIcon />
           </IconButton>
