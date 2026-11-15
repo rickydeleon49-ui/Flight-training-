@@ -45,7 +45,7 @@ export const DIAGRAMS: readonly Diagram[] = [
   d("airspace", "02-class-b-cake.svg", "Class B: upside-down wedding cake", "regulations", "PHAK ch. 15"),
   d("airspace", "03-class-c-rings.svg", "Class C: two rings", "regulations", "PHAK ch. 15"),
   d("airspace", "04-class-d-cylinder.svg", "Class D: tower airspace", "regulations", "PHAK ch. 15"),
-  d("airspace", "05-chart-boundaries.svg", "Sectional chart boundary styles", "regulations", "PHAK ch. 15"),
+  d("airspace", "05-chart-boundaries.svg", "Sectional chart boundary styles", "regulations", "Aeronautical Chart User's Guide"),
   d("airspace", "04-special-use-airspace.svg", "Special use airspace", "regulations", "PHAK ch. 15"),
   d("airspace", "05-other-airspace-areas.svg", "Other airspace areas", "regulations", "PHAK ch. 15"),
   d("airspace-2", "01-transponder-and-ads-b-areas.svg", "Where a transponder and ADS-B Out are required", "regulations", "14 CFR 91.215"),
