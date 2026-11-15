@@ -617,3 +617,36 @@ fn a_kit_keeps_every_cited_page_and_shows_runs_compressed() {
     assert!(notes.starts_with("Source pages: 1–25, 31."), "{notes}");
     assert_eq!(compress_pages(&[1, 2, 4, 6, 7, 8]), "1, 2, 4, 6–8");
 }
+
+#[test]
+fn empty_practice_questions_use_one_retry_only_when_it_has_questions() {
+    let mut v = valid();
+    v["questions"] = json!([]);
+    let failed = validate(v, 2, MODEL, None);
+    assert!(failed["parts"]["questions"]["error"].is_string());
+    let test = |n: usize| GeneratedPracticeTest {
+        title: "Practice questions".into(),
+        questions: serde_json::from_value::<Vec<PracticeQuestion>>(valid()["questions"].clone())
+            .unwrap()
+            .into_iter()
+            .take(n)
+            .collect(),
+        model: MODEL.into(),
+    };
+    for none in [None, Some(test(0))] {
+        let mut r = failed.clone();
+        use_retried_questions(&mut r, none);
+        assert_eq!(r, failed, "still empty keeps today's message");
+    }
+    let mut r = failed.clone();
+    use_retried_questions(&mut r, Some(test(1)));
+    assert!(r["parts"]["questions"]["error"].is_null());
+    assert_eq!(
+        r["parts"]["questions"]["answer"]["questions"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(r["parts"]["guide"], failed["parts"]["guide"]);
+}

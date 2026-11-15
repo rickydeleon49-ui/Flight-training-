@@ -46,6 +46,7 @@ impl Rig {
     fn new(pages: u32) -> Self {
         let dir = TempDir::new();
         std::fs::create_dir(dir.path().join("documents")).unwrap();
+        std::fs::write(dir.path().join("ai-provider"), "gemini").unwrap();
         std::fs::write(
             dir.path().join("documents/a.pdf"),
             generation_tests::pdf(pages, "sections"),

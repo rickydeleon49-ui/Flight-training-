@@ -42,16 +42,27 @@ impl ProviderId {
     }
 }
 
-/// Unknown, unreadable and missing preferences retain Gemini.
+/// Never picked (no saved file): Claude is the default (owner, 14 Nov 2026),
+/// unless a Gemini key is already saved, so an existing student keeps working.
+/// Unknown or unreadable content retains Gemini. Nothing is written.
 pub(crate) fn load_choice(root: &Path) -> ProviderId {
-    std::fs::read_to_string(root.join("ai-provider"))
-        .ok()
-        .and_then(|s| match s.trim() {
-            "gemini" => Some(ProviderId::Gemini),
-            "claude" => Some(ProviderId::Claude),
-            _ => None,
-        })
-        .unwrap_or_else(|| AnyProvider::default().id())
+    match std::fs::read_to_string(root.join("ai-provider")) {
+        Ok(s) => match s.trim() {
+            "claude" => ProviderId::Claude,
+            _ => ProviderId::Gemini,
+        },
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            if matches!(
+                crate::secrets::status_key_for(root, ProviderId::Gemini),
+                Ok(Some(_)) | Err(_)
+            ) {
+                ProviderId::Gemini
+            } else {
+                ProviderId::Claude
+            }
+        }
+        Err(_) => ProviderId::Gemini,
+    }
 }
 
 /// Replace the preference beside its target so readers never see a partial ID.
@@ -610,7 +621,7 @@ mod tests {
         let empty = serde_json::to_value(status_at(root.path()).unwrap()).unwrap();
         assert_eq!(
             empty,
-            json!({"selected":"gemini", "providers":[
+            json!({"selected":"claude", "providers":[
                 {"id":"gemini", "connected":false, "keyUnreadable":false}, {"id":"claude", "connected":false, "keyUnreadable":false}
             ]})
         );
@@ -705,7 +716,7 @@ mod tests {
                 .as_deref(),
             Some("synthetic-old")
         );
-        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
+        assert_eq!(load_choice(root.path()), ProviderId::Claude);
         tauri::async_runtime::block_on(configure_at(
             root.path(),
             ProviderId::Claude,
@@ -725,8 +736,10 @@ mod tests {
     #[test]
     fn choice_absent() {
         let root = TempRoot::new();
-        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
+        assert_eq!(load_choice(root.path()), ProviderId::Claude);
         assert!(!root.path().join("ai-provider").exists());
+        crate::secrets::save_key_for(root.path(), ProviderId::Gemini, "synthetic-key").unwrap();
+        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
     }
     #[test]
     fn choice_unknown() {

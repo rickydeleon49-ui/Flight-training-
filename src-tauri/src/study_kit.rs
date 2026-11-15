@@ -290,11 +290,35 @@ async fn generate(
             message
         }
     })?;
-    let value = serde_json::from_str(&text).map_err(|_| INCOMPLETE.to_string())?;
+    let value: Value = serde_json::from_str(&text).map_err(|_| INCOMPLETE.to_string())?;
+    let no_questions = value["questions"].as_array().is_none_or(Vec::is_empty);
     let mut local = kit_evidence::PageText::new(source);
-    let result = validate_checked(value, pages, model, practice_revision, |p| local.page(p));
+    let mut result = validate_checked(value, pages, model, practice_revision, |p| local.page(p));
+    if no_questions {
+        // Zero practice questions came back: ask once more for just that part,
+        // the same way Create practice test does. A second failure keeps today's message.
+        ctx.budget.validation_checkpoint()?;
+        let again = crate::gemini::practice_test_with(ctx, source).await.ok();
+        use_retried_questions(&mut result, again);
+    }
     ctx.budget.validation_checkpoint()?;
     Ok(result)
+}
+
+/// Replace a failed practice-question part with the retry's test, when it has questions.
+fn use_retried_questions(result: &mut Value, again: Option<GeneratedPracticeTest>) {
+    let Some(mut test) = again.filter(|t| !t.questions.is_empty()) else {
+        return;
+    };
+    test.questions.truncate(MAX_KIT_QUESTIONS);
+    if let (Some(part), Ok(answer)) = (
+        result.get_mut("parts").and_then(|p| p.get_mut("questions")),
+        serde_json::to_value(test),
+    ) {
+        if part.get("answer").is_none() {
+            *part = json!({"answer":answer});
+        }
+    }
 }
 
 /// Present durable parts as the existing review flows' jobs, without allocating
