@@ -9,6 +9,7 @@ import {
   MoreIcon,
 } from "@/components/ui";
 
+import { useGuardedLinkClick } from "@/state/leaveGuard";
 import { useScrollDirection } from "./useScrollDirection";
 import { scrollBehavior } from "../../lib/motion";
 
@@ -58,7 +59,10 @@ export function IosTabBar({ overdueCount }: Props) {
   const compact = useScrollDirection(pathname);
 
   // Tapping the tab you are already on scrolls back to the top (no new history entry).
+  const guardClick = useGuardedLinkClick();
   const scrollIfCurrent = (root: string) => (event: MouseEvent) => {
+    guardClick(event, root);
+    if (event.defaultPrevented) return;
     if (pathname === root) {
       event.preventDefault();
       window.scrollTo({ top: 0, behavior: scrollBehavior() });

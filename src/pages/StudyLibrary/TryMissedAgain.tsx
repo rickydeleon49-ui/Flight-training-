@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { Button, ConfirmDialog, Dialog } from "@/components/ui";
+import { useLeaveGuard } from "@/state/leaveGuard";
 import type { PracticeAttempt, PracticeResponse, PracticeTestItem } from "@/domain/types";
 import { missedAgainQuestions, type MixedQuestion } from "@/logic/mixedPractice";
 import { QuickQuestionRun } from "./QuickQuestionRun";
@@ -21,6 +22,7 @@ export function TryMissedAgain({ attempt, items, responses, materialTitle, prima
   const [progress, setProgress] = useState({ started: false, finished: false });
   const [leaving, setLeaving] = useState(false);
   const onProgress = useCallback((started: boolean, finished: boolean) => setProgress({ started, finished }), []);
+  useLeaveGuard(Boolean(run && progress.started && !progress.finished), "Leave this test?", "Your answers in this try are not kept.");
   const missed = missedAgainQuestions(attempt.id, items, responses, attempt.sourceMaterialId ?? "", materialTitle);
   if (missed.length === 0) return null;
   const close = () => { setRun(null); setProgress({ started: false, finished: false }); setLeaving(false); };

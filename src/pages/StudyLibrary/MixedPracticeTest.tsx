@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, ConfirmDialog, Dialog } from "@/components/ui";
+import { useLeaveGuard } from "@/state/leaveGuard";
 import type { PracticeTest, StudyMaterial } from "@/domain/types";
 import {
   buildMixedTest,
@@ -27,6 +28,7 @@ export function MixedPracticeTest({ practiceTests, materials, onFinished }: {
   const [leaving, setLeaving] = useState(false);
   const choices = mixedChoices(practiceTests, materials);
   const close = () => { setOpen(false); setPicked([]); setRun(null); setProgress({ started: false, finished: false }); setLeaving(false); };
+  useLeaveGuard(Boolean(run && progress.started && !progress.finished), "Leave this test?", "Your answers in this mixed test are not kept.");
   const requestClose = () => { if (run && progress.started && !progress.finished) setLeaving(true); else close(); };
   const onProgress = useCallback((started: boolean, finished: boolean) => setProgress({ started, finished }), []);
 

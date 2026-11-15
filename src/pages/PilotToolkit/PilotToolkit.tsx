@@ -71,6 +71,7 @@ import { explainMetar } from "@/logic/metarExplain";
 import { explainTaf, looksLikeTaf } from "@/logic/tafExplain";
 import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
+import { useLeaveGuard } from "@/state/leaveGuard";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
@@ -1386,6 +1387,7 @@ function QuizTool({ state, save, onBusyChange }: ToolProps & { onBusyChange?: (b
   const [checked, setChecked] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const busy = running && !result && quizNeedsLeaveConfirm(answers.length, checked);
+  useLeaveGuard(busy, "Leave this quiz?", "Your answers in this quiz are not kept.");
   useEffect(() => {
     onBusyChange?.(busy);
   }, [busy, onBusyChange]);

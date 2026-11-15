@@ -52,3 +52,24 @@ it("switching tabs mid-quiz asks 'Leave this quiz?' once an answer is checked (B
   fireEvent.click(screen.getByRole("button", { name: "Leave" }));
   expect(screen.getByRole("tab", { name: "Checkride", selected: true })).toBeTruthy();
 });
+
+it("a nav link clicked mid-quiz asks 'Leave this quiz?' (leave guard)", async () => {
+  const { fireEvent } = await import("@testing-library/react");
+  const { LeaveGuardProvider } = await import("@/state/leaveGuard");
+  const { IosTabBar } = await import("@/components/layout/IosTabBar");
+  render(
+    <MemoryRouter initialEntries={["/?tool=quiz"]}>
+      <LeaveGuardProvider>
+        <IosTabBar overdueCount={0} />
+        <PilotToolkit />
+      </LeaveGuardProvider>
+    </MemoryRouter>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
+  fireEvent.click(screen.getAllByRole("radio")[0]!);
+  fireEvent.click(screen.getByRole("button", { name: /Check answer/ }));
+  fireEvent.click(screen.getByRole("link", { name: "Study" }));
+  expect(screen.getByRole("heading", { name: "Leave this quiz?" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
+  expect(screen.queryByRole("heading", { name: "Leave this quiz?" })).toBeNull();
+});
