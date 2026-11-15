@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   E6B_PRACTICE,
+  e6bExpected,
+  gradeE6bAnswer,
+  summarizeE6bGrades,
+  type E6bAnswerId,
   fuelForTime,
   timeForFuel,
   timeSpeedDistance,
@@ -78,5 +82,50 @@ describe("practice problems", () => {
     expect(tsd!.answer).toContain("90 minutes");
     expect(fuelForTime(8.5, 150)).toMatchObject({ fuelGallons: 21.3 });
     expect(fuel!.answer).toContain("21.3");
+  });
+});
+
+describe("E6B answer checking", () => {
+  const [wind, tsd, fuel] = E6B_PRACTICE;
+  const wExp = e6bExpected(wind!);
+  const grade = (id: E6bAnswerId, value: string, side?: "L" | "R", p = wind!, e = wExp) =>
+    gradeE6bAnswer(id, { value, side }, p, e);
+
+  it("uses the trainer arithmetic for expected values", () => {
+    expect(wExp).toEqual({ wca: 12, trueHeading: 102, groundSpeed: 98, magneticHeading: 97 });
+    expect(e6bExpected(tsd!)).toEqual({ time: 90 });
+    expect(e6bExpected(fuel!)).toEqual({ fuel: 21.3 });
+  });
+
+  it("grades right, close, wrong and empty by tolerance", () => {
+    expect(grade("trueHeading", "102").status).toBe("right");
+    expect(grade("trueHeading", "104").status).toBe("close");
+    expect(grade("trueHeading", "105").status).toBe("wrong");
+    expect(grade("trueHeading", "").status).toBe("empty");
+    expect(grade("groundSpeed", "96").message).toMatch(/answer is 98 kt/);
+    expect(grade("groundSpeed", "95").status).toBe("wrong");
+    expect(gradeE6bAnswer("time", { value: "91" }, tsd!, e6bExpected(tsd!)).status).toBe("close");
+    expect(gradeE6bAnswer("time", { value: "92" }, tsd!, e6bExpected(tsd!)).status).toBe("wrong");
+    const fe = e6bExpected(fuel!);
+    expect(gradeE6bAnswer("fuel", { value: "21.3" }, fuel!, fe).status).toBe("right");
+    expect(gradeE6bAnswer("fuel", { value: "21.8" }, fuel!, fe).status).toBe("close");
+    expect(gradeE6bAnswer("fuel", { value: "22" }, fuel!, fe).status).toBe("wrong");
+  });
+
+  it("treats L/R mismatch on the wind correction angle as not quite", () => {
+    expect(grade("wca", "12", "R").status).toBe("right");
+    expect(grade("wca", "13", "R").status).toBe("close");
+    expect(grade("wca", "12", "L").status).toBe("wrong");
+    expect(grade("wca", "12").message).toMatch(/Pick left or right/);
+  });
+
+  it("gives a short hint for the value that was missed", () => {
+    expect(grade("magneticHeading", "107").message).toMatch(/East is least: subtract east variation/);
+    expect(grade("trueHeading", "200").message).toMatch(/add right, subtract left/);
+  });
+
+  it("wraps headings through north and summarizes", () => {
+    expect(gradeE6bAnswer("trueHeading", { value: "1" }, wind!, { trueHeading: 360 }).status).toBe("close");
+    expect(summarizeE6bGrades([{ status: "right", message: "" }, { status: "empty", message: "" }, { status: "wrong", message: "" }])).toBe("1 right, 0 close, 1 to fix");
   });
 });

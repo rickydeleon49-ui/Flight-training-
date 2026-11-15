@@ -138,3 +138,136 @@ export function describeE6bPractice(p: E6bPractice): string {
   }
   return `Given: fuel burn ${p.values.burn} gallons per hour for ${p.values.minutes} minutes. How much fuel do you burn?`;
 }
+
+// ---- Checking the typed answers (study aid) ----
+
+export type E6bGradeStatus = "right" | "close" | "wrong" | "empty";
+export type E6bGrade = { status: E6bGradeStatus; message: string };
+
+/** How far off still counts as "close" on an E6B. */
+export const E6B_TOLERANCE = { degrees: 2, knots: 2, minutes: 1, gallons: 0.5 } as const;
+
+export type E6bAnswerId = "wca" | "trueHeading" | "groundSpeed" | "magneticHeading" | "time" | "fuel";
+export type E6bAnswerBox = { id: E6bAnswerId; label: string; hasSide?: boolean };
+export type E6bExpected = Partial<Record<E6bAnswerId, number>>;
+export type E6bEntry = { value: string; side?: "L" | "R" };
+
+const ANSWER_BOXES: Record<E6bPractice["mode"], E6bAnswerBox[]> = {
+  wind: [
+    { id: "wca", label: "Wind correction angle", hasSide: true },
+    { id: "trueHeading", label: "True heading" },
+    { id: "groundSpeed", label: "Groundspeed (kt)" },
+    { id: "magneticHeading", label: "Magnetic heading" },
+  ],
+  tsd: [{ id: "time", label: "Trip time (minutes)" }],
+  fuel: [{ id: "fuel", label: "Fuel burned (gallons)" }],
+};
+
+/** The labelled answer boxes for a practice problem. */
+export function e6bAnswerBoxes(p: E6bPractice): E6bAnswerBox[] {
+  return ANSWER_BOXES[p.mode];
+}
+
+/** Expected answers, from the same arithmetic the trainer uses. Signed WCA: right is positive. */
+export function e6bExpected(p: E6bPractice): E6bExpected {
+  const n = (v: string) => (v.trim() === "" ? NaN : Number(v));
+  if (p.mode === "wind") {
+    const v = p.values;
+    const w = windTriangle(n(v.course), n(v.tas), n(v.windDir), n(v.windSpeed));
+    if (!w.ok) return {};
+    const m = trueToMagnetic(w.trueHeading, n(v.variation), v.side);
+    return {
+      wca: w.wcaDegrees,
+      trueHeading: w.trueHeading,
+      groundSpeed: w.groundSpeed,
+      ...(m.ok ? { magneticHeading: m.magneticHeading } : {}),
+    };
+  }
+  if (p.mode === "tsd") {
+    const r = timeSpeedDistance(n(p.values.distance), n(p.values.speed), n(p.values.time));
+    return r.ok && r.solved === "time" ? { time: r.timeMinutes } : {};
+  }
+  const r = fuelForTime(n(p.values.burn), n(p.values.minutes));
+  return r.ok ? { fuel: r.fuelGallons } : {};
+}
+
+const pad3 = (n: number) => String(n).padStart(3, "0");
+
+type Shape = {
+  tol: number;
+  circular?: boolean;
+  /** Smallest step the expected value is rounded to. */
+  step: number;
+  say: (n: number) => string;
+  closeNote: string;
+};
+
+const SHAPES: Record<E6bAnswerId, Shape> = {
+  wca: { tol: E6B_TOLERANCE.degrees, step: 1, say: (n) => `${n}°`, closeNote: "Within 2° counts on the E6B." },
+  trueHeading: { tol: E6B_TOLERANCE.degrees, circular: true, step: 1, say: (n) => `${pad3(n)}°`, closeNote: "Within 2° counts on the E6B." },
+  magneticHeading: { tol: E6B_TOLERANCE.degrees, circular: true, step: 1, say: (n) => `${pad3(n)}°`, closeNote: "Within 2° counts on the E6B." },
+  groundSpeed: { tol: E6B_TOLERANCE.knots, step: 1, say: (n) => `${n} kt`, closeNote: "Within 2 kt counts on the E6B." },
+  time: { tol: E6B_TOLERANCE.minutes, step: 1, say: (n) => `${n} minutes`, closeNote: "Within 1 minute counts on the E6B." },
+  fuel: { tol: E6B_TOLERANCE.gallons, step: 0.1, say: (n) => `${n} gallons`, closeNote: "Within 0.5 gallon counts on the E6B." },
+};
+
+function hintFor(id: E6bAnswerId, p: E6bPractice, expected: E6bExpected): string {
+  if (id === "wca") {
+    const side = (expected.wca ?? 0) >= 0 ? "right" : "left";
+    return `Point into the wind. This wind comes from the ${side === "right" ? "right" : "left"} of your course, so the correction is to the ${side}.`;
+  }
+  if (id === "trueHeading") return "True heading is true course plus the correction angle: add right, subtract left.";
+  if (id === "groundSpeed") return "Groundspeed is your speed over the ground. A headwind slows you down and a tailwind speeds you up.";
+  if (id === "magneticHeading") {
+    const west = p.mode === "wind" && p.values.side === "W";
+    return west ? "West is best: add west variation to the true heading." : "East is least: subtract east variation from the true heading.";
+  }
+  if (id === "time") return "Time in minutes is distance divided by speed, times 60.";
+  return "Gallons burned is burn rate times hours. Change the minutes to hours first.";
+}
+
+/**
+ * Grade one typed answer. Empty is skipped, not wrong. Right = equals the rounded answer;
+ * close = within the E6B tolerance; otherwise not quite, with a short hint.
+ */
+export function gradeE6bAnswer(id: E6bAnswerId, entry: E6bEntry, p: E6bPractice, expected: E6bExpected): E6bGrade {
+  const want = expected[id];
+  if (want === undefined || entry.value.trim() === "") return { status: "empty", message: "" };
+  const typed = Number(entry.value);
+  const shape = SHAPES[id];
+  const hint = hintFor(id, p, expected);
+  if (!Number.isFinite(typed)) return { status: "wrong", message: `Not quite. Type a number. ${hint}` };
+
+  if (id === "wca") {
+    const wantSide = want >= 0 ? "R" : "L";
+    const wantWord = want === 0 ? "no correction (0°)" : `${Math.abs(want)}° ${wantSide === "R" ? "right" : "left"}`;
+    const sideOk = want === 0 || entry.side === wantSide;
+    if (!sideOk) {
+      return { status: "wrong", message: `Not quite. ${entry.side ? "Check left or right." : "Pick left or right."} ${hint}` };
+    }
+    const diff = Math.abs(Math.abs(typed) - Math.abs(want));
+    if (diff <= 0.5 + 1e-9) return { status: "right", message: `Right: ${wantWord}` };
+    if (diff <= shape.tol + 1e-9) return { status: "close", message: `Close: answer is ${wantWord}. ${shape.closeNote}` };
+    return { status: "wrong", message: `Not quite. ${hint}` };
+  }
+
+  let diff = Math.abs(typed - want);
+  if (shape.circular) {
+    diff = Math.abs((((typed - want) % 360) + 540) % 360 - 180);
+    // 360 and 0 are the same heading
+  }
+  const say = shape.say(want);
+  if (diff <= shape.step / 2 + 1e-9) return { status: "right", message: `Right: ${say}` };
+  if (diff <= shape.tol + 1e-9) return { status: "close", message: `Close: answer is ${say}. ${shape.closeNote}` };
+  return { status: "wrong", message: `Not quite. ${hint} Answer: ${say}.` };
+}
+
+/** "2 right, 1 close, 1 to fix". Empty boxes are left out. */
+export function summarizeE6bGrades(grades: E6bGrade[]): string {
+  const count = (s: E6bGradeStatus) => grades.filter((g) => g.status === s).length;
+  const right = count("right");
+  const close = count("close");
+  const wrong = count("wrong");
+  if (right + close + wrong === 0) return "Type an answer in at least one box, then check.";
+  return `${right} right, ${close} close, ${wrong} to fix`;
+}
