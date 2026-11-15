@@ -4,6 +4,8 @@
 <dict>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo for your pilot profile or your study pictures. Photos stay on this device.</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 </dict>
