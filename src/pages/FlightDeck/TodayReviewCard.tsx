@@ -5,6 +5,7 @@ import { Button, Card } from "@/components/ui";
 import type { LibraryReviewMaterialEntry } from "@/domain/types";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
 import { practiceReadinessText, type PracticeReadiness } from "@/logic/practiceReadiness";
+import { nextSessionSize } from "@/logic/cardReviewStatus";
 import { estimateReviewMinutes } from "@/logic/reviewTime";
 import { useLibraryDueStream } from "@/pages/StudyLibrary/useLibraryReviews";
 
@@ -19,6 +20,16 @@ const rowDue = (row: CountRow) => row.againCount + row.dayCount + row.newCount;
 /** Cards due now (same rows and counts as the Study Library Review due tab). */
 export function dueCardCount(rows: readonly CountRow[]): number {
   return rows.reduce((sum, row) => sum + rowDue(row), 0);
+}
+
+/**
+ * Cards the button starts: one material's session, using the same size rule
+ * as the session itself (20 cards, 10 new at a time). Home counts every
+ * material, so this can be fewer than the title.
+ */
+export function firstSessionCards(row: CountRow): number {
+  const { due, fresh } = nextSessionSize(row.againCount + row.dayCount, row.newCount);
+  return due + fresh;
 }
 
 export function reviewTitle(dueCards: number, testsThisWeek: number): string {
@@ -185,6 +196,11 @@ function TodayReviewBody({
       <p className="small muted today-review__note">
         {fromLine(rows)} &nbsp;·&nbsp; about {estimateReviewMinutes(dueCards)} min
       </p>
+      {firstSessionCards(first) < dueCards ? (
+        <p className="small muted today-review__note">
+          This session: {plural(firstSessionCards(first), "card")} from {first.title}. The rest wait in the Review due tab.
+        </p>
+      ) : null}
       <ProgressRows readiness={readiness} coverage={coverage} />
       <div className="today-review__actions">
         <Button

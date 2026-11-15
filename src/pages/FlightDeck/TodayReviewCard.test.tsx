@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
 import type { LibraryReviewDueResult, LibraryReviewMaterialEntry } from "@/domain/types";
 
-import { TodayReviewCard, dueCardCount, fromLine, reviewTitle } from "./TodayReviewCard";
+import { TodayReviewCard, dueCardCount, firstSessionCards, fromLine, reviewTitle } from "./TodayReviewCard";
 
 afterEach(cleanup);
 
@@ -57,6 +57,19 @@ describe("helpers", () => {
     expect(fromLine([{ title: "A" }, { title: "B" }, { title: "C" }, { title: "D" }])).toBe("From A, B and 2 more");
     expect(fromLine([{ title: "A" }, { title: "B" }])).toBe("From A and B");
     expect(dueCardCount([{ againCount: 1, dayCount: 2, newCount: 2 }, { againCount: 0, dayCount: 13, newCount: 0 }])).toBe(18);
+  });
+});
+
+describe("Home count versus the session it starts (BL-59)", () => {
+  it("session size follows the same caps as the session", () => {
+    expect(firstSessionCards({ againCount: 0, dayCount: 2, newCount: 0 })).toBe(2);
+    expect(firstSessionCards({ againCount: 1, dayCount: 29, newCount: 5 })).toBe(20);
+    expect(firstSessionCards({ againCount: 0, dayCount: 0, newCount: 30 })).toBe(10);
+  });
+  it("tells her when the session is smaller than the title", async () => {
+    show(repoWith([row("m1", "Weather services", 2), row("m2", "Airspace", 1)]));
+    expect(await screen.findByText("3 cards due")).toBeTruthy();
+    expect(screen.getByText(/This session: 2 cards from Weather services/)).toBeTruthy();
   });
 });
 
