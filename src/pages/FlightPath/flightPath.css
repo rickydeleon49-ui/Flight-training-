@@ -181,3 +181,23 @@
   align-items: center;
   min-height: var(--hit-min);
 }
+
+/* Click targets (WCAG 2.5.8): whole label is the target, checkbox input 24px+. */
+.enroll-checklist .checkbox,
+.checklist-row .checkbox {
+  position: relative;
+  min-height: var(--hit-min);
+  align-items: center;
+}
+.enroll-checklist .checkbox input,
+.checklist-row .checkbox input {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.enroll-checklist a.small,
+.checklist-row a.small {
+  display: inline-block;
+  min-height: 24px;
+  line-height: 24px;
+}
+.waypoint__tools .icon-button { min-width: 40px; min-height: 40px; }
