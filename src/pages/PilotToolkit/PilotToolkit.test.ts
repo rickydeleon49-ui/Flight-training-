@@ -65,7 +65,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
 
     const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(10);
+    expect(tabs).toHaveLength(11);
 
     const activeTab = screen.getByRole("tab", { selected: true });
     expect(activeTab.id).toBe("toolkit-tab-readiness");
@@ -85,7 +85,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
 
     expect(activeTabs).toHaveLength(1);
     expect(activeTabs[0]!.getAttribute("aria-selected")).toBe("true");
-    expect(inactiveTabs).toHaveLength(9);
+    expect(inactiveTabs).toHaveLength(10);
     for (const tab of inactiveTabs) {
       expect(tab.getAttribute("aria-selected")).toBe("false");
     }

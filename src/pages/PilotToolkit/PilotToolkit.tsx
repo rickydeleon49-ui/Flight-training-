@@ -90,6 +90,7 @@ type Tool =
   | "reminders"
   | "career"
   | "metar"
+  | "e6b"
   | "radio";
 
 type ToolChoice = { id: Tool; label: string };
@@ -101,6 +102,7 @@ const TOOLS: ToolChoice[] = [
   { id: "safety", label: "Safety Check" },
   { id: "quiz", label: "Quizzes" },
   { id: "metar", label: "METAR" },
+  { id: "e6b", label: "E6B" },
   { id: "radio", label: "Radio words" },
   { id: "reminders", label: "Reminders" },
   { id: "career", label: "Career Portfolio" },
@@ -318,6 +320,7 @@ export function PilotToolkit() {
           <CareerTool state={data.toolkit} save={save} />
         ) : null}
         {tool === "metar" ? <MetarTool /> : null}
+        {tool === "e6b" ? <E6bTrainer /> : null}
       </div>
       <ConfirmDialog
         open={pendingTool !== null}
@@ -1160,7 +1163,6 @@ function SafetyTool({ state, save }: ToolProps) {
         </CardBody>
       </Card>
       <PerformanceAidCard />
-      <E6bTrainer />
     </div>
     <WeightBalancePractice />
     </>
