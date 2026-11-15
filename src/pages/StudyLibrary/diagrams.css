@@ -58,6 +58,11 @@
 .diagram-zoom-bar > button { margin-left: auto; }
 .diagram-stage { width: 100%; }
 .diagram-stage__inner { width: 100%; cursor: zoom-in; }
+/* Phones: keep diagram text legible by giving the drawing a minimum width and scrolling inside the figure only. */
+@media (max-width: 40rem) {
+  .diagram-stage { overflow-x: auto; }
+  .diagram-stage__inner { min-width: 36rem; }
+}
 .diagram-stage--zoomed { overflow: auto; max-height: 70vh; border-radius: var(--radius-sm, 6px); }
 .diagram-stage--zoomed .diagram-stage__inner { width: 200%; cursor: zoom-out; }
 .diagram-stage:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
