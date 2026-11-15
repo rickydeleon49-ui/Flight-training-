@@ -71,8 +71,12 @@ export function Field({ label, hint, error, full = false, children }: FieldProps
   );
 }
 
+// macOS spelling correction shows a pending bubble in search boxes (roger -> Roger),
+// and the next click only accepts it, so the button under the pointer misses that click.
+const NO_CORRECTION = { autoComplete: "off", autoCorrect: "off", autoCapitalize: "off", spellCheck: false } as const;
+
 export const TextInput = (props: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) => (
-  <input className="input" {...props} />
+  <input className="input" {...(props.type === "search" ? NO_CORRECTION : null)} {...props} />
 );
 
 export const TextArea = (props: TextareaHTMLAttributes<HTMLTextAreaElement>) => (

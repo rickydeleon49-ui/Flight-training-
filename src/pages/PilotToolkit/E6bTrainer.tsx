@@ -125,6 +125,8 @@ export function E6bTrainer() {
     setGrades(next);
   };
   const graded = grades ? boxes.map((b) => grades[b.id]).filter((g): g is E6bGrade => !!g) : [];
+  // The summary describes the last check, so it goes once a box changes or the answer is shown.
+  const summaryCurrent = graded.length > 0 && graded.length === boxes.length && !showAnswer;
   // The worked result would give the answer away, so hold it back until the user asks.
   const hideResult = practice !== null && !showAnswer;
 
@@ -247,7 +249,7 @@ export function E6bTrainer() {
                       <Button variant="secondary" onClick={() => setShowAnswer((s) => !s)}>
                         {showAnswer ? "Hide answer" : "Show answer"}
                       </Button>
-                      {graded.length > 0 ? (
+                      {summaryCurrent ? (
                         <span role="status" className="tiny dim">{summarizeE6bGrades(graded)}</span>
                       ) : null}
                     </div>

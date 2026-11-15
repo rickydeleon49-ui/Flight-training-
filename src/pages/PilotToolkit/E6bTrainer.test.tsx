@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 
@@ -58,4 +60,25 @@ it("skips empty boxes and grades a time answer", () => {
   fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "90" } });
   fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
   expect(screen.getByText("1 right, 0 close, 0 to fix")).toBeTruthy();
+});
+
+it("drops the check summary once the answer is shown or a box changes (R23)", () => {
+  render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 2/ }));
+  fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "90" } });
+  fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+  expect(screen.getByText("1 right, 0 close, 0 to fix")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+  expect(screen.queryByText("1 right, 0 close, 0 to fix")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Hide answer" }));
+  expect(screen.getByText("1 right, 0 close, 0 to fix")).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "80" } });
+  expect(screen.queryByText(/right, .* close, .* to fix/)).toBeNull();
+});
+
+it("lets the answer box shrink and the row wrap so L/R stays clickable at narrow widths (R23)", () => {
+  const css = readFileSync(join(__dirname, "pilotToolkit.css"), "utf8");
+  expect(css).toMatch(/\.e6b-check__row\s*\{[^}]*flex-wrap:\s*wrap/);
+  expect(css).toMatch(/\.e6b-check__input\s*\{[^}]*min-width:\s*0/);
+  expect(css).toMatch(/\.e6b-check__side\s*\{[^}]*flex:\s*none/);
 });
