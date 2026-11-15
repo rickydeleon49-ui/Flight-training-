@@ -4,6 +4,13 @@ import { Button, Card, CardBody, CardHeader, Field, TextInput } from "@/componen
 import {
   E6B_PRACTICE,
   describeE6bPractice,
+  e6bAnswerBoxes,
+  e6bExpected,
+  gradeE6bAnswer,
+  summarizeE6bGrades,
+  type E6bAnswerId,
+  type E6bEntry,
+  type E6bGrade,
   formatMinutes,
   fuelForTime,
   timeForFuel,
@@ -39,6 +46,8 @@ export function E6bTrainer() {
   const [fuel, setFuel] = useState("");
   const [practice, setPractice] = useState<E6bPractice | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [entries, setEntries] = useState<Partial<Record<E6bAnswerId, E6bEntry>>>({});
+  const [grades, setGrades] = useState<Partial<Record<E6bAnswerId, E6bGrade>> | null>(null);
 
   const fill = (p: E6bPractice) => {
     setMode(p.mode);
@@ -60,6 +69,8 @@ export function E6bTrainer() {
     }
     setPractice(p);
     setShowAnswer(false);
+    setEntries({});
+    setGrades(null);
   };
 
   let result: string;
@@ -100,6 +111,22 @@ export function E6bTrainer() {
       result = r.ok ? `You burn about ${r.fuelGallons} gallons in ${formatMinutes(r.timeMinutes)}.` : r.error;
     }
   }
+
+  const boxes = practice ? e6bAnswerBoxes(practice) : [];
+  const setEntry = (id: E6bAnswerId, patch: Partial<E6bEntry>) => {
+    setEntries((prev) => ({ ...prev, [id]: { value: "", ...prev[id], ...patch } }));
+    setGrades((prev) => (prev ? { ...prev, [id]: undefined } : prev));
+  };
+  const check = () => {
+    if (!practice) return;
+    const expected = e6bExpected(practice);
+    const next: Partial<Record<E6bAnswerId, E6bGrade>> = {};
+    for (const b of boxes) next[b.id] = gradeE6bAnswer(b.id, entries[b.id] ?? { value: "" }, practice, expected);
+    setGrades(next);
+  };
+  const graded = grades ? boxes.map((b) => grades[b.id]).filter((g): g is E6bGrade => !!g) : [];
+  // The worked result would give the answer away, so hold it back until the user asks.
+  const hideResult = practice !== null && !showAnswer;
 
   const numInput = (value: string, set: (v: string) => void) => (
     <TextInput type="number" inputMode="decimal" min="0" value={value} onChange={(e) => set(e.target.value)} />
@@ -153,7 +180,9 @@ export function E6bTrainer() {
             </div>
           ) : null}
           <div aria-live="polite" role="status" style={{ overflowX: "auto" }}>
-            <p style={{ overflowWrap: "anywhere" }}>{result}</p>
+            <p style={{ overflowWrap: "anywhere" }}>
+              {hideResult ? "Work the problem below on your E6B, then type what you get." : result}
+            </p>
           </div>
           <h3>Try this</h3>
           <p>Practice numbers, not a real flight.</p>
@@ -164,13 +193,66 @@ export function E6bTrainer() {
                 <div>
                   <Button variant="secondary" onClick={() => fill(p)}>
                     Fill in {p.title.split(":")[0]}
-                  </Button>{" "}
-                  {practice?.id === p.id ? (
-                    <Button variant="ghost" onClick={() => setShowAnswer((s) => !s)}>
-                      {showAnswer ? "Hide answer" : "Show answer"}
-                    </Button>
-                  ) : null}
+                  </Button>
                 </div>
+                {practice?.id === p.id ? (
+                  <div className="e6b-check stack stack--3">
+                    <div className="e6b-check__grid">
+                      {boxes.map((b) => {
+                        const g = grades?.[b.id];
+                        const status = g && g.status !== "empty" ? g.status : undefined;
+                        const entry = entries[b.id];
+                        const inputId = `e6b-answer-${b.id}`;
+                        return (
+                          <div key={b.id} className="e6b-check__item">
+                            <label htmlFor={inputId} className="e6b-check__label">{b.label}</label>
+                            <div className="e6b-check__row">
+                              <TextInput
+                                id={inputId}
+                                type="number"
+                                inputMode="decimal"
+                                value={entry?.value ?? ""}
+                                className={status ? `e6b-check__input e6b-check__input--${status}` : "e6b-check__input"}
+                                onChange={(e) => setEntry(b.id, { value: e.target.value })}
+                              />
+                              {b.hasSide ? (
+                                <div role="group" aria-label="Left or right" className="e6b-check__side">
+                                  {(["L", "R"] as const).map((s) => (
+                                    <button
+                                      key={s}
+                                      type="button"
+                                      aria-pressed={entry?.side === s}
+                                      aria-label={s === "L" ? "Left" : "Right"}
+                                      className="e6b-check__side-btn"
+                                      onClick={() => setEntry(b.id, { side: s })}
+                                    >
+                                      {s}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                            {status ? (
+                              <p className={`e6b-check__result e6b-check__result--${status}`}>
+                                {status === "right" ? "\u2713 " : ""}
+                                {g?.message}
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="e6b-check__actions">
+                      <Button variant="primary" onClick={check}>Check my answers</Button>
+                      <Button variant="secondary" onClick={() => setShowAnswer((s) => !s)}>
+                        {showAnswer ? "Hide answer" : "Show answer"}
+                      </Button>
+                      {graded.length > 0 ? (
+                        <span role="status" className="tiny dim">{summarizeE6bGrades(graded)}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
                 {practice?.id === p.id && showAnswer ? <p>{p.answer}</p> : null}
               </div>
             ))}
