@@ -132,7 +132,8 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
     const result = rows[index];
     if (!result) return;
     setOpen(false);
-    navigate(result.to);
+    // A jump always starts at the top, even to another tab of the page already open (BL-66).
+    navigate(result.to, { state: { scrollToTop: true } });
   };
 
   const presentation = (
