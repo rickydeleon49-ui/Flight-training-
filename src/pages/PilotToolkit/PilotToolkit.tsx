@@ -37,6 +37,7 @@ import {
 import {
   AVGAS_LB_PER_GAL,
   WB_PRACTICE,
+  describeWbPractice,
   WB_ROW_KEYS,
   WB_ROW_LABELS,
   calculateWeightBalance,
@@ -67,6 +68,7 @@ import {
   trainingCostForecast,
 } from "@/logic/toolkit";
 import { explainMetar } from "@/logic/metarExplain";
+import { explainTaf, looksLikeTaf } from "@/logic/tafExplain";
 import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
@@ -109,17 +111,35 @@ export function toolFrom(value: string | null): Tool {
   return TOOLS.find((choice) => choice.id === value)?.id ?? "readiness";
 }
 
+const METAR_EXAMPLE = "METAR KSFO 141756Z 28012G20KT 10SM FEW008 BKN015 16/11 A3002 RMK AO2 SLP168";
+const TAF_EXAMPLE =
+  "TAF KSFO 141120Z 1412/1518 28012KT P6SM FEW008 BKN015 FM141800 29015G25KT P6SM SCT035 TEMPO 1420/1424 3SM -RA BKN012 BECMG 1500/1502 VRB03KT 2SM BR OVC006";
+
+function TokenList({ tokens }: { tokens: { raw: string; meaning: string }[] }) {
+  return (
+    <ul className="stack stack--2">
+      {tokens.map((token, index) => (
+        <li key={index}>
+          <strong>{token.raw}</strong>: {token.meaning}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function MetarTool() {
   const [text, setText] = useState("");
+  const isTaf = looksLikeTaf(text);
   const result = useMemo(() => explainMetar(text), [text]);
+  const taf = useMemo(() => (isTaf ? explainTaf(text) : null), [isTaf, text]);
   return (
     <Card variant="grouped">
       <CardHeader
-        title="METAR Explainer"
+        title="METAR & TAF Explainer"
       />
       <CardBody>
         <p className="small muted">Study aid. Check official weather briefings and your instructor.</p>
-        <Field label="Paste or type a METAR">
+        <Field label="Paste or type a METAR or TAF">
           <TextArea
             rows={3}
             value={text}
@@ -127,15 +147,25 @@ function MetarTool() {
             onChange={(event) => setText(event.target.value)}
           />
         </Field>
-        {result.tokens.length ? (
+        <div className="row">
+          <Button variant="secondary" onClick={() => setText(METAR_EXAMPLE)}>Try an example METAR</Button>
+          <Button variant="secondary" onClick={() => setText(TAF_EXAMPLE)}>Try an example TAF</Button>
+        </div>
+        {taf ? (
+          <div className="stack stack--3" aria-label="Decoded forecast">
+            <TokenList tokens={taf.header} />
+            {taf.periods.map((period, index) => (
+              <section key={index} className="stack stack--2" aria-label={period.label}>
+                <h3>{period.label}</h3>
+                <p>{period.meaning}:</p>
+                <TokenList tokens={period.tokens} />
+                <p>{period.categoryNote}</p>
+              </section>
+            ))}
+          </div>
+        ) : result.tokens.length ? (
           <div className="stack stack--3" aria-label="Decoded groups">
-            <ul className="stack stack--2">
-              {result.tokens.map((token, index) => (
-                <li key={index}>
-                  <strong>{token.raw}</strong>: {token.meaning}
-                </li>
-              ))}
-            </ul>
+            <TokenList tokens={result.tokens} />
             <p>{result.categoryNote}</p>
           </div>
         ) : null}
@@ -1127,6 +1157,7 @@ function WeightBalancePractice() {
         <div className="stack stack--3">
           <p>Study aid only. Use your airplane's POH and check with your instructor.</p>
           <p>Fuel is entered in gallons and counted at {AVGAS_LB_PER_GAL} lb per gallon (avgas).</p>
+          {practice ? <p><strong>{practice.title}.</strong> {describeWbPractice(practice.input)}</p> : null}
           <div className="form-grid">
             {WB_ROW_KEYS.map((key) => (
               <Fragment key={key}>
@@ -1217,9 +1248,13 @@ function PerformanceAidCard() {
   const [altimeter, setAltimeter] = useState("29.92");
   const [oat, setOat] = useState("");
   const num = (v: string) => (v.trim() === "" ? NaN : Number(v));
-  const wind = windComponents(num(runway), num(windDir), num(windSpeed));
+  const runwayNum = num(runway);
+  const runwayBad = runway.trim() !== "" && !(Number.isInteger(runwayNum) && runwayNum >= 1 && runwayNum <= 36);
+  const wind = runwayBad ? null : windComponents(runwayNum, num(windDir), num(windSpeed));
   const density = densityAltitude(num(elevation), num(altimeter), num(oat));
-  const windText = wind
+  const windText = runwayBad
+    ? "Runway numbers are whole numbers from 1 to 36. Try again."
+    : wind
     ? `${wind.crosswind === 0 ? "Crosswind 0 kt" : `Crosswind ${wind.crosswind} kt from the ${wind.side}`}, ${
         wind.headwind < 0 ? `tailwind ${-wind.headwind} kt` : `headwind ${wind.headwind} kt`
       }.`
@@ -1235,7 +1270,7 @@ function PerformanceAidCard() {
         <div className="stack stack--3">
           <div className="form-grid">
             <Field label="Runway (1-36)">
-              <TextInput type="number" inputMode="numeric" min="1" max="360" value={runway} onChange={(e) => setRunway(e.target.value)} />
+              <TextInput type="number" inputMode="numeric" min="1" max="36" step="1" value={runway} onChange={(e) => setRunway(e.target.value)} />
             </Field>
             <Field label="Wind direction (degrees)">
               <TextInput type="number" inputMode="numeric" min="0" max="360" value={windDir} onChange={(e) => setWindDir(e.target.value)} />
@@ -1436,31 +1471,34 @@ function QuizTool({ state, save }: ToolProps) {
       <CardBody>
         <div className="quiz">
           <p className="display quiz__prompt">{question.prompt}</p>
-          {question.choices.map((choice, choiceIndex) => (
-            <button
-              type="button"
-              disabled={checked}
-              className={`quiz__choice${selected === choiceIndex ? " is-selected" : ""}${checked && choiceIndex === question.correct ? " is-correct" : ""}${checked && selected === choiceIndex && choiceIndex !== question.correct ? " is-wrong" : ""}`}
-              onClick={() => setSelected(choiceIndex)}
-              key={choice}
-            >
-              {choice}
-            </button>
-          ))}
-          <button
-            type="button"
-            disabled={checked}
-            className={`quiz__choice${selected === QUIZ_DONT_KNOW ? " is-selected" : ""}`}
-            onClick={() => setSelected(QUIZ_DONT_KNOW)}
-          >
-            I don't know
-          </button>
+          <div role="radiogroup" aria-label="Answer choices" className="stack stack--2">
+            {[...question.choices, "I don't know"].map((choice, position) => {
+              const choiceIndex = position < question.choices.length ? position : QUIZ_DONT_KNOW;
+              return (
+                <label
+                  key={choice}
+                  className={`quiz__choice${selected === choiceIndex ? " is-selected" : ""}${checked && choiceIndex === question.correct ? " is-correct" : ""}${checked && selected === choiceIndex && choiceIndex !== question.correct ? " is-wrong" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name={`quiz-question-${index}`}
+                    className="quiz__radio"
+                    disabled={checked}
+                    checked={selected === choiceIndex}
+                    onChange={() => setSelected(choiceIndex)}
+                  />
+                  {choice}
+                </label>
+              );
+            })}
+          </div>
           {checked ? (
             <p className="quiz__explanation small">
-              {selected === question.correct ? "Correct. " : "Not quite. "}
-              {selected === QUIZ_DONT_KNOW
-                ? `The answer is: ${question.choices[question.correct]}. `
-                : null}
+              {selected === question.correct
+                ? "Correct. "
+                : selected === QUIZ_DONT_KNOW
+                  ? `No problem, here is the answer: ${question.choices[question.correct]}. `
+                  : `Not quite. The correct answer is: ${question.choices[question.correct]}. `}
               {question.explanation}
             </p>
           ) : null}

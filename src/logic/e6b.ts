@@ -126,3 +126,15 @@ export const E6B_PRACTICE: E6bPractice[] = [
     answer: "8.5 gallons per hour for 2 h 30 min burns 21.3 gallons.",
   },
 ];
+
+/** The given numbers of an E6B practice problem, in plain words. */
+export function describeE6bPractice(p: E6bPractice): string {
+  if (p.mode === "wind") {
+    const v = p.values;
+    return `Given: true course ${v.course} degrees, true airspeed ${v.tas} kt, wind from ${v.windDir} at ${v.windSpeed} kt, variation ${v.variation} degrees ${v.side === "E" ? "east" : "west"}. Find the wind correction angle, true heading, groundspeed and magnetic heading.`;
+  }
+  if (p.mode === "tsd") {
+    return `Given: ${p.values.distance} nm at ${p.values.speed} kt groundspeed. How long does the trip take?`;
+  }
+  return `Given: fuel burn ${p.values.burn} gallons per hour for ${p.values.minutes} minutes. How much fuel do you burn?`;
+}

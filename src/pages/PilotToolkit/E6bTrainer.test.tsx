@@ -13,6 +13,7 @@ it("fills the wind problem and shows the worked result and answer", () => {
   expect(
     screen.getByText(/Wind correction angle 12 degrees right\. True heading 102, groundspeed 98 kt\. With 5 degrees east variation, magnetic heading 097\./),
   ).toBeTruthy();
+  expect(screen.getByText(/Given: true course 90 degrees, true airspeed 100 kt/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
   expect(screen.getByText(/^Wind correction angle 12 degrees right, true heading 102/)).toBeTruthy();
 });

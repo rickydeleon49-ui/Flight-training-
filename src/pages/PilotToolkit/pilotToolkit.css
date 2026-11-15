@@ -62,6 +62,8 @@
 .quiz { display: flex; flex-direction: column; gap: var(--space-3); max-width: 46rem; }
 .quiz__prompt { font-size: var(--text-lg); margin-bottom: var(--space-2); }
 .quiz__choice {
+  display: block;
+  box-sizing: border-box;
   width: 100%;
   padding: var(--space-4);
   border: 1px solid var(--border-strong);
@@ -71,6 +73,10 @@
   cursor: pointer;
   min-height: var(--hit-min);
 }
+.quiz__choice:has(input:disabled) { cursor: default; }
+.quiz__radio { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.quiz__choice { position: relative; }
+.quiz__choice:has(.quiz__radio:focus-visible) { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 .quiz__choice.is-selected { border-color: var(--accent-primary); background: var(--accent-primary-fill); }
 /* Hover is a hint only (border), so just the chosen answer reads as filled. */
 .quiz__choice:hover:not(:disabled):not(.is-selected) { border-color: var(--border-focus, var(--accent-primary)); }
@@ -113,14 +119,15 @@
 }
 .chart-symbol-svg {
   width: 100%;
-  max-height: 14rem;
+  height: auto;
+  max-height: 12rem;
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md, 8px);
   color: var(--text-primary);
 }
 .chart-symbol-name { margin: 0 0 var(--space-2); }
-.chart-symbol-back { min-height: 6rem; }
+.chart-symbol-back { min-height: 3.5rem; }
 .chart-symbol-note { font-size: var(--text-sm, 0.875rem); margin: 0; }
 .chart-symbol-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .radio-practice { margin-top: var(--space-3); }

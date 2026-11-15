@@ -32,7 +32,7 @@ describe("explainMetar", () => {
     expect(meaning(a, "SPECI")).toMatch(/Special/);
     expect(meaning(a, "COR")).toBe("Corrected report");
     expect(meaning(a, "00000KT")).toBe("Calm wind");
-    expect(meaning(a, "M1/4SM")).toBe("Visibility Less than 1/4 statute miles");
+    expect(meaning(a, "M1/4SM")).toBe("Visibility less than 1/4 statute mile");
     expect(meaning(a, "VV002")).toMatch(/vertical visibility 200 ft/);
     expect(meaning(a, "M05/M06")).toBe("Temperature -5 C, dew point -6 C");
     expect(a.category).toBe("LIFR");

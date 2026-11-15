@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button, Card, CardBody, CardHeader, Field, TextInput } from "@/components/ui";
 import {
   E6B_PRACTICE,
+  describeE6bPractice,
   formatMinutes,
   fuelForTime,
   timeForFuel,
@@ -121,6 +122,7 @@ export function E6bTrainer() {
               </Button>
             ))}
           </div>
+          {practice ? <p><strong>{practice.title}.</strong> {describeE6bPractice(practice)}</p> : null}
           {mode === "wind" ? (
             <div className="form-grid">
               <Field label="True course (degrees)">{numInput(course, setCourse)}</Field>

@@ -129,8 +129,8 @@ export function explainMetar(input: string): MetarExplanation {
       pendingVisWhole = null;
       if (value === null) { push(shownRaw, NOT_EXPLAINED); continue; }
       visibility = m[1] === "M" ? value - 0.0001 : value;
-      const prefix = m[1] === "M" ? "Less than " : m[1] === "P" ? "More than " : "";
-      push(shownRaw, `Visibility ${prefix}${text} statute ${value === 1 && !m[1] ? "mile" : "miles"}`);
+      const prefix = m[1] === "M" ? "less than " : m[1] === "P" ? "more than " : "";
+      push(shownRaw, `Visibility ${prefix}${text} statute ${value <= 1 ? "mile" : "miles"}`);
     } else if ((m = /^R(\d{2}[LCR]?)\/([MP])?(\d{4})(?:V([MP])?(\d{4}))?FT$/.exec(raw))) {
       const lim = (c: string | undefined) => (c === "M" ? "less than " : c === "P" ? "more than " : "");
       const range = m[5] ? `varying from ${lim(m[2])}${Number(m[3])} to ${lim(m[4])}${Number(m[5])} ft` : `${lim(m[2])}${Number(m[3])} ft`;

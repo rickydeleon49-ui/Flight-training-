@@ -30,7 +30,7 @@ describe("RadioWords component", () => {
   it("searches and quizzes", () => {
     render(h(RadioWords));
     fireEvent.change(screen.getByLabelText("Search radio words"), { target: { value: "zzzzqq" } });
-    expect(screen.getByText("0 of " + RADIO_WORDS.length + " terms")).toBeTruthy();
+    expect(screen.getByText("No terms match. Try another word.")).toBeTruthy();
     fireEvent.click(screen.getByText("Quiz me"));
     expect(screen.queryByText(RADIO_WORDS[0]!.meaning)).toBeNull();
     fireEvent.click(screen.getByText("Reveal"));

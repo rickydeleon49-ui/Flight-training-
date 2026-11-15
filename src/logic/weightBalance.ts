@@ -1,5 +1,5 @@
 // Weight and balance practice math. A study aid only: no aircraft data is
-// shipped; the student types in numbers from her own POH.
+// shipped; the student types in numbers from the airplane's own POH.
 
 export const AVGAS_LB_PER_GAL = 6;
 
@@ -159,18 +159,34 @@ export const WB_PRACTICE: WbPractice[] = [
     id: "within",
     title: "Problem 1: a normal load",
     input: mk([["1500", "85"], ["340", "85"], ["", ""], ["30", "95"], ["50", "140"]], ["2300", "84", "93"]),
-    answer: "Total weight 2070.0 lb, total moment 180500.0, CG 87.20 in. Within the limits you entered.",
+    answer: "Total weight 2070 lb, total moment 180500, CG 87.20 in. Within the limits you entered.",
   },
   {
     id: "gross",
     title: "Problem 2: too heavy",
     input: mk([["1600", "86"], ["380", "85"], ["340", "121"], ["40", "95"], ["100", "140"]], ["2550", "84", "95"]),
-    answer: "Total weight 2660.0 lb, total moment 247840.0, CG 93.17 in. Over max gross weight by 110.0 lb.",
+    answer: "Total weight 2660 lb, total moment 247840, CG 93.17 in. Over max gross weight by 110 lb.",
   },
   {
     id: "aft",
     title: "Problem 3: CG too far back",
     input: mk([["1450", "84"], ["170", "85"], ["", ""], ["20", "95"], ["120", "140"]], ["2300", "84", "87.5"]),
-    answer: "Total weight 1860.0 lb, total moment 164450.0, CG 88.41 in. CG is 0.91 in behind the aft limit.",
+    answer: "Total weight 1860 lb, total moment 164450, CG 88.41 in. CG is 0.91 in behind the aft limit.",
   },
 ];
+
+/** The given numbers of a practice problem, in plain words. */
+export function describeWbPractice(input: WbInput): string {
+  const parts: string[] = [];
+  for (const key of WB_ROW_KEYS) {
+    const { amount, arm } = input.rows[key];
+    if (amount.trim() === "" && arm.trim() === "") continue;
+    const name = WB_ROW_LABELS[key].replace(" (gallons)", "");
+    parts.push(`${name} ${amount}${key === "fuel" ? " gal" : " lb"} at arm ${arm} in`);
+  }
+  const limits: string[] = [];
+  if (input.maxGross.trim()) limits.push(`max gross ${input.maxGross} lb`);
+  if (input.forwardLimit.trim()) limits.push(`forward CG limit ${input.forwardLimit} in`);
+  if (input.aftLimit.trim()) limits.push(`aft CG limit ${input.aftLimit} in`);
+  return `Given: ${parts.join("; ")}.${limits.length ? ` Limits: ${limits.join(", ")}.` : ""} Is the airplane within limits?`;
+}

@@ -67,6 +67,7 @@ export function ChartSymbolDrill() {
           <Button variant="primary" aria-pressed={flipped} onClick={() => setFlipped((value) => !value)}>
             {flipped ? "Hide answer" : "Flip"}
           </Button>
+          <Button onClick={() => go(index - 1)}>Previous</Button>
           <Button onClick={() => go(index + 1)}>Next</Button>
           <Button
             onClick={() => {

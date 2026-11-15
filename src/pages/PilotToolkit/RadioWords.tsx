@@ -95,7 +95,7 @@ export function RadioWords() {
               onChange={(event) => setQuery(event.target.value)}
             />
             <p className="small" role="status">
-              {matches.length} of {RADIO_WORDS.length} terms
+              {matches.length ? `${matches.length} of ${RADIO_WORDS.length} terms` : "No terms match. Try another word."}
             </p>
             <ul style={{ listStyle: "none", padding: 0 }}>
               {matches.map((word) => (

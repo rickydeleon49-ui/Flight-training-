@@ -116,7 +116,7 @@ export const REG_CARDS: readonly RegCard[] = [
     reg: "14 CFR 91.205",
     prompt: "What instruments and equipment does day VFR require? (a memory aid)",
     answer:
-      "ATOMATOFLAMES is a memory aid: airspeed, tachometer, oil pressure, manifold pressure, altimeter, temperature gauge, oil temperature, fuel gauge, landing gear position, anti-collision lights, magnetic compass, ELT, safety belts. Check the rule for what your airplane needs.",
+      "ATOMATOFLAMES is a memory aid for day VFR. Instruments: airspeed indicator, tachometer, oil pressure gauge, manifold pressure gauge (if the engine has one), altimeter, temperature gauge, oil temperature gauge, fuel gauge, landing gear position indicator (if retractable), magnetic compass. Also: anti-collision lights, ELT and safety belts. Check the rule for what your airplane needs.",
   },
   {
     id: "elt",
@@ -129,7 +129,7 @@ export const REG_CARDS: readonly RegCard[] = [
     reg: "14 CFR 91.211",
     prompt: "When must the crew use supplemental oxygen, and when must passengers be offered it?",
     answer:
-      "Crew: more than 30 minutes above 12,500 feet up to 14,000, and always above 14,000. Passengers must be offered oxygen above 15,000 feet.",
+      "These heights are cabin pressure altitude. Crew: more than 30 minutes above 12,500 feet up to 14,000, and always above 14,000. Passengers must be offered oxygen above 15,000 feet.",
   },
   {
     id: "alcohol",

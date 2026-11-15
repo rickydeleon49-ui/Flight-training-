@@ -284,7 +284,7 @@ describe("Knowledge quiz result", () => {
   const onScreen = () => QUIZ_QUESTIONS.find((q) => screen.queryByText(q.prompt))!;
   const answerAll = (pick: (i: number, q: (typeof QUIZ_QUESTIONS)[number]) => string) => {
     for (let i = 0; i < QUIZ_LENGTH; i++) {
-      fireEvent.click(screen.getByRole("button", { name: pick(i, onScreen()) }));
+      fireEvent.click(screen.getByRole("radio", { name: pick(i, onScreen()) }));
       fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
       fireEvent.click(screen.getByRole("button", { name: i === QUIZ_LENGTH - 1 ? "Finish quiz" : "Next question" }));
     }
@@ -302,9 +302,19 @@ describe("Knowledge quiz result", () => {
 
   it("I don't know shows the correct answer like a wrong answer", () => {
     openQuiz();
-    fireEvent.click(screen.getByRole("button", { name: "I don't know" }));
+    fireEvent.click(screen.getByRole("radio", { name: "I don't know" }));
     fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
     const q = onScreen();
-    expect(screen.getByText(new RegExp(`Not quite\\. The answer is: ${q.choices[q.correct]}`))).toBeTruthy();
+    expect(screen.getByText(new RegExp(`No problem, here is the answer: ${q.choices[q.correct]}`))).toBeTruthy();
+  });
+
+  it("names the correct option after a wrong answer and groups options as radios", () => {
+    openQuiz();
+    expect(screen.getByRole("radiogroup")).toBeTruthy();
+    const q = onScreen();
+    const wrong = q.choices.findIndex((_, i) => i !== q.correct);
+    fireEvent.click(screen.getByRole("radio", { name: q.choices[wrong]! }));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+    expect(document.querySelector(".quiz__explanation")?.textContent).toContain(`Not quite. The correct answer is: ${q.choices[q.correct]}`);
   });
 });
