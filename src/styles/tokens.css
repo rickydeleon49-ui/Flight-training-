@@ -20,6 +20,7 @@
   --palette-navy: #17233c;
   --palette-navy-muted: #596276;
   --palette-berry: #a84c6b;
+  --diagram-on-fill: #ffffff;
   --palette-rose: #dfa7b8;
   --palette-lavender: #b9addf;
   --palette-sky: #8ebfda;
@@ -271,6 +272,7 @@
   --palette-navy: #eef1f7;
   --palette-navy-muted: #a9b1c2;
   --palette-berry: #e0809f;
+  --diagram-on-fill: #141a24;
   --palette-rose: #86566a;
   --palette-lavender: #6c66a0;
   --palette-sky: #477595;
@@ -371,6 +373,7 @@
     --palette-navy: #eef1f7;
     --palette-navy-muted: #a9b1c2;
     --palette-berry: #e0809f;
+    --diagram-on-fill: #141a24;
     --palette-rose: #86566a;
     --palette-lavender: #6c66a0;
     --palette-sky: #477595;
