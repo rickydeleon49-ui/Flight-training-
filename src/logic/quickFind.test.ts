@@ -32,6 +32,19 @@ const data: AppData = {
 const labels = (query: string) => quickFind(data, query, TODAY).map((result) => result.label);
 
 describe("quickFind", () => {
+  it("ranks the METAR explainer above an oral-question note that mentions metar (BL-63)", () => {
+    const records: AppData = {
+      ...EMPTY_DATA,
+      notes: [
+        makeNote({ id: "oral", title: "", body: "Oral question: how do you read a METAR for gusts?" }),
+        makeNote({ id: "oral2", title: "METAR oral question", body: "Practice saying it aloud" }),
+      ],
+    };
+    const results = quickFind(records, "metar", TODAY);
+    expect(results[0]).toMatchObject({ label: "METAR explainer", to: "/toolkit?tool=metar" });
+    expect(results.map((r) => r.label)).toContain("METAR oral question");
+  });
+
   it.each(["-", "–", "—", "−"])("matches page-range dashes in Quick Find and preserves the %s title", (storedDash) => {
     const title = `00_afh_full — Pages 120${storedDash}150`;
     const material = makeMaterial({ id: "range", title, notes: `More pages 160${storedDash}180` });

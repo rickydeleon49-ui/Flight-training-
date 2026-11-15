@@ -73,7 +73,23 @@ it("drops the check summary once the answer is shown or a box changes (R23)", ()
   fireEvent.click(screen.getByRole("button", { name: "Hide answer" }));
   expect(screen.getByText("1 right, 0 close, 0 to fix")).toBeTruthy();
   fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "80" } });
-  expect(screen.queryByText(/right, .* close, .* to fix/)).toBeNull();
+  // Hidden, not removed: the line keeps its height so the boxes below do not jump.
+  expect(screen.getByText("1 right, 0 close, 0 to fix").style.visibility).toBe("hidden");
+});
+
+it("keeps the feedback line in the layout while the student retypes a checked box (BL-64)", () => {
+  render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 2/ }));
+  fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "90" } });
+  fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+  const line = screen.getByText(/Right: /);
+  expect(line.style.visibility).toBe("");
+  fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "9" } });
+  expect(screen.getByText(/Right: /)).toBe(line);
+  expect(line.style.visibility).toBe("hidden");
+  fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "90" } });
+  fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+  expect(screen.getByText(/Right: /).style.visibility).toBe("");
 });
 
 it("lets the answer box shrink and the row wrap so L/R stays clickable at narrow widths (R23)", () => {

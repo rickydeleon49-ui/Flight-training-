@@ -71,6 +71,7 @@ export function E6bTrainer() {
     setShowAnswer(false);
     setEntries({});
     setGrades(null);
+    setEdited({});
   };
 
   let result: string;
@@ -113,9 +114,12 @@ export function E6bTrainer() {
   }
 
   const boxes = practice ? e6bAnswerBoxes(practice) : [];
+  // Editing a box retires its old feedback, but the lines stay in the layout
+  // (hidden) so the boxes below do not move under the student's cursor.
+  const [edited, setEdited] = useState<Partial<Record<E6bAnswerId, boolean>>>({});
   const setEntry = (id: E6bAnswerId, patch: Partial<E6bEntry>) => {
     setEntries((prev) => ({ ...prev, [id]: { value: "", ...prev[id], ...patch } }));
-    setGrades((prev) => (prev ? { ...prev, [id]: undefined } : prev));
+    setEdited((prev) => ({ ...prev, [id]: true }));
   };
   const check = () => {
     if (!practice) return;
@@ -123,10 +127,12 @@ export function E6bTrainer() {
     const next: Partial<Record<E6bAnswerId, E6bGrade>> = {};
     for (const b of boxes) next[b.id] = gradeE6bAnswer(b.id, entries[b.id] ?? { value: "" }, practice, expected);
     setGrades(next);
+    setEdited({});
   };
   const graded = grades ? boxes.map((b) => grades[b.id]).filter((g): g is E6bGrade => !!g) : [];
   // The summary describes the last check, so it goes once a box changes or the answer is shown.
   const summaryCurrent = graded.length > 0 && graded.length === boxes.length && !showAnswer;
+  const anyEdited = boxes.some((b) => edited[b.id]);
   // The worked result would give the answer away, so hold it back until the user asks.
   const hideResult = practice !== null && !showAnswer;
 
@@ -203,6 +209,7 @@ export function E6bTrainer() {
                       {boxes.map((b) => {
                         const g = grades?.[b.id];
                         const status = g && g.status !== "empty" ? g.status : undefined;
+                        const stale = !!edited[b.id];
                         const entry = entries[b.id];
                         const inputId = `e6b-answer-${b.id}`;
                         return (
@@ -214,7 +221,7 @@ export function E6bTrainer() {
                                 type="number"
                                 inputMode="decimal"
                                 value={entry?.value ?? ""}
-                                className={status ? `e6b-check__input e6b-check__input--${status}` : "e6b-check__input"}
+                                className={status && !stale ? `e6b-check__input e6b-check__input--${status}` : "e6b-check__input"}
                                 onChange={(e) => setEntry(b.id, { value: e.target.value })}
                               />
                               {b.hasSide ? (
@@ -235,7 +242,11 @@ export function E6bTrainer() {
                               ) : null}
                             </div>
                             {status ? (
-                              <p className={`e6b-check__result e6b-check__result--${status}`}>
+                              <p
+                                className={`e6b-check__result e6b-check__result--${status}`}
+                                style={stale ? { visibility: "hidden" } : undefined}
+                                aria-hidden={stale || undefined}
+                              >
                                 {status === "right" ? "\u2713 " : ""}
                                 {g?.message}
                               </p>
@@ -250,7 +261,14 @@ export function E6bTrainer() {
                         {showAnswer ? "Hide answer" : "Show answer"}
                       </Button>
                       {summaryCurrent ? (
-                        <span role="status" className="tiny dim">{summarizeE6bGrades(graded)}</span>
+                        <span
+                          role="status"
+                          className="tiny dim"
+                          style={anyEdited ? { visibility: "hidden" } : undefined}
+                          aria-hidden={anyEdited || undefined}
+                        >
+                          {summarizeE6bGrades(graded)}
+                        </span>
                       ) : null}
                     </div>
                   </div>

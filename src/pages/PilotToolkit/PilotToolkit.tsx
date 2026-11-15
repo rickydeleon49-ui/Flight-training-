@@ -200,10 +200,21 @@ export function PilotToolkit() {
   const { data, mutate } = useAppData();
   const [params] = useSearchParams();
   const [tool, setTool] = useState<Tool>(() => toolFrom(params.get("tool")));
+  // Quick Find can link to a tool while the toolkit is already open.
+  const toolParam = params.get("tool");
+  useEffect(() => {
+    if (toolParam) setTool(toolFrom(toolParam));
+  }, [toolParam]);
   const [saved, setSaved] = useState(false);
+  const [quizBusy, setQuizBusy] = useState(false);
+  const [pendingTool, setPendingTool] = useState<Tool | null>(null);
   const tabState = useTabListState<ToolChoice>({
     selectedKey: tool,
-    onSelectionChange: (key) => setTool(key as Tool),
+    onSelectionChange: (key) => {
+      // Same question as the quiz's Exit button when answers are in progress.
+      if (tool === "quiz" && key !== "quiz" && quizBusy) setPendingTool(key as Tool);
+      else setTool(key as Tool);
+    },
     disabledKeys: [],
     items: TOOLS,
     children: (choice) => <Item key={choice.id} textValue={choice.label}>{choice.label}</Item>,
@@ -294,7 +305,7 @@ export function PilotToolkit() {
         ) : null}
         {tool === "quiz" ? (
           <>
-            <QuizTool state={data.toolkit} save={save} />
+            <QuizTool state={data.toolkit} save={save} onBusyChange={setQuizBusy} />
             <ChartSymbolDrill />
             <RegCardDrill />
           </>
@@ -308,6 +319,20 @@ export function PilotToolkit() {
         ) : null}
         {tool === "metar" ? <MetarTool /> : null}
       </div>
+      <ConfirmDialog
+        open={pendingTool !== null}
+        title="Leave this quiz?"
+        message="Your answers in this quiz are not kept."
+        confirmLabel="Leave"
+        cancelLabel="Keep going"
+        destructive={true}
+        onConfirm={() => {
+          if (pendingTool) setTool(pendingTool);
+          setPendingTool(null);
+          setQuizBusy(false);
+        }}
+        onCancel={() => setPendingTool(null)}
+      />
     </>
   );
 }
@@ -1346,7 +1371,7 @@ export function quizNeedsLeaveConfirm(answered: number, checkedNow: boolean): bo
 // Not a valid choice index, so makeQuizAttempt scores it as a miss.
 const QUIZ_DONT_KNOW = -1;
 
-function QuizTool({ state, save }: ToolProps) {
+function QuizTool({ state, save, onBusyChange }: ToolProps & { onBusyChange?: (busy: boolean) => void }) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<QuizAttempt | null>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
@@ -1358,6 +1383,10 @@ function QuizTool({ state, save }: ToolProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const busy = running && !result && quizNeedsLeaveConfirm(answers.length, checked);
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
   const [questions, setQuestions] = useState(() => selectQuizQuestions(Date.now()));
   const question = questions[index]!;
   const best = state.quizAttempts.length

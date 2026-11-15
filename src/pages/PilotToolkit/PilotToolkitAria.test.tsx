@@ -33,3 +33,22 @@ it("the toolkit page passes axe with its focusable, labelled tabpanel", async ()
   expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
   await expectNoA11yViolations(container);
 });
+
+it("switching tabs mid-quiz asks 'Leave this quiz?' once an answer is checked (BL-65)", async () => {
+  const { fireEvent } = await import("@testing-library/react");
+  render(<MemoryRouter initialEntries={["/?tool=quiz"]}><PilotToolkit /></MemoryRouter>);
+  fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
+  // Before any answer: switching is free.
+  fireEvent.click(screen.getByRole("tab", { name: "Checkride" }));
+  expect(screen.queryByRole("button", { name: "Keep going" })).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Quizzes" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
+  fireEvent.click(screen.getAllByRole("radio")[0]!);
+  fireEvent.click(screen.getByRole("button", { name: /Check answer/ }));
+  fireEvent.click(screen.getByRole("tab", { name: "Checkride" }));
+  fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
+  expect(screen.getByRole("tab", { name: "Quizzes", selected: true })).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "Checkride" }));
+  fireEvent.click(screen.getByRole("button", { name: "Leave" }));
+  expect(screen.getByRole("tab", { name: "Checkride", selected: true })).toBeTruthy();
+});
