@@ -136,7 +136,6 @@ fn assert_schema(value: &Value) {
         "maximum",
         "minLength",
         "maxLength",
-        "minItems",
         "maxItems",
         "nullable",
     ] {
@@ -157,6 +156,7 @@ fn assert_schema(value: &Value) {
         }
     }
     if kind == "array" {
+        assert!(value["minItems"].as_u64().is_none_or(|min| min <= 1));
         assert_schema(&value["items"]);
     }
 }
@@ -954,4 +954,27 @@ fn gemini_kit_schema_keeps_its_own_shape() {
         schema["properties"]["guide"]["properties"]["body"]["maxLength"],
         12000
     );
+}
+#[test]
+fn claude_keeps_min_items_zero_or_one_and_drops_other_list_limits() {
+    let list = |extra: Value| {
+        let mut schema = json!({"type": "ARRAY", "items": {"type": "STRING"}});
+        schema
+            .as_object_mut()
+            .unwrap()
+            .extend(extra.as_object().unwrap().clone());
+        claude::translate_schema(&schema)
+    };
+    assert_eq!(list(json!({"minItems": 1}))["minItems"], 1);
+    assert_eq!(list(json!({"minItems": 0}))["minItems"], 0);
+    for extra in [
+        json!({"minItems": 3}),
+        json!({"maxItems": 3}),
+        json!({"minItems": 1, "maxItems": 3}),
+    ] {
+        let out = list(extra.clone());
+        assert!(out.get("maxItems").is_none(), "{extra}");
+        assert!(out["minItems"].is_null() || out["minItems"] == 1, "{extra}");
+    }
+    assert!(list(json!({"minItems": 3})).get("minItems").is_none());
 }

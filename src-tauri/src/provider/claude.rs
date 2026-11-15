@@ -58,6 +58,11 @@ pub(crate) fn translate_schema(schema: &Value) -> Value {
     if let Some(items) = schema.get("items") {
         out.insert("items".into(), translate_schema(items));
     }
+    // Claude's structured outputs accept `minItems` of 0 or 1 only; larger values and
+    // `maxItems` are rejected (HTTP 400), so those stay dropped and the app checks them.
+    if let Some(min @ (0 | 1)) = schema.get("minItems").and_then(Value::as_u64) {
+        out.insert("minItems".into(), json!(min));
+    }
     if let Some(values) = schema.get("enum") {
         out.insert("enum".into(), values.clone());
     }
