@@ -19,6 +19,10 @@ plutil -lint src-tauri/gen/apple/her-flight-deck_iOS/PrivacyInfo.xcprivacy
 echo "== Files app keys (Info.plist and project.yml)"
 plutil -lint src-tauri/gen/apple/her-flight-deck_iOS/Info.plist src-tauri/Info.ios.plist
 for k in UIFileSharingEnabled LSSupportsOpeningDocumentsInPlace; do [ "$(plutil -extract "$k" raw -o - src-tauri/gen/apple/her-flight-deck_iOS/Info.plist)" = "true" ] || { echo "check-ios: $k missing from Info.plist" >&2; exit 1; }; grep -q "^ *$k: true" src-tauri/gen/apple/project.yml || { echo "check-ios: $k missing from project.yml" >&2; exit 1; }; echo "ok $k"; done
+# A file input with accept="image/*" offers "Take Photo"; without this key iOS kills the app when the camera opens.
+for f in src-tauri/gen/apple/her-flight-deck_iOS/Info.plist src-tauri/Info.ios.plist; do [ -n "$(plutil -extract NSCameraUsageDescription raw -o - "$f" 2>/dev/null)" ] || { echo "check-ios: NSCameraUsageDescription missing from $f" >&2; exit 1; }; done
+grep -q "^ *NSCameraUsageDescription: " src-tauri/gen/apple/project.yml || { echo "check-ios: NSCameraUsageDescription missing from project.yml" >&2; exit 1; }
+echo "ok NSCameraUsageDescription"
 for t in aarch64-apple-ios aarch64-apple-ios-sim; do
   echo "== cargo check --target $t"
   cargo check --locked --manifest-path src-tauri/Cargo.toml --target "$t"
