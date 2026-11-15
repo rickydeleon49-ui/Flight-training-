@@ -370,13 +370,15 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
 
   const { recovered, forget } = useDraftRecovery(draftKey, draft, restoreDraft);
 
-  // Sync refs if a recovered draft carried IDs across page reloads:
-  if (draft.id && !createdEntryIdRef.current) createdEntryIdRef.current = draft.id;
-  if (draft.createdActionId && !createdActionIdRef.current) createdActionIdRef.current = draft.createdActionId;
-  if (draft.createdQuestionId && !createdQuestionIdRef.current) createdQuestionIdRef.current = draft.createdQuestionId;
 
   const latestDraftRef = useRef<DebriefDraft>(draft);
-  latestDraftRef.current = draft;
+  // Refs are written after render, never during it. This also syncs IDs a recovered draft carried across reloads.
+  useEffect(() => {
+    latestDraftRef.current = draft;
+    if (draft.id && !createdEntryIdRef.current) createdEntryIdRef.current = draft.id;
+    if (draft.createdActionId && !createdActionIdRef.current) createdActionIdRef.current = draft.createdActionId;
+    if (draft.createdQuestionId && !createdQuestionIdRef.current) createdQuestionIdRef.current = draft.createdQuestionId;
+  });
 
   const schoolSuggestions = useMemo(() => {
     const names = new Set<string>();
