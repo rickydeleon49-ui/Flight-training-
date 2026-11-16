@@ -55,4 +55,16 @@ describe("Add cards from Quizlet", { timeout: 60_000 }, () => {
     expect(cards).toHaveLength(3);
     expect(cards[1].origin).toBe("user");
   });
+
+  it("explains when nothing new can be added", async () => {
+    render(h(AppDataProvider, null, h(Editor)));
+    fireEvent.click(await screen.findByRole("button", { name: "Add cards from Quizlet" }, SLOW));
+    const box = await screen.findByLabelText("Quizlet text");
+    fireEvent.change(box, { target: { value: "Existing\tBack" } });
+    expect(await screen.findByText("This card is already in this set.")).toBeTruthy();
+    const add = screen.getByRole("button", { name: "Add cards" }) as HTMLButtonElement;
+    expect(add.disabled).toBe(true);
+    fireEvent.change(box, { target: { value: "just some words" } });
+    expect(await screen.findByText("No cards found. Each line needs a term, then a tab or comma, then the definition.")).toBeTruthy();
+  });
 });

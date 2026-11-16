@@ -637,7 +637,7 @@ export function StudySetEditor({
           <>
             <Button onClick={closeQuizlet} disabled={busy}>Cancel</Button>
             <Button variant="primary" onClick={() => void saveQuizlet()} disabled={busy || quizletParsed.cards.length === 0}>
-              {busy ? "Saving…" : `Add ${quizletParsed.cards.length} ${quizletParsed.cards.length === 1 ? "card" : "cards"}`}
+              {busy ? "Saving…" : quizletParsed.cards.length === 0 ? "Add cards" : `Add ${quizletParsed.cards.length} ${quizletParsed.cards.length === 1 ? "card" : "cards"}`}
             </Button>
           </>
         }
@@ -650,8 +650,13 @@ export function StudySetEditor({
           {quizletText.trim() ? (
             <div className="stack stack--2" role="status">
               <p className="small">
-                {quizletParsed.cards.length} {quizletParsed.cards.length === 1 ? "card" : "cards"} found
-                {quizletParsed.skippedDuplicates > 0 ? ` (${quizletParsed.skippedDuplicates} already here, skipped)` : ""}
+                {quizletParsed.cards.length === 0
+                  ? quizletParsed.skippedDuplicates === 1
+                    ? "This card is already in this set."
+                    : quizletParsed.skippedDuplicates > 1
+                      ? `All ${quizletParsed.skippedDuplicates} of these cards are already in this set.`
+                      : "No cards found. Each line needs a term, then a tab or comma, then the definition."
+                  : `${quizletParsed.cards.length} ${quizletParsed.cards.length === 1 ? "card" : "cards"} found${quizletParsed.skippedDuplicates > 0 ? ` (${quizletParsed.skippedDuplicates} already here, skipped)` : ""}`}
               </p>
               {quizletParsed.cut ? <p className="tiny muted">Only the first 500 cards will be added.</p> : null}
               <ul className="tiny stack stack--1">

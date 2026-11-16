@@ -565,7 +565,11 @@ export function SessionView({
       ) : null}
       {!item.visualRegionId || item.pageSource ? (
         <div className="row" style={{ justifyContent: "flex-end" }}>
-          <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
+          {item.origin === "user" && !item.pageSource && item.sourcePage == null ? (
+            <Badge tone="neutral">Your card</Badge>
+          ) : (
+            <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
+          )}
         </div>
       ) : null}
       {progress ? <p className="tiny dim">From {progress.from}</p> : null}

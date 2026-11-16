@@ -212,6 +212,15 @@ describe("card reviews in MaterialDetail", () => {
     ordinaryView.unmount();
   });
 
+  it("labels a card the student wrote with no page as Your card, not Check source", async () => {
+    await seed([{ front: "Mine", back: "B", sourcePage: null, origin: "user" }]);
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(screen.getByText("Your card")).toBeTruthy();
+    expect(sessionRegion().queryByText("Check source")).toBeNull();
+  });
+
   it("Explain this without a PDF keeps the original answer without evidence UI", async () => {
     await seed();
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
