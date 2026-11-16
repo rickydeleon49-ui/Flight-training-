@@ -159,16 +159,87 @@ export function navLogHow(field: NavLogField, leg: NavLogLeg): string {
   }
 }
 
-/** Grade one typed box. `scale` widens the tolerance (a totals box adds up several legs). */
-export function gradeNavLogBox(field: NavLogField, text: string, want: number, leg: NavLogLeg, scale = 1): NavLogGrade {
+/** Grade one typed box. `scale` widens the tolerance (a totals box adds up several legs); `howText` replaces the usual hint. */
+export function gradeNavLogBox(field: NavLogField, text: string, want: number, leg: NavLogLeg, scale = 1, howText?: string): NavLogGrade {
   if (text.trim() === "") return { status: "empty", message: "" };
   const typed = Number(text);
   const say = sayNavLog(field, want);
-  const how = navLogHow(field, leg);
+  const how = howText ?? navLogHow(field, leg);
   if (!Number.isFinite(typed)) return { status: "wrong", message: `Not quite. Type a number. ${how}` };
   let diff = Math.abs(typed - want);
   if (CIRCULAR[field]) diff = Math.abs((((typed - want) % 360) + 540) % 360 - 180);
   if (diff <= STEP[field] / 2 + 1e-9) return { status: "right", message: `Right: ${say}` };
   if (diff <= TOL[field] * scale + 1e-9) return { status: "close", message: `Close: answer is ${say}.` };
   return { status: "wrong", message: `Not quite. ${how} Answer: ${say}.` };
+}
+
+// ---- Diversion practice ----
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Quick time estimate tip for a diversion. */
+export const DIVERSION_TIP = "Quick time estimate: time in minutes = distance ÷ GS × 60. At 100 kt that is 10 NM in about 6 minutes.";
+
+export type NavLogDiversion = { leg: NavLogLeg; fuelOnBoard: number };
+export type NavLogDiversionSolution = { th: number; mh: number; gs: number; ete: number; fuelUsed: number; fuelLeft: number };
+
+/** A fictional diversion: a short leg to an alternate, plus the fuel on board at the point of diversion. */
+export function generateDiversion(seed: number): NavLogDiversion {
+  const r = rng(seed);
+  const leg = { ...legFrom(r), distanceNm: int(r, 10, 40) };
+  const s = solveLeg(leg);
+  const used = s ? s.fuel : 0;
+  return { leg, fuelOnBoard: round1(used + int(r, 20, 60) / 10) };
+}
+
+export function solveDiversion(d: NavLogDiversion): NavLogDiversionSolution | null {
+  const s = solveLeg(d.leg);
+  if (!s) return null;
+  return { th: s.th, mh: s.mh, gs: s.gs, ete: s.ete, fuelUsed: s.fuel, fuelLeft: round1(d.fuelOnBoard - s.fuel) };
+}
+
+// ---- Fuel reserve practice ----
+
+export type NavLogReserveScenario = { legs: NavLogLeg[]; fuelOnBoard: number; night: boolean; gph: number };
+export type NavLogReserveSolution = {
+  fuelUsed: number;
+  fuelLeft: number;
+  reserveMinutes: 30 | 45;
+  /** Gallons: GPH x 0.5 by day, x 0.75 at night. */
+  reserveGallons: number;
+  covers: boolean;
+};
+
+/** Reserve in gallons at normal cruise: 30 minutes by day, 45 at night (14 CFR 91.151, VFR). */
+export function reserveFor(gph: number, night: boolean): { minutes: 30 | 45; gallons: number } {
+  return { minutes: night ? 45 : 30, gallons: round1(gph * (night ? 0.75 : 0.5)) };
+}
+
+/** A 2-3 leg trip with one burn rate; about half the seeds fall short of the reserve. */
+export function generateReserveScenario(seed: number): NavLogReserveScenario {
+  const r = rng(seed);
+  const n = int(r, 2, 3);
+  const gph = int(r, 14, 24) / 2;
+  const legs = Array.from({ length: n }, () => ({ ...legFrom(r), gph }));
+  const night = r() < 0.5;
+  const short = r() < 0.5;
+  const used = navLogTotals(legs).fuel;
+  const reserve = reserveFor(gph, night).gallons;
+  const margin = short ? -int(r, 5, 25) / 10 : int(r, 5, 40) / 10;
+  return { legs, fuelOnBoard: round1(used + reserve + margin), night, gph };
+}
+
+export function solveReserve(sc: NavLogReserveScenario): NavLogReserveSolution {
+  const fuelUsed = navLogTotals(sc.legs).fuel;
+  const fuelLeft = round1(sc.fuelOnBoard - fuelUsed);
+  const res = reserveFor(sc.gph, sc.night);
+  return { fuelUsed, fuelLeft, reserveMinutes: res.minutes, reserveGallons: res.gallons, covers: fuelLeft >= res.gallons };
+}
+
+/** The plain-words result line for the reserve check. */
+export function reserveSentence(sol: NavLogReserveSolution, night: boolean): string {
+  const name = `${sol.reserveMinutes}-minute ${night ? "night" : "day"} reserve (14 CFR 91.151)`;
+  return sol.covers
+    ? `Your fuel left, ${sol.fuelLeft} gal, covers the ${name}.`
+    : `Your fuel left, ${sol.fuelLeft} gal, is less than the ${name}. Talk through fuel planning with your instructor.`;
 }

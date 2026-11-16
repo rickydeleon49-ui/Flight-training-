@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { generateLeg, solveLeg } from "@/logic/navLog";
+import { generateDiversion, generateLeg, generateReserveScenario, solveDiversion, solveLeg, solveReserve } from "@/logic/navLog";
 
 import { E6bTrainer } from "./E6bTrainer";
 
@@ -129,4 +129,41 @@ it("Nav log whole trip shows the table with totals", () => {
   expect(screen.getByText("Total")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Check my nav log" }));
   expect(screen.queryByText(/Not quite/)).toBeNull();
+});
+
+it("Nav log diversion view grades answers and shows fuel left", () => {
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
+  const d = generateDiversion(500001);
+  const sol = solveDiversion(d)!;
+  render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
+  fireEvent.click(screen.getByRole("button", { name: "Diversion" }));
+  expect(screen.getByText(/You divert to an alternate/)).toBeTruthy();
+  expect(screen.getByText(/distance ÷ GS × 60/)).toBeTruthy();
+  fireEvent.change(screen.getByLabelText(/^TH/), { target: { value: String(sol.th) } });
+  fireEvent.change(screen.getByLabelText(/^MH/), { target: { value: String(sol.mh) } });
+  fireEvent.change(screen.getByLabelText(/^GS/), { target: { value: String(sol.gs) } });
+  fireEvent.change(screen.getByLabelText(/^ETE/), { target: { value: String(sol.ete) } });
+  fireEvent.change(screen.getByLabelText(/^Fuel used/), { target: { value: String(sol.fuelUsed + 3) } });
+  fireEvent.click(screen.getByRole("button", { name: "Check my nav log" }));
+  expect(screen.getByText("4 right, 0 close, 1 to fix")).toBeTruthy();
+  expect(screen.getByText(new RegExp(`fuel left at the alternate = .* = ${sol.fuelLeft} gallons`))).toBeTruthy();
+  vi.restoreAllMocks();
+});
+
+it("Nav log fuel reserve view grades answers and shows the reserve line", () => {
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
+  const sc = generateReserveScenario(500001);
+  const sol = solveReserve(sc);
+  render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
+  fireEvent.click(screen.getByRole("button", { name: "Fuel reserve" }));
+  fireEvent.change(screen.getByLabelText(/^Total fuel used/), { target: { value: String(sol.fuelUsed) } });
+  fireEvent.change(screen.getByLabelText(/^Fuel left on landing/), { target: { value: String(sol.fuelLeft) } });
+  fireEvent.click(screen.getByRole("button", { name: "Check my nav log" }));
+  expect(screen.getByText("2 right, 0 close, 0 to fix")).toBeTruthy();
+  const word = sol.covers ? "covers the" : "is less than the";
+  expect(screen.getByText(new RegExp(`${word} ${sol.reserveMinutes}-minute ${sc.night ? "night" : "day"} reserve \\(14 CFR 91\\.151\\)`))).toBeTruthy();
+  expect(screen.getByText(new RegExp(`= ${sol.reserveGallons} gallons`))).toBeTruthy();
+  vi.restoreAllMocks();
 });
