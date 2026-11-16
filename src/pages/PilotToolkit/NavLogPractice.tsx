@@ -2,12 +2,19 @@ import { useMemo, useState } from "react";
 
 import { Button, Field, TextInput } from "@/components/ui";
 import {
+  DIVERSION_TIP,
   NAV_LOG_FIELDS,
+  generateDiversion,
   generateLeg,
+  generateReserveScenario,
   generateTrip,
   gradeNavLogBox,
   navLogTotals,
+  reserveFor,
+  reserveSentence,
+  solveDiversion,
   solveLeg,
+  solveReserve,
   type NavLogField,
   type NavLogGrade,
   type NavLogLeg,
@@ -32,11 +39,24 @@ function describeLeg(l: NavLogLeg): string {
   return `TC ${pad3(l.tc)}°, ${l.distanceNm} NM, TAS ${l.tas} kt, wind ${pad3(l.windDir)}° at ${l.windSpeed} kt, variation ${l.variation}° ${l.side === "E" ? "east" : "west"}, deviation ${signed(l.deviation)}°, burn ${l.gph} GPH.`;
 }
 
+type View = "leg" | "trip" | "diversion" | "reserve";
+const DIVERSION_FIELDS = ["th", "mh", "gs", "ete", "fuel"] as const;
+const DIVERSION_LABELS: Record<(typeof DIVERSION_FIELDS)[number], string> = {
+  th: LABELS.th,
+  mh: LABELS.mh,
+  gs: LABELS.gs,
+  ete: LABELS.ete,
+  fuel: "Fuel used (gallons)",
+};
+
 type Totals = "totalEte" | "totalFuel";
 
 /** "Nav log" mode: a guided single leg, or a small whole-trip table. State resets on leaving the mode. */
 export function NavLogPractice() {
-  const [trip, setTrip] = useState(false);
+  const [view, setView] = useState<View>("leg");
+  const trip = view === "trip";
+  const diversionView = view === "diversion";
+  const reserveView = view === "reserve";
   const [seed, setSeed] = useState(newSeed);
   const [legCount, setLegCount] = useState(3);
   const [entries, setEntries] = useState<Record<string, string>>({});
@@ -44,6 +64,10 @@ export function NavLogPractice() {
   const [edited, setEdited] = useState<Record<string, boolean>>({});
 
   const legs = useMemo(() => (trip ? generateTrip(seed, legCount) : [generateLeg(seed)]), [trip, seed, legCount]);
+  const diversion = useMemo(() => generateDiversion(seed), [seed]);
+  const diversionSol = useMemo(() => solveDiversion(diversion), [diversion]);
+  const reserve = useMemo(() => generateReserveScenario(seed), [seed]);
+  const reserveSol = useMemo(() => solveReserve(reserve), [reserve]);
   const solutions = useMemo(() => legs.map(solveLeg), [legs]);
   const totals = useMemo(() => navLogTotals(legs), [legs]);
 
@@ -58,6 +82,26 @@ export function NavLogPractice() {
   };
   const check = () => {
     const next: Record<string, NavLogGrade> = {};
+    if (diversionView) {
+      if (diversionSol) {
+        for (const f of DIVERSION_FIELDS) {
+          const want = f === "fuel" ? diversionSol.fuelUsed : diversionSol[f];
+          next[`d-${f}`] = gradeNavLogBox(f, entries[`d-${f}`] ?? "", want, diversion.leg);
+        }
+      }
+      setGrades(next);
+      setEdited({});
+      return;
+    }
+    if (reserveView) {
+      const tip = "Fuel = burn (GPH) × time in hours, added up for every leg; fuel left = fuel on board − fuel used.";
+      const n = reserve.legs.length;
+      next["r-used"] = gradeNavLogBox("fuel", entries["r-used"] ?? "", reserveSol.fuelUsed, reserve.legs[0]!, n, tip);
+      next["r-left"] = gradeNavLogBox("fuel", entries["r-left"] ?? "", reserveSol.fuelLeft, reserve.legs[0]!, n, tip);
+      setGrades(next);
+      setEdited({});
+      return;
+    }
     legs.forEach((leg, i) => {
       const s = solutions[i];
       if (!s) return;
@@ -113,11 +157,17 @@ export function NavLogPractice() {
   return (
     <div className="stack stack--3">
       <div role="group" aria-label="Nav log view" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <Button variant={trip ? "secondary" : "primary"} aria-pressed={!trip} onClick={() => { setTrip(false); reset(); }}>
+        <Button variant={view === "leg" ? "primary" : "secondary"} aria-pressed={view === "leg"} onClick={() => { setView("leg"); reset(); }}>
           One leg
         </Button>
-        <Button variant={trip ? "primary" : "secondary"} aria-pressed={trip} onClick={() => { setTrip(true); reset(); }}>
+        <Button variant={trip ? "primary" : "secondary"} aria-pressed={trip} onClick={() => { setView("trip"); reset(); }}>
           Whole trip
+        </Button>
+        <Button variant={diversionView ? "primary" : "secondary"} aria-pressed={diversionView} onClick={() => { setView("diversion"); reset(); }}>
+          Diversion
+        </Button>
+        <Button variant={reserveView ? "primary" : "secondary"} aria-pressed={reserveView} onClick={() => { setView("reserve"); reset(); }}>
+          Fuel reserve
         </Button>
         {trip ? (
           <select
@@ -132,13 +182,78 @@ export function NavLogPractice() {
           </select>
         ) : null}
         <Button variant="secondary" onClick={() => { setSeed(newSeed()); reset(); }}>
-          {trip ? "New trip" : "New leg"}
+          {trip || reserveView ? "New trip" : diversionView ? "New diversion" : "New leg"}
         </Button>
       </div>
       <p className="tiny dim">Practice numbers, not for flight. Use your own charts, POH and weather with your instructor.</p>
       <p><strong>Memory aid:</strong> East is least, West is best (variation).</p>
 
-      {!trip ? (
+      {diversionView ? (
+        <>
+          <p>
+            <strong>Given:</strong> You divert to an alternate {diversion.leg.distanceNm} NM away on a true course of {pad3(diversion.leg.tc)}°. Wind {pad3(diversion.leg.windDir)}° at {diversion.leg.windSpeed} kt, TAS {diversion.leg.tas} kt, variation {diversion.leg.variation}° {diversion.leg.side === "E" ? "east" : "west"}, deviation {signed(diversion.leg.deviation)}°, burn {diversion.leg.gph} GPH. Fuel on board at the point of diversion: {diversion.fuelOnBoard} gallons.
+          </p>
+          <p className="tiny dim">{DIVERSION_TIP}</p>
+          <div className="e6b-check__grid">
+            {DIVERSION_FIELDS.map((f) => (
+              <div key={f} className="e6b-check__item">
+                <Field label={DIVERSION_LABELS[f]}>{box(`d-${f}`, DIVERSION_LABELS[f])}</Field>
+                {feedback(`d-${f}`)}
+              </div>
+            ))}
+          </div>
+          {grades && diversionSol ? (
+            <p role="note">
+              <strong>Worked line:</strong> fuel left at the alternate = {diversion.fuelOnBoard} − {diversionSol.fuelUsed} = {diversionSol.fuelLeft} gallons.
+            </p>
+          ) : null}
+        </>
+      ) : reserveView ? (
+        <>
+          <p>
+            <strong>Given:</strong> A {reserve.legs.length}-leg trip, {reserve.night ? "at night" : "by day"}, burn {reserve.gph} GPH, fuel on board {reserve.fuelOnBoard} gallons.
+          </p>
+          <div style={{ overflowX: "auto" }}>
+            <table className="navlog-table" style={{ borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  {["Leg", "TC", "NM", "TAS", "Wind", "Var", "Dev"].map((h) => (
+                    <th key={h} scope="col" style={{ textAlign: "left", padding: "4px 6px" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {reserve.legs.map((l, i) => (
+                  <tr key={i}>
+                    <th scope="row" style={{ textAlign: "left", padding: "4px 6px" }}>{i + 1}</th>
+                    <td style={{ padding: "4px 6px" }}>{pad3(l.tc)}°</td>
+                    <td style={{ padding: "4px 6px" }}>{l.distanceNm}</td>
+                    <td style={{ padding: "4px 6px" }}>{l.tas}</td>
+                    <td style={{ padding: "4px 6px" }}>{pad3(l.windDir)}/{l.windSpeed}</td>
+                    <td style={{ padding: "4px 6px" }}>{l.variation}° {l.side}</td>
+                    <td style={{ padding: "4px 6px" }}>{signed(l.deviation)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="e6b-check__grid">
+            <div className="e6b-check__item">
+              <Field label="Total fuel used (gallons)">{box("r-used", "Total fuel used")}</Field>
+              {feedback("r-used")}
+            </div>
+            <div className="e6b-check__item">
+              <Field label="Fuel left on landing (gallons)">{box("r-left", "Fuel left on landing")}</Field>
+              {feedback("r-left")}
+            </div>
+          </div>
+          {grades ? (
+            <p role="note">
+              <strong>Reserve:</strong> {reserveFor(reserve.gph, reserve.night).minutes} minutes at normal cruise ({reserve.night ? "night" : "day"}) = {reserve.gph} × {reserve.night ? "0.75" : "0.5"} = {reserveSol.reserveGallons} gallons. Fuel used {reserveSol.fuelUsed} gallons, fuel left {reserveSol.fuelLeft} gallons. {reserveSentence(reserveSol, reserve.night)}
+            </p>
+          ) : null}
+        </>
+      ) : !trip ? (
         <>
           <p><strong>Given:</strong> {describeLeg(legs[0]!)} Fill the boxes in order.</p>
           <div className="e6b-check__grid">

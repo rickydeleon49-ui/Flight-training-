@@ -1,6 +1,20 @@
 import { expect, it } from "vitest";
 
-import { generateLeg, generateTrip, gradeNavLogBox, navLogTotals, normalizeHeading, solveLeg, type NavLogLeg } from "./navLog";
+import {
+  generateDiversion,
+  generateLeg,
+  generateReserveScenario,
+  generateTrip,
+  gradeNavLogBox,
+  navLogTotals,
+  normalizeHeading,
+  reserveFor,
+  reserveSentence,
+  solveDiversion,
+  solveLeg,
+  solveReserve,
+  type NavLogLeg,
+} from "./navLog";
 
 const base: NavLogLeg = { tc: 90, distanceNm: 50, tas: 100, windDir: 180, windSpeed: 20, variation: 5, side: "E", deviation: 0, gph: 8 };
 
@@ -66,4 +80,38 @@ it("grades right, close, wrong and empty with a how line", () => {
   expect(gradeNavLogBox("th", "2", 360, base).status).toBe("close");
   expect(gradeNavLogBox("wca", "-12", 12, base).status).toBe("wrong");
   expect(gradeNavLogBox("ete", "", 31, base).status).toBe("empty");
+});
+
+it("diversion solution matches solveLeg and is deterministic", () => {
+  const d = generateDiversion(7);
+  expect(generateDiversion(7)).toEqual(d);
+  const leg = solveLeg(d.leg)!;
+  const sol = solveDiversion(d)!;
+  expect(sol).toMatchObject({ th: leg.th, mh: leg.mh, gs: leg.gs, ete: leg.ete, fuelUsed: leg.fuel });
+  expect(sol.fuelLeft).toBeCloseTo(d.fuelOnBoard - leg.fuel, 5);
+  expect(sol.fuelLeft).toBeGreaterThan(0);
+  expect(gradeNavLogBox("gs", String(sol.gs), sol.gs, d.leg).status).toBe("right");
+});
+
+it("reserve gallons: 30 minutes by day, 45 at night", () => {
+  expect(reserveFor(9, false)).toEqual({ minutes: 30, gallons: 4.5 });
+  expect(reserveFor(9, true)).toEqual({ minutes: 45, gallons: 6.8 });
+});
+
+it("reserve scenario is deterministic and shows covered and short cases with the right words", () => {
+  expect(generateReserveScenario(11)).toEqual(generateReserveScenario(11));
+  const seen = new Set<boolean>();
+  for (let seed = 1; seed <= 200; seed++) {
+    const sc = generateReserveScenario(seed);
+    expect(sc.legs.length).toBeGreaterThanOrEqual(2);
+    expect(sc.legs.length).toBeLessThanOrEqual(3);
+    const sol = solveReserve(sc);
+    expect(sol.fuelLeft).toBeGreaterThan(0);
+    seen.add(sol.covers);
+    const text = reserveSentence(sol, sc.night);
+    if (sol.covers) expect(text).toMatch(/covers the (30-minute day|45-minute night) reserve \(14 CFR 91\.151\)\./);
+    else expect(text).toMatch(/is less than the (30-minute day|45-minute night) reserve \(14 CFR 91\.151\)\. Talk through fuel planning with your instructor\./);
+    expect(text).not.toMatch(/\b(safe|legal|go)\b/i);
+  }
+  expect(seen.size).toBe(2);
 });
