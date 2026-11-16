@@ -199,6 +199,125 @@ export function privatePilotPart61Reference(totals: FlightLogTotals): HourRefere
   ];
 }
 
+export type HoursToGoStatus = "to_go" | "done" | "unknown";
+
+export interface HoursToGoRow {
+  key: string;
+  label: string;
+  /** Logged hours when the journal can measure this; null for text-only rows. */
+  logged: number | null;
+  /** The reference in plain words, e.g. "40 h". */
+  reference: string;
+  /** Hours left to the reference, never negative; null when not measurable. */
+  toGo: number | null;
+  status: HoursToGoStatus;
+  meta?: string;
+  /** Extra logged figure shown as information only. */
+  info?: string;
+}
+
+export const HOURS_TO_GO_CANT_TELL = "Can't tell from your journal";
+export const HOURS_TO_GO_NIGHT_STATUS = "Can't tell from your journal — check with your instructor";
+
+/**
+ * First day of the calendar month two months before the test month: the start
+ * of the 61.109(a)(1)(ii) practice-test-prep window. 2027-03-15 -> 2027-01-01;
+ * 2027-02-10 -> 2026-12-01. Null for anything that is not a YYYY-MM-DD day.
+ */
+export function prepWindowStart(testDate: string | null | undefined): string | null {
+  if (!testDate || !/^\d{4}-\d{2}-\d{2}$/.test(testDate)) return null;
+  const year = Number(testDate.slice(0, 4));
+  const month = Number(testDate.slice(5, 7));
+  if (month < 1 || month > 12) return null;
+  const index = year * 12 + (month - 1) - 2;
+  const y = Math.floor(index / 12);
+  const m = (index % 12) + 1;
+  return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-01`;
+}
+
+/**
+ * "Hours still to go" against the headline 14 CFR 61.109(a) airplane
+ * references. A study aid: only totals the journal can measure are computed.
+ * Subsets the journal cannot tell apart are listed as text with no numbers.
+ */
+export function privatePilotHoursToGo(
+  totals: FlightLogTotals,
+  nightLandings: number,
+  checkrideDate?: string | null,
+): HoursToGoRow[] {
+  const measured = (
+    key: string,
+    label: string,
+    logged: number,
+    reference: number,
+    meta?: string,
+  ): HoursToGoRow => {
+    const toGo = Math.max(0, Math.round((reference - logged) * 10) / 10);
+    return {
+      key,
+      label,
+      logged,
+      reference: `${reference} h`,
+      toGo,
+      status: toGo === 0 ? "done" : "to_go",
+      ...(meta ? { meta } : {}),
+    };
+  };
+  const text = (key: string, label: string, reference: string, meta?: string): HoursToGoRow => ({
+    key,
+    label,
+    logged: null,
+    reference,
+    toGo: null,
+    status: "unknown",
+    ...(meta ? { meta } : {}),
+  });
+  const windowStart = prepWindowStart(checkrideDate);
+
+  return [
+    measured("total", "Total flight time", totals.totalTime, 40),
+    measured("training", "Flight training received", totals.dualReceived, 20),
+    measured("solo", "Solo flight", totals.soloTime, 10),
+    measured(
+      "instrument",
+      "Instrument training",
+      totals.instrumentTime,
+      3,
+      "Counts only training from your instructor by reference to instruments.",
+    ),
+    {
+      key: "night",
+      label: "Night training",
+      logged: totals.nightTime,
+      reference:
+        "3 h night training incl. one night XC over 100 NM total and 10 night takeoffs/landings to a full stop",
+      toGo: null,
+      status: "unknown",
+      info: `Logged: ${formatHours(totals.nightTime)} h night, ${nightLandings} night landings`,
+    },
+    text("xc-training", "Cross-country training", "3 h"),
+    text(
+      "prep",
+      "Practical-test prep training",
+      "3 h within the 2 calendar months before the test month",
+      windowStart
+        ? `Your 2-month window starts ${windowStart} — confirm with your instructor.`
+        : undefined,
+    ),
+    text("solo-xc", "Solo cross-country", "5 h"),
+    text(
+      "solo-xc-long",
+      "Long solo cross-country",
+      "One solo XC of 150 NM total with full-stop landings at 3 points and one leg over 50 NM straight-line",
+    ),
+    text(
+      "solo-tower",
+      "Solo towered-airport landings",
+      "3 solo takeoffs/landings to a full stop at an airport with an operating control tower",
+    ),
+  ];
+}
+
 export function flightRoute(entry: JournalEntry): string {
   const from = entry.departureAirport.trim();
   const to = entry.arrivalAirport.trim();

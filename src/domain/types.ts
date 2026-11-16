@@ -1435,6 +1435,8 @@ export interface ToolkitState {
   checkrideDate?: IsoDate | null;
   /** Optional: personal minimums saved once with an instructor. None when missing. */
   personalMinimums?: PersonalMinimums;
+  /** Optional: endorsements you have ticked yourself, by checklist id. Off when missing. */
+  endorsementChecks?: Record<string, { done: boolean; date?: IsoDate }>;
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;

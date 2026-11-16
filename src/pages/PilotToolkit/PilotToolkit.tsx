@@ -62,8 +62,12 @@ import {
   flightActivity,
   flightLogTotals,
   formatHours,
+  HOURS_TO_GO_CANT_TELL,
+  HOURS_TO_GO_NIGHT_STATUS,
+  privatePilotHoursToGo,
 } from "@/logic/flightLog";
 import {
+  ENDORSEMENT_ITEMS,
   buildReminders,
   daysUntil,
   makeQuizAttempt,
@@ -349,6 +353,89 @@ export function PilotToolkit() {
   );
 }
 
+function HoursToGoCard({ state }: { state: ToolkitState }) {
+  const { data } = useAppData();
+  const totals = flightLogTotals(data.journalEntries);
+  const nightLandings = data.journalEntries.reduce(
+    (sum, entry) => sum + (entry.nightLandings ?? 0),
+    0,
+  );
+  const rows = privatePilotHoursToGo(totals, nightLandings, state.checkrideDate);
+  return (
+    <Card variant="grouped">
+      <CardHeader title="Hours still to go (14 CFR 61.109(a))" eyebrow="From your journal" />
+      <CardBody flush>
+        {rows.map((row) => (
+          <div className="toolkit-row" key={row.key} data-testid={`hours-to-go-${row.key}`}>
+            <div>
+              <p className="strong small">{row.label}</p>
+              <p className="tiny dim">Reference: {row.reference}</p>
+              {row.info ? <p className="tiny">{row.info}</p> : null}
+              {row.meta ? <p className="tiny dim">{row.meta}</p> : null}
+            </div>
+            <p className="small numeric">
+              {row.logged != null && row.toGo != null
+                ? row.status === "done"
+                  ? `logged ${formatHours(row.logged)} / ${row.reference} — done`
+                  : `logged ${formatHours(row.logged)} / ${row.reference} — ${formatHours(row.toGo)} h to go`
+                : row.key === "night"
+                  ? HOURS_TO_GO_NIGHT_STATUS
+                  : HOURS_TO_GO_CANT_TELL}
+            </p>
+          </div>
+        ))}
+      </CardBody>
+      <CardBody>
+        <p className="tiny dim">
+          A study aid, not an eligibility check. Your instructor's logbook review decides.
+        </p>
+      </CardBody>
+    </Card>
+  );
+}
+
+function EndorsementChecklist({ state, save }: ToolProps) {
+  const checks = state.endorsementChecks ?? {};
+  const update = (id: string, next: { done: boolean; date?: string }) =>
+    save((current) => ({
+      ...current,
+      endorsementChecks: {
+        ...(current.endorsementChecks ?? {}),
+        [id]: next.date ? { done: next.done, date: next.date } : { done: next.done },
+      },
+    }));
+  return (
+    <details className="card material-fold" id="endorsements-checklist">
+      <summary>Endorsements checklist</summary>
+      <p className="tiny dim">
+        Your instructor writes the real endorsements in your logbook. This list only helps you keep track.
+      </p>
+      <div className="stack stack--4">
+        {ENDORSEMENT_ITEMS.map((item) => {
+          const entry = checks[item.id];
+          return (
+            <div key={item.id} className="stack stack--2">
+              <Checkbox
+                checked={entry?.done === true}
+                onChange={(done) => void update(item.id, { done, date: entry?.date })}
+                label={item.label}
+                meta={item.cite}
+              />
+              {entry?.done ? (
+                <TypedDateField
+                  label={`Date: ${item.label}`}
+                  value={entry.date ?? ""}
+                  onChange={(date) => void update(item.id, { done: true, date: date || undefined })}
+                />
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 function ReadinessTool({ state, save }: ToolProps) {
   const summary = readinessSummary(state.readinessItems);
   const areas = [
@@ -402,6 +489,8 @@ function ReadinessTool({ state, save }: ToolProps) {
           </p>
         </CardBody>
       </Card>
+
+      <HoursToGoCard state={state} />
 
       {areas.map(([area, title]) => (
         <Card key={area} variant="grouped">
@@ -844,6 +933,7 @@ function RecordsTool({
           )}
         </CardBody>
       </Card>
+      <EndorsementChecklist state={state} save={save} />
       <p className="tiny dim">
         This organizer does not replace original certificates, endorsements,
         test reports, identification, or records required by the FAA or flight
