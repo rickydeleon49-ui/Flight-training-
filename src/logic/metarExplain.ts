@@ -22,7 +22,7 @@ const PHENOMENON: Record<string, string> = {
   HZ: "haze", PY: "spray", PO: "dust or sand whirls", SQ: "squalls", FC: "funnel cloud or tornado",
   SS: "sandstorm", DS: "duststorm",
 };
-const COVER: Record<string, string> = {
+export const COVER: Record<string, string> = {
   FEW: "few clouds (1 to 2 eighths of the sky)",
   SCT: "scattered clouds (3 to 4 eighths)",
   BKN: "broken clouds (5 to 7 eighths), a ceiling",
@@ -48,7 +48,7 @@ function parseFraction(text: string): number | null {
   return Number(m[1] ?? 0) + Number(m[2]) / Number(m[3]);
 }
 
-function weatherMeaning(raw: string): string | null {
+export function weatherMeaning(raw: string): string | null {
   let rest = raw;
   const parts: string[] = [];
   const plus = /^(\+|-|VC)/.exec(rest);

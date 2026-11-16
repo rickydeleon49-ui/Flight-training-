@@ -63,6 +63,33 @@ it("decodes a TAF and fills examples on the METAR tab", () => {
   expect(screen.queryByRole("heading", { name: "Temporary (TEMPO)" })).toBeNull();
 });
 
+it("decodes an example winds aloft and PIREP in the one paste box", () => {
+  render(<MemoryRouter initialEntries={["/?tool=metar"]}><PilotToolkit /></MemoryRouter>);
+  fireEvent.click(screen.getByRole("tab", { name: "METAR" }));
+  expect(screen.getByText("Weather Report Explainer")).toBeTruthy();
+  expect(screen.getByLabelText("Paste or type a METAR, TAF, winds aloft (FB) or PIREP")).toBeTruthy();
+  expect(screen.getByText(/G-AIRMET/)).toBeTruthy();
+
+  fireEvent.click(screen.getByRole("button", { name: "Try an example winds aloft" }));
+  expect(screen.getByLabelText("Decoded winds aloft")).toBeTruthy();
+  expect(screen.getByText(/From 220° at 14 kt, temperature \+5 °C/)).toBeTruthy();
+  expect(screen.getByText(/Light and variable \(less than 5 kt\)/)).toBeTruthy();
+  expect(screen.getAllByText(/No forecast for this level/).length).toBeGreaterThan(0);
+  fireEvent.change(screen.getByLabelText(/Your cruise altitude/), { target: { value: "7500" } });
+  expect(screen.getAllByText(/sits between the 6,000 ft level/).length).toBe(2);
+
+  fireEvent.click(screen.getByRole("button", { name: "Try an example PIREP" }));
+  expect(screen.getByLabelText("Decoded pilot report")).toBeTruthy();
+  expect(screen.getByText(/Routine pilot report/)).toBeTruthy();
+  expect(screen.getByText(/Wind from 270° at 30 kt/)).toBeTruthy();
+  expect(screen.getByText(/Light to moderate chop turbulence/)).toBeTruthy();
+  expect(screen.queryByLabelText("Decoded winds aloft")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Try an example METAR" }));
+  expect(screen.getByText(/Station KSFO/)).toBeTruthy();
+  expect(screen.queryByLabelText("Decoded pilot report")).toBeNull();
+});
+
 it("shows the E6B trainer on its own tab, not in Safety Check", () => {
   expect(toolFrom("e6b")).toBe("e6b");
   render(<MemoryRouter initialEntries={["/?tool=e6b"]}><PilotToolkit /></MemoryRouter>);

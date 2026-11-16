@@ -223,9 +223,10 @@ describe("GetStudyMaterialCard", () => {
       render(<GetStudyMaterialCard />);
       fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
       await screen.findByText(/From your Mac/);
+      // Wait for the unsaved-work check to settle, not just the panel (flaked on slow CI).
+      expect(await screen.findByRole("button", { name: "Save my phone work first" })).toBeTruthy();
       expect(screen.getByText(BLOCKED)).toBeTruthy();
       expect(screen.queryByText(/coming in the next update/)).toBeNull();
-      expect(screen.getByRole("button", { name: "Save my phone work first" })).toBeTruthy();
       expect(screen.queryByRole("button", { name: "Replace what's on this phone" })).toBeNull();
       expect(screen.queryByText(/will be replaced/)).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Not now" }));

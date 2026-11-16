@@ -46,7 +46,7 @@ interface Candidate extends QuickFindResult {
 }
 
 /** The sections themselves, so typing "fin" reaches Finances. */
-const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
+const DESTINATIONS: Array<{ label: string; to: string; detail: string; keywords?: string }> = [
   { label: "Flight Deck", to: "/", detail: "Today at a glance" },
   { label: "Flight Path", to: "/flight-path", detail: "Milestones and goals" },
   { label: "Study Library", to: "/study", detail: "Materials and notes" },
@@ -56,7 +56,7 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
   { label: "Notes", to: "/notes", detail: "Anything you wrote down" },
   { label: "Finances", to: "/finances", detail: "Spending and funds" },
   { label: "Pilot Toolkit", to: "/toolkit", detail: "Checkride readiness" },
-  { label: "METAR explainer", to: "/toolkit?tool=metar", detail: "Pilot Toolkit: read a weather report" },
+  { label: "METAR explainer", to: "/toolkit?tool=metar", detail: "Pilot Toolkit: read a weather report", keywords: "TAF winds aloft FB PIREP pilot report" },
   { label: "E6B trainer", to: "/toolkit?tool=e6b", detail: "Pilot Toolkit: practise wind and fuel math" },
   { label: "Settings", to: "/settings", detail: "Profile and preferences" },
 ];
@@ -164,7 +164,7 @@ function buildCandidates(data: AppData, today: string): Candidate[] {
   }
 
   for (const destination of DESTINATIONS) {
-    push(`page:${destination.to}`, "Go to", destination.label, destination.detail, destination.to);
+    push(`page:${destination.to}`, "Go to", destination.label, destination.detail, destination.to, destination.keywords);
   }
 
   return candidates;
