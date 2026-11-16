@@ -19,6 +19,7 @@ import {
   type StudyEdit,
   type StudyItem,
 } from "@/logic/studyAuthoring";
+import { parseQuizletText } from "@/logic/quizletImport";
 import { authoringStateOf, emptyManualSet, frameOf, itemAuthorLabel, nextSetOf } from "@/logic/studySetEditing";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
@@ -346,6 +347,55 @@ export function StudySetEditor({
       </div>
     ) : null;
 
+  // "Add cards from Quizlet": one dialog, one save for all the cards.
+  const [quizletOpen, setQuizletOpen] = useState(false);
+  const [quizletText, setQuizletText] = useState("");
+  const [quizletError, setQuizletError] = useState<string | null>(null);
+  const quizletParsed = parseQuizletText(quizletText, studySet.flashcards.map((card) => card.front));
+  const closeQuizlet = () => {
+    if (busyRef.current) return;
+    setQuizletOpen(false);
+    setQuizletText("");
+    setQuizletError(null);
+  };
+  const saveQuizlet = async () => {
+    if (busyRef.current || !repositories || quizletParsed.cards.length === 0) return;
+    busyRef.current = true;
+    setBusy(true);
+    setQuizletError(null);
+    const outcome = await mutate(async (repos) => {
+      try {
+        const read = await repos.documents.readStudySetForEdit(material.id);
+        if (!read || !sameContent(read.set, studySet)) {
+          return { ok: false as const, message: "This study set changed since this page was shown. Close this and look at it again." };
+        }
+        let state = authoringStateOf(read.set);
+        const fronts = read.set.flashcards.map((card) => card.front);
+        const parsed = parseQuizletText(quizletText, fronts);
+        for (const card of parsed.cards) {
+          const plan = await prepareStudyEdit(state, { kind: "add", item: { kind: "card", fields: [card.front, card.back], sourcePage: null }, origin: "user" });
+          state = plan.next;
+        }
+        await repos.documents.saveStudySet({
+          operationId: newId(),
+          materialId: material.id,
+          reason: read.stored === null ? "create" : "edit",
+          expected: read.stored,
+          next: nextSetOf(frameOf(read.set), state),
+        });
+        return { ok: true as const };
+      } catch (failure) {
+        return { ok: false as const, message: problemText(failure) };
+      }
+    });
+    busyRef.current = false;
+    setBusy(false);
+    if (outcome?.ok) {
+      setQuizletOpen(false);
+      setQuizletText("");
+    } else setQuizletError(outcome?.message ?? "These cards couldn't be saved. Nothing has been saved; your text is still here.");
+  };
+
   if (compact) {
     return (
       <Dialog
@@ -481,6 +531,9 @@ export function StudySetEditor({
           <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "card" })}>
             Add a card
           </Button>
+          <Button size="small" disabled={busy} onClick={() => setQuizletOpen(true)}>
+            Add cards from Quizlet
+          </Button>
     </>
   );
 
@@ -572,6 +625,44 @@ export function StudySetEditor({
             <p className="tiny dim" role="status">Opening…</p>
           ) : null}
           {error ? <p className="field__error" role="alert">{error}</p> : null}
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={quizletOpen}
+        onClose={closeQuizlet}
+        title="Add cards from Quizlet"
+        dismissible={!busy}
+        footer={
+          <>
+            <Button onClick={closeQuizlet} disabled={busy}>Cancel</Button>
+            <Button variant="primary" onClick={() => void saveQuizlet()} disabled={busy || quizletParsed.cards.length === 0}>
+              {busy ? "Saving…" : `Add ${quizletParsed.cards.length} ${quizletParsed.cards.length === 1 ? "card" : "cards"}`}
+            </Button>
+          </>
+        }
+      >
+        <div className="stack stack--3">
+          <p className="small">In Quizlet, open the set, choose ⋯ › Export, then Copy text. Paste it here:</p>
+          <Field label="Quizlet text">
+            <TextArea rows={6} value={quizletText} onChange={(event) => setQuizletText(event.target.value)} />
+          </Field>
+          {quizletText.trim() ? (
+            <div className="stack stack--2" role="status">
+              <p className="small">
+                {quizletParsed.cards.length} {quizletParsed.cards.length === 1 ? "card" : "cards"} found
+                {quizletParsed.skippedDuplicates > 0 ? ` (${quizletParsed.skippedDuplicates} already here, skipped)` : ""}
+              </p>
+              {quizletParsed.cut ? <p className="tiny muted">Only the first 500 cards will be added.</p> : null}
+              <ul className="tiny stack stack--1">
+                {quizletParsed.cards.slice(0, 20).map((card, index) => (
+                  <li key={index} className="wrap-anywhere">{card.front} → {card.back}</li>
+                ))}
+              </ul>
+              {quizletParsed.cards.length > 20 ? <p className="tiny muted">and {quizletParsed.cards.length - 20} more</p> : null}
+            </div>
+          ) : null}
+          {quizletError ? <p className="field__error" role="alert">{quizletError}</p> : null}
         </div>
       </Dialog>
 
