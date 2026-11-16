@@ -13,6 +13,7 @@ import type {
   Transaction,
 } from "@/domain/types";
 import { addDays, daysBetween, todayIso } from "@/lib/dates";
+import { normalizePersonalMinimums } from "./personalMinimums";
 import { trainingCostSummary } from "./finance";
 import type { FlightLogTotals } from "./flightLog";
 
@@ -122,11 +123,13 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     (item) => item?.id && !DEFAULT_READINESS_ITEMS.some((fallback) => fallback.id === item.id),
   );
 
-  const { studyGuideNotice, ...rest } = input;
+  const { studyGuideNotice, personalMinimums: storedMinimums, ...rest } = input;
+  const personalMinimums = normalizePersonalMinimums(storedMinimums);
   return copyToolkitData({
     ...DEFAULT_TOOLKIT_STATE,
     ...rest,
     ...(typeof studyGuideNotice === "boolean" ? { studyGuideNotice } : {}),
+    ...(personalMinimums ? { personalMinimums } : {}),
     studyReminder: normalizeStudyReminder(input.studyReminder),
     checkrideDate: normalizeCheckrideDate(input.checkrideDate),
     version: 1,

@@ -1406,6 +1406,20 @@ export interface StudyReminder {
   time: string;
 }
 
+/** Optional personal minimums set with an instructor. Every field is optional. */
+export interface PersonalMinimums {
+  /** Lowest ceiling, feet AGL. */
+  ceilingFt?: number;
+  /** Lowest visibility, statute miles. */
+  visibilitySm?: number;
+  /** Highest wind, knots. */
+  windKt?: number;
+  /** Highest crosswind, knots. */
+  crosswindKt?: number;
+  /** One free-text line, e.g. "no night flights yet". */
+  note?: string;
+}
+
 export interface ToolkitState {
   version: 1;
   readinessItems: ReadinessItem[];
@@ -1419,6 +1433,8 @@ export interface ToolkitState {
   studyReminder?: StudyReminder;
   /** Optional: the practical test day. Counted down on the Flight Deck. Off when missing. */
   checkrideDate?: IsoDate | null;
+  /** Optional: personal minimums saved once with an instructor. None when missing. */
+  personalMinimums?: PersonalMinimums;
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;
