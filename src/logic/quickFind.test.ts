@@ -40,6 +40,17 @@ describe("quickFind", () => {
     expect(quickFind(EMPTY_DATA, query, TODAY).map((r) => r.to)).toContain("/toolkit?tool=metar");
   });
 
+  it.each(["regulation cards", "reg cards", "VFR minimums", "scenarios", "inoperative equipment", "91.213"])(
+    "finds the reg-card drill for %s",
+    (query) => {
+      expect(quickFind(EMPTY_DATA, query, TODAY).map((r) => r.to)).toContain("/toolkit?tool=quiz");
+    },
+  );
+
+  it.each(["oral", "oral practice", "examiner", "scenarios"])("finds oral practice for %s", (query) => {
+    expect(quickFind(EMPTY_DATA, query, TODAY).map((r) => r.label)).toContain("Oral practice");
+  });
+
   it("ranks the METAR explainer above an oral-question note that mentions metar (BL-63)", () => {
     const records: AppData = {
       ...EMPTY_DATA,

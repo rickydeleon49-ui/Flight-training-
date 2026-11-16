@@ -266,12 +266,12 @@ export function NavLogPractice() {
           </div>
         </>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table className="navlog-table" style={{ borderCollapse: "collapse", minWidth: 900 }}>
+        <div className="navlog-trip">
+          <table className="navlog-table navlog-table--trip" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr>
                 {["Leg", "TC", "NM", "TAS", "Wind", "Var", "Dev", "GPH", ...NAV_LOG_FIELDS.map((f) => SHORT[f])].map((h) => (
-                  <th key={h} scope="col" style={{ textAlign: "left", padding: "4px 6px" }}>{h}</th>
+                  <th key={h} scope="col" title={h === "WCA" ? "Wind correction angle" : undefined} style={{ textAlign: "left", padding: "4px 6px" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -279,15 +279,15 @@ export function NavLogPractice() {
               {legs.map((l, i) => (
                 <tr key={i}>
                   <th scope="row" style={{ textAlign: "left", padding: "4px 6px" }}>{i + 1}</th>
-                  <td style={{ padding: "4px 6px" }}>{pad3(l.tc)}°</td>
-                  <td style={{ padding: "4px 6px" }}>{l.distanceNm}</td>
-                  <td style={{ padding: "4px 6px" }}>{l.tas}</td>
-                  <td style={{ padding: "4px 6px" }}>{pad3(l.windDir)}/{l.windSpeed}</td>
-                  <td style={{ padding: "4px 6px" }}>{l.variation}° {l.side}</td>
-                  <td style={{ padding: "4px 6px" }}>{signed(l.deviation)}</td>
-                  <td style={{ padding: "4px 6px" }}>{l.gph}</td>
+                  <td data-label="TC" style={{ padding: "4px 6px" }}>{pad3(l.tc)}°</td>
+                  <td data-label="NM" style={{ padding: "4px 6px" }}>{l.distanceNm}</td>
+                  <td data-label="TAS" style={{ padding: "4px 6px" }}>{l.tas}</td>
+                  <td data-label="Wind" style={{ padding: "4px 6px" }}>{pad3(l.windDir)}/{l.windSpeed}</td>
+                  <td data-label="Var" style={{ padding: "4px 6px" }}>{l.variation}° {l.side}</td>
+                  <td data-label="Dev" style={{ padding: "4px 6px" }}>{signed(l.deviation)}</td>
+                  <td data-label="GPH" style={{ padding: "4px 6px" }}>{l.gph}</td>
                   {NAV_LOG_FIELDS.map((f) => (
-                    <td key={f} style={{ padding: "4px 6px", minWidth: 72 }}>
+                    <td key={f} data-label={SHORT[f]} className="navlog-answer" style={{ padding: "4px 6px" }}>
                       {box(`${i}-${f}`, LABELS[f], `Leg ${i + 1} ${SHORT[f]}`)}
                       {feedback(`${i}-${f}`)}
                     </td>
@@ -297,13 +297,13 @@ export function NavLogPractice() {
               <tr>
                 <th scope="row" style={{ textAlign: "left", padding: "4px 6px" }}>Total</th>
                 <td />
-                <td style={{ padding: "4px 6px" }}>{totals.distanceNm}</td>
+                <td data-label="NM" style={{ padding: "4px 6px" }}>{totals.distanceNm}</td>
                 <td colSpan={9} />
-                <td style={{ padding: "4px 6px", minWidth: 72 }}>
+                <td data-label="Total ETE" className="navlog-answer" style={{ padding: "4px 6px" }}>
                   {box("totalEte", "Total ETE", "Total ETE (minutes)")}
                   {feedback("totalEte" satisfies Totals)}
                 </td>
-                <td style={{ padding: "4px 6px", minWidth: 72 }}>
+                <td data-label="Total fuel" className="navlog-answer" style={{ padding: "4px 6px" }}>
                   {box("totalFuel", "Total fuel", "Total fuel (gallons)")}
                   {feedback("totalFuel" satisfies Totals)}
                 </td>

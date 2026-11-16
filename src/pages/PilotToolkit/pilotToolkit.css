@@ -179,3 +179,31 @@
 .e6b-check__result--close { background: var(--status-due-today-fill); color: var(--status-due-today); }
 .e6b-check__result--wrong { background: var(--status-overdue-fill); color: var(--status-overdue); }
 .e6b-check__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+
+/* Whole-trip nav log: a wide table, or one stacked card per leg when the window is narrow (no sideways scroll). */
+.navlog-trip { overflow-x: auto; }
+.navlog-table--trip { min-width: 900px; }
+.navlog-table .navlog-answer { min-width: 72px; }
+@media (max-width: 760px) {
+  .navlog-trip { overflow-x: visible; }
+  .navlog-table--trip { min-width: 0; width: 100%; display: block; }
+  .navlog-table--trip thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .navlog-table--trip tbody { display: block; }
+  .navlog-table--trip tr {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: var(--space-2);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .navlog-table--trip th[scope="row"], .navlog-table--trip td { display: block; min-width: 0; }
+  .navlog-table--trip th[scope="row"] { grid-column: 1 / -1; font-weight: 600; }
+  .navlog-table--trip td:empty { display: none; }
+  .navlog-table--trip td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+  .navlog-table .navlog-answer { min-width: 0; }
+}

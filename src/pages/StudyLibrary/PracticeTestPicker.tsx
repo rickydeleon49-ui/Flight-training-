@@ -16,7 +16,7 @@ export function PracticeTestPicker({ practiceTests, materials }: {
   }).sort((a, b) => a.material.title.localeCompare(b.material.title));
 
   return <>
-    <Button variant="secondary" onClick={() => setOpen(true)}>Practice test</Button>
+    <Button variant="secondary" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (!open) setOpen(true); }}>Practice test</Button>
     {open ? <Dialog open title="Practice tests" onClose={() => setOpen(false)}>
       <div className="stack stack--3">
         <div className="row row--wrap">

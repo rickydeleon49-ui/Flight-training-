@@ -29,7 +29,11 @@ export type PracticeReadiness =
       previousAverage: number | null;
       trend: PracticeTrend | null;
     }
-  | { kind: "nudge" }
+  | {
+      kind: "nudge";
+      /** Finished practice tests in the window, when there are any (even ones not counted in the average). */
+      testsDone?: number;
+    }
   | { kind: "none" };
 
 export interface PracticeReadinessInput {
@@ -79,7 +83,14 @@ export function buildPracticeReadiness(input: PracticeReadinessInput): PracticeR
     });
 
   if (recent.length < MIN_RECENT_ATTEMPTS) {
-    return input.hasPracticeTest ? { kind: "nudge" } : { kind: "none" };
+    if (!input.hasPracticeTest) return { kind: "none" };
+    // Any finished test in the window, so this line agrees with "done this week" on Home.
+    const testsDone = input.attempts.filter((attempt) => {
+      if (attempt.status !== "completed" || attempt.completedAt === null) return false;
+      const day = localDayOf(attempt.completedAt);
+      return day !== null && day >= start && day <= input.today;
+    }).length;
+    return testsDone > 0 ? { kind: "nudge", testsDone } : { kind: "nudge" };
   }
 
   const latest = recent.slice(0, GROUP_SIZE);
@@ -107,7 +118,11 @@ export function buildPracticeReadiness(input: PracticeReadinessInput): PracticeR
 /** The words the student reads, or null when nothing should be shown. */
 export function practiceReadinessText(readiness: PracticeReadiness): string | null {
   if (readiness.kind === "none") return null;
-  if (readiness.kind === "nudge") return "Take a practice test this month to see how you're doing.";
+  if (readiness.kind === "nudge") {
+    return readiness.testsDone
+      ? "A few more practice tests this month will show how you're doing."
+      : "Take a practice test this month to see how you're doing.";
+  }
   const base = `Your last ${readiness.recentCount} practice tests averaged ${readiness.recentAverage}%`;
   switch (readiness.trend) {
     case "up":
