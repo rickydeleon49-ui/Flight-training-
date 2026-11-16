@@ -14,7 +14,7 @@ import {
   useState,
 } from "react";
 
-import { AlertIcon, Badge, Button, ConfirmDialog } from "@/components/ui";
+import { AlertIcon, Badge, Button, Checkbox, ConfirmDialog } from "@/components/ui";
 import { PracticeSessionError } from "@/data/persistenceErrors";
 import type {
   PracticeCompletedResult,
@@ -27,7 +27,18 @@ import type {
 import { formatLongDate, localDayOf } from "@/lib/dates";
 import { practiceWeakAreas, PASS_PERCENT } from "@/logic/practiceWeakAreas";
 import { TryMissedAgain } from "./TryMissedAgain";
-import { attemptReviewPath } from "@/logic/practiceAttemptReview";
+import { attemptReviewPath, buildAttemptReview, isMissedOrSkipped } from "@/logic/practiceAttemptReview";
+import {
+  describeDuration,
+  finishTimedAttempt,
+  formatClock,
+  readTimedAttempt,
+  remainingMs,
+  secondsUsedAt,
+  startTimedAttempt,
+  timeAnnouncement,
+  type TimedAttemptRecord,
+} from "@/logic/timedAttempts";
 import { AppDataContext } from "@/state/AppDataContext";
 import "./studyLibrary.css";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
@@ -911,9 +922,47 @@ export function PracticeTestPanel({
 
   const canEdit = state.phase === "ready";
 
+  // "Test conditions": the clock is a deadline timestamp, never a counter, so a
+  // re-render or a slow tick cannot drift it.
+  const [timedWanted, setTimedWanted] = useState(false);
+  const [timedState, setTimedState] = useState<{ attemptId: string; record: TimedAttemptRecord } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [confirmingFinish, setConfirmingFinish] = useState(false);
+  const attemptIdNow = state.attempt?.attemptId ?? null;
+  const attemptInProgress = state.attempt !== null && state.completedResult === null;
+  const timedRecord = timedState && timedState.attemptId === attemptIdNow ? timedState.record : null;
+  const timedActive = timedRecord !== null && attemptInProgress;
+
+  useEffect(() => {
+    if (!attemptIdNow || !attemptInProgress) return;
+    let record = readTimedAttempt(attemptIdNow);
+    if (!record && timedWanted && totalQuestions > 0) {
+      record = startTimedAttempt(attemptIdNow, totalQuestions);
+    }
+    setTimedState(record ? { attemptId: attemptIdNow, record } : null);
+  }, [attemptIdNow, attemptInProgress, timedWanted, totalQuestions]);
+
+  useEffect(() => {
+    if (!timedActive) return;
+    setNowMs(Date.now());
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [timedActive]);
+
+  useEffect(() => {
+    const result = state.completedResult;
+    if (!result) return;
+    setTimedWanted(false);
+    const record = finishTimedAttempt(result.attemptId, Date.parse(result.completedAt) || Date.now());
+    if (record) setTimedState({ attemptId: result.attemptId, record });
+  }, [state.completedResult]);
+
+  const timeLeftMs = timedRecord ? remainingMs(timedRecord, nowMs) : 0;
+
   // Durable feedback only: an unsaved draft never inherits saved correctness.
+  // Under test conditions nothing is revealed until the test is finished.
   const revealed =
-    !state.changingAnswer && state.draft === null && confirmedResponse !== undefined;
+    !timedActive && !state.changingAnswer && state.draft === null && confirmedResponse !== undefined;
 
   // Owner decision 11 Nov: pick an answer first, then press "Check answer".
   const [picked, setPicked] = useState<number | null>(null);
@@ -983,8 +1032,10 @@ export function PracticeTestPanel({
   );
 
   const handleCheck = useCallback(() => {
-    if (picked !== null) submitAnswer(picked, false);
-  }, [picked, submitAnswer]);
+    if (picked === null) return;
+    submitAnswer(picked, false);
+    if (timedActive || timedWanted) setPicked(null);
+  }, [picked, submitAnswer, timedActive, timedWanted]);
 
   const handleDontKnow = useCallback(() => {
     submitAnswer(null, true);
@@ -1042,6 +1093,19 @@ export function PracticeTestPanel({
     if (unanswered.length) setOfferingSkipped(true);
     else handleComplete();
   }, [goToIndex, handleComplete, answeringSkipped]);
+
+  // Time out finishes the test; unanswered questions count as missed. While a
+  // write is in flight this is a no-op and the next tick tries again.
+  useEffect(() => {
+    if (timedActive && timeLeftMs <= 0) handleComplete();
+  }, [timedActive, timeLeftMs, nowMs, handleComplete]);
+
+  const handleFinishTimed = useCallback(() => {
+    const current = renderedRef.current;
+    const total = current.items?.length ?? 0;
+    if ((current.attempt?.answeredCount ?? 0) < total) setConfirmingFinish(true);
+    else handleComplete();
+  }, [handleComplete]);
 
   const handleRetake = useCallback(() => {
     if (busyRef.current || intentRef.current) return;
@@ -1287,6 +1351,19 @@ export function PracticeTestPanel({
       state.version?.id === state.attempt.versionId
         ? state.version.historyKey
         : null;
+    const timedAttemptDone = timedRecord !== null;
+    const missedEntries = timedAttemptDone
+      ? buildAttemptReview(
+          result.attemptId,
+          questions,
+          (state.attempt?.responses ?? []).map((r) => ({
+            ...r,
+            id: `${result.attemptId}:${r.itemId}`,
+            attemptId: result.attemptId,
+            answeredAt: result.completedAt,
+          })),
+        ).filter((entry) => isMissedOrSkipped(entry.outcome))
+      : [];
     return (
       <div className="stack stack--4" role="status">
         {notices}
@@ -1301,7 +1378,19 @@ export function PracticeTestPanel({
           <div className="practice-result__bar" aria-hidden="true">
             <span style={{ width: `${Math.min(100, Math.max(0, result.scorePercent))}%` }} />
           </div>
-          <p className="small dim">FAA pass mark is {PASS_PERCENT}%.</p>
+          {timedAttemptDone ? (
+            <>
+              <p className="small dim">The FAA written passes at {PASS_PERCENT}%.</p>
+              <p className="small dim">This practice set: {result.scorePercent}%</p>
+              {timedRecord ? (
+                <p className="small dim">
+                  Time used: {describeDuration(timedRecord.secondsUsed ?? secondsUsedAt(timedRecord, Date.parse(result.completedAt) || Date.now()))} of {describeDuration(Math.round((timedRecord.deadlineMs - timedRecord.startedMs) / 1000))}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className="small dim">FAA pass mark is {PASS_PERCENT}%.</p>
+          )}
         </div>
 
         <div className="row row--wrap row--gap-2">
@@ -1341,6 +1430,28 @@ export function PracticeTestPanel({
             </a>
           )}
         </div>
+
+        {timedAttemptDone && missedEntries.length > 0 && (
+          <div className="stack stack--2 practice-focus">
+            <p className="eyebrow">Review these</p>
+            <ul className="practice-focus__list">
+              {missedEntries.map((entry) => (
+                <li key={entry.item.id} className="practice-focus__row">
+                  <span className="practice-focus__name">
+                    {reviewHistoryKey ? (
+                      <a href={`#${attemptReviewPath(reviewHistoryKey, result.attemptId, "missed")}`}>
+                        Question {entry.number}
+                      </a>
+                    ) : (
+                      <>Question {entry.number}</>
+                    )}
+                    <span className="tiny dim">{entry.item.sourcePage ? `page ${entry.item.sourcePage}` : "No source page"}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {weakAreas.length > 0 && (
           <div className="stack stack--2 practice-focus">
@@ -1391,6 +1502,16 @@ export function PracticeTestPanel({
 
   if (!question) return <div className="stack stack--3">{notices}</div>;
 
+  const timedToggle = !state.attempt && !startHeld ? (
+    <Checkbox
+      checked={timedWanted}
+      onChange={setTimedWanted}
+      disabled={!canEdit}
+      strikethrough={false}
+      label="Test conditions"
+      meta="Timed at the FAA written pace — 2 minutes per question. No answers shown until the end."
+    />
+  ) : null;
   const startBlock = <div className="row row--wrap">
         {!state.attempt && startHeld ? <p className="small muted">{startHeld}</p> : !state.attempt ? <Button variant="secondary" disabled={!canEdit} onClick={() => {
           if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
@@ -1414,7 +1535,15 @@ export function PracticeTestPanel({
     <div ref={keyboardPanelRef} className="stack stack--3" aria-labelledby="practice-test-title">
       {notices}
 
+      {timedToggle}
       {entrySummary ? startBlock : null}
+
+      {timedActive ? (
+        <div className="row row--between">
+          <p className="tiny muted" aria-label="Time left">Time left: {formatClock(timeLeftMs)}</p>
+          <span className="visually-hidden" role="status" aria-live="polite">{timeAnnouncement(timeLeftMs)}</span>
+        </div>
+      ) : null}
 
       {beforeStart ? null : <p className="tiny muted" role="status" aria-label="Practice progress">
         {state.attempt && resumedAttempt.current === state.attempt.attemptId
@@ -1427,7 +1556,8 @@ export function PracticeTestPanel({
           {questions.map((itm, qIdx) => {
             const resp = state.attempt?.responses.find((r) => r.itemId === itm.id);
             let pillClass = "practice-pill";
-            if (resp) pillClass += resp.isCorrect ? " practice-pill--correct" : " practice-pill--incorrect";
+            if (resp && !timedActive) pillClass += resp.isCorrect ? " practice-pill--correct" : " practice-pill--incorrect";
+            if (resp && timedActive) pillClass += " practice-pill--answered";
             if (qIdx === state.index) pillClass += " practice-pill--current";
 
             return (
@@ -1436,7 +1566,7 @@ export function PracticeTestPanel({
                 type="button"
                 className={pillClass}
                 disabled={!canEdit}
-                aria-label={`Question ${qIdx + 1}, ${resp ? (resp.isDontKnow ? "not quite, don’t know" : resp.isCorrect ? "correct" : "not quite") : "unanswered"}`}
+                aria-label={`Question ${qIdx + 1}, ${timedActive ? (resp ? "answered" : "unanswered") : resp ? (resp.isDontKnow ? "not quite, don’t know" : resp.isCorrect ? "correct" : "not quite") : "unanswered"}`}
                 aria-current={qIdx === state.index ? "true" : undefined}
                 onClick={() => goToIndex(qIdx)}
               >
@@ -1511,14 +1641,20 @@ export function PracticeTestPanel({
             I don’t know
           </Button>
 
+          {timedActive && state.index > 0 && (
+            <Button size="small" variant="ghost" disabled={!canEdit} onClick={() => goToIndex(state.index - 1)}>
+              ← Previous
+            </Button>
+          )}
+
           {state.index + 1 < totalQuestions && (
             <Button
               size="small"
               variant="ghost"
               disabled={!canEdit}
-              onClick={handleContinue}
+              onClick={timedActive ? () => goToIndex(state.index + 1) : handleContinue}
             >
-              Skip for now →
+              {timedActive ? "Next →" : "Skip for now →"}
             </Button>
           )}
         </div>
@@ -1565,10 +1701,18 @@ export function PracticeTestPanel({
             disabled={revealed ? !canEdit : !canEdit || picked === null}
             onClick={revealed ? handleContinue : handleCheck}
           >
-            {!revealed ? "Check answer" : state.index + 1 < totalQuestions ? "Next question" : "See score"}
+            {timedActive || (timedWanted && !state.attempt) ? "Save answer" : !revealed ? "Check answer" : state.index + 1 < totalQuestions ? "Next question" : "See score"}
           </Button>
 
-          {answeredCount > 0 && answeredCount < totalQuestions && (
+          {timedActive && confirmedResponse && picked === null ? (
+            <p className="tiny muted" role="status">Answer saved. You can change it until you finish.</p>
+          ) : null}
+
+          {timedActive ? (
+            <Button size="small" variant="secondary" disabled={!canEdit} onClick={handleFinishTimed}>
+              Finish test
+            </Button>
+          ) : answeredCount > 0 && answeredCount < totalQuestions && (
             <Button size="small" variant="secondary" disabled={!canEdit} onClick={handleComplete}>
               Complete test now ({totalQuestions - answeredCount} unanswered)
             </Button>
@@ -1610,6 +1754,15 @@ export function PracticeTestPanel({
           if (next >= 0) goToIndex(next);
         }}
         onCancel={() => setOfferingSkipped(false)}
+      />
+      <ConfirmDialog
+        open={confirmingFinish}
+        title="Finish the test?"
+        message={`${totalQuestions - answeredCount} ${totalQuestions - answeredCount === 1 ? "question is" : "questions are"} still unanswered and will count as missed.`}
+        confirmLabel="Finish test"
+        destructive={false}
+        onConfirm={() => { setConfirmingFinish(false); handleComplete(); }}
+        onCancel={() => setConfirmingFinish(false)}
       />
       <ConfirmDialog
         open={confirmingAbandon}
