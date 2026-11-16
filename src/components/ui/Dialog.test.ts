@@ -81,3 +81,36 @@ it("closes only the top dialog when Escape is pressed in a nested dialog", () =>
   expect(innerClose).toHaveBeenCalledTimes(1);
   expect(outerClose).not.toHaveBeenCalled();
 });
+
+function scrollableDialog() {
+  const view = render(h(Dialog, {
+    open: true,
+    onClose: vi.fn(),
+    title: "Long",
+    footer: h("button", null, "Done"),
+    children: h("textarea", { "aria-label": "Notes" }),
+  }));
+  const body = view.container.querySelector<HTMLElement>(".dialog__body")!;
+  Object.defineProperty(body, "clientHeight", { value: 100, configurable: true });
+  Object.defineProperty(body, "scrollHeight", { value: 1000, configurable: true });
+  return body;
+}
+
+it("scrolls the dialog body on PageDown, PageUp, Home and End from a footer button", () => {
+  const body = scrollableDialog();
+  const done = screen.getByRole("button", { name: "Done" });
+  expect(fireEvent.keyDown(done, { key: "PageDown" })).toBe(false);
+  expect(body.scrollTop).toBe(90);
+  fireEvent.keyDown(done, { key: "PageUp" });
+  expect(body.scrollTop).toBe(0);
+  fireEvent.keyDown(done, { key: "End" });
+  expect(body.scrollTop).toBe(900);
+  fireEvent.keyDown(done, { key: "Home" });
+  expect(body.scrollTop).toBe(0);
+});
+
+it("leaves paging keys alone in a text field", () => {
+  const body = scrollableDialog();
+  expect(fireEvent.keyDown(screen.getByLabelText("Notes"), { key: "PageDown" })).toBe(true);
+  expect(body.scrollTop).toBe(0);
+});
