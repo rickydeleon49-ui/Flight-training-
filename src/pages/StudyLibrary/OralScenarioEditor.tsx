@@ -37,6 +37,9 @@ export function OralScenarioEditor({
   const [saving, setSaving] = useState(false);
   // Synchronous: a second click in the same render must not save twice.
   const savingRef = useRef(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  // Set by "Add a follow-up question": the new field takes focus once it exists.
+  const focusNewRef = useRef(false);
 
   useEffect(() => {
     if (!open || savingRef.current) return;
@@ -47,6 +50,13 @@ export function OralScenarioEditor({
     setFromInstructor(scenario?.origin === "instructor");
     setProblem(null);
   }, [open, scenario]);
+
+  useEffect(() => {
+    if (!focusNewRef.current) return;
+    focusNewRef.current = false;
+    const fields = listRef.current?.querySelectorAll<HTMLInputElement>("input");
+    fields?.[fields.length - 1]?.focus();
+  }, [followUps.length]);
 
   const close = () => {
     if (!savingRef.current) onClose();
@@ -136,7 +146,7 @@ export function OralScenarioEditor({
           label={`Follow-up questions (optional, up to ${ORAL_MAX_FOLLOW_UPS})`}
           hint="What the examiner might ask next. They show one at a time after the points."
         >
-          <div className="stack stack--2">
+          <div className="stack stack--2" ref={listRef}>
             {followUps.map((line, at) => (
               <div key={at} className="row row--gap-2">
                 <TextInput
@@ -152,7 +162,10 @@ export function OralScenarioEditor({
             ))}
             {followUps.length < ORAL_MAX_FOLLOW_UPS ? (
               <div>
-                <Button size="small" onClick={() => setFollowUps((current) => [...current, ""])}>Add a follow-up question</Button>
+                <Button size="small" onClick={() => {
+                  focusNewRef.current = true;
+                  setFollowUps((current) => [...current, ""]);
+                }}>Add a follow-up question</Button>
               </div>
             ) : null}
           </div>

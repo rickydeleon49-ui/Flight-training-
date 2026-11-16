@@ -300,6 +300,10 @@ export function PilotToolkit() {
   useEffect(() => {
     if (toolParam) setTool(toolFrom(toolParam));
   }, [toolParam]);
+  // Opening the Toolkit, or switching its tool, starts at the top, not where the last tool was scrolled.
+  useEffect(() => {
+    window.scrollTo?.(0, 0);
+  }, [tool]);
   const [saved, setSaved] = useState(false);
   const [quizBusy, setQuizBusy] = useState(false);
   const [pendingTool, setPendingTool] = useState<Tool | null>(null);

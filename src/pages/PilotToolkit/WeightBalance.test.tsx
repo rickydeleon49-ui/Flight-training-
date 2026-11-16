@@ -97,3 +97,14 @@ it("shows the E6B trainer on its own tab, not in Safety Check", () => {
   fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
   expect(screen.queryByText("E6B practice")).toBeNull();
 });
+
+it("scrolls to the top when the Toolkit opens and when its tool changes", () => {
+  const scrollTo = vi.fn();
+  vi.stubGlobal("scrollTo", scrollTo);
+  render(<MemoryRouter initialEntries={["/"]}><PilotToolkit /></MemoryRouter>);
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+  scrollTo.mockClear();
+  fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
+  expect(scrollTo).toHaveBeenCalledWith(0, 0);
+  vi.unstubAllGlobals();
+});

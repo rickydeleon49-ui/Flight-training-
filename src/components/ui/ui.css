@@ -628,7 +628,16 @@ dialog:not([open]) { display: none; }
   padding: var(--space-5);
   overflow-y: auto;
   max-height: calc(100vh - 16rem);
+  /* Room below the last line so the footer never covers it. */
+  padding-bottom: var(--space-6);
+  flex: 1 1 auto;
+  min-height: 0;
 }
+
+/* The body is the one scroll area; header and footer keep their height. */
+.dialog[open]:not(.modal-fallback) { display: flex; flex-direction: column; overflow: hidden; }
+.dialog__header, .dialog__footer { flex: none; }
+.modal-fallback[open] .dialog__body { max-height: calc(100vh - 12rem); }
 
 .dialog__footer {
   display: flex;
