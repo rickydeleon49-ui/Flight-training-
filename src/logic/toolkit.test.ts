@@ -245,3 +245,30 @@ describe("quiz question pool", () => {
     expect(attempt.weakTopics).toEqual([set[0]!.topic]);
   });
 });
+
+describe("endorsementChecks normalization (BL-72)", () => {
+  it("an old saved state without the field still loads, with the field absent", () => {
+    const state = normalizeToolkitState({ readinessItems: [] });
+    expect(state.endorsementChecks).toBeUndefined();
+  });
+
+  it("keeps valid entries and drops unknown ids, bad shapes and bad dates", () => {
+    const state = normalizeToolkitState({
+      endorsementChecks: {
+        "presolo-knowledge": { done: true, date: "2026-05-01" },
+        "solo-class-b": { done: false, date: "2026-02-31" },
+        "practical-test": { done: "yes" },
+        "made-up": { done: true },
+        "knowledge-test": "x",
+      },
+    });
+    expect(state.endorsementChecks).toEqual({
+      "presolo-knowledge": { done: true, date: "2026-05-01" },
+      "solo-class-b": { done: false },
+    });
+  });
+
+  it("a non-object field becomes an empty record", () => {
+    expect(normalizeToolkitState({ endorsementChecks: [1] }).endorsementChecks).toEqual({});
+  });
+});

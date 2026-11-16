@@ -10,6 +10,9 @@ import {
   flightRoute,
   hasFlightLogData,
   privatePilotPart61Reference,
+  privatePilotHoursToGo,
+  prepWindowStart,
+  type FlightLogTotals,
 } from "./flightLog";
 
 describe("flight log", () => {
@@ -159,5 +162,46 @@ describe("flightTimeChecks", () => {
     expect(checks[1]!.problem).toBe("Dual received time can't be more than this flight's total time of 1.0 hr.");
     expect(checks[0]!.problem).toMatch(/^Dual received and solo time together/);
     expect(JSON.stringify(entries)).toBe(snapshot);
+  });
+});
+
+describe("privatePilotHoursToGo / prepWindowStart (BL-72)", () => {
+  const totals = (over: Partial<FlightLogTotals> = {}): FlightLogTotals => ({
+    flights: 0, totalTime: 0, dualReceived: 0, soloTime: 0, picTime: 0,
+    crossCountryTime: 0, nightTime: 0, instrumentTime: 0, landings: 0, ...over,
+  });
+  const row = (rows: ReturnType<typeof privatePilotHoursToGo>, key: string) => rows.find((r) => r.key === key)!;
+
+  it("computes hours to go and never goes negative", () => {
+    const rows = privatePilotHoursToGo(totals({ totalTime: 12.5, dualReceived: 25, soloTime: 10, instrumentTime: 1 }), 0);
+    expect(row(rows, "total")).toMatchObject({ toGo: 27.5, status: "to_go" });
+    expect(row(rows, "training")).toMatchObject({ toGo: 0, status: "done" });
+    expect(row(rows, "solo")).toMatchObject({ toGo: 0, status: "done" });
+    expect(row(rows, "instrument").toGo).toBe(2);
+    expect(rows.every((r) => r.toGo == null || r.toGo >= 0)).toBe(true);
+  });
+
+  it("lists night and the other subsets as text only, with no computed numbers", () => {
+    const rows = privatePilotHoursToGo(totals({ nightTime: 1.5 }), 4);
+    expect(row(rows, "night")).toMatchObject({ toGo: null, status: "unknown", info: "Logged: 1.5 h night, 4 night landings" });
+    for (const key of ["xc-training", "prep", "solo-xc", "solo-xc-long", "solo-tower"]) {
+      expect(row(rows, key)).toMatchObject({ logged: null, toGo: null, status: "unknown" });
+    }
+  });
+
+  it("window date: 1st of the month two months before the test month, with year rollover", () => {
+    expect(prepWindowStart("2027-03-15")).toBe("2027-01-01");
+    expect(prepWindowStart("2027-02-10")).toBe("2026-12-01");
+    expect(prepWindowStart("2027-01-31")).toBe("2026-11-01");
+    expect(prepWindowStart("2027-12-01")).toBe("2027-10-01");
+    expect(prepWindowStart(null)).toBeNull();
+    expect(prepWindowStart("nope")).toBeNull();
+  });
+
+  it("prep row names the window only when a checkride date is set", () => {
+    expect(row(privatePilotHoursToGo(totals(), 0), "prep").meta).toBeUndefined();
+    expect(row(privatePilotHoursToGo(totals(), 0, "2027-03-15"), "prep").meta).toBe(
+      "Your 2-month window starts 2027-01-01 — confirm with your instructor.",
+    );
   });
 });

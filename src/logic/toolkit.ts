@@ -49,6 +49,36 @@ export function normalizeCheckrideDate(value: unknown): IsoDate | null {
   return check.getFullYear() === y && check.getMonth() === m! - 1 && check.getDate() === d ? value : null;
 }
 
+/** The endorsements you can tick off yourself. Real endorsements are written by your instructor. */
+export const ENDORSEMENT_ITEMS: { id: string; label: string; cite: string }[] = [
+  { id: "presolo-knowledge", label: "Pre-solo knowledge test", cite: "61.87(b)" },
+  { id: "presolo-training", label: "Pre-solo flight training", cite: "61.87(c)" },
+  { id: "solo-90-days", label: "Solo flight, first 90 days", cite: "61.87(n)" },
+  { id: "solo-25nm", label: "Solo to another airport within 25 NM", cite: "61.93(b)(1)" },
+  { id: "solo-xc-training", label: "Solo cross-country training", cite: "61.93(c)(1)" },
+  { id: "solo-xc-each", label: "Solo cross-country, each flight", cite: "61.93(c)(2)" },
+  { id: "solo-xc-repeat", label: "Repeated solo cross-country within 50 NM", cite: "61.93(b)(2)" },
+  { id: "solo-class-b", label: "Solo in Class B airspace, if needed", cite: "61.95" },
+  { id: "knowledge-test", label: "Knowledge test", cite: "61.35(a)(1)" },
+  { id: "practical-test", label: "Practical test", cite: "61.39(a)(6)" },
+];
+
+/** Keeps known ids with a boolean `done` and a real optional date; drops the rest. */
+export function normalizeEndorsementChecks(value: unknown): Record<string, { done: boolean; date?: IsoDate }> {
+  const out: Record<string, { done: boolean; date?: IsoDate }> = {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) return out;
+  const input = value as Record<string, unknown>;
+  for (const { id } of ENDORSEMENT_ITEMS) {
+    const entry = input[id];
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const { done, date } = entry as { done?: unknown; date?: unknown };
+    if (typeof done !== "boolean") continue;
+    const day = normalizeCheckrideDate(date);
+    out[id] = day ? { done, date: day } : { done };
+  }
+  return out;
+}
+
 export const DEFAULT_TOOLKIT_STATE: ToolkitState = {
   version: 1,
   readinessItems: DEFAULT_READINESS_ITEMS,
@@ -132,6 +162,9 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     ...(personalMinimums ? { personalMinimums } : {}),
     studyReminder: normalizeStudyReminder(input.studyReminder),
     checkrideDate: normalizeCheckrideDate(input.checkrideDate),
+    ...(input.endorsementChecks !== undefined
+      ? { endorsementChecks: normalizeEndorsementChecks(input.endorsementChecks) }
+      : {}),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
