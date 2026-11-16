@@ -36,7 +36,7 @@ describe("quickFind", () => {
     expect(labels("e6b")).toContain("E6B trainer");
   });
 
-  it.each(["winds aloft", "FB", "PIREP", "pilot report"])("finds the weather explainer for %s (BL-78)", (query) => {
+  it.each(["winds aloft", "FB", "PIREP", "pilot report", "NOTAM", "notice to airmen"])("finds the weather explainer for %s (BL-78)", (query) => {
     expect(quickFind(EMPTY_DATA, query, TODAY).map((r) => r.to)).toContain("/toolkit?tool=metar");
   });
 

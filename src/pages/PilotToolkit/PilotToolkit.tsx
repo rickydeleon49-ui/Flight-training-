@@ -83,6 +83,7 @@ import { explainMetar } from "@/logic/metarExplain";
 import { explainTaf, looksLikeTaf } from "@/logic/tafExplain";
 import { explainWindsAloft, feetText, levelsAround, looksLikeWindsAloft, type WindsAloftStation } from "@/logic/windsAloft";
 import { explainPirep, looksLikePirep } from "@/logic/pirepExplain";
+import { explainNotam, looksLikeNotam } from "@/logic/notamExplain";
 import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { useLeaveGuard } from "@/state/leaveGuard";
@@ -139,6 +140,8 @@ const FB_EXAMPLE = [
   "SFO 9900 2725+11 2734+05 2740-01 2752-13 2763-25 277340 278148 279054",
   "DEN              2214+05 2320-01 2427-13 2538-25 265240 265848 266154",
 ].join("\n");
+// Made-up, well-formed domestic NOTAM (fictional numbers) following the order's App. A pattern.
+const NOTAM_EXAMPLE = "!CLE 11/045 CLE TWY L CLSD 2611201300-2611202100";
 const PIREP_EXAMPLE =
   "UA /OV OKC063064/TM 1522/FL080/TP C172/SK BKN065-TOP090/WX FV03SM HZ/TA M05/WV 270030KT/TB LGT-MOD CHOP/IC LGT RIME/RM SYNTHETIC EXAMPLE";
 
@@ -194,8 +197,10 @@ function WindsAloftView({ stations, cruise }: { stations: WindsAloftStation[]; c
 function MetarTool() {
   const [text, setText] = useState("");
   const [cruise, setCruise] = useState("");
-  // Detection order: PIREP, then winds aloft, then TAF, then METAR.
-  const kind = looksLikePirep(text)
+  // Detection order: NOTAM (the "!" is unambiguous), then PIREP, winds aloft, TAF, then METAR.
+  const kind = looksLikeNotam(text)
+    ? "notam"
+    : looksLikePirep(text)
     ? "pirep"
     : looksLikeWindsAloft(text)
       ? "fb"
@@ -205,15 +210,16 @@ function MetarTool() {
   const result = useMemo(() => (kind === "metar" ? explainMetar(text) : null), [kind, text]);
   const taf = useMemo(() => (kind === "taf" ? explainTaf(text) : null), [kind, text]);
   const pirep = useMemo(() => (kind === "pirep" ? explainPirep(text) : null), [kind, text]);
+  const notam = useMemo(() => (kind === "notam" ? explainNotam(text) : null), [kind, text]);
   const fb = useMemo(() => (kind === "fb" ? explainWindsAloft(text) : null), [kind, text]);
   return (
     <Card variant="grouped">
       <CardHeader
-        title="Weather Report Explainer"
+        title="Weather and NOTAM Explainer"
       />
       <CardBody>
         <p className="small muted">Study aid. Check official weather briefings and your instructor.</p>
-        <Field label="Paste or type a METAR, TAF, winds aloft (FB) or PIREP">
+        <Field label="Paste or type a METAR, TAF, winds aloft (FB), PIREP or NOTAM">
           <TextArea
             rows={3}
             value={text}
@@ -226,6 +232,7 @@ function MetarTool() {
           <Button variant="secondary" onClick={() => setText(TAF_EXAMPLE)}>Try an example TAF</Button>
           <Button variant="secondary" onClick={() => setText(FB_EXAMPLE)}>Try an example winds aloft</Button>
           <Button variant="secondary" onClick={() => setText(PIREP_EXAMPLE)}>Try an example PIREP</Button>
+          <Button variant="secondary" onClick={() => setText(NOTAM_EXAMPLE)}>Try an example NOTAM</Button>
         </div>
         <p className="small muted">
           AIRMETs for the lower 48 states are now graphical only (G-AIRMET), so look at them on aviationweather.gov.
@@ -242,6 +249,13 @@ function MetarTool() {
             </Field>
             <WindsAloftView stations={fb.stations} cruise={cruise} />
           </>
+        ) : notam ? (
+          <div className="stack stack--3" aria-label="Decoded NOTAM">
+            <TokenList tokens={notam.tokens} />
+            <p className="small muted">
+              The US plans to move to the ICAO NOTAM format in the coming years; this explainer reads today&apos;s US domestic format.
+            </p>
+          </div>
         ) : pirep ? (
           <div className="stack stack--3" aria-label="Decoded pilot report">
             <TokenList tokens={pirep.tokens} />

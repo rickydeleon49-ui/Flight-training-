@@ -66,8 +66,8 @@ it("decodes a TAF and fills examples on the METAR tab", () => {
 it("decodes an example winds aloft and PIREP in the one paste box", () => {
   render(<MemoryRouter initialEntries={["/?tool=metar"]}><PilotToolkit /></MemoryRouter>);
   fireEvent.click(screen.getByRole("tab", { name: "METAR" }));
-  expect(screen.getByText("Weather Report Explainer")).toBeTruthy();
-  expect(screen.getByLabelText("Paste or type a METAR, TAF, winds aloft (FB) or PIREP")).toBeTruthy();
+  expect(screen.getByText("Weather and NOTAM Explainer")).toBeTruthy();
+  expect(screen.getByLabelText("Paste or type a METAR, TAF, winds aloft (FB), PIREP or NOTAM")).toBeTruthy();
   expect(screen.getByText(/G-AIRMET/)).toBeTruthy();
 
   fireEvent.click(screen.getByRole("button", { name: "Try an example winds aloft" }));
@@ -88,6 +88,18 @@ it("decodes an example winds aloft and PIREP in the one paste box", () => {
   fireEvent.click(screen.getByRole("button", { name: "Try an example METAR" }));
   expect(screen.getByText(/Station KSFO/)).toBeTruthy();
   expect(screen.queryByLabelText("Decoded pilot report")).toBeNull();
+});
+
+it("decodes an example NOTAM in the same paste box", () => {
+  render(<MemoryRouter initialEntries={["/?tool=metar"]}><PilotToolkit /></MemoryRouter>);
+  fireEvent.click(screen.getByRole("button", { name: "Try an example NOTAM" }));
+  expect(screen.getByLabelText("Decoded NOTAM")).toBeTruthy();
+  expect(screen.getByText(/Taxiway: a temporary change or hazard/)).toBeTruthy();
+  expect(screen.getByText(/From 20 Nov 2026 13:00 UTC until 20 Nov 2026 21:00 UTC/)).toBeTruthy();
+  expect(screen.getByText(/ICAO NOTAM format/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Try an example METAR" }));
+  expect(screen.queryByLabelText("Decoded NOTAM")).toBeNull();
+  expect(screen.queryByText(/ICAO NOTAM format/)).toBeNull();
 });
 
 it("shows the E6B trainer on its own tab, not in Safety Check", () => {
