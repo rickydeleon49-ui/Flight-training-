@@ -22,3 +22,7 @@ it("scenario cards cite a paragraph and point at a real diagram", () => {
     expect(DIAGRAMS.some((d) => d.id === c.diagramId)).toBe(true);
   }
 });
+
+it("has the 91.213(d) card", () => {
+  expect(REG_CARDS.some((c) => c.id === "inop-equipment" && c.reg === "14 CFR 91.213(d)")).toBe(true);
+});
