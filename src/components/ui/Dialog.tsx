@@ -1,6 +1,6 @@
 import { useId, useRef } from "react";
 import { createPortal } from "react-dom";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import { Button, IconButton } from "./Button";
 import { CloseIcon } from "./Icons";
@@ -20,6 +20,34 @@ interface DialogProps {
   headerActions?: ReactNode;
   /** Where focus goes on opening; defaults to the first focusable element. */
   initialFocus?: () => HTMLElement | null;
+}
+
+const SCROLL_KEYS = new Set(["PageDown", "PageUp", "Home", "End"]);
+
+/**
+ * Focus often sits on a header or footer button, where the browser has no
+ * scroll area to move. Scroll the dialog body for the paging keys instead.
+ */
+function scrollBodyOnKey(event: KeyboardEvent<HTMLDialogElement>) {
+  if (event.defaultPrevented || !SCROLL_KEYS.has(event.key)) return;
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const target = event.target as HTMLElement;
+  const dialog = event.currentTarget;
+  // A nested dialog's events bubble through React; only the dialog on top acts.
+  if (target.closest("dialog") !== dialog) return;
+  // Inside the body the browser already scrolls it.
+  const body = dialog.querySelector<HTMLElement>(":scope > .dialog__body");
+  if (!body || body.contains(target)) return;
+  if (target.closest("input, textarea, select, [contenteditable]")) return;
+  const range = body.scrollHeight - body.clientHeight;
+  if (range <= 0) return;
+  const page = Math.max(1, Math.round(body.clientHeight * 0.9));
+  let top = body.scrollTop;
+  if (event.key === "PageDown") top += page;
+  else if (event.key === "PageUp") top -= page;
+  else top = event.key === "Home" ? 0 : range;
+  event.preventDefault();
+  body.scrollTop = Math.min(range, Math.max(0, top));
 }
 
 /**
@@ -79,6 +107,7 @@ export function Dialog({
           event.preventDefault();
           requestClose();
         }}
+        onKeyDown={scrollBodyOnKey}
         // Natively, a backdrop click targets the dialog element itself. In the
         // fallback the element is the visible box, and the backdrop is separate.
         onClick={(event) => {
