@@ -318,3 +318,35 @@ describe("Knowledge quiz result", () => {
     expect(document.querySelector(".quiz__explanation")?.textContent).toContain(`Not quite. The correct answer is: ${q.choices[q.correct]}`);
   });
 });
+
+describe("Safety check personal minimums", () => {
+  const open = () => render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=safety"] }, h(PilotToolkit)));
+
+  it("keeps the row as today when nothing is saved", () => {
+    open();
+    expect(screen.getByRole("button", { name: "Set my minimums" })).toBeTruthy();
+    expect(screen.queryByText(/Your minimums:/)).toBeNull();
+    expect(screen.queryByLabelText("Lowest ceiling (ft AGL)")).toBeNull();
+  });
+
+  it("shows saved minimums and inside/outside wording without ticking the box", () => {
+    data = {
+      ...data,
+      toolkit: { ...DEFAULT_TOOLKIT_STATE, personalMinimums: { ceilingFt: 3000, visibilitySm: 5, windKt: 15, crosswindKt: 8 } },
+    };
+    open();
+    expect(screen.getByText("Your minimums: ceiling 3,000 ft · vis 5 SM · wind 15 kt · crosswind 8 kt")).toBeTruthy();
+    expect(screen.queryByTestId("minimums-summary")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Today's ceiling (ft AGL)"), { target: { value: "3000" } });
+    expect(screen.getByTestId("minimums-summary").textContent).toBe(
+      "Inside the minimums you saved. You and your instructor still make the call.",
+    );
+    fireEvent.change(screen.getByLabelText("Today's wind (kt)"), { target: { value: "20" } });
+    expect(screen.getByTestId("minimums-summary").textContent).toBe("Outside your minimum — talk with your instructor.");
+    expect(screen.getByText("outside your minimum")).toBeTruthy();
+
+    const box = screen.getByLabelText(/Personal minimums/) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+  });
+});
