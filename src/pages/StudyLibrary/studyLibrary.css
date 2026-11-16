@@ -411,6 +411,11 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   color: var(--status-overdue);
 }
 
+.practice-pill--answered {
+  background: var(--surface-sunken, var(--surface-card));
+  font-weight: 600;
+}
+
 .practice-pill--current {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
