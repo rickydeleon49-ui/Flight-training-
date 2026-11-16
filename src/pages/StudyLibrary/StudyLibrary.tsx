@@ -75,6 +75,7 @@ import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { AddStudyPackDialog } from "./AddStudyPackDialog";
+import { MyAircraftDialog } from "./MyAircraftDialog";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { PhotoPictureButton } from "./PhotoPictureButton";
@@ -594,6 +595,7 @@ export function StudyLibrary() {
             {deviceCan().importFiles ? <Button variant={hasAny && !searching && !arranging && continueItems.length > 0 ? undefined : "primary"} onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button> : null}
+            <MyAircraftDialog />
             {deviceCan().pictureFromPhoto ? <PhotoPictureButton /> : null}
           </div>
         }
