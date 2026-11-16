@@ -5,7 +5,13 @@ export interface RegCard {
   prompt: string;
   answer: string;
   whyItMatters?: string;
+  /** Situation card (shown under the "Scenarios" filter). Optional so older data and cards are unchanged. */
+  scenario?: boolean;
+  /** Id of a shipped diagram to show with the answer (see src/logic/diagrams.ts). */
+  diagramId?: string;
 }
+
+export const VFR_MINIMUMS_DIAGRAM_ID = "flight-rules/05-basic-vfr-weather-minimums";
 
 export const REG_CARDS_CHECKED = "14 Nov 2026";
 export const REG_CARDS_NOTE =
@@ -149,5 +155,117 @@ export const REG_CARDS: readonly RegCard[] = [
     reg: "14 CFR 91.409",
     prompt: "What inspections does an airplane need?",
     answer: "An annual inspection within the previous 12 calendar months, and also a 100-hour inspection if it is used for hire (including flight instruction for hire).",
+  },
+  {
+    id: "sc-class-b",
+    reg: "14 CFR 91.155(a)",
+    prompt: "You plan a VFR flight in Class B airspace. What visibility and cloud clearance do you need?",
+    answer: "3 statute miles flight visibility and clear of clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-c",
+    reg: "14 CFR 91.155(a)",
+    prompt: "You are VFR in Class C airspace. What visibility and cloud clearance do you need?",
+    answer: "3 statute miles flight visibility; 500 feet below, 1,000 feet above and 2,000 feet horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-d",
+    reg: "14 CFR 91.155(a)",
+    prompt: "You are VFR in Class D airspace at the traffic pattern altitude. What visibility and cloud clearance do you need?",
+    answer: "3 statute miles flight visibility; 500 feet below, 1,000 feet above and 2,000 feet horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-e-below",
+    reg: "14 CFR 91.155(a)",
+    prompt: "Day, Class E airspace below 10,000 ft MSL. What visibility and cloud clearance do you need?",
+    answer: "3 statute miles flight visibility; 500 feet below, 1,000 feet above and 2,000 feet horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-e-above",
+    reg: "14 CFR 91.155(a)",
+    prompt: "You climb through 10,500 ft MSL in Class E airspace. What visibility and cloud clearance do you need?",
+    answer: "5 statute miles flight visibility; 1,000 feet below, 1,000 feet above and 1 statute mile horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-g-low-day",
+    reg: "14 CFR 91.155(a)",
+    prompt: "Day, Class G airspace, 800 ft AGL. What visibility and cloud clearance do you need?",
+    answer: "1 statute mile flight visibility and clear of clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-g-low-night",
+    reg: "14 CFR 91.155(a)",
+    prompt: "Night, Class G airspace, 800 ft AGL, not in a traffic pattern. What visibility and cloud clearance do you need?",
+    answer: "3 statute miles flight visibility; 500 feet below, 1,000 feet above and 2,000 feet horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-g-pattern-night",
+    reg: "14 CFR 91.155(b)(2)",
+    prompt: "Night, Class G airspace, flying an airplane in the traffic pattern within half a mile of the runway, visibility 1 mile. Is that legal VFR?",
+    answer: "Yes, as an exception: flight visibility of at least 1 statute mile and clear of clouds, when the airplane stays in the airport traffic pattern within 1/2 mile of the runway.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-g-mid-day",
+    reg: "14 CFR 91.155(a)",
+    prompt: "Day, Class G airspace, 2,500 ft AGL and below 10,000 ft MSL. What visibility and cloud clearance do you need?",
+    answer: "1 statute mile flight visibility; 500 feet below, 1,000 feet above and 2,000 feet horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-g-mid-night",
+    reg: "14 CFR 91.155(a)",
+    prompt: "Night, Class G airspace, 2,500 ft AGL and below 10,000 ft MSL. What visibility and cloud clearance do you need?",
+    answer: "3 statute miles flight visibility; 500 feet below, 1,000 feet above and 2,000 feet horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-class-g-high",
+    reg: "14 CFR 91.155(a)",
+    prompt: "Class G airspace, more than 1,200 ft AGL and at or above 10,000 ft MSL. What visibility and cloud clearance do you need?",
+    answer: "5 statute miles flight visibility; 1,000 feet below, 1,000 feet above and 1 statute mile horizontally from clouds.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-ceiling-1000",
+    reg: "14 CFR 91.155(c)",
+    prompt: "The ceiling is 800 feet at an airport with controlled airspace down to the surface. Can you fly VFR beneath the ceiling in that airspace?",
+    answer: "No. Without a special VFR clearance, you may not operate VFR beneath the ceiling within the lateral boundaries of controlled airspace designated to the surface for an airport when the ceiling is less than 1,000 feet.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-ground-vis",
+    reg: "14 CFR 91.155(d)",
+    prompt: "The airport is in a Class D surface area and the reported ground visibility is 2 miles. Can you take off or land VFR?",
+    answer: "No. Without a special VFR clearance, you may not take off, land or enter the traffic pattern VFR in a surface area unless ground visibility at the airport is at least 3 statute miles. If none is reported, flight visibility must be at least 3.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
+  },
+  {
+    id: "sc-special-vfr",
+    reg: "14 CFR 91.157",
+    prompt: "What are the special VFR minimums in a surface area, and what else do you need?",
+    answer: "1 statute mile flight visibility and clear of clouds, with an ATC clearance. At night you also need an instrument rating and an IFR-equipped airplane.",
+    scenario: true,
+    diagramId: VFR_MINIMUMS_DIAGRAM_ID,
   },
 ];
