@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories, type Repositories } from "@/data/repositories";
@@ -124,7 +124,10 @@ describe("PracticeTestPanel test conditions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save answer" }));
     await screen.findByText(/Answer saved/);
     // One unanswered: Finish asks first, using the app's dialog.
-    fireEvent.click(screen.getByRole("button", { name: "Finish test" }));
+    // The save finishes before Finish is enabled again; a click while it is disabled does nothing.
+    const finish = screen.getByRole("button", { name: "Finish test" }) as HTMLButtonElement;
+    await waitFor(() => expect(finish.disabled).toBe(false));
+    fireEvent.click(finish);
     const confirm = await screen.findByRole("dialog", { name: "Finish the test?" });
     expect(within(confirm).getByText(/1 question is still unanswered/)).toBeTruthy();
     fireEvent.click(within(confirm).getByRole("button", { name: "Finish test" }));
