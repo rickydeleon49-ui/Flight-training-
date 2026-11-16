@@ -57,6 +57,14 @@ function series(scores: number[]): PracticeAttempt[] {
   });
 }
 
+describe("nudge agrees with tests done this week", () => {
+  it("does not say 'take a practice test' after a test finished this week, even one with no source material", () => {
+    const done = [attempt("w1", "2026-10-19T12:00:00Z", 70, { sourceMaterialId: null })];
+    expect(text(done)).toBe("A few more practice tests this month will show how you're doing.");
+    expect(text([])).toBe("Take a practice test this month to see how you're doing.");
+  });
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
 });
@@ -64,7 +72,7 @@ afterEach(() => {
 describe("buildPracticeReadiness", () => {
   it("nudges when she has fewer than three recent attempts and a test to take", () => {
     expect(text([])).toBe("Take a practice test this month to see how you're doing.");
-    expect(text(series([80, 90]))).toBe("Take a practice test this month to see how you're doing.");
+    expect(text(series([80, 90]))).toBe("A few more practice tests this month will show how you're doing.");
   });
 
   it("shows nothing when she has no practice test to take", () => {
@@ -131,7 +139,7 @@ describe("buildPracticeReadiness", () => {
       attempt("p5", null, 50),
       attempt("p6", "2026-10-10T12:00:00Z", 0, { totalQuestions: 0, answeredCount: 0 }),
     ];
-    expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
+    expect(buildPracticeReadiness(input(attempts))).toMatchObject({ kind: "nudge" });
   });
 
   it("counts a finished attempt with skipped questions at its stored score (skips count as wrong)", () => {
@@ -146,7 +154,7 @@ describe("buildPracticeReadiness", () => {
       attempt("gone", "2026-10-10T12:00:00Z", 10, { sourceMaterialId: null }),
       attempt("other", "2026-10-10T12:00:00Z", 10, { sourceMaterialId: "deleted" }),
     ];
-    expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
+    expect(buildPracticeReadiness(input(attempts))).toMatchObject({ kind: "nudge" });
     expect(
       text([...series([80, 80]), attempt("m2", "2026-10-10T12:00:00Z", 50, { sourceMaterialId: "mat-2" })]),
     ).toBe("Your last 3 practice tests averaged 70%.");
@@ -159,7 +167,7 @@ describe("buildPracticeReadiness", () => {
       attempt("old", "2026-09-20T12:00:00Z", 90),
       attempt("future", "2026-10-22T12:00:00Z", 90),
     ];
-    expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
+    expect(buildPracticeReadiness(input(attempts))).toMatchObject({ kind: "nudge" });
     expect(text([...attempts, attempt("mid", "2026-10-01T12:00:00Z", 60)])).toBe(
       "Your last 3 practice tests averaged 80%.",
     );
@@ -172,7 +180,7 @@ describe("buildPracticeReadiness", () => {
       ...series([80, 80]),
       attempt("late", "2026-09-21T03:00:00Z", 80),
     ];
-    expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
+    expect(buildPracticeReadiness(input(attempts))).toMatchObject({ kind: "nudge" });
     // 03:00 UTC on 21 October is 20 October (today) in California: inside.
     expect(text([...series([80, 80]), attempt("eve", "2026-10-21T03:00:00Z", 80)])).toBe(
       "Your last 3 practice tests averaged 80%.",

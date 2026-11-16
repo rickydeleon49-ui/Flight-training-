@@ -33,7 +33,7 @@ export function MixedPracticeTest({ practiceTests, materials, onFinished }: {
   const onProgress = useCallback((started: boolean, finished: boolean) => setProgress({ started, finished }), []);
 
   return <>
-    <Button variant="secondary" onClick={() => setOpen(true)}>Mixed practice test</Button>
+    <Button variant="secondary" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (!open) setOpen(true); }}>Mixed practice test</Button>
     {open ? <Dialog open title="Mixed practice test" onClose={requestClose}>
       <div className="stack stack--3">
         {!run ? <>
