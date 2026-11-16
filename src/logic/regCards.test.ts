@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { DIAGRAMS } from "./diagrams";
 import { REG_CARDS } from "./regCards";
 
 it("reg cards are unique and well formed", () => {
@@ -10,5 +11,14 @@ it("reg cards are unique and well formed", () => {
     expect(c.reg.startsWith("14 CFR")).toBe(true);
     expect(c.prompt.length).toBeGreaterThan(10);
     expect(c.answer.length).toBeGreaterThan(10);
+  }
+});
+
+it("scenario cards cite a paragraph and point at a real diagram", () => {
+  const scenarios = REG_CARDS.filter((c) => c.scenario);
+  expect(scenarios.length).toBeGreaterThanOrEqual(10);
+  for (const c of scenarios) {
+    expect(c.reg).toMatch(/^14 CFR 91\.15[57]/);
+    expect(DIAGRAMS.some((d) => d.id === c.diagramId)).toBe(true);
   }
 });

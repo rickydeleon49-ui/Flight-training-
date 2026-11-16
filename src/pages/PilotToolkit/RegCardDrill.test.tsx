@@ -20,3 +20,11 @@ it("flips to the answer and moves to the next card", () => {
   fireEvent.click(screen.getByRole("button", { name: "Previous" }));
   expect(screen.getByText(REG_CARDS[0]!.prompt)).toBeTruthy();
 });
+
+it("Scenarios filter shows only scenario cards", () => {
+  render(<RegCardDrill />);
+  fireEvent.click(screen.getByRole("button", { name: "Scenarios" }));
+  const scenarios = REG_CARDS.filter((c) => c.scenario);
+  expect(screen.getByText(`Card 1 of ${scenarios.length}.`, { exact: false })).toBeTruthy();
+  expect(screen.getByText(scenarios[0]!.prompt)).toBeTruthy();
+});
