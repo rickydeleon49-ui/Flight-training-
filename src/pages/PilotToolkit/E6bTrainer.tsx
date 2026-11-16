@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Card, CardBody, CardHeader, Field, TextInput } from "@/components/ui";
+import { NavLogPractice } from "./NavLogPractice";
 import {
   E6B_PRACTICE,
   describeE6bPractice,
@@ -20,11 +21,12 @@ import {
   type E6bPractice,
 } from "@/logic/e6b";
 
-type Mode = "wind" | "tsd" | "fuel";
+type Mode = "wind" | "tsd" | "fuel" | "navlog";
 const MODES: { id: Mode; label: string }[] = [
   { id: "wind", label: "Wind" },
   { id: "tsd", label: "Time-speed-distance" },
   { id: "fuel", label: "Fuel" },
+  { id: "navlog", label: "Nav log" },
 ];
 
 const num = (v: string) => (v.trim() === "" ? NaN : Number(v));
@@ -157,7 +159,7 @@ export function E6bTrainer() {
               </Button>
             ))}
           </div>
-          {practice ? <p><strong>{practice.title}.</strong> {describeE6bPractice(practice)}</p> : null}
+          {practice && mode !== "navlog" ? <p><strong>{practice.title}.</strong> {describeE6bPractice(practice)}</p> : null}
           {mode === "wind" ? (
             <div className="form-grid">
               <Field label="True course (degrees)">{numInput(course, setCourse)}</Field>
@@ -187,6 +189,10 @@ export function E6bTrainer() {
               <Field label="Fuel on board (gallons, to find the time)">{numInput(fuel, setFuel)}</Field>
             </div>
           ) : null}
+          {mode === "navlog" ? (
+            <NavLogPractice />
+          ) : (
+            <>
           <div aria-live="polite" role="status" style={{ overflowX: "auto" }}>
             <p style={{ overflowWrap: "anywhere" }}>
               {hideResult ? "Work the problem below on your E6B, then type what you get." : result}
@@ -277,6 +283,8 @@ export function E6bTrainer() {
               </div>
             ))}
           </div>
+            </>
+          )}
           <p className="tiny dim">Study aid. Check your answers with your E6B or instructor.</p>
         </div>
       </CardBody>
