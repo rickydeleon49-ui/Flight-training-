@@ -88,6 +88,7 @@ import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepositor
 
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
 import { AccidentCaseDrill } from "./AccidentCaseDrill";
+import { InoperativeEquipmentCard } from "./InoperativeEquipmentCard";
 import { RegCardDrill } from "./RegCardDrill";
 import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
@@ -315,6 +316,7 @@ export function PilotToolkit() {
         {tool === "safety" ? (
           <>
             <SafetyTool state={data.toolkit} save={save} />
+            <InoperativeEquipmentCard />
             <AccidentCaseDrill />
           </>
         ) : null}

@@ -268,4 +268,11 @@ export const REG_CARDS: readonly RegCard[] = [
     scenario: true,
     diagramId: VFR_MINIMUMS_DIAGRAM_ID,
   },
+  {
+    id: "inop-equipment",
+    reg: "14 CFR 91.213(d)",
+    prompt: "No MEL: when can you fly with inoperative equipment?",
+    answer:
+      "Only if the item is NOT part of the VFR-day type-certificated equipment, NOT required by the equipment list or KOEL for this flight, NOT required by 91.205 or another rule, and NOT required by an AD. It must be removed (cockpit control placarded, recorded per 43.9) or deactivated and placarded \"Inoperative\", and a certificated pilot or mechanic must determine it is not a hazard. This is the no-MEL path for non-turbine airplanes like most trainers; talk it through with your instructor.",
+  },
 ];
