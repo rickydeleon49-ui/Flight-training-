@@ -191,7 +191,7 @@
   .navlog-table--trip tbody { display: block; }
   .navlog-table--trip tr {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
     gap: var(--space-2);
     padding: var(--space-3) 0;
     border-bottom: 1px solid var(--border-subtle);
@@ -206,4 +206,7 @@
     color: var(--text-secondary);
   }
   .navlog-table .navlog-answer { min-width: 0; }
+  .navlog-table--trip td .input,
+  .navlog-table--trip td .e6b-check__input { width: 100%; min-width: 0; box-sizing: border-box; }
+  .navlog-table--trip td .e6b-check__result { overflow-wrap: break-word; }
 }

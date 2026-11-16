@@ -47,6 +47,11 @@ describe("quickFind", () => {
     },
   );
 
+  it.each(["safety check", "personal minimums", "IMSAFE", "PAVE"])("finds the Safety Check tool for %s", (query) => {
+    const hit = quickFind(EMPTY_DATA, query, TODAY).find((r) => r.label === "Safety Check");
+    expect(hit?.to).toBe("/toolkit?tool=safety");
+  });
+
   it.each(["oral", "oral practice", "examiner", "scenarios"])("finds oral practice for %s", (query) => {
     expect(quickFind(EMPTY_DATA, query, TODAY).map((r) => r.label)).toContain("Oral practice");
   });
