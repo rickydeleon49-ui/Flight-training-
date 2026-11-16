@@ -56,7 +56,7 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string; keywords?
   { label: "Notes", to: "/notes", detail: "Anything you wrote down" },
   { label: "Finances", to: "/finances", detail: "Spending and funds" },
   { label: "Pilot Toolkit", to: "/toolkit", detail: "Checkride readiness" },
-  { label: "METAR explainer", to: "/toolkit?tool=metar", detail: "Pilot Toolkit: read a weather report", keywords: "TAF winds aloft FB PIREP pilot report" },
+  { label: "METAR explainer", to: "/toolkit?tool=metar", detail: "Pilot Toolkit: read a weather report", keywords: "TAF winds aloft FB PIREP pilot report NOTAM notice to airmen" },
   { label: "E6B trainer", to: "/toolkit?tool=e6b", detail: "Pilot Toolkit: practise wind and fuel math" },
   { label: "Regulation cards", to: "/toolkit?tool=quiz", detail: "Pilot Toolkit > Quizzes: drill the reg cards", keywords: "reg cards regulation card drill VFR minimums scenarios inoperative equipment 91.213 91.155" },
   { label: "Safety Check", to: "/toolkit?tool=safety", detail: "Pilot Toolkit: check your own minimums before a flight", keywords: "safety check personal minimums minimums IMSAFE PAVE" },
