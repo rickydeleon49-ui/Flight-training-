@@ -12,6 +12,9 @@ import type { SqlValue } from "./db";
 
 export const ORAL_POINTS_MAX = 12;
 export const ORAL_POINT_MAX_CHARS = 500;
+/** BL-76: optional examiner-style follow-up questions (0-3, each 1-500 characters). */
+export const ORAL_FOLLOW_UPS_MAX = 3;
+export const ORAL_FOLLOW_UP_MAX_CHARS = 500;
 export const ORAL_PROMPT_MAX_CHARS = 4000;
 export const ORAL_ASSUMPTIONS_MAX_CHARS = 2000;
 export const ORAL_SOURCE_PAGE_MAX = 100000;
@@ -27,6 +30,8 @@ export interface OralScenarioContent {
   points: string[];
   sourcePage: number | null;
   origin: OralOrigin;
+  /** Optional follow-up questions; absent or empty means none. */
+  followUps?: string[];
 }
 
 export type OralOperation =
@@ -126,13 +131,40 @@ export function decodeOralPoints(raw: unknown): string[] {
   return parsed as string[];
 }
 
+/** 0-3 strings, each 1-500 characters. An empty list means "no follow-ups". */
+export function validOralFollowUps(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= ORAL_FOLLOW_UPS_MAX &&
+    value.every((q) => boundedText(q, 1, ORAL_FOLLOW_UP_MAX_CHARS))
+  );
+}
+/** The stored text: NULL when there are none, else the exact JSON the writer produces. */
+export function encodeOralFollowUps(followUps: string[] | undefined): string | null {
+  if (followUps === undefined || followUps.length === 0) return null;
+  ensure(validOralFollowUps(followUps));
+  return JSON.stringify(followUps);
+}
+export function decodeOralFollowUps(raw: unknown): string[] | undefined {
+  if (raw === null || raw === undefined) return undefined;
+  ensure(typeof raw === "string");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw as string);
+  } catch {
+    return fail();
+  }
+  ensure(validOralFollowUps(parsed) && (parsed as string[]).length >= 1 && JSON.stringify(parsed) === raw);
+  return parsed as string[];
+}
+
 function validSourcePage(value: unknown): value is number | null {
   return value === null || (Number.isSafeInteger(value) && (value as number) >= 1 && (value as number) <= ORAL_SOURCE_PAGE_MAX);
 }
 
 /** Content the student can write (origin `user` or `instructor`); stored rows may also be `study_aid`. */
 export function validOralContent(value: unknown, stored = false): value is OralScenarioContent {
-  if (!exactKeys(value, ["prompt", "assumptions", "points", "sourcePage", "origin"])) return false;
+  if (!exactKeys(value, ["prompt", "assumptions", "points", "sourcePage", "origin"]) && !exactKeys(value, ["prompt", "assumptions", "points", "sourcePage", "origin", "followUps"])) return false;
   const origins = stored ? ["user", "instructor", "study_aid"] : ["user", "instructor"];
   return (
     boundedText(value.prompt, 1, ORAL_PROMPT_MAX_CHARS) &&
@@ -140,12 +172,16 @@ export function validOralContent(value: unknown, stored = false): value is OralS
     validOralPoints(value.points) &&
     validSourcePage(value.sourcePage) &&
     typeof value.origin === "string" &&
-    origins.includes(value.origin)
+    origins.includes(value.origin) &&
+    (!Object.prototype.hasOwnProperty.call(value, "followUps") || validOralFollowUps(value.followUps))
   );
 }
 
 /** SHA-256 of the canonical descriptor of one frozen version. */
 export function oralContentHash(scenarioId: string, versionNumber: number, content: Omit<OralScenarioContent, "origin"> & { origin: string }): Promise<string> {
+  // Follow-ups join the descriptor only when there are some, so a scenario without them
+  // keeps the exact hash it always had.
+  const followUps = content.followUps && content.followUps.length > 0 ? { followUps: content.followUps } : {};
   return sha256Hex(
     canonicalJson({
       scenarioId,
@@ -155,6 +191,7 @@ export function oralContentHash(scenarioId: string, versionNumber: number, conte
       points: content.points,
       sourcePage: content.sourcePage,
       origin: content.origin,
+      ...followUps,
     }),
   );
 }
@@ -293,7 +330,7 @@ async function applyOralOperation(run: Run, query: Query, value: unknown): Promi
 
 async function insertVersion(run: Run, scenarioId: string, versionId: string, versionNumber: number, content: OralScenarioContent, at: string) {
   await run(
-    "INSERT INTO oral_scenario_versions (id, scenario_id, version_number, prompt, assumptions, points_json, source_page, origin, content_hash, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO oral_scenario_versions (id, scenario_id, version_number, prompt, assumptions, points_json, source_page, origin, content_hash, created_at, follow_ups_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
     [
       versionId,
       scenarioId,
@@ -305,6 +342,7 @@ async function insertVersion(run: Run, scenarioId: string, versionId: string, ve
       content.origin,
       await oralContentHash(scenarioId, versionNumber, content),
       at,
+      encodeOralFollowUps(content.followUps),
     ],
   );
 }
@@ -312,7 +350,7 @@ async function insertVersion(run: Run, scenarioId: string, versionId: string, ve
 /** The student's current scenarios for one material, in the student's order, each at its latest version. */
 export async function readOralScenarios(query: Query, materialId: string): Promise<OralScenario[]> {
   const rows = await query(
-    `SELECT s.id, s.position, v.id AS version_id, v.version_number, v.prompt, v.assumptions, v.points_json, v.source_page, v.origin
+    `SELECT s.id, s.position, v.id AS version_id, v.version_number, v.prompt, v.assumptions, v.points_json, v.source_page, v.origin, v.follow_ups_json
        FROM oral_scenarios s
        JOIN oral_scenario_versions v ON v.scenario_id = s.id
         AND v.version_number = (SELECT MAX(version_number) FROM oral_scenario_versions WHERE scenario_id = s.id)
@@ -320,7 +358,9 @@ export async function readOralScenarios(query: Query, materialId: string): Promi
       ORDER BY s.position`,
     [materialId],
   );
-  return rows.map((r) => ({
+  return rows.map((r) => {
+    const followUps = decodeOralFollowUps(r.follow_ups_json);
+    return {
     id: String(r.id),
     position: Number(r.position),
     versionId: String(r.version_id),
@@ -330,5 +370,7 @@ export async function readOralScenarios(query: Query, materialId: string): Promi
     points: decodeOralPoints(r.points_json),
     sourcePage: r.source_page == null ? null : Number(r.source_page),
     origin: String(r.origin) as StoredOralOrigin,
-  }));
+    ...(followUps ? { followUps } : {}),
+    };
+  });
 }

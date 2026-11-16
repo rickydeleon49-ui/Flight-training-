@@ -51,6 +51,7 @@ import kitQueue from "../../src-tauri/migrations/0036_kit_queue.sql?raw";
 import studyPackProvenance from "../../src-tauri/migrations/0037_study_pack_provenance.sql?raw";
 import libraryFolders from "../../src-tauri/migrations/0038_library_folders.sql?raw";
 import practiceUnchecked from "../../src-tauri/migrations/0039_practice_unchecked.sql?raw";
+import oralFollowUps from "../../src-tauri/migrations/0040_oral_follow_ups.sql?raw";
 
 export interface Migration {
   version: number;
@@ -98,6 +99,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 37, description: "study_pack_provenance", sql: studyPackProvenance },
   { version: 38, description: "library_folders", sql: libraryFolders },
   { version: 39, description: "practice_unchecked", sql: practiceUnchecked },
+  { version: 40, description: "oral_follow_ups", sql: oralFollowUps },
 ];
 
 /**

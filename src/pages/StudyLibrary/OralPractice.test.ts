@@ -20,7 +20,7 @@ const POINTS = ["Zebra alpha point", "Quokka bravo point", "Narwhal charlie poin
 
 function Harness() {
   const ctx = useAppData();
-  const material = ctx.data.materials[0];
+  const material = ctx.data.materials.find((m) => m.id === "m1");
   if (ctx.status !== "ready" || !material) return null;
   return h("div", null, h(OralScenariosCard, { material }), h(UndoBar));
 }
@@ -116,7 +116,7 @@ it("keeps the discussion points out of the page until she shows them, then offer
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   for (const point of POINTS) expect(await screen.findByText(point)).toBeTruthy();
   expect(screen.getByText("carb heat first")).toBeTruthy();
-  expect(screen.getAllByRole("checkbox")).toHaveLength(3);
+  expect(screen.getAllByRole("checkbox")).toHaveLength(4); // 3 points + the missed-points box
   fireEvent.click(screen.getByRole("button", { name: "Next scenario" }));
   expect((await screen.findByLabelText(/Your answer \(optional\)/) as HTMLTextAreaElement).value).toBe("");
   expect(document.body.innerHTML).not.toContain("Bravo only point");
@@ -485,4 +485,113 @@ it("expands a multi-paragraph earlier answer and shows ticks from its frozen ver
   expect(disclosure.getAllByRole("listitem").map((item) => item.textContent)).toEqual([POINTS[0], POINTS[2]]);
   expect(disclosure.queryByText(POINTS[1]!)).toBeNull();
   expect(disclosure.queryByText("Replacement point")).toBeNull();
+});
+
+const FOLLOW_UPS = ["What if the weather worsens en route?", "Why that choice?"];
+const seedWithFollowUps = () =>
+  repos().create("m1", { prompt: "Scenario Alpha", assumptions: "", points: POINTS, followUps: FOLLOW_UPS, sourcePage: null, origin: "user" });
+const cardFronts = async () => {
+  const rows = await db.select<{ flashcards_json: string }>("SELECT flashcards_json FROM ai_study_sets s JOIN study_materials m ON m.id = s.source_material_id WHERE m.title = 'Oral practice: missed points'");
+  return rows.flatMap((row) => JSON.parse(row.flashcards_json) as { front: string; back: string }[]);
+};
+
+it("the editor adds, saves and removes follow-up questions (up to three)", async () => {
+  mount();
+  fireEvent.click(await screen.findByText("Practice an oral question", { selector: "summary" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Add a scenario" }));
+  fireEvent.change(screen.getByLabelText("Scenario"), { target: { value: "Scenario Alpha" } });
+  fireEvent.change(screen.getByLabelText("Discussion points"), { target: { value: POINTS.join("\n") } });
+  expect(screen.getByText("Follow-up questions (optional, up to 3)")).toBeTruthy();
+  for (let i = 0; i < 3; i += 1) fireEvent.click(screen.getByRole("button", { name: "Add a follow-up question" }));
+  expect(screen.queryByRole("button", { name: "Add a follow-up question" })).toBeNull();
+  fireEvent.change(screen.getByLabelText("Follow-up question 1"), { target: { value: "  First follow-up  " } });
+  fireEvent.change(screen.getByLabelText("Follow-up question 2"), { target: { value: "Second follow-up" } });
+  fireEvent.click(screen.getByRole("button", { name: "Remove follow-up question 3" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save scenario" }));
+  await screen.findByRole("button", { name: "Practice: Scenario Alpha" });
+  expect((await repos().list("m1"))[0]!.followUps).toEqual(["First follow-up", "Second follow-up"]);
+});
+
+it("asks each follow-up one at a time after the points, without grading or keeping the answers", async () => {
+  await seedWithFollowUps();
+  mount();
+  await practice("Scenario Alpha");
+  expect(screen.queryByText(/The examiner asks next/)).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  expect(await screen.findByText(`The examiner asks next: ${FOLLOW_UPS[0]}`)).toBeTruthy();
+  expect(screen.queryByText(new RegExp(FOLLOW_UPS[1]!))).toBeNull();
+  fireEvent.change(screen.getByLabelText("Your answer to the follow-up"), { target: { value: "Private follow-up answer" } });
+  fireEvent.click(screen.getByRole("button", { name: "Next follow-up" }));
+  expect(await screen.findByText(`The examiner asks next: ${FOLLOW_UPS[1]}`)).toBeTruthy();
+  expect((screen.getByLabelText("Your answer to the follow-up") as HTMLTextAreaElement).value).toBe("");
+  fireEvent.click(screen.getAllByRole("button", { name: "Done" })[0]!);
+  expect(screen.queryByText(/The examiner asks next/)).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(JSON.stringify(await db.select("SELECT * FROM oral_answers"))).not.toContain("Private follow-up answer");
+});
+
+it("shows no follow-up block when the scenario has none", async () => {
+  await seed("Scenario Alpha");
+  mount();
+  await practice("Scenario Alpha");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  await screen.findByText("Your discussion points");
+  expect(screen.queryByText(/The examiner asks next/)).toBeNull();
+  expect(screen.queryByLabelText("Your answer to the follow-up")).toBeNull();
+});
+
+it("shows the short-answer hint at the points only for an answer over 120 words", async () => {
+  await seed("Scenario Alpha");
+  mount();
+  await practice("Scenario Alpha", Array.from({ length: 121 }, (_, i) => `w${i}`).join(" "));
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  expect(await screen.findByText("Examiners like short answers: state the rule, then one example.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await practice("Scenario Alpha", Array.from({ length: 120 }, (_, i) => `w${i}`).join(" "));
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  await screen.findByText("Your discussion points");
+  expect(screen.queryByText(/Examiners like short answers/)).toBeNull();
+});
+
+it("adds missed points to review cards only when asked, and only once across two runs", async () => {
+  await seed("Scenario Alpha");
+  mount();
+  // Default off: nothing is created.
+  await practice("Scenario Alpha");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  const box = await screen.findByLabelText("Add missed points to my review cards") as HTMLInputElement;
+  expect(box.checked).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(await cardFronts()).toEqual([]);
+  // Opt in, tick the first point: two missed points become two cards.
+  for (let run = 0; run < 2; run += 1) {
+    await practice("Scenario Alpha");
+    fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+    fireEvent.click(await screen.findByLabelText(POINTS[0]!));
+    fireEvent.click(screen.getByLabelText("Add missed points to my review cards"));
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  }
+  expect(await cardFronts()).toEqual([
+    { front: "Scenario Alpha Key point?", back: POINTS[1], sourcePage: null },
+    { front: "Scenario Alpha Key point?", back: POINTS[2], sourcePage: null },
+  ].map((card) => expect.objectContaining(card)));
+  // Ticking everything offers no checkbox.
+  await practice("Scenario Alpha");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  for (const point of POINTS) fireEvent.click(await screen.findByLabelText(point));
+  expect(screen.queryByLabelText("Add missed points to my review cards")).toBeNull();
+});
+
+it("answerLengthHint is quiet at or under 120 words and for empty text", async () => {
+  const { answerLengthHint, missedPointCards } = await import("@/logic/oralPractice");
+  const words = (n: number) => Array.from({ length: n }, () => "word").join(" ");
+  expect(answerLengthHint("")).toBeNull();
+  expect(answerLengthHint("   \n ")).toBeNull();
+  expect(answerLengthHint(words(120))).toBeNull();
+  expect(answerLengthHint(words(121))).toBe("Examiners like short answers: state the rule, then one example.");
+  expect(missedPointCards("Q", ["a", "b"], [true, false])).toEqual([{ front: "Q Key point?", back: "b" }]);
 });

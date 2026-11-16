@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Button, Checkbox, Dialog, Field, TextArea } from "@/components/ui";
+import { Button, Checkbox, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import type { OralScenario } from "@/data/oralScenarios";
 import type { StudyMaterial } from "@/domain/types";
 import {
   ORAL_MAX_ASSUMPTIONS,
+  ORAL_MAX_FOLLOW_UP,
+  ORAL_MAX_FOLLOW_UPS,
   ORAL_MAX_POINTS,
   ORAL_MAX_SCENARIO,
   oralSetupProblem,
@@ -29,6 +31,7 @@ export function OralScenarioEditor({
   const [prompt, setPrompt] = useState("");
   const [assumptions, setAssumptions] = useState("");
   const [pointsText, setPointsText] = useState("");
+  const [followUps, setFollowUps] = useState<string[]>([]);
   const [fromInstructor, setFromInstructor] = useState(false);
   const [problem, setProblem] = useState<ReturnType<typeof oralSetupProblem>>(null);
   const [saving, setSaving] = useState(false);
@@ -40,6 +43,7 @@ export function OralScenarioEditor({
     setPrompt(scenario?.prompt ?? "");
     setAssumptions(scenario?.assumptions ?? "");
     setPointsText(scenario?.points.join("\n") ?? "");
+    setFollowUps(scenario?.followUps ?? []);
     setFromInstructor(scenario?.origin === "instructor");
     setProblem(null);
   }, [open, scenario]);
@@ -53,10 +57,12 @@ export function OralScenarioEditor({
     const found = oralSetupProblem(prompt, pointsText);
     setProblem(found);
     if (found) return;
+    const kept = followUps.map((line) => line.trim()).filter((line) => line.length > 0);
     const content = {
       prompt: prompt.trim(),
       assumptions: assumptions.trim(),
       points: parseOralPoints(pointsText),
+      ...(kept.length > 0 ? { followUps: kept } : {}),
       sourcePage: scenario?.sourcePage ?? null,
       origin: fromInstructor ? ("instructor" as const) : ("user" as const),
     };
@@ -65,7 +71,8 @@ export function OralScenarioEditor({
       content.prompt === scenario.prompt &&
       content.assumptions === scenario.assumptions &&
       content.origin === scenario.origin &&
-      content.points.join("\n") === scenario.points.join("\n")
+      content.points.join("\n") === scenario.points.join("\n") &&
+      kept.join("\n") === (scenario.followUps ?? []).join("\n")
     ) {
       onClose();
       return;
@@ -124,6 +131,31 @@ export function OralScenarioEditor({
           error={problem?.field === "points" ? problem.message : null}
         >
           <TextArea rows={4} value={pointsText} onChange={(event) => setPointsText(event.target.value)} />
+        </Field>
+        <Field
+          label={`Follow-up questions (optional, up to ${ORAL_MAX_FOLLOW_UPS})`}
+          hint="What the examiner might ask next. They show one at a time after the points."
+        >
+          <div className="stack stack--2">
+            {followUps.map((line, at) => (
+              <div key={at} className="row row--gap-2">
+                <TextInput
+                  aria-label={`Follow-up question ${at + 1}`}
+                  maxLength={ORAL_MAX_FOLLOW_UP}
+                  value={line}
+                  onChange={(event) => setFollowUps((current) => current.map((value, i) => (i === at ? event.target.value : value)))}
+                />
+                <Button size="small" onClick={() => setFollowUps((current) => current.filter((_, i) => i !== at))} aria-label={`Remove follow-up question ${at + 1}`}>
+                  Remove
+                </Button>
+              </div>
+            ))}
+            {followUps.length < ORAL_MAX_FOLLOW_UPS ? (
+              <div>
+                <Button size="small" onClick={() => setFollowUps((current) => [...current, ""])}>Add a follow-up question</Button>
+              </div>
+            ) : null}
+          </div>
         </Field>
         <Checkbox
           checked={fromInstructor}

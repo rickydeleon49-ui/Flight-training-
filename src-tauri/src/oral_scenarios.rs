@@ -12,6 +12,8 @@ pub(crate) const POINTS_MAX: usize = 12;
 pub(crate) const POINT_MAX_CHARS: usize = 500;
 const PROMPT_MAX_CHARS: usize = 4000;
 const ASSUMPTIONS_MAX_CHARS: usize = 2000;
+pub(crate) const FOLLOW_UPS_MAX: usize = 3;
+pub(crate) const FOLLOW_UP_MAX_CHARS: usize = 500;
 const SOURCE_PAGE_MAX: i64 = 100_000;
 const SCENARIOS_MAX: usize = 200;
 const ANSWER_MAX_CHARS: usize = 20_000;
@@ -97,6 +99,32 @@ pub(crate) fn decode_points(raw: &str) -> Option<Value> {
     (valid_points(&parsed) && serde_json::to_string(&parsed).ok()? == raw).then_some(parsed)
 }
 
+/// BL-76: 0-3 follow-up questions, each 1-500 characters. Empty means "none".
+pub(crate) fn valid_follow_ups(v: &Value) -> bool {
+    v.as_array().is_some_and(|a| {
+        a.len() <= FOLLOW_UPS_MAX && a.iter().all(|q| bounded_text(q, true, FOLLOW_UP_MAX_CHARS))
+    })
+}
+
+/// The follow-ups worth storing: `None` when absent or empty.
+fn follow_ups_of(content: &Value) -> Option<&Vec<Value>> {
+    content["followUps"].as_array().filter(|a| !a.is_empty())
+}
+
+/// The stored text: NULL when there are none, else the exact JSON the writer produces.
+fn encode_follow_ups(content: &Value) -> Option<String> {
+    follow_ups_of(content).and_then(|a| serde_json::to_string(a).ok())
+}
+
+/// Decodes only the exact encoding the writer produces (1-3 strings).
+pub(crate) fn decode_follow_ups(raw: &str) -> Option<Value> {
+    let parsed: Value = serde_json::from_str(raw).ok()?;
+    (valid_follow_ups(&parsed)
+        && parsed.as_array().is_some_and(|a| !a.is_empty())
+        && serde_json::to_string(&parsed).ok()? == raw)
+        .then_some(parsed)
+}
+
 fn valid_source_page(v: &Value) -> bool {
     v.is_null()
         || v.as_i64()
@@ -110,10 +138,21 @@ pub(crate) fn valid_content(v: &Value, stored: bool) -> bool {
     } else {
         &["user", "instructor"]
     };
-    exact_keys(
+    (exact_keys(
         v,
         &["prompt", "assumptions", "points", "sourcePage", "origin"],
-    ) && bounded_text(&v["prompt"], true, PROMPT_MAX_CHARS)
+    ) || exact_keys(
+        v,
+        &[
+            "prompt",
+            "assumptions",
+            "points",
+            "sourcePage",
+            "origin",
+            "followUps",
+        ],
+    )) && v.get("followUps").is_none_or(valid_follow_ups)
+        && bounded_text(&v["prompt"], true, PROMPT_MAX_CHARS)
         && bounded_text(&v["assumptions"], false, ASSUMPTIONS_MAX_CHARS)
         && valid_points(&v["points"])
         && valid_source_page(&v["sourcePage"])
@@ -122,7 +161,7 @@ pub(crate) fn valid_content(v: &Value, stored: bool) -> bool {
 
 /// SHA-256 of the canonical descriptor of one frozen version.
 pub(crate) fn content_hash(scenario_id: &str, version_number: i64, content: &Value) -> String {
-    compute_canonical_hash(&json!({
+    let mut descriptor = json!({
         "scenarioId": scenario_id,
         "versionNumber": version_number,
         "prompt": content["prompt"],
@@ -130,7 +169,13 @@ pub(crate) fn content_hash(scenario_id: &str, version_number: i64, content: &Val
         "points": content["points"],
         "sourcePage": content["sourcePage"],
         "origin": content["origin"],
-    }))
+    });
+    // Follow-ups join the descriptor only when there are some, so a scenario without them
+    // keeps the exact hash it always had.
+    if let Some(list) = follow_ups_of(content) {
+        descriptor["followUps"] = Value::Array(list.clone());
+    }
+    compute_canonical_hash(&descriptor)
 }
 
 pub(crate) fn decode_operation(v: &Value) -> Result<(), OralError> {
@@ -258,7 +303,7 @@ fn insert_version(
 ) -> Result<(), OralError> {
     let points = serde_json::to_string(&content["points"]).map_err(storage)?;
     conn.execute(
-        "INSERT INTO oral_scenario_versions (id, scenario_id, version_number, prompt, assumptions, points_json, source_page, origin, content_hash, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
+        "INSERT INTO oral_scenario_versions (id, scenario_id, version_number, prompt, assumptions, points_json, source_page, origin, content_hash, created_at, follow_ups_json) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
         params![
             version_id,
             scenario_id,
@@ -269,7 +314,8 @@ fn insert_version(
             content["sourcePage"].as_i64(),
             content["origin"].as_str(),
             content_hash(scenario_id, number, content),
-            at
+            at,
+            encode_follow_ups(content)
         ],
     )
     .map_err(storage)?;
@@ -479,7 +525,20 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
             return Err("Damaged oral scenario versions.".into());
         }
     }
-    for row in read("SELECT id, scenario_id, version_number, prompt, assumptions, points_json, source_page, origin, content_hash, created_at FROM oral_scenario_versions ORDER BY scenario_id, version_number")? {
+    // 0040 added follow_ups_json; an older backup has no such column.
+    let has_follow_ups: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('oral_scenario_versions') WHERE name = 'follow_ups_json'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|_| DAMAGED.to_string())?;
+    let follow_ups_select = if has_follow_ups == 1 {
+        "follow_ups_json"
+    } else {
+        "NULL"
+    };
+    for row in read(&format!("SELECT id, scenario_id, version_number, prompt, assumptions, points_json, source_page, origin, content_hash, created_at, {follow_ups_select} FROM oral_scenario_versions ORDER BY scenario_id, version_number"))? {
         let id = txt(&row[0]).map(Value::String).unwrap_or(Value::Null);
         let scenario = txt(&row[1]).ok_or(DAMAGED)?;
         let number = int(&row[2]).ok_or(DAMAGED)?;
@@ -489,13 +548,20 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
             V::Integer(n) => json!(n),
             _ => return Err(DAMAGED.into()),
         };
-        let content = json!({
+        let mut content = json!({
             "prompt": txt(&row[3]).ok_or(DAMAGED)?,
             "assumptions": txt(&row[4]).ok_or(DAMAGED)?,
             "points": points,
             "sourcePage": source_page,
             "origin": txt(&row[7]).ok_or(DAMAGED)?,
         });
+        match &row[10] {
+            V::Null => {}
+            V::Text(raw) => {
+                content["followUps"] = decode_follow_ups(raw).ok_or(DAMAGED)?;
+            }
+            _ => return Err(DAMAGED.into()),
+        }
         if !is_id(&id)
             || !valid_content(&content, true)
             || !txt(&row[9]).is_some_and(|c| !c.is_empty())

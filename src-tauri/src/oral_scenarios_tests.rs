@@ -242,3 +242,58 @@ fn content_hash_matches_the_typescript_twin() {
         "b2a60eb7007922a82cf294fb7974d960fb422064142dab736482c9c0aa928c91"
     );
 }
+
+#[test]
+fn follow_ups_are_stored_hashed_only_when_present_and_verified() {
+    let base = content("Scenario Alpha \"quoted\"\n✈", 2);
+    let mut empty = base.clone();
+    empty["followUps"] = json!([]);
+    let mut with = base.clone();
+    with["followUps"] = json!(["What if the weather worsens en route?"]);
+    assert_eq!(
+        content_hash(&uid(10), 2, &empty),
+        content_hash(&uid(10), 2, &base)
+    );
+    assert_ne!(
+        content_hash(&uid(10), 2, &with),
+        content_hash(&uid(10), 2, &base)
+    );
+
+    let mut c = library();
+    let mut op = create(1, 10, 11, "Scenario Alpha");
+    op["content"]["followUps"] =
+        json!(["What if the weather worsens en route?", "Why that choice?"]);
+    execute(&mut c, &op).unwrap();
+    execute(&mut c, &create(2, 20, 21, "Scenario Bravo")).unwrap();
+    let stored: Option<String> = c
+        .query_row(
+            "SELECT follow_ups_json FROM oral_scenario_versions WHERE scenario_id = ?1",
+            [uid(10)],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        stored.as_deref(),
+        Some("[\"What if the weather worsens en route?\",\"Why that choice?\"]")
+    );
+    let none: Option<String> = c
+        .query_row(
+            "SELECT follow_ups_json FROM oral_scenario_versions WHERE scenario_id = ?1",
+            [uid(20)],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(none, None);
+    verify(&c).unwrap();
+
+    for bad in [
+        json!(["a", "b", "c", "d"]),
+        json!([""]),
+        json!([1]),
+        json!("x"),
+    ] {
+        let mut op = create(3, 30, 31, "Scenario Charlie");
+        op["content"]["followUps"] = bad;
+        assert_eq!(execute(&mut c, &op).unwrap_err().code, "INVALID");
+    }
+}

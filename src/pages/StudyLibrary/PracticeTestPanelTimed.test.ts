@@ -125,7 +125,7 @@ describe("PracticeTestPanel test conditions", () => {
     await screen.findByText(/Answer saved/);
     // One unanswered: Finish asks first, using the app's dialog.
     fireEvent.click(screen.getByRole("button", { name: "Finish test" }));
-    const confirm = screen.getByRole("dialog", { name: "Finish the test?" });
+    const confirm = await screen.findByRole("dialog", { name: "Finish the test?" });
     expect(within(confirm).getByText(/1 question is still unanswered/)).toBeTruthy();
     fireEvent.click(within(confirm).getByRole("button", { name: "Finish test" }));
     expect(await screen.findByText("This practice set: 0%")).toBeTruthy();
