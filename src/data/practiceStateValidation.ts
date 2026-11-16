@@ -260,7 +260,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 19) await validateStudySetReceiptState(query, reference);
   if (newest >= 20) await validateHomeworkState(query, reference);
   if (newest >= 24) await validatePageSources(query, reference);
-  if (newest >= 25) await validateOralScenarios(query, reference);
+  if (newest >= 25) await validateOralScenarios(query, reference, newest);
   if (newest >= 26) await validateVisualCards(query, reference);
   if (newest >= 29) await validateVideoLinks(query, reference);
   if (newest >= 30) await validateStudentPilotSteps(query, reference);
@@ -2068,21 +2068,24 @@ async function validateAuthoredQuestionSource(query: ValidationQuery, binding: R
  * as migrated, every frozen version's points codec and content hash, contiguous
  * version numbers, and receipts that hold ids only and point at real rows.
  */
-export async function validateOralScenarios(query: ValidationQuery, reference: ValidationQuery) {
+export async function validateOralScenarios(query: ValidationQuery, reference: ValidationQuery, newest = Number.POSITIVE_INFINITY) {
   for (const table of ["oral_scenarios", "oral_scenario_versions", "oral_save_operations"]) {
-    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) || !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) || !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) || !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged oral scenario schema.");
+    // 0040 adds follow_ups_json; a database older than that is checked against its own version.
+    const expectedColumns = (await navigationColumns(reference, table)).filter((c) => !(table === "oral_scenario_versions" && newest < 40 && c.startsWith("follow_ups_json|")));
+    if (!same(await navigationColumns(query, table), expectedColumns) || !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) || !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) || !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged oral scenario schema.");
   }
   const indexSql = "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_oral_scenario_order'";
   const [actualIndex] = await query(indexSql, []);
   const [expectedIndex] = await reference(indexSql, []);
   if (!actualIndex || !expectedIndex || normalizeSql(text(actualIndex, "sql")) !== normalizeSql(text(expectedIndex, "sql"))) refuse("Damaged oral scenario order.");
-  const { decodeOralPoints, decodeOralResult, isOralId, oralContentHash, validOralContent } = await import("./oralScenarios");
+  const { decodeOralFollowUps, decodeOralPoints, decodeOralResult, isOralId, oralContentHash, validOralContent } = await import("./oralScenarios");
   for (const s of await query("SELECT id, (SELECT COUNT(*) FROM oral_scenario_versions v WHERE v.scenario_id = s.id) AS n, (SELECT COALESCE(MAX(version_number), 0) FROM oral_scenario_versions v WHERE v.scenario_id = s.id) AS top FROM oral_scenarios s", [])) {
     if (!isOralId(s.id) || int(s, "n") < 1 || int(s, "n") !== int(s, "top")) refuse("Damaged oral scenario versions.");
   }
   for (const v of await query("SELECT * FROM oral_scenario_versions ORDER BY scenario_id, version_number", [])) {
     try {
-      const content = { prompt: v.prompt, assumptions: v.assumptions, points: decodeOralPoints(v.points_json), sourcePage: optInt(v, "source_page"), origin: v.origin };
+      const followUps = decodeOralFollowUps(v.follow_ups_json);
+      const content = { prompt: v.prompt, assumptions: v.assumptions, points: decodeOralPoints(v.points_json), sourcePage: optInt(v, "source_page"), origin: v.origin, ...(followUps ? { followUps } : {}) };
       if (!isOralId(v.id) || !validOralContent(content, true) || !text(v, "created_at")) throw new Error();
       if ((await oralContentHash(text(v, "scenario_id"), int(v, "version_number"), content)) !== v.content_hash) throw new Error();
     } catch {

@@ -1,3 +1,5 @@
+import { normalizedStudyText, prepareStudyEdit, type AuthoringState } from "@/logic/studyAuthoring";
+
 /**
  * Oral-question practice (ORAL-01b/01c). Pure helpers: nothing here stores anything.
  * The student's answer and the ticked points live only in the open practice dialog.
@@ -7,6 +9,40 @@ export const ORAL_MAX_SCENARIO = 4000;
 export const ORAL_MAX_ASSUMPTIONS = 2000;
 export const ORAL_MAX_POINT = 500;
 export const ORAL_MAX_ANSWER = 20000;
+export { ORAL_FOLLOW_UPS_MAX as ORAL_MAX_FOLLOW_UPS, ORAL_FOLLOW_UP_MAX_CHARS as ORAL_MAX_FOLLOW_UP } from "@/data/oralScenarios";
+export const ORAL_LONG_ANSWER_WORDS = 120;
+export const ORAL_LENGTH_HINT = "Examiners like short answers: state the rule, then one example.";
+export const ORAL_REVIEW_SET_TITLE = "Oral practice: missed points";
+
+/** A quiet nudge when an answer runs long (over about 120 words). Nothing for short or empty answers. */
+export function answerLengthHint(text: string): string | null {
+  const words = text.trim().split(/\s+/u).filter(Boolean).length;
+  return words > ORAL_LONG_ANSWER_WORDS ? ORAL_LENGTH_HINT : null;
+}
+
+/** One review card per point that was not ticked: the scenario plus "Key point?" on the front, the point on the back. */
+export function missedPointCards(prompt: string, points: readonly string[], covered: readonly boolean[]): { front: string; back: string }[] {
+  const text = prompt.trim();
+  // A card front holds 1,000 characters at most; keep "Key point?" and shorten a very long scenario.
+  const front = `${text.length > 960 ? `${text.slice(0, 959)}…` : text} Key point?`;
+  return points.flatMap((point, at) => (covered[at] ? [] : [{ front, back: point }]));
+}
+
+/**
+ * Add the missed-point cards to a set as the student's own cards. A card with the same front
+ * (the scenario) and the same back (the point) is already there, so a second run adds nothing.
+ */
+export async function applyMissedPointCards(state: AuthoringState, cards: readonly { front: string; back: string }[]): Promise<AuthoringState> {
+  let next = state;
+  for (const card of cards) {
+    const same = next.items.some(
+      (item) => item.kind === "card" && normalizedStudyText(item.fields[0] ?? "") === normalizedStudyText(card.front) && normalizedStudyText(item.fields[1] ?? "") === normalizedStudyText(card.back),
+    );
+    if (same) continue;
+    next = (await prepareStudyEdit(next, { kind: "add", item: { kind: "card", fields: [card.front, card.back], sourcePage: null }, origin: "user" })).next;
+  }
+  return next;
+}
 
 /** One discussion point per line; blank lines are ignored. */
 export function parseOralPoints(text: string): string[] {

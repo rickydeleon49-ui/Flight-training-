@@ -1471,12 +1471,22 @@ fn verify_authored_question_source(
 /// hash, version-order and receipt checks in `oral_scenarios`.
 pub(crate) fn verify_schema_25_oral_scenarios(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
+    let newest = newest_migration_version(connection).unwrap_or(crate::CURRENT_SCHEMA_VERSION);
     for table in [
         "oral_scenarios",
         "oral_scenario_versions",
         "oral_save_operations",
     ] {
-        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        // 0040 added follow_ups_json; an older backup is checked against its own version.
+        let expected_columns: Vec<String> = m3_columns(&reference, table)?
+            .into_iter()
+            .filter(|c| {
+                !(table == "oral_scenario_versions"
+                    && newest < 40
+                    && c.starts_with("follow_ups_json|"))
+            })
+            .collect();
+        if m3_columns(connection, table)? != expected_columns
             || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
             || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
             || check_constraints(&table_sql(connection, table)?)

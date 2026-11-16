@@ -37,5 +37,6 @@
   "0036_kit_queue.sql": "c0564c739072f82ca584448563b7f0be202ba7c6474adf736fde2f8e944129b3",
   "0037_study_pack_provenance.sql": "3afdb93f75f40b24b41b3f4b5a1babcbe1d85c91017975e0917eef5a862271e4",
   "0038_library_folders.sql": "f463ab494509d1d4c1bdbd4ff9513cb0ceded2a24767e6478150da92594d4b78",
-  "0039_practice_unchecked.sql": "f9f73d21b45e0a109627da429bb1c860f6c922ff50a8960ba262fe27f0b711dd"
+  "0039_practice_unchecked.sql": "f9f73d21b45e0a109627da429bb1c860f6c922ff50a8960ba262fe27f0b711dd",
+  "0040_oral_follow_ups.sql": "163e5ec930cd7785fbfb8bf18b90d470b5ae0137dba7cb4670b2eae2f6ec639b"
 }

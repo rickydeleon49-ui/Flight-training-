@@ -7,7 +7,20 @@ import type { OralScenario } from "@/data/oralScenarios";
 import { coveredIndexes, oralAnswerFirstLine, type OralAnswer } from "@/data/oralAnswers";
 import { formatShortDate, localDayOf, nowIso } from "@/lib/dates";
 import type { StudyMaterial } from "@/domain/types";
-import { ORAL_MAX_ANSWER, oralNoteDraft, oralQuestionText, type OralText } from "@/logic/oralPractice";
+import { newId } from "@/lib/id";
+import { StudySetSaveError } from "@/data/persistenceErrors";
+import {
+  answerLengthHint,
+  applyMissedPointCards,
+  missedPointCards,
+  ORAL_MAX_ANSWER,
+  ORAL_REVIEW_SET_TITLE,
+  oralNoteDraft,
+  oralQuestionText,
+  type OralText,
+} from "@/logic/oralPractice";
+import { StudyAuthoringError } from "@/logic/studyAuthoring";
+import { authoringStateOf, emptyManualSet, frameOf, nextSetOf } from "@/logic/studySetEditing";
 import { useAppData } from "@/state/AppDataContext";
 
 type Step = "answer" | "reveal";
@@ -44,6 +57,9 @@ export function OralPracticeDialog({
   const [revealedAt, setRevealedAt] = useState<string | null>(null);
   const [earlier, setEarlier] = useState<OralAnswer[]>([]);
   const [confirming, setConfirming] = useState<string | "all" | null>(null);
+  const [followAt, setFollowAt] = useState(0);
+  const [followAnswer, setFollowAnswer] = useState("");
+  const [addMissed, setAddMissed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [retryAction, setRetryAction] = useState<FinishAction | null>(null);
   const savingRef = useRef(false);
@@ -57,6 +73,9 @@ export function OralPracticeDialog({
     setAsked(false);
     setAsking(false);
     setRevealedAt(null);
+    setFollowAt(0);
+    setFollowAnswer("");
+    setAddMissed(false);
     setConfirming(null);
     setRetryAction(null);
   };
@@ -82,8 +101,39 @@ export function OralPracticeDialog({
     };
   }, [open, scenarioId, repositories, dataRevision]);
 
+  /** The ticked-nothing points as the student's own review cards; safe to run twice (nothing is added twice). */
+  const saveMissedCards = async (): Promise<boolean> => {
+    if (!scenario || step !== "reveal" || !addMissed) return true;
+    const cards = missedPointCards(scenario.prompt, scenario.points, covered);
+    if (cards.length === 0) return true;
+    const result = await mutate(async (repos) => {
+      try {
+        const title = ORAL_REVIEW_SET_TITLE;
+        const known = (await repos.documents.list()).find((m) => m.title.trim().toLowerCase() === title.toLowerCase());
+        const doc = known ?? (await repos.documents.create({ title, materialType: "personal_note", topic: material.topic }));
+        const read = known ? await repos.documents.readStudySetForEdit(doc.id) : null;
+        const base = read ? { frame: frameOf(read.set), state: authoringStateOf(read.set) } : emptyManualSet(title);
+        const state = await applyMissedPointCards(base.state, cards);
+        if (state === base.state) return { ok: true as const };
+        await repos.documents.saveStudySet({
+          operationId: newId(),
+          materialId: doc.id,
+          reason: read ? "edit" : "create",
+          expected: read ? read.stored : null,
+          next: nextSetOf(base.frame, state),
+        });
+        return { ok: true as const };
+      } catch (failure) {
+        if (failure instanceof StudyAuthoringError || failure instanceof StudySetSaveError) return { ok: false as const };
+        throw failure;
+      }
+    });
+    return result?.ok === true;
+  };
+
   /** Keep this practice once the student has shown the points and written or ticked something. */
   const keepAnswer = async (): Promise<boolean> => {
+    if (!(await saveMissedCards())) return false;
     if (!scenario || step !== "reveal" || !revealedAt) return true;
     const ticked = coveredIndexes(covered);
     if (!answer.trim() && ticked.length === 0) return true;
@@ -102,6 +152,8 @@ export function OralPracticeDialog({
   };
   if (!scenario) return null;
   const points = scenario.points;
+  const followUps = scenario.followUps ?? [];
+  const missed = points.filter((_, at) => !covered[at]).length;
 
   const reveal = () => {
     setCovered(points.map(() => false));
@@ -286,6 +338,7 @@ export function OralPracticeDialog({
             <h3 ref={revealRef} tabIndex={-1} className="small">
               Your discussion points
             </h3>
+            {answerLengthHint(answer) ? <p className="tiny muted">{answerLengthHint(answer)}</p> : null}
             <p className="tiny muted">Tick the points you covered.</p>
             <div className="stack stack--2">
               {points.map((point, at) => (
@@ -301,6 +354,41 @@ export function OralPracticeDialog({
                 />
               ))}
             </div>
+            {followUps.length > 0 && followAt < followUps.length ? (
+              <div className="stack stack--1">
+                <p className="small wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
+                  The examiner asks next: {followUps[followAt]}
+                </p>
+                <TextArea
+                  rows={3}
+                  aria-label="Your answer to the follow-up"
+                  maxLength={ORAL_MAX_ANSWER}
+                  value={followAnswer}
+                  onChange={(event) => setFollowAnswer(event.target.value)}
+                />
+                <div>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setFollowAnswer("");
+                      setFollowAt((at) => at + 1);
+                    }}
+                  >
+                    {followAt < followUps.length - 1 ? "Next follow-up" : "Done"}
+                  </Button>
+                </div>
+                <p className="tiny muted">Follow-up answers aren't graded or kept.</p>
+              </div>
+            ) : null}
+            {missed > 0 ? (
+              <Checkbox
+                checked={addMissed}
+                disabled={saving}
+                strikethrough={false}
+                onChange={setAddMissed}
+                label="Add missed points to my review cards"
+              />
+            ) : null}
             <p className="tiny muted">Your own outline. Check it with your instructor and current FAA material.</p>
             <div className="row row--wrap row--gap-2">
               <Button variant="secondary" onClick={() => void ask()} disabled={saving || asking || asked}>

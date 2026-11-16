@@ -101,6 +101,40 @@ describe("points codec", () => {
 
 const PARITY_HASH = "b2a60eb7007922a82cf294fb7974d960fb422064142dab736482c9c0aa928c91";
 
+describe("follow-up questions", () => {
+  const withFollowUps = { ...content("Scenario Alpha \"quoted\"\n✈", 2), followUps: ["What if the weather worsens en route?", "  Why that choice?  "] };
+
+  it("leaves the hash of a scenario without follow-ups unchanged, and changes it when there are some", async () => {
+    const base = content("Scenario Alpha \"quoted\"\n✈", 2);
+    expect(await oralContentHash(uid(10), 2, base)).toBe(PARITY_HASH);
+    expect(await oralContentHash(uid(10), 2, { ...base, followUps: [] })).toBe(PARITY_HASH);
+    expect(await oralContentHash(uid(10), 2, withFollowUps)).not.toBe(PARITY_HASH);
+  });
+
+  it("round-trips follow-ups, loads old rows unchanged, and rejects bad follow-ups in both engines", async () => {
+    for (const [name, db] of await engines()) {
+      const repos = createRepositories(db);
+      const save = db.saveOralScenarioAtomically!.bind(db);
+      await save(create(1, 10, 11, "Scenario Alpha"));
+      await save({ ...create(2, 20, 21, "Scenario Bravo"), content: { ...content("Scenario Bravo"), followUps: ["What if the weather worsens en route?", "Why that choice?"] } });
+      const [alpha, bravo] = await repos.oralScenarios.list(M);
+      expect(alpha!.followUps, name).toBeUndefined();
+      expect("followUps" in alpha!, name).toBe(false);
+      expect(bravo!.followUps, name).toEqual(["What if the weather worsens en route?", "Why that choice?"]);
+      expect(await db.select("SELECT follow_ups_json FROM oral_scenario_versions ORDER BY scenario_id")).toEqual([
+        { follow_ups_json: null },
+        { follow_ups_json: JSON.stringify(["What if the weather worsens en route?", "Why that choice?"]) },
+      ]);
+      // An empty list is "none": stored as NULL, hash unchanged from a scenario with no key.
+      await save({ ...create(3, 30, 31, "Scenario Charlie"), content: { ...content("Scenario Charlie"), followUps: [] } });
+      expect((await db.select<{ follow_ups_json: string | null }>("SELECT follow_ups_json FROM oral_scenario_versions WHERE prompt = 'Scenario Charlie'"))[0]!.follow_ups_json, name).toBeNull();
+      for (const bad of [["a", "b", "c", "d"], [""], ["x".repeat(501)], [1]]) {
+        await expect(save({ ...create(4, 40, 41, "Scenario Delta"), content: { ...content("Scenario Delta"), followUps: bad as string[] } }), name).rejects.toMatchObject({ code: "INVALID" });
+      }
+    }
+  });
+});
+
 describe("saving scenarios", () => {
   it("creates, edits into a new version, reorders, removes and retries idempotently in both engines", async () => {
     for (const [name, db] of await engines()) {
