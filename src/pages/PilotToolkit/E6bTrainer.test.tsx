@@ -2,7 +2,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
+
+import { generateLeg, solveLeg } from "@/logic/navLog";
 
 import { E6bTrainer } from "./E6bTrainer";
 
@@ -97,4 +99,34 @@ it("lets the answer box shrink and the row wrap so L/R stays clickable at narrow
   expect(css).toMatch(/\.e6b-check__row\s*\{[^}]*flex-wrap:\s*wrap/);
   expect(css).toMatch(/\.e6b-check__input\s*\{[^}]*min-width:\s*0/);
   expect(css).toMatch(/\.e6b-check__side\s*\{[^}]*flex:\s*none/);
+});
+
+it("Nav log mode renders and grades a correct and a wrong box", () => {
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
+  const leg = generateLeg(500001);
+  const sol = solveLeg(leg)!;
+  render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
+  expect(screen.getByText(/Practice numbers, not for flight\. Use your own charts, POH and weather with your instructor\./)).toBeTruthy();
+  expect(screen.getByText(/East is least, West is best/)).toBeTruthy();
+  fireEvent.change(screen.getByLabelText(/^GS/), { target: { value: String(sol.gs) } });
+  fireEvent.change(screen.getByLabelText(/^MH/), { target: { value: String((sol.mh + 90) % 360) } });
+  fireEvent.click(screen.getByRole("button", { name: "Check my nav log" }));
+  expect(screen.getByText(new RegExp(`Right: ${sol.gs} kt`))).toBeTruthy();
+  expect(screen.getByText(leg.side === "E" ? /MH = TH − east variation/ : /MH = TH \+ west variation/)).toBeTruthy();
+  expect(screen.getByText("1 right, 0 close, 1 to fix")).toBeTruthy();
+  vi.restoreAllMocks();
+});
+
+it("Nav log whole trip shows the table with totals", () => {
+  render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
+  fireEvent.click(screen.getByRole("button", { name: "Whole trip" }));
+  expect(screen.getByRole("columnheader", { name: "CH" })).toBeTruthy();
+  expect(screen.getByLabelText("Leg 1 WCA")).toBeTruthy();
+  expect(screen.getByLabelText("Leg 2 Fuel")).toBeTruthy();
+  expect(screen.getByLabelText("Total ETE (minutes)")).toBeTruthy();
+  expect(screen.getByText("Total")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Check my nav log" }));
+  expect(screen.queryByText(/Not quite/)).toBeNull();
 });
