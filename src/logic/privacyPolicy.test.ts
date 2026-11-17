@@ -30,7 +30,7 @@ describe("privacy policy", () => {
       for (const m of code.matchAll(/"https:\/\/([a-z0-9.-]+)[/"?]/g)) hosts.add(m[1]!);
     }
     expect([...hosts].sort()).toEqual(
-      ["api.anthropic.com", "aviationweather.gov", "generativelanguage.googleapis.com", "www.faa.gov"],
+      ["api.anthropic.com", "aviationweather.gov", "generativelanguage.googleapis.com", "github.com", "objects.githubusercontent.com", "www.faa.gov"],
     );
     for (const host of hosts) expect(policy).toContain(host);
   });

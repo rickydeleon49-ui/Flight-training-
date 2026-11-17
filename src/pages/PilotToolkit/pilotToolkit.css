@@ -249,3 +249,7 @@
   .navlog-table--trip td .e6b-check__input { width: 100%; min-width: 0; box-sizing: border-box; }
   .navlog-table--trip td .e6b-check__result { overflow-wrap: break-word; }
 }
+
+.figure-pack { display: grid; gap: var(--space-3); }
+.figure-pack__credit { color: var(--status-due-today); font-weight: 600; }
+.figure-pack .toolkit-progress { margin-top: 0; }

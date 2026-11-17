@@ -66,6 +66,7 @@ mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
 // command — see `platform.rs`'s own doc comment for why.
 mod faa_downloads;
+mod figure_packs;
 mod platform;
 mod practice_authoring;
 #[cfg(test)]
@@ -492,6 +493,9 @@ pub fn run() {
                 log::warn!("Could not clean up staged deletions; will try again next launch.");
             }
             faa_downloads::clean_incoming(app.handle());
+            if let Ok(root) = storage::app_root(app.handle()) {
+                figure_packs::clean_tmp_in(&root);
+            }
             for window in &windows {
                 if window.create {
                     #[cfg(not(desktop))]
@@ -520,6 +524,11 @@ pub fn run() {
             faa_downloads::download_faa_handbook,
             faa_downloads::cancel_faa_download,
             faa_downloads::faa_download_progress,
+            figure_packs::figure_pack_status,
+            figure_packs::figure_pack_download,
+            figure_packs::figure_pack_cancel,
+            figure_packs::figure_pack_image,
+            figure_packs::figure_pack_remove,
             study_pack::export_study_pack,
             study_pack::inspect_study_pack,
             study_pack::add_study_pack,
