@@ -45,12 +45,18 @@ describe("explainNotam", () => {
     expect(t[2]!.meaning).toMatch(/^Location CLE/);
     expect(t[3]).toMatchObject({ raw: "TWY" });
     expect(t[3]!.meaning).toMatch(/^Taxiway/);
-    expect(t[4]).toEqual({ raw: "L", meaning: "Written as is (a name, number or plain word)" });
+    expect(t[4]).toEqual({ raw: "L", meaning: "Taxiway L" });
     expect(t[5]).toEqual({ raw: "CLSD", meaning: "closed" });
     expect(t[6]).toEqual({
       raw: "2611201300-2611202100",
       meaning: "From 20 Nov 2026 13:00 UTC until 20 Nov 2026 21:00 UTC (all NOTAMs end at their end time unless PERM)",
     });
+  });
+
+  it("names the runway right after RWY", () => {
+    const text = "!CLE 11/046 CLE RWY 13/31 CLSD";
+    expect(meaning(text, "13/31")).toBe("Runway 13/31");
+    expect(meaning(text, "CLSD")).toBe("closed");
   });
 
   it("decodes a NOTAM without a number (App. A style)", () => {
