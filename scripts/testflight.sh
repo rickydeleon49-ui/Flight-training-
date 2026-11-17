@@ -5,6 +5,9 @@
 #   scripts/testflight.sh --check-only [ipa] [--record]
 #                                              pre-upload checks on an existing ipa
 # --record writes the build number to .last-testflight-build (do it after the upload).
+# Auth: App Store Connect API key if ~/.apple-keys/asc.conf exists (ASC_KEY_ID= and ASC_ISSUER_ID=,
+# key file ~/.apple-keys/AuthKey_<ASC_KEY_ID>.p8); no Xcode sign-in needed. Without asc.conf it
+# falls back to the Apple ID signed in to Xcode (Settings > Accounts).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -46,6 +49,22 @@ LAST=0
 BUILD="$(node scripts/bump-version.mjs --build "${LAST:-0}")"
 echo "Build number is now $BUILD"
 
+AUTH=()
+ASC_CONF="$HOME/.apple-keys/asc.conf"
+if [ -f "$ASC_CONF" ]; then
+  # shellcheck disable=SC1090
+  . "$ASC_CONF"
+  KEY="$HOME/.apple-keys/AuthKey_${ASC_KEY_ID:-}.p8"
+  [ -n "${ASC_KEY_ID:-}" ] && [ -n "${ASC_ISSUER_ID:-}" ] && [ -f "$KEY" ] \
+    || { echo "asc.conf needs ASC_KEY_ID and ASC_ISSUER_ID, and $KEY must exist" >&2; exit 1; }
+  # Tauri passes these to its xcodebuild archive step as -authenticationKey* flags.
+  export APPLE_API_KEY="$ASC_KEY_ID" APPLE_API_ISSUER="$ASC_ISSUER_ID" APPLE_API_KEY_PATH="$KEY"
+  AUTH=(-authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+  echo "Auth: App Store Connect API key $ASC_KEY_ID (no Xcode sign-in needed)"
+else
+  echo "Auth: Apple ID signed in to Xcode (no $ASC_CONF)"
+fi
+
 # Tauri rewrites CFBundleVersion from tauri.conf (the app version) unless bundle.iOS.bundleVersion is set.
 npm run tauri ios build -- --export-method app-store-connect --config "{\"bundle\":{\"iOS\":{\"bundleVersion\":\"$BUILD\"}}}"
 
@@ -60,13 +79,13 @@ fi
 # Pre-upload checks must pass before anything is sent to Apple.
 node scripts/testflight-checks.mjs "$IPA" "$LAST_FILE"
 
-# Upload the same archive with Xcode's signed-in account (no API key needed).
+# Upload the same archive (API key above, or Xcode's signed-in account).
 ARCHIVE="$APPLE_DIR/build/her-flight-deck_iOS.xcarchive"
 [ -d "$ARCHIVE" ] || { echo "No archive at $ARCHIVE" >&2; exit 1; }
 UPDIR="$(mktemp -d)"
 cp "$APPLE_DIR/build/ExportOptions.plist" "$UPDIR/ExportOptions.plist"
 plutil -replace destination -string upload "$UPDIR/ExportOptions.plist"
 xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist "$UPDIR/ExportOptions.plist" \
-  -exportPath "$UPDIR" -allowProvisioningUpdates
+  -exportPath "$UPDIR" -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"}
 node scripts/testflight-checks.mjs "$IPA" "$LAST_FILE" --record
 echo "Uploaded build $BUILD. Apple emails when processing is done (about 10-30 min); testers get it in the TestFlight app."
