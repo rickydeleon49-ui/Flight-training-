@@ -90,6 +90,7 @@ import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepositor
 import { ChartSymbolDrill } from "./ChartSymbolDrill";
 import { AccidentCaseDrill } from "./AccidentCaseDrill";
 import { InoperativeEquipmentCard } from "./InoperativeEquipmentCard";
+import { FigureDrill } from "./FigureDrill";
 import { RegCardDrill } from "./RegCardDrill";
 import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
@@ -452,6 +453,7 @@ export function PilotToolkit() {
             <QuizTool state={data.toolkit} save={save} onBusyChange={setQuizBusy} />
             <ChartSymbolDrill />
             <RegCardDrill />
+            <FigureDrill />
           </>
         ) : null}
         {tool === "reminders" ? (

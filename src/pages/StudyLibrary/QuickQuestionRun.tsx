@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Badge, Button } from "@/components/ui";
+import { FigureViewer } from "@/components/FigureViewer";
+import { getFigure } from "@/logic/figures";
 import type { MixedQuestion } from "@/logic/mixedPractice";
 
 /**
@@ -8,13 +10,15 @@ import type { MixedQuestion } from "@/logic/mixedPractice";
  * for today only. Nothing here reads or writes the database: the caller owns
  * the questions and gets `onDone` when the student closes the result.
  */
-export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress }: {
+export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, onFinished }: {
   questions: readonly MixedQuestion[];
   /** Accessible name of the result section. */
   resultLabel: string;
   onDone: () => void;
   /** Tells the caller whether an answer has been given and whether the result is showing. */
   onProgress?: (started: boolean, finished: boolean) => void;
+  /** Called once when the run ends, with the questions answered wrong. */
+  onFinished?: (missed: MixedQuestion[]) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
@@ -25,6 +29,12 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress }:
   const started = answer !== null || answers.length > 0;
   useEffect(() => { onProgress?.(started, finished); }, [started, finished, onProgress]);
   useEffect(() => { heading.current?.focus(); }, [index, finished]);
+  const finishedSent = useRef(false);
+  useEffect(() => {
+    if (!finished || finishedSent.current) return;
+    finishedSent.current = true;
+    onFinished?.(questions.filter((item, i) => answers[i] !== item.question.correctIndex));
+  }, [finished, onFinished, questions, answers]);
 
   const next = () => {
     if (answer === null) return;
@@ -37,8 +47,8 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress }:
   const total = questions.length;
   const percent = total ? Math.round((correct / total) * 100) : 0;
 
-  return <>
-    {question && current ? <>
+  const figure = question?.figureId ? getFigure(question.figureId) : undefined;
+  const body = question && current ? <>
       <h3 ref={heading} tabIndex={-1} className="ai-guide__title">Question {index + 1} of {total}</h3>
       <p className="small ai-copy">{question.question}</p>
       <div className="stack stack--2" role="group" aria-label="Answer choices">
@@ -53,7 +63,13 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress }:
         <p className="tiny">Source: {current.materialTitle}{question.sourcePage !== null ? ` · Page ${question.sourcePage}` : ""}</p>
         <Button onClick={next}>{index + 1 < total ? "Continue" : "See score"}</Button>
       </div> : null}
-    </> : null}
+    </> : null;
+
+  return <>
+    {figure ? <div className="figure-run figure-run--with">
+      <FigureViewer key={figure.id} figure={figure} />
+      <div className="stack stack--2">{body}</div>
+    </div> : body}
     {finished ? <section className="stack stack--2" aria-label={resultLabel}>
       <h3 ref={heading} tabIndex={-1} className="ai-guide__title">{correct} of {total} correct</h3>
       <div className="row">
