@@ -1,8 +1,47 @@
-.toolkit-tabs {
+.toolkit-home__title, .toolkit-tool-head__title { margin: 0; }
+.toolkit-home { display: grid; gap: var(--space-5); }
+.toolkit-group { display: grid; gap: var(--space-3); }
+.toolkit-group__head { display: flex; align-items: center; gap: var(--space-2); }
+.toolkit-group__title { margin: 0; }
+.toolkit-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+.toolkit-tile {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--hit-min);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.toolkit-tile__text { display: grid; gap: var(--space-1); }
+.toolkit-tile__name { font-weight: 700; }
+.toolkit-tile__line { font-size: var(--text-sm); color: var(--text-secondary); }
+.toolkit-tile__chevron { flex: none; color: var(--text-tertiary); }
+.toolkit-nav { margin-bottom: var(--space-3); }
+.toolkit-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--hit-min);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.toolkit-tool-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+
+@media (max-width: 640px) {
+  .toolkit-tiles { grid-template-columns: 1fr; }
 }
 
 .toolkit-saved { color: var(--status-complete); }
@@ -95,7 +134,7 @@
 }
 
 @media print {
-  .sidebar, .page-header__action, .toolkit-tabs, .toolkit-no-print { display: none !important; }
+  .sidebar, .page-header__action, .toolkit-nav, .toolkit-no-print { display: none !important; }
   .shell, .content, .content__inner { display: block !important; width: 100% !important; padding: 0 !important; overflow: visible !important; }
   body { background: white; }
   .card { break-inside: avoid; box-shadow: none; }
@@ -109,7 +148,7 @@
 
 /* Tool inputs and selects follow the F1 control scale; every target stays >= --hit-min. */
 .toolkit-row .input, .toolkit-row .select { min-height: var(--control-h); }
-.toolkit-row .button, .toolkit-row .icon-button, .toolkit-tabs [role="tab"] { min-height: var(--hit-min); }
+.toolkit-row .button, .toolkit-row .icon-button { min-height: var(--hit-min); }
 
 .chart-symbol-card {
   display: grid;

@@ -25,7 +25,6 @@ afterEach(cleanup);
 
 it("fills a practice problem and reveals its answer", () => {
   render(<MemoryRouter initialEntries={["/?tool=safety"]}><PilotToolkit /></MemoryRouter>);
-  fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
   expect(screen.getByText("Weight & balance practice")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: /Fill in Problem 1/ }));
   expect(screen.getByText(/Center of gravity: 87.2 in\. Within the limits you entered\./)).toBeTruthy();
@@ -39,7 +38,6 @@ it("fills a practice problem and reveals its answer", () => {
 
 it("rejects runway numbers outside 1 to 36 in the crosswind tool", () => {
   render(<MemoryRouter initialEntries={["/?tool=safety"]}><PilotToolkit /></MemoryRouter>);
-  fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
   fireEvent.change(screen.getByLabelText("Runway (1-36)"), { target: { value: "37" } });
   fireEvent.change(screen.getByLabelText("Wind direction (degrees)"), { target: { value: "270" } });
   fireEvent.change(screen.getByLabelText("Wind speed (kt)"), { target: { value: "15" } });
@@ -54,7 +52,6 @@ it("rejects runway numbers outside 1 to 36 in the crosswind tool", () => {
 
 it("decodes a TAF and fills examples on the METAR tab", () => {
   render(<MemoryRouter initialEntries={["/?tool=metar"]}><PilotToolkit /></MemoryRouter>);
-  fireEvent.click(screen.getByRole("tab", { name: "METAR" }));
   fireEvent.click(screen.getByRole("button", { name: "Try an example TAF" }));
   expect(screen.getByRole("heading", { name: "Temporary (TEMPO)" })).toBeTruthy();
   expect(screen.getAllByText(/A study hint only/).length).toBeGreaterThan(2);
@@ -65,8 +62,7 @@ it("decodes a TAF and fills examples on the METAR tab", () => {
 
 it("decodes an example winds aloft and PIREP in the one paste box", () => {
   render(<MemoryRouter initialEntries={["/?tool=metar"]}><PilotToolkit /></MemoryRouter>);
-  fireEvent.click(screen.getByRole("tab", { name: "METAR" }));
-  expect(screen.getByText("Weather and NOTAM Explainer")).toBeTruthy();
+  expect(screen.getAllByText("Weather and NOTAM Explainer").length).toBeGreaterThan(0);
   expect(screen.getByLabelText("Paste or type a METAR, TAF, winds aloft (FB), PIREP or NOTAM")).toBeTruthy();
   expect(screen.getByText(/G-AIRMET/)).toBeTruthy();
 
@@ -106,7 +102,8 @@ it("shows the E6B trainer on its own tab, not in Safety Check", () => {
   expect(toolFrom("e6b")).toBe("e6b");
   render(<MemoryRouter initialEntries={["/?tool=e6b"]}><PilotToolkit /></MemoryRouter>);
   expect(screen.getByText("E6B practice")).toBeTruthy();
-  fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
+  fireEvent.click(screen.getByRole("link", { name: "All tools" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Safety Check/ }));
   expect(screen.queryByText("E6B practice")).toBeNull();
 });
 
@@ -116,7 +113,7 @@ it("scrolls to the top when the Toolkit opens and when its tool changes", () => 
   render(<MemoryRouter initialEntries={["/"]}><PilotToolkit /></MemoryRouter>);
   expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
   scrollTo.mockClear();
-  fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Safety Check/ }));
   expect(scrollTo).toHaveBeenCalledWith(0, 0);
   vi.unstubAllGlobals();
 });

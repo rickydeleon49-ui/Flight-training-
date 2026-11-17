@@ -194,14 +194,14 @@ describe("quick-add boxes save once on a double-click or held Enter", () => {
   it("Pilot Toolkit › Safety check-in", async () => {
     const save = slowSave();
     withData(h(PilotToolkit), { toolkit: DEFAULT_TOOLKIT_STATE }, save.fn);
-    fireEvent.click(screen.getByRole("tab", { name: "Safety Check" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Safety Check/ }));
     await expectGuarded("Save this check-in", save);
   });
 
   it("Pilot Toolkit › Add record", async () => {
     const save = slowSave();
     withData(h(PilotToolkit), { toolkit: DEFAULT_TOOLKIT_STATE }, save.fn);
-    fireEvent.click(screen.getByRole("tab", { name: "Certificates" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Certificates/ }));
     fireEvent.change(screen.getByLabelText(/^Title/), { target: { value: "Student pilot certificate" } });
     await expectGuarded("Add record", save);
   });

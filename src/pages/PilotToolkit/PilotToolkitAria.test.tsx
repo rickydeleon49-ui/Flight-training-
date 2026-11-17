@@ -24,33 +24,32 @@ vi.mock("@/state/AppDataContext", () => ({
 
 afterEach(cleanup);
 
-it("the toolkit page passes axe with its focusable, labelled tabpanel", async () => {
-  const { container } = render(<MemoryRouter><PilotToolkit /></MemoryRouter>);
-  const tab = screen.getByRole("tab", { selected: true });
-  const panel = screen.getByRole("tabpanel");
-  expect(panel.tabIndex).toBe(0);
-  expect(panel.id).toBe(tab.getAttribute("aria-controls"));
-  expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
-  await expectNoA11yViolations(container);
+it("the toolkit home and an open tool pass axe", async () => {
+  const home = render(<MemoryRouter><PilotToolkit /></MemoryRouter>);
+  await expectNoA11yViolations(home.container);
+  home.unmount();
+  const open = render(<MemoryRouter initialEntries={["/?tool=readiness"]}><PilotToolkit /></MemoryRouter>);
+  expect(screen.getByRole("region", { name: "Checkride" })).toBeTruthy();
+  await expectNoA11yViolations(open.container);
 });
 
-it("switching tabs mid-quiz asks 'Leave this quiz?' once an answer is checked (BL-65)", async () => {
+it("leaving a quiz with All tools asks 'Leave this quiz?' once an answer is checked (BL-65)", async () => {
   const { fireEvent } = await import("@testing-library/react");
   render(<MemoryRouter initialEntries={["/?tool=quiz"]}><PilotToolkit /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
-  // Before any answer: switching is free.
-  fireEvent.click(screen.getByRole("tab", { name: "Checkride" }));
+  // Before any answer: leaving is free.
+  fireEvent.click(screen.getByRole("link", { name: "All tools" }));
   expect(screen.queryByRole("button", { name: "Keep going" })).toBeNull();
-  fireEvent.click(screen.getByRole("tab", { name: "Quizzes" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Quizzes/ }));
   fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
   fireEvent.click(screen.getAllByRole("radio")[0]!);
   fireEvent.click(screen.getByRole("button", { name: /Check answer/ }));
-  fireEvent.click(screen.getByRole("tab", { name: "Checkride" }));
+  fireEvent.click(screen.getByRole("link", { name: "All tools" }));
   fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
-  expect(screen.getByRole("tab", { name: "Quizzes", selected: true })).toBeTruthy();
-  fireEvent.click(screen.getByRole("tab", { name: "Checkride" }));
+  expect(screen.getByRole("heading", { level: 2, name: "Quizzes" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("link", { name: "All tools" }));
   fireEvent.click(screen.getByRole("button", { name: "Leave" }));
-  expect(screen.getByRole("tab", { name: "Checkride", selected: true })).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 2, name: "All tools" })).toBeTruthy();
 });
 
 it("a nav link clicked mid-quiz asks 'Leave this quiz?' (leave guard)", async () => {

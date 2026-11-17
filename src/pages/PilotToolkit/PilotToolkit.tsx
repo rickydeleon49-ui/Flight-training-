@@ -1,8 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
-import { useTabListState, type TabListState } from "@react-stately/tabs";
-import { Item } from "react-stately/Item";
 import { Link, useSearchParams } from "react-router-dom";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icons";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -110,24 +108,50 @@ type Tool =
   | "e6b"
   | "radio";
 
-type ToolChoice = { id: Tool; label: string };
-const TOOLS: ToolChoice[] = [
-  { id: "readiness", label: "Checkride" },
-  { id: "report", label: "Instructor Report" },
-  { id: "records", label: "Certificates" },
-  { id: "costs", label: "Cost Forecast" },
-  { id: "safety", label: "Safety Check" },
-  { id: "quiz", label: "Quizzes" },
-  { id: "metar", label: "METAR" },
-  { id: "e6b", label: "E6B" },
-  { id: "radio", label: "Radio words" },
-  { id: "reminders", label: "Reminders" },
-  { id: "career", label: "Career Portfolio" },
+type ToolChoice = { id: Tool; label: string; line: string };
+type ToolGroup = { id: string; label: string; tools: ToolChoice[] };
+const TOOL_GROUPS: ToolGroup[] = [
+  {
+    id: "checkride",
+    label: "Checkride",
+    tools: [
+      { id: "readiness", label: "Checkride", line: "Your plan and prep for the big day" },
+      { id: "report", label: "Instructor Report", line: "A summary to share with your instructor" },
+    ],
+  },
+  {
+    id: "plan",
+    label: "Plan a flight",
+    tools: [
+      { id: "metar", label: "Weather and NOTAM Explainer", line: "METAR, TAF, winds aloft, PIREPs and NOTAMs in plain words" },
+      { id: "e6b", label: "E6B", line: "Practise wind and fuel math" },
+      { id: "safety", label: "Safety Check", line: "Your personal minimums before a flight" },
+    ],
+  },
+  {
+    id: "practice",
+    label: "Practice",
+    tools: [
+      { id: "quiz", label: "Quizzes", line: "Short questions on any topic" },
+      { id: "radio", label: "Radio words", line: "Phrases for the radio" },
+    ],
+  },
+  {
+    id: "records",
+    label: "My records",
+    tools: [
+      { id: "records", label: "Certificates", line: "Your certificates, ratings and medical" },
+      { id: "costs", label: "Cost Forecast", line: "What training may cost" },
+      { id: "reminders", label: "Reminders", line: "Medical, flight review and currency dates" },
+      { id: "career", label: "Career Portfolio", line: "Your hours and story in one place" },
+    ],
+  },
 ];
+const TOOLS: ToolChoice[] = TOOL_GROUPS.flatMap((group) => group.tools);
 
-/** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else is Checkride. */
-export function toolFrom(value: string | null): Tool {
-  return TOOLS.find((choice) => choice.id === value)?.id ?? "readiness";
+/** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else shows the home of tool tiles. */
+export function toolFrom(value: string | null): Tool | null {
+  return TOOLS.find((choice) => choice.id === value)?.id ?? null;
 }
 
 const METAR_EXAMPLE = "METAR KSFO 141756Z 28012G20KT 10SM FEW008 BKN015 16/11 A3002 RMK AO2 SLP168";
@@ -283,62 +307,36 @@ function MetarTool() {
   );
 }
 
-function PilotToolTab({ choice, state }: { choice: ToolChoice; state: TabListState<ToolChoice> }) {
-  const ref = useRef<HTMLButtonElement>(null);
-  const { tabProps, isSelected } = useTab({ key: choice.id }, state, ref);
-  return (
-    <button
-      {...tabProps}
-      ref={ref}
-      // Preserve click-to-focus, including synthetic/assistive-technology clicks.
-      onClick={(event) => {
-        tabProps.onClick?.(event);
-        ref.current?.focus();
-      }}
-      type="button"
-      id={`toolkit-tab-${choice.id}`}
-      aria-controls={`toolkit-panel-${choice.id}`}
-      className={`filter-chip${isSelected ? " is-active" : ""}`}
-    >
-      {choice.label}
-    </button>
-  );
-}
-
 export function PilotToolkit() {
   const { data, mutate } = useAppData();
-  const [params] = useSearchParams();
-  const [tool, setTool] = useState<Tool>(() => toolFrom(params.get("tool")));
-  // Quick Find can link to a tool while the toolkit is already open.
-  const toolParam = params.get("tool");
-  useEffect(() => {
-    if (toolParam) setTool(toolFrom(toolParam));
-  }, [toolParam]);
-  // Opening the Toolkit, or switching its tool, starts at the top, not where the last tool was scrolled.
-  useEffect(() => {
-    window.scrollTo?.(0, 0);
-  }, [tool]);
+  const [params, setParams] = useSearchParams();
+  const tool = toolFrom(params.get("tool"));
+  const choice = TOOLS.find((entry) => entry.id === tool) ?? null;
+  const group = TOOL_GROUPS.find((entry) => entry.tools.some((item) => item.id === tool)) ?? null;
   const [saved, setSaved] = useState(false);
   const [quizBusy, setQuizBusy] = useState(false);
-  const [pendingTool, setPendingTool] = useState<Tool | null>(null);
-  const tabState = useTabListState<ToolChoice>({
-    selectedKey: tool,
-    onSelectionChange: (key) => {
-      // Same question as the quiz's Exit button when answers are in progress.
-      if (tool === "quiz" && key !== "quiz" && quizBusy) setPendingTool(key as Tool);
-      else setTool(key as Tool);
-    },
-    disabledKeys: [],
-    items: TOOLS,
-    children: (choice) => <Item key={choice.id} textValue={choice.label}>{choice.label}</Item>,
-  });
-  const tabListRef = useRef<HTMLDivElement>(null);
-  const { tabListProps } = useTabList({ "aria-label": "Pilot tools", keyboardActivation: "automatic" }, tabState, tabListRef);
-  const tabPanelRef = useRef<HTMLDivElement>(null);
-  const { tabPanelProps } = useTabPanel({}, tabState, tabPanelRef);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const homeHeading = useRef<HTMLHeadingElement>(null);
+  const toolHeading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+  // Opening a tool, or coming back to the home, starts at the top and moves focus to the new heading.
+  useEffect(() => {
+    window.scrollTo?.(0, 0);
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    (tool ? toolHeading.current : homeHeading.current)?.focus();
+  }, [tool]);
+  // A quiz that is no longer on screen is no longer in progress (browser back, Quick Find).
+  useEffect(() => {
+    if (tool !== "quiz") setQuizBusy(false);
+  }, [tool]);
+  const openTool = (id: Tool) => setParams({ tool: id });
+  const openHome = () => setParams({});
 
   // Owned here, not by the medical card, so a choice still saving keeps both
-  // buttons locked when the student switches tabs and comes back.
+  // buttons locked when the student leaves the tool and comes back.
   const medicalChoosingRef = useRef(false);
   const [medicalChoosing, setMedicalChoosing] = useState(false);
   const medicalChoice = useMemo<PendingChoice>(
@@ -371,7 +369,7 @@ export function PilotToolkit() {
     <>
       <PageHeader
         title="Pilot Toolkit"
-        subtitle="Readiness, records, safety, training costs, and the airline path in one place."
+        subtitle={tool ? undefined : "Choose a tool to open it."}
         action={
           saved ? <span className="small toolkit-saved">Saved.</span> : null
         }
@@ -381,22 +379,54 @@ export function PilotToolkit() {
           {TOOLKIT_UNREADABLE_MESSAGE}
         </p>
       ) : null}
-      <div
-        {...tabListProps}
-        ref={tabListRef}
-        className="filter-chips toolkit-tabs"
-      >
-        {TOOLS.map((choice) => <PilotToolTab key={choice.id} choice={choice} state={tabState} />)}
-      </div>
-
-      <div
-        {...tabPanelProps}
-        ref={tabPanelRef}
-        id={`toolkit-panel-${tool}`}
-        aria-labelledby={`toolkit-tab-${tool}`}
-        tabIndex={0}
-        className="toolkit-tabpanel"
-      >
+      {!tool || !choice ? (
+        <section className="toolkit-home" aria-labelledby="toolkit-home-heading">
+          <h2 id="toolkit-home-heading" ref={homeHeading} tabIndex={-1} className="toolkit-home__title">
+            All tools
+          </h2>
+          {TOOL_GROUPS.map((entry) => (
+            <section key={entry.id} className="toolkit-group" aria-labelledby={`toolkit-group-${entry.id}`}>
+              <div className="toolkit-group__head">
+                <h3 id={`toolkit-group-${entry.id}`} className="toolkit-group__title">{entry.label}</h3>
+                <Badge>{entry.tools.length} {entry.tools.length === 1 ? "tool" : "tools"}</Badge>
+              </div>
+              <div className="toolkit-tiles">
+                {entry.tools.map((item) => (
+                  <button key={item.id} type="button" className="toolkit-tile" onClick={() => openTool(item.id)}>
+                    <span className="toolkit-tile__text">
+                      <span className="toolkit-tile__name">{item.label}</span>
+                      <span className="toolkit-tile__line">{item.line}</span>
+                    </span>
+                    <ChevronRightIcon size={16} className="toolkit-tile__chevron" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </section>
+      ) : (
+      <section className="toolkit-tabpanel" aria-labelledby="toolkit-tool-heading">
+        <div className="toolkit-nav">
+          <Link
+            to={{ search: "" }}
+            className="toolkit-back"
+            onClick={(event) => {
+              event.preventDefault();
+              // Same question as the quiz's Exit button when answers are in progress.
+              if (tool === "quiz" && quizBusy) setConfirmLeave(true);
+              else openHome();
+            }}
+          >
+            <ChevronLeftIcon size={16} />
+            All tools
+          </Link>
+        </div>
+        <div className="toolkit-tool-head">
+          <h2 id="toolkit-tool-heading" ref={toolHeading} tabIndex={-1} className="toolkit-tool-head__title">
+            {choice.label}
+          </h2>
+          {group ? <Badge>{group.label}</Badge> : null}
+        </div>
         {tool === "readiness" ? (
           <ReadinessTool state={data.toolkit} save={save} />
         ) : null}
@@ -433,20 +463,21 @@ export function PilotToolkit() {
         ) : null}
         {tool === "metar" ? <MetarTool /> : null}
         {tool === "e6b" ? <E6bTrainer /> : null}
-      </div>
+      </section>
+      )}
       <ConfirmDialog
-        open={pendingTool !== null}
+        open={confirmLeave}
         title="Leave this quiz?"
         message="Your answers in this quiz are not kept."
         confirmLabel="Leave"
         cancelLabel="Keep going"
         destructive={true}
         onConfirm={() => {
-          if (pendingTool) setTool(pendingTool);
-          setPendingTool(null);
+          setConfirmLeave(false);
           setQuizBusy(false);
+          openHome();
         }}
-        onCancel={() => setPendingTool(null)}
+        onCancel={() => setConfirmLeave(false)}
       />
     </>
   );

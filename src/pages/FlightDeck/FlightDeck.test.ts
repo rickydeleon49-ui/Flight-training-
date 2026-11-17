@@ -156,7 +156,7 @@ describe("FlightDeck and reminders bound homework actions", () => {
     appData.homework = [hwSnapshot];
 
     render(h(MemoryRouter, null, h(PilotToolkit)));
-    fireEvent.click(screen.getByRole("tab", { name: "Reminders" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Reminders/ }));
 
     expect(await screen.findByText("Training reminders")).toBeTruthy();
     expect(screen.getByText("Homework overdue")).toBeTruthy();
