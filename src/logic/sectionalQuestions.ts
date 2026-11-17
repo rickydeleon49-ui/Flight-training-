@@ -1,0 +1,190 @@
+import type { PracticeQuestion } from "@/domain/types";
+
+/**
+ * BL-80: practice questions read from the optional sectional chart pack. Written in our own words
+ * (never copied from FAA tests). Plain data; `figureId` points into `SECTIONAL_PACK.figures`.
+ */
+export const SECTIONAL_QUESTIONS: readonly PracticeQuestion[] = [
+  // Figure 20 (Norfolk, Virginia)
+  {
+    figureId: "faa-20",
+    question: "Find Norfolk Intl (ORF) in the upper half of this excerpt, just east of Norfolk. Which frequency is shown for its control tower (CT)?",
+    options: ["118.9", "120.8", "127.15"],
+    correctIndex: 1,
+    explanation: "The CT value is the tower frequency, 120.8 here. The 127.15 beside it is the ATIS, the recorded airport information, and 118.9 is a Norfolk approach frequency in a nearby box.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-20",
+    question: "East of Virginia Beach, the blue hatched areas labelled W-50A, W-50B and W-50C are which kind of special-use airspace?",
+    options: ["Restricted areas", "Military operations areas", "Warning areas"],
+    correctIndex: 2,
+    explanation: "The chart prints the word WARNING with these areas. They sit over the ocean, where activity such as military exercises can be hazardous to aircraft.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-20",
+    question: "Near Fentress NALF, a red-bordered CAUTION box sits south of Norfolk. What does it point out?",
+    options: [
+      "High density military operations near Oceana NAS and Fentress NALF",
+      "An unmarked balloon on a cable",
+      "A wildlife refuge closed to aircraft",
+    ],
+    correctIndex: 0,
+    explanation: "The box names high density military operations in the vicinity of Oceana NAS and Fentress NALF. A different caution box farther south warns about an unmarked balloon on a cable.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-20",
+    question: "Chesapeake Rgnl (CPK) lists \"AWOS-3 123.675\" and \"123.075\". Which one is the automated weather broadcast frequency?",
+    options: ["123.075", "They are the same service", "123.675"],
+    correctIndex: 2,
+    explanation: "The frequency printed right after AWOS-3 is the automated weather broadcast. The italic 123.075 with the runway data is the common traffic advisory frequency for the airport.",
+    sourcePage: null,
+  },
+  // Figure 21 (Minot, North Dakota)
+  {
+    figureId: "faa-21",
+    question: "Minot Intl (MOT) is at the top of this excerpt. Which frequency is printed for its ASOS weather broadcast?",
+    options: ["118.725", "118.2", "122.95"],
+    correctIndex: 0,
+    explanation: "ASOS 118.725 is the automated weather broadcast. The CT 118.2 is the control tower, and the italic 122.95 after the runway data is the UNICOM frequency.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-21",
+    question: "Garrison (D05) shows \"1937 *L 37 122.9\". How long is its longest runway?",
+    options: ["1,937 feet", "122 feet", "3,700 feet"],
+    correctIndex: 2,
+    explanation: "On the chart the runway length is in hundreds of feet, so 37 means 3,700 feet. The 1937 is the airport elevation in feet, and 122.9 is its common traffic advisory frequency.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-21",
+    question: "On the east side of this excerpt, the area labelled DEVILS LAKE WEST is which kind of special-use airspace?",
+    options: ["Military operations area", "Prohibited area", "Restricted area"],
+    correctIndex: 0,
+    explanation: "The label ends in MOA, short for military operations area. It is drawn with a magenta hatched edge along its border.",
+    sourcePage: null,
+  },
+  // Figure 22 (northern Idaho)
+  {
+    figureId: "faa-22",
+    question: "Find Coeur d'Alene-Boyington (COE) at the left side. Which frequency is its AWOS-3?",
+    options: ["122.8", "135.425", "135.075"],
+    correctIndex: 2,
+    explanation: "AWOS-3 135.075 is printed in the airport label. The italic 122.8 is the common traffic advisory frequency, and 135.425 belongs to the AWOS-3 at Sandpoint (SZT) farther north.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-22",
+    question: "In the legend at the top right, what contour interval does this excerpt show?",
+    options: ["500 feet", "1,000 feet", "12,799 feet"],
+    correctIndex: 0,
+    explanation: "The legend says CONTOUR INTERVAL 500 feet, so neighbouring contour lines differ by 500 feet in elevation. The 12799 at the top of the colour bar is the highest elevation shown on the scale.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-22",
+    question: "The VOR-DME box for Coeur d'Alene (COE) gives which frequency?",
+    options: ["115.5", "108.8", "122.05"],
+    correctIndex: 1,
+    explanation: "The box reads 108.8 Ch 25 COE: the VOR frequency, its paired channel and its identifier. The 115.5 belongs to the VORTAC with identifier GEG at the lower left.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-22",
+    question: "Comparing Shoshone Co (S83) and St Maries (S72), which has the longer longest runway?",
+    options: ["St Maries (S72)", "They are the same", "Shoshone Co (S83)"],
+    correctIndex: 2,
+    explanation: "Shoshone Co shows L 53 (5,300 feet) while St Maries shows L 33 (3,300 feet). The L figure is the longest runway in hundreds of feet.",
+    sourcePage: null,
+  },
+  // Figure 26 (Jamestown, North Dakota)
+  {
+    figureId: "faa-26",
+    question: "Find Jamestown Rgnl (JMS) in the lower half, next to the town of Jamestown. Which frequency is its ASOS?",
+    options: ["123.0", "114.5", "118.425"],
+    correctIndex: 2,
+    explanation: "ASOS 118.425 is the automated weather broadcast. The italic 123.0 is the common traffic advisory frequency, and 114.5 is the Jamestown VOR-DME.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-26",
+    question: "The box at the upper left says \"FOR INFORMATION ON R-5402 AND R-5403 CALL 1-800-972-8824\". What kind of airspace are R-5402 and R-5403?",
+    options: ["Warning areas", "Restricted areas", "Alert areas"],
+    correctIndex: 1,
+    explanation: "The R in R-5402 and R-5403 means restricted area, and the chart prints the word RESTRICTED beside each. The box gives a number to call for activity information.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-26",
+    question: "Cooperstown (S32) lists \"1424 *L 35 122.9\". What is the airport elevation?",
+    options: ["3,500 feet", "1,424 feet", "122 feet"],
+    correctIndex: 1,
+    explanation: "The first number in the airport data is the elevation in feet, 1,424. The 35 is the longest runway in hundreds of feet, and 122.9 is the common traffic advisory frequency.",
+    sourcePage: null,
+  },
+  // Figure 59 (Toledo, Ohio)
+  {
+    figureId: "faa-59",
+    question: "Toledo Express (TOL) sits at the centre of the magenta Toledo Class C rings. Which frequency is its control tower (CT)?",
+    options: ["118.75", "122.95", "118.1"],
+    correctIndex: 2,
+    explanation: "CT - 118.1 is the tower frequency. The 118.75 is the ATIS, and the italic 122.95 after the runway data is the UNICOM frequency (it has no C symbol).",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-59",
+    question: "Two magenta CTC TOLEDO APP boxes are on this excerpt. Which VHF frequency does the box at the left, near Liberty Center, tell you to use within 20 NM?",
+    options: ["134.35", "126.1", "118.1"],
+    correctIndex: 0,
+    explanation: "CTC means contact. The box near Liberty Center reads CTC TOLEDO APP WITHIN 20 NM ON 134.35. The 126.1 is in the other approach box at the upper right, and 118.1 is the Toledo Express tower.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-59",
+    question: "Findlay (FDY) lists \"813 *L 65 122.725\". How long is its longest runway?",
+    options: ["650 feet", "8,130 feet", "6,500 feet"],
+    correctIndex: 2,
+    explanation: "The L value is the longest runway in hundreds of feet, so 65 means 6,500 feet. The 813 is the airport elevation in feet.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-59",
+    question: "Near Bowling Green, the box labelled WATERVILLE gives which VOR frequency?",
+    options: ["113.1", "108.2", "122.1"],
+    correctIndex: 0,
+    explanation: "The Waterville box reads 113.1 Ch 78 VWV. The 108.2 is the Flag City box (identifier FBC) farther south.",
+    sourcePage: null,
+  },
+  // Figure 69 (Corpus Christi, Texas)
+  {
+    figureId: "faa-69",
+    question: "Corpus Christi Intl (CRP) is just east of the CORPUS CHRISTI CLASS C label. Which frequency is shown for its control tower (CT)?",
+    options: ["126.8", "122.95", "119.4"],
+    correctIndex: 2,
+    explanation: "CT - 119.4 is the tower frequency. The 126.8 is the ATIS, and the italic 122.95 after the runway data is the UNICOM frequency (it has no C symbol).",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-69",
+    question: "West of Corpus Christi is the label ALERT AREA A-632C. What activity does the chart print with it?",
+    options: [
+      "Concentrated student jet training",
+      "Parachute jumping",
+      "Glider operations",
+    ],
+    correctIndex: 0,
+    explanation: "The words CONCENTRATED STUDENT JET TRAINING sit right under the A-632C label. An alert area marks heavy or unusual flying activity, so you should keep a sharp lookout when you pass through it.",
+    sourcePage: null,
+  },
+  {
+    figureId: "faa-69",
+    question: "Bishop (07R) lists \"55 L 32 122.9\". How long is its longest runway?",
+    options: ["5,500 feet", "55 feet", "3,200 feet"],
+    correctIndex: 2,
+    explanation: "On the chart the runway length is in hundreds of feet, so 32 means 3,200 feet. The 55 is the airport elevation in feet.",
+    sourcePage: null,
+  },
+];
