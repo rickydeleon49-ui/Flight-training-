@@ -392,6 +392,14 @@ function bundledEntries(root, packages) {
     "A work of the U.S. Federal Aviation Administration, not subject to copyright in the United",
     "States (17 U.S.C. 105). Listed for attribution; FAA handbooks are downloaded, not bundled.",
   ]);
+
+  entries.push([
+    "FAA knowledge test figures (src/assets/figures/faa-*.webp)",
+    "https://www.faa.gov/training_testing/testing/supplements",
+    "From the FAA \"Airman Knowledge Testing Supplement for Sport Pilot, Recreational Pilot, Remote Pilot,",
+    "and Private Pilot\" (FAA-CT-8080-2H, 2018), a work of the U.S. Federal Aviation Administration,",
+    "believed to be in the public domain (17 U.S.C. 105). The figures are cropped and converted to WebP.",
+  ]);
   return entries;
 }
 
