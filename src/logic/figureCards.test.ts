@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { addNewFigureCards, figureCards } from "./figureCards";
 import { FIGURE_QUESTIONS } from "./figureQuestions";
 import type { MixedQuestion } from "./mixedPractice";
+import { SECTIONAL_QUESTIONS } from "./sectionalQuestions";
 import { authoringStateOf } from "./studySetEditing";
 
 const mixed = (i: number): MixedQuestion => ({ question: FIGURE_QUESTIONS[i]!, materialId: "faa-figures", materialTitle: "FAA test figures" });
@@ -24,4 +25,10 @@ it("adds only cards not already in the set", async () => {
   expect(again.state.items.filter((i) => i.kind === "card")).toHaveLength(3);
   const none = await addNewFigureCards(again.state, cards);
   expect(none.added).toBe(0);
+});
+
+it("names the figure number for a pack figure", () => {
+  const q = SECTIONAL_QUESTIONS[0]!;
+  const cards = figureCards([{ question: q, materialId: "faa-figures", materialTitle: "FAA test figures" }]);
+  expect(cards[0]!.front).toBe(`Figure 20 (FAA-CT-8080-2H): ${q.question}`);
 });

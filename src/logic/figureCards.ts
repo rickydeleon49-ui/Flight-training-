@@ -1,6 +1,7 @@
 /** BL-80: review cards made from missed FAA figure questions. Pure; modelled on pohCards.ts. */
 import type { MixedQuestion } from "@/logic/mixedPractice";
-import { getFigure } from "@/logic/figures";
+import { getFigure, type FaaFigure } from "@/logic/figures";
+import { getSectionalFigure } from "@/logic/sectionalPack";
 import { normalizedStudyText, prepareStudyEdit, type AuthoringState } from "@/logic/studyAuthoring";
 
 export const FIGURE_MATERIAL_TITLE = "FAA test figures";
@@ -9,11 +10,13 @@ export interface FigureCard { front: string; back: string }
 const clean = (text: string) => text.replace(/\s+/gu, " ").trim();
 
 /** One card per missed question; the same question twice makes one card. */
-export function figureCards(missed: readonly MixedQuestion[]): FigureCard[] {
+const bundledOrPack = (id: string) => getFigure(id) ?? getSectionalFigure(id);
+
+export function figureCards(missed: readonly MixedQuestion[], lookup: (id: string) => FaaFigure | undefined = bundledOrPack): FigureCard[] {
   const seen = new Set<string>();
   const cards: FigureCard[] = [];
   for (const { question } of missed) {
-    const figure = question.figureId ? getFigure(question.figureId) : undefined;
+    const figure = question.figureId ? lookup(question.figureId) : undefined;
     const lead = figure ? `Figure ${figure.faaNumber} (${figure.edition.split(" ")[0]}): ` : "";
     const front = clean(`${lead}${question.question}`);
     const key = normalizedStudyText(front);
