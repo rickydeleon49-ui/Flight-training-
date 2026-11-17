@@ -126,7 +126,7 @@ describe("DATES-01 pages save a typed date as typed", () => {
 
   it("Pilot Toolkit: a certificate's issued and expiry dates", async () => {
     await open("/toolkit");
-    fireEvent.click(await screen.findByRole("tab", { name: "Certificates" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Certificates/ }));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Third-class medical" } });
     typeDate("Issued", "11052026");
     typeDate("Expires", "02/30/2031");

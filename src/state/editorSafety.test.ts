@@ -201,7 +201,7 @@ it("recovers a journal draft and preserves it through a background refresh", asy
 });
 
 it("keeps both rapid readiness changes instead of overwriting the first snapshot", async () => {
-  await open("/toolkit");
+  await open("/toolkit?tool=readiness");
   const selects = screen.getAllByRole("combobox");
   const ids = context.data.toolkit.readinessItems
     .slice(0, 2)

@@ -60,141 +60,36 @@ beforeEach(() => {
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
-  it("establishes valid tab and panel relationships", () => {
+describe("PilotToolkit home of tiles", () => {
+  it("shows 4 group headings and 11 tool tiles, and no tab strip", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
-
-    const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(11);
-
-    const activeTab = screen.getByRole("tab", { selected: true });
-    expect(activeTab.id).toBe("toolkit-tab-readiness");
-    expect(activeTab.getAttribute("aria-controls")).toBe("toolkit-panel-readiness");
-
-    const panel = screen.getByRole("tabpanel");
-    expect(panel.id).toBe("toolkit-panel-readiness");
-    expect(panel.getAttribute("aria-labelledby")).toBe("toolkit-tab-readiness");
+    expect(screen.getAllByRole("heading", { level: 3 }).map((e) => e.textContent)).toEqual([
+      "Checkride", "Plan a flight", "Practice", "My records",
+    ]);
+    const tiles = document.querySelectorAll("button.toolkit-tile");
+    expect(tiles).toHaveLength(11);
+    expect(screen.queryAllByRole("tab")).toHaveLength(0);
+    expect(screen.getByText("Choose a tool to open it.")).toBeTruthy();
   });
 
-  it("enforces roving tabindex with exactly one tabIndex=0", () => {
+  it("opens a tool from its tile, and All tools returns to the home", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
-
-    const tabs = screen.getAllByRole("tab");
-    const activeTabs = tabs.filter((t) => t.tabIndex === 0);
-    const inactiveTabs = tabs.filter((t) => t.tabIndex === -1);
-
-    expect(activeTabs).toHaveLength(1);
-    expect(activeTabs[0]!.getAttribute("aria-selected")).toBe("true");
-    expect(inactiveTabs).toHaveLength(10);
-    for (const tab of inactiveTabs) {
-      expect(tab.getAttribute("aria-selected")).toBe("false");
-    }
+    fireEvent.click(screen.getByRole("button", { name: /^E6B/ }));
+    expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
+    expect(screen.getByText("Plan a flight")).toBeTruthy();
+    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("link", { name: "All tools" }));
+    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(11);
   });
 
-  it("navigates forward and backward with ArrowRight and ArrowLeft", () => {
-    render(h(MemoryRouter, null, h(PilotToolkit)));
-
-    const tabs = screen.getAllByRole("tab");
-    const tab0 = tabs[0]!; // Checkride / readiness
-    const tab1 = tabs[1]!; // Instructor Report / report
-
-    tab0.focus();
-    expect(document.activeElement).toBe(tab0);
-
-    // ArrowRight moves to next tab
-    fireEvent.keyDown(tab0, { key: "ArrowRight" });
-    expect(tab1.getAttribute("aria-selected")).toBe("true");
-    expect(tab1.tabIndex).toBe(0);
-    expect(tab0.tabIndex).toBe(-1);
-    expect(document.activeElement).toBe(tab1);
-
-    const panel1 = screen.getByRole("tabpanel");
-    expect(panel1.id).toBe("toolkit-panel-report");
-    expect(panel1.getAttribute("aria-labelledby")).toBe("toolkit-tab-report");
-
-    // ArrowLeft moves back to previous tab
-    fireEvent.keyDown(tab1, { key: "ArrowLeft" });
-    expect(tab0.getAttribute("aria-selected")).toBe("true");
-    expect(tab0.tabIndex).toBe(0);
-    expect(document.activeElement).toBe(tab0);
-
-    const panel0 = screen.getByRole("tabpanel");
-    expect(panel0.id).toBe("toolkit-panel-readiness");
-    expect(panel0.getAttribute("aria-labelledby")).toBe("toolkit-tab-readiness");
+  it("opens a tool directly from ?tool=e6b", () => {
+    render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=e6b"] }, h(PilotToolkit)));
+    expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
   });
 
-  it("wraps around at both ends with ArrowLeft and ArrowRight", () => {
-    render(h(MemoryRouter, null, h(PilotToolkit)));
-
-    const tabs = screen.getAllByRole("tab");
-    const firstTab = tabs[0]!;
-    const lastTab = tabs[tabs.length - 1]!; // Career Portfolio / career
-
-    firstTab.focus();
-
-    // ArrowLeft from first wraps to last
-    fireEvent.keyDown(firstTab, { key: "ArrowLeft" });
-    expect(lastTab.getAttribute("aria-selected")).toBe("true");
-    expect(lastTab.tabIndex).toBe(0);
-    expect(firstTab.tabIndex).toBe(-1);
-    expect(document.activeElement).toBe(lastTab);
-
-    const lastPanel = screen.getByRole("tabpanel");
-    expect(lastPanel.id).toBe("toolkit-panel-career");
-    expect(lastPanel.getAttribute("aria-labelledby")).toBe("toolkit-tab-career");
-
-    // ArrowRight from last wraps to first
-    fireEvent.keyDown(lastTab, { key: "ArrowRight" });
-    expect(firstTab.getAttribute("aria-selected")).toBe("true");
-    expect(firstTab.tabIndex).toBe(0);
-    expect(document.activeElement).toBe(firstTab);
-
-    const firstPanel = screen.getByRole("tabpanel");
-    expect(firstPanel.id).toBe("toolkit-panel-readiness");
-  });
-
-  it("navigates directly to ends with Home and End keys", () => {
-    render(h(MemoryRouter, null, h(PilotToolkit)));
-
-    const tabs = screen.getAllByRole("tab");
-    const firstTab = tabs[0]!;
-    const middleTab = tabs[3]!; // Cost Forecast
-    const lastTab = tabs[tabs.length - 1]!;
-
-    // Click middle tab first
-    fireEvent.click(middleTab);
-    expect(middleTab.getAttribute("aria-selected")).toBe("true");
-
-    // End key moves to last tab
-    fireEvent.keyDown(middleTab, { key: "End" });
-    expect(lastTab.getAttribute("aria-selected")).toBe("true");
-    expect(lastTab.tabIndex).toBe(0);
-    expect(document.activeElement).toBe(lastTab);
-    expect(screen.getByRole("tabpanel").id).toBe("toolkit-panel-career");
-
-    // Home key moves to first tab
-    fireEvent.keyDown(lastTab, { key: "Home" });
-    expect(firstTab.getAttribute("aria-selected")).toBe("true");
-    expect(firstTab.tabIndex).toBe(0);
-    expect(document.activeElement).toBe(firstTab);
-    expect(screen.getByRole("tabpanel").id).toBe("toolkit-panel-readiness");
-  });
-
-  it("synchronizes selection, focus, and visible panel on click", () => {
-    render(h(MemoryRouter, null, h(PilotToolkit)));
-
-    const tabs = screen.getAllByRole("tab");
-    const certsTab = tabs[2]!; // Certificates / records
-
-    fireEvent.click(certsTab);
-
-    expect(certsTab.getAttribute("aria-selected")).toBe("true");
-    expect(certsTab.tabIndex).toBe(0);
-    expect(document.activeElement).toBe(certsTab);
-
-    const panel = screen.getByRole("tabpanel");
-    expect(panel.id).toBe("toolkit-panel-records");
-    expect(panel.getAttribute("aria-labelledby")).toBe("toolkit-tab-records");
+  it("shows the home for an unknown ?tool= value", () => {
+    render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=nope"] }, h(PilotToolkit)));
+    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(11);
   });
 });
 
@@ -204,7 +99,7 @@ it("shows reminders in Toolkit and asks notification permission only through its
   data.toolkit = { ...data.toolkit, remindersEnabled: false };
   render(h(MemoryRouter, null, h(PilotToolkit)));
   expect(requestPermission).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("tab", { name: "Reminders" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Reminders/ }));
   expect(screen.getByText("Fictional pattern work")).toBeTruthy();
   expect(screen.getByText(/Your reminder list is here in Pilot Toolkit/)).toBeTruthy();
   expect(screen.queryByText(/popup when the app opens/)).toBeNull();
@@ -217,7 +112,7 @@ it("shows reminders in Toolkit and asks notification permission only through its
 it("keeps checked reminder settings readable without a completion strike", () => {
   data.toolkit = { ...data.toolkit, remindersEnabled: true };
   render(h(MemoryRouter, null, h(PilotToolkit)));
-  fireEvent.click(screen.getByRole("tab", { name: "Reminders" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Reminders/ }));
   const checkbox = screen.getByRole("checkbox", { name: /Show system reminders/ }) as HTMLInputElement;
   expect(checkbox.checked).toBe(true);
   const label = checkbox.closest("label")!.querySelector<HTMLElement>(".checkbox__label")!;
@@ -226,7 +121,7 @@ it("keeps checked reminder settings readable without a completion strike", () =>
 
 it("lets her clear a half-typed certificate form, and shows Clear only when something is typed", () => {
   render(h(MemoryRouter, null, h(PilotToolkit)));
-  fireEvent.click(screen.getByRole("tab", { name: "Certificates" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Certificates/ }));
   expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
   const title = screen.getByRole("textbox", { name: "Title" }) as HTMLInputElement;
   fireEvent.change(title, { target: { value: "Student pilot certificate" } });
@@ -237,24 +132,19 @@ it("lets her clear a half-typed certificate form, and shows Clear only when some
 
 it("says 'In progress' in the instructor report when no goal is being worked on", () => {
   render(h(MemoryRouter, null, h(PilotToolkit)));
-  fireEvent.click(screen.getByRole("tab", { name: "Instructor Report" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Instructor Report/ }));
   expect(screen.getByText("No goals marked In Progress.")).toBeTruthy();
 });
 
 it("opens on Quizzes when the address says ?tool=quiz (the Study Library's Practice test link)", () => {
   render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=quiz"] }, h(PilotToolkit)));
-  expect(screen.getByRole("tab", { name: "Quizzes" }).getAttribute("aria-selected")).toBe("true");
-});
-
-it("opens on Checkride for an unknown ?tool= value", () => {
-  render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=nope"] }, h(PilotToolkit)));
-  expect(screen.getByRole("tab", { name: "Checkride" }).getAttribute("aria-selected")).toBe("true");
+  expect(screen.getByRole("heading", { level: 2, name: "Quizzes" })).toBeTruthy();
 });
 
 describe("Knowledge quiz history", () => {
   it("says which list it shows, since material practice tests are counted elsewhere", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
-    fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Quizzes/ }));
     expect(screen.getByText(/No knowledge quiz attempts yet\./)).toBeTruthy();
     expect(screen.getByText(/Practice tests on your study materials are kept in the Study Library/)).toBeTruthy();
   });
@@ -268,7 +158,7 @@ describe("Knowledge quiz history", () => {
       },
     } as unknown as AppData;
     render(h(MemoryRouter, null, h(PilotToolkit)));
-    fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Quizzes/ }));
     expect(screen.getByText("6/8")).toBeTruthy();
     expect(screen.queryByText(/No knowledge quiz attempts yet/)).toBeNull();
   });
@@ -277,7 +167,7 @@ describe("Knowledge quiz history", () => {
 describe("Knowledge quiz result", () => {
   const openQuiz = () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
-    fireEvent.click(screen.getByRole("tab", { name: /quiz/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Quizzes/ }));
     fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
   };
   // The quiz draws a random set, so find each question by the prompt on screen.

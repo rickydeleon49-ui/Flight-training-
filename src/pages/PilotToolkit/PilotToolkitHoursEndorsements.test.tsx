@@ -43,7 +43,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 it("Checkride tab shows the hours still to go rows", () => {
-  render(<MemoryRouter><PilotToolkit /></MemoryRouter>);
+  render(<MemoryRouter initialEntries={["/?tool=readiness"]}><PilotToolkit /></MemoryRouter>);
   expect(screen.getByText(/Hours still to go \(14 CFR 61\.109\(a\)\)/)).toBeTruthy();
   expect(screen.getByTestId("hours-to-go-total").textContent).toContain("28.0 h to go");
   expect(screen.getByTestId("hours-to-go-training").textContent).toContain("11.0 h to go");

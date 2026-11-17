@@ -77,7 +77,7 @@ const previous: CredentialRecord = { ...medical, id: "med-old", title: "Previous
 async function showRecords() {
   render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(PilotToolkit))));
   await waitFor(() => expect(status).toBe("ready"));
-  fireEvent.click(await screen.findByRole("tab", { name: "Certificates" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Certificates/ }));
 }
 
 beforeEach(async () => {
@@ -312,9 +312,11 @@ describe("two different medical dates: one choice at a time, against current dat
     await act(async () => {
       fireEvent.click(choices().record);
     });
-    fireEvent.click(screen.getByRole("tab", { name: "Cost Forecast" }));
+    fireEvent.click(screen.getByRole("link", { name: "All tools" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Cost Forecast/ }));
     expect(screen.queryByRole("note", { name: "Medical dates differ" })).toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: "Certificates" }));
+    fireEvent.click(screen.getByRole("link", { name: "All tools" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Certificates/ }));
     const { record, settings } = choices();
     expect(record.disabled).toBe(true);
     expect(settings.disabled).toBe(true);
