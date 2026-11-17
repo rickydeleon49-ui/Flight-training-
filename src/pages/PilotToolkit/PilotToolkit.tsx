@@ -91,6 +91,7 @@ import { ChartSymbolDrill } from "./ChartSymbolDrill";
 import { AccidentCaseDrill } from "./AccidentCaseDrill";
 import { InoperativeEquipmentCard } from "./InoperativeEquipmentCard";
 import { FigureDrill } from "./FigureDrill";
+import { SectionalDrill } from "./SectionalDrill";
 import { RegCardDrill } from "./RegCardDrill";
 import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
@@ -454,6 +455,7 @@ export function PilotToolkit() {
             <ChartSymbolDrill />
             <RegCardDrill />
             <FigureDrill />
+            <SectionalDrill />
           </>
         ) : null}
         {tool === "reminders" ? (
