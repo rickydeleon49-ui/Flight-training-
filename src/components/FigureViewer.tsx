@@ -10,7 +10,7 @@ const MAX = 400;
 const STEP = 25;
 
 /** One figure with zoom 100-400%, drag to pan, and Fit. Used inline and inside the full-screen dialog. */
-function FigureStage({ figure, tall }: { figure: FaaFigure; tall?: boolean }) {
+function FigureStage({ figure, tall, src }: { figure: FaaFigure; tall?: boolean; src?: string }) {
   const [percent, setPercent] = useState(MIN);
   const scroller = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
@@ -58,7 +58,7 @@ function FigureStage({ figure, tall }: { figure: FaaFigure; tall?: boolean }) {
       >
         <img
           className="figure-stage__img"
-          src={figureUrl(figure)}
+          src={src ?? figureUrl(figure)}
           alt={figure.alt}
           width={figure.width}
           height={figure.height}
@@ -73,7 +73,7 @@ function FigureStage({ figure, tall }: { figure: FaaFigure; tall?: boolean }) {
 }
 
 /** Inline figure card: zoomable image, caption with credit, and a full-screen dialog. */
-export function FigureViewer({ figure }: { figure: FaaFigure }) {
+export function FigureViewer({ figure, src }: { figure: FaaFigure; src?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <figure className="figure-view">
@@ -81,7 +81,7 @@ export function FigureViewer({ figure }: { figure: FaaFigure }) {
         <span className="figure-view__title">{figure.title}</span>
         <Button type="button" size="small" variant="secondary" onClick={() => setOpen(true)}>Full screen</Button>
       </div>
-      <FigureStage figure={figure} />
+      <FigureStage figure={figure} src={src} />
       <figcaption className="figure-view__caption">
         <span className="tiny dim">{figureCredit(figure)}</span>
         <span className="tiny figure-view__practice">Practice, not for flight</span>
@@ -89,7 +89,7 @@ export function FigureViewer({ figure }: { figure: FaaFigure }) {
       <p className="tiny dim figure-view__hint">Pinch or use + and − to look closer. Pan by dragging.</p>
       {open ? (
         <Dialog open onClose={() => setOpen(false)} title={figure.title} className="dialog--figure">
-          <FigureStage figure={figure} tall />
+          <FigureStage figure={figure} src={src} tall />
           <p className="tiny dim">{figureCredit(figure)} · Practice, not for flight</p>
         </Dialog>
       ) : null}

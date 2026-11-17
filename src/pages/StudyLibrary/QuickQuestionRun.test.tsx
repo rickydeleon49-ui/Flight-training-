@@ -33,3 +33,11 @@ it("calls onFinished once with the missed questions", () => {
   expect(onFinished).toHaveBeenCalledTimes(1);
   expect(onFinished.mock.calls[0]![0].map((m: MixedQuestion) => m.question.question)).toEqual(["B"]);
 });
+
+it("uses resolveFigure for the figure and its image source", () => {
+  const figure = { id: "faa-900", faaNumber: 900, title: "Sectional", alt: "A sectional excerpt", file: "faa-900.webp", edition: "FAA-CT-8080-2H (2018)" as const, width: 10, height: 10 };
+  const resolveFigure = vi.fn((id: string) => id === "faa-900" ? { figure, src: "data:image/webp;base64,AAAA" } : undefined);
+  render(h(QuickQuestionRun, { questions: [mq("Pack", "faa-900")], resultLabel: "r", onDone: () => {}, resolveFigure }));
+  expect(resolveFigure).toHaveBeenCalledWith("faa-900");
+  expect(screen.getByRole("img").getAttribute("src")).toBe("data:image/webp;base64,AAAA");
+});

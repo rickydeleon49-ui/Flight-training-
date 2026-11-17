@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Badge, Button } from "@/components/ui";
 import { FigureViewer } from "@/components/FigureViewer";
-import { getFigure } from "@/logic/figures";
+import { getFigure, type FaaFigure } from "@/logic/figures";
 import type { MixedQuestion } from "@/logic/mixedPractice";
 
 /**
@@ -10,7 +10,7 @@ import type { MixedQuestion } from "@/logic/mixedPractice";
  * for today only. Nothing here reads or writes the database: the caller owns
  * the questions and gets `onDone` when the student closes the result.
  */
-export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, onFinished }: {
+export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, onFinished, resolveFigure }: {
   questions: readonly MixedQuestion[];
   /** Accessible name of the result section. */
   resultLabel: string;
@@ -19,6 +19,8 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, o
   onProgress?: (started: boolean, finished: boolean) => void;
   /** Called once when the run ends, with the questions answered wrong. */
   onFinished?: (missed: MixedQuestion[]) => void;
+  /** Finds a question's figure (and an optional image source, e.g. from a downloaded pack). Defaults to the bundled figures. */
+  resolveFigure?: (id: string) => { figure: FaaFigure; src?: string } | undefined;
 }) {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<number | null>(null);
@@ -47,7 +49,10 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, o
   const total = questions.length;
   const percent = total ? Math.round((correct / total) * 100) : 0;
 
-  const figure = question?.figureId ? getFigure(question.figureId) : undefined;
+  const resolved: { figure: FaaFigure; src?: string } | undefined = question?.figureId
+    ? (resolveFigure ? resolveFigure(question.figureId) : (() => { const f = getFigure(question.figureId!); return f ? { figure: f } : undefined; })())
+    : undefined;
+  const figure = resolved?.figure;
   const body = question && current ? <>
       <h3 ref={heading} tabIndex={-1} className="ai-guide__title">Question {index + 1} of {total}</h3>
       <p className="small ai-copy">{question.question}</p>
@@ -67,7 +72,7 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, o
 
   return <>
     {figure ? <div className="figure-run figure-run--with">
-      <FigureViewer key={figure.id} figure={figure} />
+      <FigureViewer key={figure.id} figure={figure} src={resolved?.src} />
       <div className="stack stack--2">{body}</div>
     </div> : body}
     {finished ? <section className="stack stack--2" aria-label={resultLabel}>

@@ -53,3 +53,8 @@ it("opens full screen in a dialog and closes it with Escape", () => {
   fireEvent(dialog, new Event("cancel", { cancelable: true }));
   expect(document.querySelector("dialog")).toBeNull();
 });
+
+it("uses the src override when given", () => {
+  render(h(FigureViewer, { figure, src: "data:image/webp;base64,AAAA" }));
+  expect((screen.getByRole("img", { name: figure.alt }) as HTMLImageElement).getAttribute("src")).toBe("data:image/webp;base64,AAAA");
+});

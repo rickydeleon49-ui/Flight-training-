@@ -77,6 +77,13 @@ IP address.
 - When you press download on an FAA handbook, the app downloads that PDF from
   `www.faa.gov`. Nothing about you is sent with the request.
 
+### Optional figure packs
+
+- When you press download on an optional figure pack (such as the sectional
+  chart excerpts), the app downloads one file from `github.com`, which may
+  hand the download on to `objects.githubusercontent.com`. Nothing about you
+  is sent with the request.
+
 ### Links you open
 
 - Links to outside websites (for example FAA pages, Google AI Studio or videos)
