@@ -61,6 +61,10 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string; keywords?
   { label: "Regulation cards", to: "/toolkit?tool=quiz", detail: "Pilot Toolkit > Quizzes: drill the reg cards", keywords: "reg cards regulation card drill VFR minimums scenarios inoperative equipment 91.213 91.155" },
   { label: "Safety Check", to: "/toolkit?tool=safety", detail: "Pilot Toolkit: check your own minimums before a flight", keywords: "safety check personal minimums minimums IMSAFE PAVE" },
   { label: "Oral practice", to: "/study", detail: "Study Library: open a material, then Oral questions", keywords: "oral examiner oral questions scenarios practice an oral question" },
+  { label: "Review due cards", to: "/study?tab=due", detail: "Study Library: flashcards due for review", keywords: "review due flashcards cards due today spaced review" },
+  { label: "Mixed practice test", to: "/study", detail: "Study Library: use the Mixed practice test button", keywords: "mixed practice practice test mix of materials" },
+  { label: "How to", to: "/study?tab=howto", detail: "Study Library: how to study and use the app", keywords: "help how to guide tips getting started" },
+  { label: "Add cards from Quizlet", to: "/study", detail: "Study Library: open a material, then Edit cards", keywords: "quizlet import paste cards edit cards" },
   { label: "Settings", to: "/settings", detail: "Profile and preferences" },
 ];
 

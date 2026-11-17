@@ -56,6 +56,26 @@ describe("quickFind", () => {
     expect(quickFind(EMPTY_DATA, query, TODAY).map((r) => r.label)).toContain("Oral practice");
   });
 
+  it.each([
+    ["mixed practice", "Mixed practice test", "/study"],
+    ["review due", "Review due cards", "/study?tab=due"],
+    ["help", "How to", "/study?tab=howto"],
+    ["how to", "How to", "/study?tab=howto"],
+    ["quizlet", "Add cards from Quizlet", "/study"],
+  ])("reaches the right Study Library spot for %s", (query, label, to) => {
+    const hit = quickFind(EMPTY_DATA, query, TODAY).find((r) => r.label === label);
+    expect(hit?.to).toBe(to);
+  });
+
+  it.each([
+    ["safety check", "Safety Check"],
+    ["personal minimums", "Safety Check"],
+    ["metar", "METAR explainer"],
+    ["notam", "METAR explainer"],
+  ])("keeps %s landing on %s first", (query, label) => {
+    expect(quickFind(EMPTY_DATA, query, TODAY)[0]?.label).toBe(label);
+  });
+
   it("ranks the METAR explainer above an oral-question note that mentions metar (BL-63)", () => {
     const records: AppData = {
       ...EMPTY_DATA,
