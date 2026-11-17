@@ -395,7 +395,7 @@ describe("Quick Find screen reader pattern", () => {
     act(() => { window.dispatchEvent(new Event(QUICK_FIND_EVENT)); });
     const region = screen.getByRole("status");
     expect(region.textContent).toBe("");
-    fireEvent.change(input(), { target: { value: "z" } });
+    fireEvent.change(input(), { target: { value: "j" } });
     expect(screen.getByRole("status")).toBe(region);
     expect(region.textContent).toContain("Nothing matches");
     expect(input().getAttribute("aria-expanded")).toBe("false");
