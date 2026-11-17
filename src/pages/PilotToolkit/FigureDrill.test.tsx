@@ -8,6 +8,12 @@ import { AppDataProvider } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import { FigureDrill } from "./FigureDrill";
 
+// The drill draws up to 10 questions from the pool; pin a 3-question pool (all answer index 0) so the counts stay exact.
+vi.mock("@/logic/figureQuestions", async (orig) => {
+  const real = await orig<typeof import("@/logic/figureQuestions")>();
+  return { ...real, FIGURE_QUESTIONS: real.FIGURE_QUESTIONS.filter((q) => q.correctIndex === 0).slice(0, 3) };
+});
+
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 configure({ asyncUtilTimeout: 20_000 });
