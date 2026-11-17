@@ -18,7 +18,7 @@
 .figure-stage__btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 .figure-stage__pct { min-width: 3.25rem; text-align: center; font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 .figure-stage__scroll {
-  overflow: auto; max-height: 60vh; border: 1px solid var(--border-subtle);
+  overflow: auto; max-height: 45vh; border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm); background: var(--surface-card); touch-action: pan-x pan-y;
 }
 .figure-stage--tall .figure-stage__scroll { max-height: calc(100dvh - 12rem); }
