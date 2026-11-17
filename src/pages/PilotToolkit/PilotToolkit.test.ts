@@ -141,6 +141,11 @@ it("opens on Quizzes when the address says ?tool=quiz (the Study Library's Pract
   expect(screen.getByRole("heading", { level: 2, name: "Quizzes" })).toBeTruthy();
 });
 
+it("shows the FAA figure drill card in Quizzes", () => {
+  render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=quiz"] }, h(PilotToolkit)));
+  expect(screen.getByText("FAA figure drill")).toBeTruthy();
+});
+
 describe("Knowledge quiz history", () => {
   it("says which list it shows, since material practice tests are counted elsewhere", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));

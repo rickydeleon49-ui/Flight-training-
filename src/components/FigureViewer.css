@@ -1,0 +1,36 @@
+/* BL-80: FAA figure viewer. Colours come from tokens only. */
+.figure-view { margin: 0; display: grid; gap: var(--space-2); min-width: 0; }
+.figure-view__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.figure-view__title { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.figure-view__caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-1) var(--space-3); }
+.figure-view__practice { color: var(--status-due-today); font-weight: 600; }
+.figure-view__hint { margin: 0; }
+
+.figure-stage { display: grid; gap: var(--space-2); min-width: 0; }
+.figure-stage__toolbar { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--surface-sunken); justify-self: start; }
+.figure-stage__btn {
+  min-width: 44px; min-height: 44px; border: 0; border-radius: var(--radius-pill);
+  background: transparent; color: var(--text-primary); font: inherit; font-size: var(--text-lg, 1.125rem); cursor: pointer;
+}
+.figure-stage__btn--text { font-size: var(--text-sm); padding: 0 var(--space-3); }
+.figure-stage__btn:hover:not(:disabled) { background: var(--surface-card); }
+.figure-stage__btn:disabled { opacity: 0.4; cursor: default; }
+.figure-stage__btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.figure-stage__pct { min-width: 3.25rem; text-align: center; font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.figure-stage__scroll {
+  overflow: auto; max-height: 60vh; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); background: var(--surface-card); touch-action: pan-x pan-y;
+}
+.figure-stage--tall .figure-stage__scroll { max-height: calc(100dvh - 12rem); }
+.figure-stage__scroll--zoomed { cursor: grab; }
+.figure-stage__scroll:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.figure-stage__img { display: block; max-width: none; height: auto; user-select: none; }
+
+.dialog.dialog--figure { width: calc(100vw - 48px); max-width: 70rem; }
+
+/* Wide: figure left, question right (QuickQuestionRun). */
+.figure-run { display: grid; gap: var(--space-3); min-width: 0; }
+@media (min-width: 900px) {
+  .figure-run--with { grid-template-columns: minmax(0, 1fr) 440px; align-items: start; gap: var(--space-5); }
+  .figure-run--with .figure-stage__scroll { max-height: 70vh; }
+}

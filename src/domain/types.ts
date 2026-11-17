@@ -461,6 +461,8 @@ export interface PracticeQuestion {
   sourcePage: number | null;
   /** Who wrote the question, only when stored authoring data names one; absent otherwise. */
   origin?: StudyItemOrigin;
+  /** BL-80: the bundled FAA figure (`faa-<n>`) this question is read from. Runtime only; never stored. */
+  figureId?: string;
 }
 
 /** A saved Gemini, imported or hand-written practice test, tied to its material. */
