@@ -232,10 +232,12 @@ export function explainNotam(text: string): NotamExplanation {
     i++;
   }
   let keyword = "";
+  let designatorAt = -1;
   if (words[i] !== undefined) {
     const w = words[i]!;
     if (KEYWORDS[w]) {
       keyword = w;
+      if (w === "TWY" || w === "RWY") designatorAt = i + 1;
       tokens.push({ raw: w, meaning: KEYWORDS[w]! });
     } else if (w === "NOTAMR" || w === "NOTAMC") {
       tokens.push({ raw: w, meaning: GLOSSARY[w]! });
@@ -262,6 +264,17 @@ export function explainNotam(text: string): NotamExplanation {
     const next = words[i + 1];
     const nextIsAgl = next !== undefined && core(next) === "AGL";
     let m: RegExpExecArray | null;
+
+    // Name right after TWY or RWY, such as "L" or "13/31"
+    if (
+      i === designatorAt &&
+      /^(?:\d{1,2}[LRC]?(?:\/\d{1,2}[LRC]?)?|[A-Z]{1,2}\d{0,2})$/.test(c) &&
+      !Object.prototype.hasOwnProperty.call(GLOSSARY, c) &&
+      !Object.prototype.hasOwnProperty.call(KEYWORDS, c)
+    ) {
+      push(word, `${keyword === "TWY" ? "Taxiway" : "Runway"} ${c}`);
+      continue;
+    }
 
     // Validity: YYMMDDHHMM-YYMMDDHHMM or -PERM, optionally followed by EST
     if ((m = /^(\d{10})-(\d{10}|PERM)(EST)?$/.exec(c))) {
