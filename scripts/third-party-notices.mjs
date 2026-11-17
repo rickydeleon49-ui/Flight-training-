@@ -399,6 +399,8 @@ function bundledEntries(root, packages) {
     "From the FAA \"Airman Knowledge Testing Supplement for Sport Pilot, Recreational Pilot, Remote Pilot,",
     "and Private Pilot\" (FAA-CT-8080-2H, 2018), a work of the U.S. Federal Aviation Administration,",
     "believed to be in the public domain (17 U.S.C. 105). The figures are cropped and converted to WebP.",
+    "The optional sectional chart pack, downloaded in the app and not bundled, uses figures from the",
+    "same supplement.",
   ]);
   return entries;
 }
