@@ -43,7 +43,7 @@ export function FigurePackCard({ pack, questionCount, onStart }: {
       </> : <>
         <div><Badge tone="neutral">Not downloaded yet</Badge></div>
         <h3 className="ai-guide__title">Practice with sectional charts</h3>
-        <p className="small">Adds {count} sectional excerpts and about {questionCount} questions. Download once, then use them offline.</p>
+        <p className="small">Adds {count} sectional excerpts and {questionCount} questions (each quiz asks up to 10). Download once, then use them offline.</p>
         <p className="tiny dim">About {formatMb(pack.bytes)} MB · Needs internet for the download</p>
         {error ? <p className="small" role="alert">{error}</p> : null}
         <div className="row">

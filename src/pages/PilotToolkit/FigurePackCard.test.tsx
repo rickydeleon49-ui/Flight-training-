@@ -50,7 +50,7 @@ describe("FigurePackCard", () => {
   it("shows the not-downloaded state", async () => {
     view();
     expect(await screen.findByText("Not downloaded yet")).toBeTruthy();
-    expect(screen.getByText(/Adds 3 sectional excerpts and about 20 questions/)).toBeTruthy();
+    expect(screen.getByText(/Adds 3 sectional excerpts and 20 questions \(each quiz asks up to 10\)/)).toBeTruthy();
     expect(screen.getByText(/About 8.0 MB/)).toBeTruthy();
     expect(screen.getByText("Offline? The rest of the figure drill still works.")).toBeTruthy();
   });
