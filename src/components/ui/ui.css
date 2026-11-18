@@ -557,6 +557,13 @@ button[role="tab"] {
 }
 .checkbox--switch input:checked + .checkbox__mark::after { transform: translateX(20px); }
 .checkbox--switch input:focus-visible + .checkbox__mark { box-shadow: var(--focus-ring); }
+/* Dark only: the off knob was a dark disc on a mid-grey track. Use the light text token for the knob and the control edge for the track so off reads clearly. */
+:root[data-theme="dark"] .checkbox--switch input:not(:checked) + .checkbox__mark { background: var(--border-control); }
+:root[data-theme="dark"] .checkbox--switch input:not(:checked) + .checkbox__mark::after { background: var(--text-primary); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .checkbox--switch input:not(:checked) + .checkbox__mark { background: var(--border-control); }
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .checkbox--switch input:not(:checked) + .checkbox__mark::after { background: var(--text-primary); }
+}
 @media (prefers-reduced-motion: reduce) {
   .checkbox--switch .checkbox__mark, .checkbox--switch .checkbox__mark::after { transition: none; }
 }

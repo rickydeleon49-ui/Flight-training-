@@ -217,14 +217,17 @@ export function StudyLibraryReviewDue({
         <LibraryExtraReview plan={extraPlan} repository={reviews} onClose={closeExtra} />
       ) : stream.isCaughtUp ? (
         <Card>
-          <EmptyState title="All caught up!" body="No cards are due for review right now. New and returning cards will show up here." />
-          {reviews ? (
-            <div style={{ marginTop: "var(--space-3)" }}>
-              <Button size="small" disabled={extraBusy} onClick={() => void reviewAnyway()}>
-                {extraBusy ? "Opening…" : "Review 10 anyway from any book"}
-              </Button>
-            </div>
-          ) : null}
+          <EmptyState
+            title="All caught up!"
+            body="No cards are due for review right now. New and returning cards will show up here."
+            action={
+              reviews ? (
+                <Button size="small" disabled={extraBusy} onClick={() => void reviewAnyway()}>
+                  {extraBusy ? "Opening…" : "Review 10 anyway from any book"}
+                </Button>
+              ) : undefined
+            }
+          />
           <p className="live-region small muted" role="status">{extraNote}</p>
         </Card>
       ) : null}
