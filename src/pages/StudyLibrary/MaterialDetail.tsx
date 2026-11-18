@@ -1948,7 +1948,7 @@ function MaterialDetailPage() {
                       explanations. The result will be saved locally with your other data.
                     </p>
                   ) : !generatingPractice && !hasImported && !practiceJob && !practiceGenerationError && practiceMetadata.phase !== "failed" && conversionStatus?.legacyError !== "MALFORMED_QUESTION" ? (
-                    <p className="small muted">No practice questions yet.</p>
+                    <EmptyState compact title="No practice questions yet." />
                   ) : null}
 
                   {reviewingPracticeRegeneration &&
@@ -2077,10 +2077,11 @@ function MaterialDetailPage() {
             {!tipsHidden ? <p className="tiny muted material-detail__intro">Give this material a small next step, and add a date if you have one in mind.</p> : null}
             <CardBody flush>
               {relatedActions.length === 0 ? (
-                <p className="small muted material-detail__empty">
-                  What should you do with this material? &ldquo;Review pages 4&ndash;8 before
-                  Saturday&rdquo; is more useful than &ldquo;study&rdquo;.
-                </p>
+                <EmptyState
+                  compact
+                  title="What should you do with this material?"
+                  body="&ldquo;Review pages 4&ndash;8 before Saturday&rdquo; is more useful than &ldquo;study&rdquo;."
+                />
               ) : (
                 <div className="material-detail__pb-3">
                   {relatedActions.map((action) => (
