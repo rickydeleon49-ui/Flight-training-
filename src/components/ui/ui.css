@@ -24,11 +24,6 @@
   box-shadow: none;
 }
 
-.card--accent {
-  border-color: var(--category-flight-edge);
-  box-shadow: var(--shadow-md);
-}
-
 /* Grouped: the iOS settings group. White rounded block on the grey page. */
 .card--grouped {
   border: 0;

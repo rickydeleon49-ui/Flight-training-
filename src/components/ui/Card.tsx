@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 interface CardProps {
   children: ReactNode;
-  variant?: "default" | "quiet" | "accent" | "grouped" | "flat";
+  variant?: "default" | "quiet" | "grouped" | "flat";
   className?: string;
   ariaLabel?: string;
 }
