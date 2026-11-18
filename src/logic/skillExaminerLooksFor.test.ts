@@ -9,7 +9,10 @@ describe("examinerLooksFor", () => {
       expect(tasks.length, skillId).toBe(SKILL_ACS_TASKS[skillId]!.length);
       for (const task of tasks) {
         expect(task.lines.length, `${skillId} ${task.code}`).toBeGreaterThan(0);
-        for (const line of task.lines) expect(line.code).toMatch(new RegExp(`^${task.code.replace(/\./g, "\\.")}\\.S\\d`));
+        for (const line of task.lines) {
+          expect(line.code.startsWith(`${task.code}.S`), line.code).toBe(true);
+          expect(line.code.slice(task.code.length + 2)).toMatch(/^\d/);
+        }
       }
     }
   });
