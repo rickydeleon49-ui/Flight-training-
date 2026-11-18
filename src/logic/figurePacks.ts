@@ -62,72 +62,92 @@ export type FigurePackState = {
   remove: () => Promise<void>;
 };
 
+type PackStore = {
+  status: FigurePackStatus | null;
+  downloading: boolean;
+  progress: { received: number; total: number } | null;
+  error: string | null;
+  cancelled: boolean;
+};
+
+// Download state lives here, not in the component, so it survives a remount.
+const stores = new Map<string, PackStore>();
+const listeners = new Map<string, Set<() => void>>();
+
+function storeFor(id: string): PackStore {
+  let s = stores.get(id);
+  if (!s) { s = { status: null, downloading: false, progress: null, error: null, cancelled: false }; stores.set(id, s); }
+  return s;
+}
+function patch(id: string, p: Partial<PackStore>) {
+  stores.set(id, { ...storeFor(id), ...p });
+  listeners.get(id)?.forEach((fn) => fn());
+}
+function subscribe(id: string, fn: () => void) {
+  let set = listeners.get(id);
+  if (!set) { set = new Set(); listeners.set(id, set); }
+  set.add(fn);
+  return () => { set!.delete(fn); };
+}
+
+async function startDownload(pack: FigurePackDescriptor): Promise<void> {
+  const id = pack.id;
+  if (storeFor(id).downloading) return;
+  patch(id, { cancelled: false, error: null, progress: { received: 0, total: pack.bytes }, downloading: true });
+  let unlisten: (() => void) | undefined;
+  let stopped = false;
+  import("@tauri-apps/api/event")
+    .then(({ listen }) => listen<FigurePackProgress>("figure-pack-progress", (event) => {
+      if (event.payload.id === id) patch(id, { progress: { received: event.payload.received, total: event.payload.total } });
+    }))
+    .then((fn) => { if (stopped) fn(); else unlisten = fn; })
+    .catch(() => { /* progress is a nicety */ });
+  try {
+    await figurePackDownload(pack);
+    patch(id, { status: await figurePackStatus(id) });
+  } catch {
+    if (!storeFor(id).cancelled) patch(id, { error: FIGURE_PACK_ERROR });
+  } finally {
+    stopped = true;
+    unlisten?.();
+    patch(id, { downloading: false, progress: null });
+  }
+}
+
 export function useFigurePack(pack: FigurePackDescriptor): FigurePackState {
-  const [status, setStatus] = useState<FigurePackStatus | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [progress, setProgress] = useState<{ received: number; total: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
-  const alive = useRef(true);
+  const [, bump] = useState(0);
   const packRef = useRef(pack);
   packRef.current = pack;
+  const id = pack.id;
 
-  useEffect(() => {
-    alive.current = true;
-    return () => { alive.current = false; };
-  }, []);
+  useEffect(() => subscribe(id, () => bump((n) => n + 1)), [id]);
 
   useEffect(() => {
     let live = true;
-    figurePackStatus(pack.id)
-      .then((s) => { if (live) setStatus(s); })
-      .catch(() => { if (live) setStatus({ installed: false, bytes: 0 }); });
+    figurePackStatus(id)
+      .then((s) => { if (live) patch(id, { status: s }); })
+      .catch(() => { if (live) patch(id, { status: { installed: false, bytes: 0 } }); });
     return () => { live = false; };
-  }, [pack.id]);
+  }, [id]);
 
-  useEffect(() => {
-    if (!downloading) return;
-    let unlisten: (() => void) | undefined;
-    let stopped = false;
-    import("@tauri-apps/api/event")
-      .then(({ listen }) => listen<FigurePackProgress>("figure-pack-progress", (event) => {
-        if (event.payload.id === pack.id) setProgress({ received: event.payload.received, total: event.payload.total });
-      }))
-      .then((fn) => { if (stopped) fn(); else unlisten = fn; })
-      .catch(() => { /* progress is a nicety */ });
-    return () => { stopped = true; unlisten?.(); };
-  }, [downloading, pack.id]);
-
-  const download = useCallback(async () => {
-    cancelled.current = false;
-    setError(null);
-    setProgress({ received: 0, total: packRef.current.bytes });
-    setDownloading(true);
-    try {
-      await figurePackDownload(packRef.current);
-      const next = await figurePackStatus(packRef.current.id);
-      if (alive.current) setStatus(next);
-    } catch {
-      if (alive.current && !cancelled.current) setError(FIGURE_PACK_ERROR);
-    } finally {
-      if (alive.current) { setDownloading(false); setProgress(null); }
-    }
-  }, []);
+  const download = useCallback(() => startDownload(packRef.current), []);
 
   const cancel = useCallback(() => {
-    cancelled.current = true;
+    patch(packRef.current.id, { cancelled: true });
     figurePackCancel(packRef.current.id).catch(() => {});
   }, []);
 
   const remove = useCallback(async () => {
-    setError(null);
+    const rid = packRef.current.id;
+    patch(rid, { error: null });
     try {
-      await figurePackRemove(packRef.current.id);
-      if (alive.current) setStatus({ installed: false, bytes: 0 });
+      await figurePackRemove(rid);
+      patch(rid, { status: { installed: false, bytes: 0 } });
     } catch {
-      if (alive.current) setError("Could not remove the download. Try again.");
+      patch(rid, { error: "Could not remove the download. Try again." });
     }
   }, []);
 
-  return { status, downloading, progress, error, download, cancel, remove };
+  const s = storeFor(id);
+  return { status: s.status, downloading: s.downloading, progress: s.progress, error: s.error, download, cancel, remove };
 }
