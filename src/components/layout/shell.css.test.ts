@@ -57,3 +57,24 @@ it("700-999px rail is slim, stacks icon over label and keeps targets >= 44px; th
   expect(css).toContain(".sidebar__note-toggle");
   expect(css).toMatch(/\.sidebar__note-toggle\s*\{[^}]*min-height: var\(--hit-min\)/);
 });
+
+describe("visual R1 plumbing", () => {
+  it("header title block shrinks and the action sits in its own wrapper", () => {
+    expect(css).toMatch(/\.page-header__text\s*\{[^}]*flex:\s*1 1 16rem;[^}]*min-width:\s*0/);
+    expect(css).toMatch(/\.page-header__action\s*\{/);
+  });
+  it("owns the global print rule", () => {
+    expect(css).toMatch(/@media print\s*\{[^}]*\.page-header__action/);
+    const toolkit = readFileSync(join(process.cwd(), "src/pages/PilotToolkit/pilotToolkit.css"), "utf8");
+    expect(toolkit).not.toContain("@media print");
+  });
+  it("reserves the scrollbar gutter", () => {
+    expect(css).toMatch(/html\s*\{\s*scrollbar-gutter:\s*stable/);
+  });
+  it("More caret is in flow and swatch hover is hover-only", () => {
+    const lib = readFileSync(join(process.cwd(), "src/pages/StudyLibrary/studyLibrary.css"), "utf8");
+    expect(lib).toMatch(/summary::after\s*\{[^}]*position:\s*static/);
+    const settings = readFileSync(join(process.cwd(), "src/pages/Settings/settings.css"), "utf8");
+    expect(settings).toMatch(/@media \(hover: hover\)\s*\{\s*\.accent-option:hover/);
+  });
+});

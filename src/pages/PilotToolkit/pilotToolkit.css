@@ -133,12 +133,6 @@
   .report-grid, .toolkit-hero-metrics { grid-template-columns: 1fr; }
 }
 
-@media print {
-  .sidebar, .page-header__action, .toolkit-nav, .toolkit-no-print { display: none !important; }
-  .shell, .content, .content__inner { display: block !important; width: 100% !important; padding: 0 !important; overflow: visible !important; }
-  body { background: white; }
-  .card { break-inside: avoid; box-shadow: none; }
-}
 
 /* Inline styles moved here (DESIGN-01 s23). */
 .toolkit-mt-4 { margin-top: var(--space-4); }

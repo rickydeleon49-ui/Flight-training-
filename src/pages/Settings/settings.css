@@ -23,7 +23,9 @@
   min-width: 5.5rem;
   transition: border-color var(--transition), background var(--transition);
 }
-.accent-option:hover { background: var(--surface-sunken); }
+@media (hover: hover) {
+  .accent-option:hover { background: var(--surface-sunken); }
+}
 
 .accent-option.is-selected {
   border-color: var(--text-primary);

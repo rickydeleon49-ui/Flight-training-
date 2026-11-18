@@ -6,6 +6,9 @@
   min-height: 100vh;
 }
 
+/* Reserve the scrollbar's width so pages do not change width when it appears. */
+html { scrollbar-gutter: stable; }
+
 /* ------------------------------ Sidebar ----------------------------- */
 
 .sidebar {
@@ -191,6 +194,10 @@
   margin-bottom: var(--space-5);
   flex-wrap: wrap;
 }
+
+.page-header__text { flex: 1 1 16rem; min-width: 0; }
+
+.page-header__action { flex: 0 0 auto; max-width: 100%; }
 
 .page-header__title {
   font-family: var(--font-display);
@@ -412,4 +419,11 @@ html[data-input="pointer"] .sidebar__menu:focus-visible,
   .sidebar__navigation.is-overlay .sidebar__note { display: block; }
   .content { padding-left: var(--space-5); padding-right: var(--space-5); }
   .content.content--top-bar { --content-pad-x: var(--space-5); }
+}
+
+@media print {
+  .sidebar, .page-header__action, .toolkit-nav, .toolkit-no-print { display: none !important; }
+  .shell, .content, .content__inner { display: block !important; width: 100% !important; padding: 0 !important; overflow: visible !important; }
+  body { background: white; }
+  .card { break-inside: avoid; box-shadow: none; }
 }
