@@ -95,3 +95,30 @@ export function oralNoteDraft(text: OralText): { title: string; body: string } {
 export function oralQuestionText(text: OralText): string {
   return `Oral question I practiced. Could we talk it through?\n\n${oralPlainText(text)}`;
 }
+
+/** The first line of a scenario, kept short for lists. */
+export function oralScenarioTitle(prompt: string): string {
+  const first = prompt.trim().split(/\r?\n/)[0] ?? "";
+  return first.length > 80 ? `${first.slice(0, 77)}…` : first;
+}
+
+export const MOCK_ORAL_MIN = 3;
+export const MOCK_ORAL_MAX = 5;
+
+/**
+ * Mock oral: pick 3 to 5 saved scenarios, least recently practised first. A scenario never
+ * practised comes before any practised one; ties keep the student's own list order (scenarios
+ * carry no created time, so list order stands in for "oldest created"). Fewer than 3 gives [].
+ * `lastPractised` maps scenario id to the latest finished-answer ISO time.
+ */
+export function pickMockOral<T extends { id: string }>(
+  scenarios: readonly T[],
+  lastPractised: ReadonlyMap<string, string>,
+): T[] {
+  if (scenarios.length < MOCK_ORAL_MIN) return [];
+  return scenarios
+    .map((scenario, at) => ({ scenario, at, last: lastPractised.get(scenario.id) ?? "" }))
+    .sort((a, b) => (a.last < b.last ? -1 : a.last > b.last ? 1 : a.at - b.at))
+    .slice(0, MOCK_ORAL_MAX)
+    .map((x) => x.scenario);
+}
