@@ -1,18 +1,19 @@
 .toolkit-home__title, .toolkit-tool-head__title { margin: 0; }
 .toolkit-home { display: grid; gap: var(--space-5); }
 .toolkit-group { display: grid; gap: var(--space-3); }
-.toolkit-group__head { display: flex; align-items: center; gap: var(--space-2); }
 .toolkit-group__title { margin: 0; }
 .toolkit-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-auto-rows: 1fr;
   gap: var(--space-3);
 }
 .toolkit-tile {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-2);
   width: 100%;
   min-height: var(--hit-min);
   padding: var(--space-3) var(--space-4);
@@ -25,10 +26,8 @@
   box-shadow: var(--shadow-sm);
   cursor: pointer;
 }
-.toolkit-tile__text { display: grid; gap: var(--space-1); }
-.toolkit-tile__name { font-weight: 700; }
-.toolkit-tile__line { font-size: var(--text-sm); color: var(--text-secondary); }
-.toolkit-tile__chevron { flex: none; color: var(--text-tertiary); }
+.toolkit-tile__icon { flex: none; color: var(--accent-primary); }
+.toolkit-tile__name { font-size: 15px; font-weight: 500; }
 .toolkit-nav { margin-bottom: var(--space-3); }
 .toolkit-back {
   display: inline-flex;
