@@ -33,7 +33,14 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) 0;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-primary);
 }
+/* 1px hairline between rows; none above the first. */
+.checklist-row + .checklist-row { border-top: 1px solid var(--border-subtle); }
+.checklist-row .small,
+.checklist-row .tiny { color: var(--text-secondary); }
 .checklist-row:hover .checklist-row__tools { opacity: 1; }
 .checklist-row__tools { opacity: 0; transition: opacity var(--transition); }
 .checklist-row__tools:focus-within { opacity: 1; }

@@ -76,7 +76,6 @@ describe("PilotToolkit home of tiles", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
     fireEvent.click(screen.getByRole("button", { name: /^E6B/ }));
     expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
-    expect(screen.getByText("Plan a flight")).toBeTruthy();
     expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(0);
     fireEvent.click(screen.getByRole("link", { name: "All tools" }));
     expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(11);

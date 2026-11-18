@@ -1,7 +1,20 @@
 import { BRING_ITEMS, daysToCheckride } from "@/logic/checkride";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icons";
+import {
+  BookIcon,
+  CalendarIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  DocumentIcon,
+  JournalIcon,
+  NoteIcon,
+  PlaneIcon,
+  QuestionIcon,
+  TargetIcon,
+  WalletIcon,
+} from "@/components/ui/Icons";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -151,6 +164,19 @@ const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
 ];
+const TOOL_ICONS: Record<Tool, (p: { size?: number; className?: string }) => ReactElement> = {
+  readiness: TargetIcon,
+  report: DocumentIcon,
+  metar: NoteIcon,
+  e6b: ClockIcon,
+  safety: CheckIcon,
+  quiz: QuestionIcon,
+  radio: JournalIcon,
+  records: BookIcon,
+  costs: WalletIcon,
+  reminders: CalendarIcon,
+  career: PlaneIcon,
+};
 const TOOLS: ToolChoice[] = TOOL_GROUPS.flatMap((group) => group.tools);
 
 /** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else shows the home of tool tiles. */
@@ -318,7 +344,6 @@ export function PilotToolkit() {
   const [params, setParams] = useSearchParams();
   const tool = toolFrom(params.get("tool"));
   const choice = TOOLS.find((entry) => entry.id === tool) ?? null;
-  const group = TOOL_GROUPS.find((entry) => entry.tools.some((item) => item.id === tool)) ?? null;
   const [saved, setSaved] = useState(false);
   const [quizBusy, setQuizBusy] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -394,18 +419,17 @@ export function PilotToolkit() {
             <section key={entry.id} className="toolkit-group" aria-labelledby={`toolkit-group-${entry.id}`}>
               <div className="toolkit-group__head">
                 <h3 id={`toolkit-group-${entry.id}`} className="toolkit-group__title">{entry.label}</h3>
-                <Badge>{entry.tools.length} {entry.tools.length === 1 ? "tool" : "tools"}</Badge>
               </div>
               <div className="toolkit-tiles">
-                {entry.tools.map((item) => (
-                  <button key={item.id} type="button" className="toolkit-tile" onClick={() => openTool(item.id)}>
-                    <span className="toolkit-tile__text">
+                {entry.tools.map((item) => {
+                  const ToolIcon = TOOL_ICONS[item.id];
+                  return (
+                    <button key={item.id} type="button" className="toolkit-tile" onClick={() => openTool(item.id)}>
+                      <ToolIcon size={22} className="toolkit-tile__icon" />
                       <span className="toolkit-tile__name">{item.label}</span>
-                      <span className="toolkit-tile__line">{item.line}</span>
-                    </span>
-                    <ChevronRightIcon size={16} className="toolkit-tile__chevron" />
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           ))}
@@ -431,7 +455,6 @@ export function PilotToolkit() {
           <h2 id="toolkit-tool-heading" ref={toolHeading} tabIndex={-1} className="toolkit-tool-head__title">
             {choice.label}
           </h2>
-          {group ? <Badge>{group.label}</Badge> : null}
         </div>
         {tool === "readiness" ? (
           <ReadinessTool state={data.toolkit} save={save} />
