@@ -47,7 +47,7 @@ export function solveLeg(leg: NavLogLeg): NavLogSolution | null {
   const mh = normalizeHeading(m.magneticHeading);
   const ch = normalizeHeading(mh + leg.deviation);
   const ete = Math.round((leg.distanceNm / w.groundSpeed) * 60);
-  const f = fuelForTime(leg.gph, ete);
+  const f = fuelForTime(leg.gph, (leg.distanceNm / w.groundSpeed) * 60);
   if (!f.ok) return null;
   return { wca: w.wcaDegrees, th, mh, ch, gs: w.groundSpeed, ete, fuel: f.fuelGallons };
 }

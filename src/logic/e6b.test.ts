@@ -5,6 +5,7 @@ import {
   gradeE6bAnswer,
   summarizeE6bGrades,
   type E6bAnswerId,
+  formatMinutes,
   fuelForTime,
   timeForFuel,
   timeSpeedDistance,
@@ -19,6 +20,12 @@ describe("windTriangle", () => {
   it("pure headwind and tailwind", () => {
     expect(windTriangle(360, 100, 360, 20)).toMatchObject({ wcaDegrees: 0, trueHeading: 360, groundSpeed: 80 });
     expect(windTriangle(90, 100, 270, 20)).toMatchObject({ wcaDegrees: 0, groundSpeed: 120 });
+  });
+  it("allows a tailwind at or above airspeed, rejects a crosswind that cannot be held", () => {
+    expect(windTriangle(90, 100, 270, 120)).toMatchObject({ ok: true, wcaDegrees: 0, groundSpeed: 220 });
+    expect(windTriangle(90, 100, 270, 100)).toMatchObject({ ok: true, groundSpeed: 200 });
+    expect(windTriangle(90, 100, 180, 120).ok).toBe(false);
+    expect(windTriangle(90, 100, 90, 120).ok).toBe(false);
   });
   it("wind from the left gives a left correction", () => {
     expect(windTriangle(90, 100, 360, 20)).toMatchObject({ wcaDegrees: -12, trueHeading: 78 });
@@ -52,6 +59,10 @@ describe("fuel", () => {
     expect(fuelForTime(8.5, 150)).toMatchObject({ ok: true, fuelGallons: 21.3 });
     expect(timeForFuel(9, 30)).toMatchObject({ ok: true, timeMinutes: 200 });
     expect(fuelForTime(0, 30).ok).toBe(false);
+    expect(fuelForTime(10, 0.4)).toMatchObject({ ok: true, timeMinutes: 0.4 });
+    expect(timeSpeedDistance(1, 150, NaN)).toMatchObject({ ok: true, timeMinutes: 0.4 });
+    expect(formatMinutes(0.4)).toBe("under 1 min");
+    expect(formatMinutes(75)).toBe("1 h 15 min");
     expect(timeForFuel(NaN, 30).ok).toBe(false);
   });
 });

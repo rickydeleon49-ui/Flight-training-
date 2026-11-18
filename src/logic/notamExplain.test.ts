@@ -138,3 +138,10 @@ describe("glossary", () => {
     expect(Object.values(NOTAM_GLOSSARY).every((v) => v.length > 0)).toBe(true);
   });
 });
+
+describe("NOTAM dates", () => {
+  it("rejects a day that does not exist in the month", () => {
+    expect(explainNotam("!ABC 02/001 ZZZ AIRSPACE TEST 2602311300-2602312100").tokens.map((t) => t.meaning).join(" ")).not.toContain("31 Feb");
+    expect(explainNotam("!ABC 02/001 ZZZ AIRSPACE TEST 2604301300-2604302100").tokens.map((t) => t.meaning).join(" ")).toContain("30 Apr 2026");
+  });
+});

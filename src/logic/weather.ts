@@ -34,7 +34,8 @@ export function conditionsSummary(c: Conditions): string {
   if (Array.isArray(c.clouds)) for (const layer of c.clouds) {
     if (layer && typeof layer === "object") {
       const { cover, base } = layer as Conditions;
-      if (typeof cover === "string" && cloudNames[cover]) parts.push(`${cloudNames[cover]}${number(base, 0, 100000) ? ` at ${base} feet` : "; base not reported"}.`);
+      if (cover === "CLR" || cover === "SKC") parts.push("Sky clear.");
+      else if (typeof cover === "string" && cloudNames[cover]) parts.push(`${cloudNames[cover]}${number(base, 0, 100000) ? ` at ${base} feet` : "; base not reported"}.`);
     }
   }
   if (number(c.vertVis, 0, 100000)) parts.push(`Vertical visibility ${c.vertVis} feet.`);

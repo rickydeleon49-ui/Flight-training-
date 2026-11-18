@@ -20,6 +20,10 @@ describe("weather identity and deterministic partial words", () => {
     expect(text).toContain(PARTIAL); expect(text).not.toContain("inHg");
     expect(text).not.toMatch(/safe|suitable|cleared|ready|VFR|IFR|fly/i);
   });
+  it("says sky clear for CLR and SKC layers", () => {
+    expect(conditionsSummary({ clouds: [{ cover: "CLR", base: null }] })).toContain("Sky clear.");
+    expect(conditionsSummary({ clouds: [{ cover: "SKC" }] })).toContain("Sky clear.");
+  });
   it("distinguishes calm, variable and missing winds", () => {
     expect(conditionsSummary({ wdir: 0, wspd: 0 })).toContain("Wind calm.");
     expect(conditionsSummary({ wdir: "VRB", wspd: 4, wgst: 9 })).toContain("Wind direction variable at 4 knots, gusting to 9.");

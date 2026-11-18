@@ -9,6 +9,7 @@ describe("explainTaf", () => {
   it("recognises the header", () => {
     expect(looksLikeTaf(SAMPLE)).toBe(true);
     expect(looksLikeTaf("METAR KSFO 141756Z")).toBe(false);
+    expect(looksLikeTaf("METAR EGLL 171120Z 18010KT 9999 TEMPO 4000 RA")).toBe(false);
     const meaning = (raw: string) => r.header.find((t) => t.raw === raw)?.meaning;
     expect(meaning("TAF")).toMatch(/forecast/i);
     expect(meaning("KSFO")).toBe("Station KSFO");
@@ -38,5 +39,12 @@ describe("explainTaf", () => {
     expect(x.periods[1]!.label).toBe("40% chance, temporary (PROB40 TEMPO)");
     expect(x.periods[1]!.tokens[0]!.meaning).toBe("Thunderstorm with rain");
     expect(x.periods[1]!.tokens.some((t) => t.meaning.startsWith("Expected highest temperature 25 C"))).toBe(true);
+  });
+  it("treats a TAF pasted without the TAF word as a TAF", () => {
+    const text = "KJFK 171130Z 1712/1818 18010KT 1SM BR OVC020 FM171800 20012KT P6SM SKC";
+    expect(looksLikeTaf(text)).toBe(true);
+    expect(looksLikeTaf("KJFK 171151Z 18010KT 10SM FEW250 20/10 A3001")).toBe(false);
+    expect(looksLikeTaf("EGLL 171120Z 18010KT 9999 SCT020 12/08 Q1015 TEMPO 4000 RA")).toBe(false);
+    expect(explainTaf(text).periods.length).toBeGreaterThan(1);
   });
 });

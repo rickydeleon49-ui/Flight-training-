@@ -32,9 +32,9 @@ export function windTriangle(
     return { ok: false, error: "Courses and wind directions run from 0 to 360 degrees." };
   if (tas <= 0) return { ok: false, error: "True airspeed must be more than zero." };
   if (windSpeed < 0) return { ok: false, error: "Wind speed cannot be negative." };
-  if (windSpeed >= tas)
-    return { ok: false, error: "The wind is as strong as your airspeed, so this course cannot be held." };
   const angle = rad(windDirection - trueCourse);
+  if (Math.abs(windSpeed * Math.sin(angle)) >= tas)
+    return { ok: false, error: "The crosswind is stronger than your airspeed, so this course cannot be held." };
   const wca = Math.asin((windSpeed * Math.sin(angle)) / tas);
   const gs = tas * Math.cos(wca) - windSpeed * Math.cos(angle);
   if (gs <= 0) return { ok: false, error: "The groundspeed works out to zero or less, so this course cannot be flown." };
@@ -47,6 +47,9 @@ export function windTriangle(
     groundSpeed: Math.round(gs),
   };
 }
+
+/** Whole minutes, but keep one decimal under a minute so short legs never show as zero. */
+const roundMinutes = (m: number) => (m >= 1 ? Math.round(m) : Math.max(0.1, Math.round(m * 10) / 10));
 
 export type TsdResult =
   | { ok: true; solved: "distance" | "speed" | "time"; distanceNm: number; speedKt: number; timeMinutes: number }
@@ -63,7 +66,7 @@ export function timeSpeedDistance(distanceNm: number, speedKt: number, timeMinut
     return { ok: true, solved: "distance", distanceNm: Math.round((speedKt * timeMinutes) / 60), speedKt, timeMinutes };
   if (!finite(speedKt))
     return { ok: true, solved: "speed", distanceNm, speedKt: Math.round((distanceNm * 60) / timeMinutes), timeMinutes };
-  return { ok: true, solved: "time", distanceNm, speedKt, timeMinutes: Math.round((distanceNm / speedKt) * 60) };
+  return { ok: true, solved: "time", distanceNm, speedKt, timeMinutes: roundMinutes((distanceNm / speedKt) * 60) };
 }
 
 export type FuelResult = { ok: true; fuelGallons: number; timeMinutes: number } | E6bFail;
@@ -72,14 +75,14 @@ export type FuelResult = { ok: true; fuelGallons: number; timeMinutes: number } 
 export function fuelForTime(burnGph: number, timeMinutes: number): FuelResult {
   if (!finite(burnGph) || !finite(timeMinutes)) return { ok: false, error: "Fill in the burn rate and the time." };
   if (burnGph <= 0 || timeMinutes <= 0) return { ok: false, error: "Use numbers above zero." };
-  return { ok: true, fuelGallons: Math.round(((burnGph * timeMinutes) / 60) * 10) / 10, timeMinutes: Math.round(timeMinutes) };
+  return { ok: true, fuelGallons: Math.round(((burnGph * timeMinutes) / 60) * 10) / 10, timeMinutes: roundMinutes(timeMinutes) };
 }
 
 /** How long a fuel amount lasts at a burn rate, in whole minutes. */
 export function timeForFuel(burnGph: number, fuelGallons: number): FuelResult {
   if (!finite(burnGph) || !finite(fuelGallons)) return { ok: false, error: "Fill in the burn rate and the fuel." };
   if (burnGph <= 0 || fuelGallons <= 0) return { ok: false, error: "Use numbers above zero." };
-  return { ok: true, fuelGallons, timeMinutes: Math.round((fuelGallons / burnGph) * 60) };
+  return { ok: true, fuelGallons, timeMinutes: roundMinutes((fuelGallons / burnGph) * 60) };
 }
 
 export type MagneticResult = { ok: true; magneticHeading: number } | E6bFail;
@@ -93,6 +96,7 @@ export function trueToMagnetic(trueHeading: number, variation: number, side: "E"
 }
 
 export function formatMinutes(minutes: number): string {
+  if (minutes < 1) return "under 1 min";
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return h === 0 ? `${m} min` : `${h} h ${m} min`;
