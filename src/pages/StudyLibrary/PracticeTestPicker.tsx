@@ -1,22 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Dialog } from "@/components/ui";
 import type { PracticeTest, StudyMaterial } from "@/domain/types";
 import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
 import { MixedPracticeTest } from "./MixedPracticeTest";
 
-export function PracticeTestPicker({ practiceTests, materials }: {
+export function PracticeTestPicker({ practiceTests, materials, openRequest, hideTrigger }: {
   practiceTests: readonly PracticeTest[];
   materials: readonly StudyMaterial[];
+  /** A page menu owns the button: each new number opens the dialog. */
+  openRequest?: number;
+  hideTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { if (openRequest) setOpen(true); }, [openRequest]);
   const rows = practiceTests.flatMap((test) => {
     const material = materials.find((entry) => entry.id === test.sourceMaterialId);
     return material && test.questions.length > 0 ? [{ material, count: test.questions.length }] : [];
   }).sort((a, b) => a.material.title.localeCompare(b.material.title));
 
   return <>
-    <Button variant="secondary" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (!open) setOpen(true); }}>Practice test</Button>
+    {hideTrigger ? null : <Button variant="secondary" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (!open) setOpen(true); }}>Practice test</Button>}
     {open ? <Dialog open title="Practice tests" onClose={() => setOpen(false)}>
       <div className="stack stack--3">
         <div className="row row--wrap">
