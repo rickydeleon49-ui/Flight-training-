@@ -4,14 +4,11 @@ import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorNote } from "@/
 import type { OralScenario } from "@/data/oralScenarios";
 import type { StudyMaterial } from "@/domain/types";
 import { useAppData } from "@/state/AppDataContext";
-import { OralPracticeDialog } from "./OralPracticeDialog";
+import { oralScenarioTitle, pickMockOral, MOCK_ORAL_MIN } from "@/logic/oralPractice";
+import { OralPracticeDialog, lastPractisedAt } from "./OralPracticeDialog";
 import { OralScenarioEditor } from "./OralScenarioEditor";
 
-/** The first line of a scenario, kept short for the list. */
-export function oralScenarioTitle(prompt: string): string {
-  const first = prompt.trim().split(/\r?\n/)[0] ?? "";
-  return first.length > 80 ? `${first.slice(0, 77)}…` : first;
-}
+export { oralScenarioTitle };
 
 /**
  * "Practice an oral question": the student's saved scenarios for this material, each
@@ -24,6 +21,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
   const [editing, setEditing] = useState<{ scenario: OralScenario | null } | null>(null);
   const [practising, setPractising] = useState<number | null>(null);
   const [removing, setRemoving] = useState<OralScenario | null>(null);
+  const [mockSet, setMockSet] = useState<OralScenario[] | null>(null);
 
   useEffect(() => {
     if (!repositories) return;
@@ -55,6 +53,12 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
     for (const s of scenarios) if (hidden.has(s.id)) order.push(s.id);
     void mutate((repos) => repos.oralScenarios.reorder(material.id, order));
   };
+  const startMock = async () => {
+    if (!repositories) return;
+    const last = await lastPractisedAt(repositories, visible);
+    const picked = pickMockOral(visible, last);
+    if (picked.length > 0) setMockSet(picked);
+  };
   const canMove = visible.length > 1;
 
   const body = (
@@ -64,6 +68,14 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
             Practice answering out loud, using scenarios you write yourself or copy from your instructor.
           </p>
           {loadFailed ? <ErrorNote>Your scenarios could not be loaded right now.</ErrorNote> : null}
+          {visible.length >= MOCK_ORAL_MIN ? (
+            <div>
+              <Button size="small" onClick={() => void startMock()}>
+                Mock oral
+              </Button>
+              <p className="tiny muted">Runs 3 to 5 of your scenarios, the ones you practised least recently first.</p>
+            </div>
+          ) : null}
           {visible.length > 0 ? (
             <ol className="stack stack--2" style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {visible.map((scenario, at) => {
@@ -146,6 +158,14 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
         startIndex={practising ?? 0}
         open={practising !== null}
         onClose={() => setPractising(null)}
+      />
+      <OralPracticeDialog
+        material={material}
+        scenarios={mockSet ?? []}
+        startIndex={0}
+        open={mockSet !== null}
+        mock
+        onClose={() => setMockSet(null)}
       />
       <ConfirmDialog
         open={removing !== null}

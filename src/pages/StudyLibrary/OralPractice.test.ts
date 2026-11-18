@@ -595,3 +595,34 @@ it("answerLengthHint is quiet at or under 120 words and for empty text", async (
   expect(answerLengthHint(words(121))).toBe("Examiners like short answers: state the rule, then one example.");
   expect(missedPointCards("Q", ["a", "b"], [true, false])).toEqual([{ front: "Q Key point?", back: "b" }]);
 });
+
+it("hides Mock oral below 3 scenarios, shows it at 3", async () => {
+  await seed("Scenario Alpha");
+  await seed("Scenario Bravo");
+  mount();
+  await screen.findByRole("button", { name: "Practice: Scenario Alpha" });
+  expect(screen.queryByRole("button", { name: "Mock oral" })).toBeNull();
+  cleanup();
+  await seed("Scenario Charlie");
+  mount();
+  expect(await screen.findByRole("button", { name: "Mock oral" })).toBeTruthy();
+});
+
+it("mock oral chains scenarios and ends with a list and add-missed-points", async () => {
+  await seed("Scenario Alpha");
+  await seed("Scenario Bravo");
+  await seed("Scenario Charlie");
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: "Mock oral" }));
+  for (const [i, name] of ["Scenario Alpha", "Scenario Bravo", "Scenario Charlie"].entries()) {
+    expect(name).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Show discussion points" }));
+    if (i === 0) fireEvent.click(screen.getAllByRole("checkbox")[0]!);
+    fireEvent.click(await screen.findByRole("button", { name: i < 2 ? "Next scenario" : "Finish mock oral" }));
+  }
+  expect(await screen.findByText("Mock oral finished")).toBeTruthy();
+  expect(screen.getAllByRole("button", { name: /^Add missed points to my review cards/ })).toHaveLength(3);
+  expect(screen.queryByText(/score|pass|ready/i)).toBeNull();
+  fireEvent.click(screen.getAllByRole("button", { name: /^Add missed points to my review cards/ })[0]!);
+  expect(await screen.findByText("Missed points added to your review cards.")).toBeTruthy();
+});

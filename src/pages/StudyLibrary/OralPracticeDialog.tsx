@@ -17,14 +17,32 @@ import {
   ORAL_REVIEW_SET_TITLE,
   oralNoteDraft,
   oralQuestionText,
+  oralScenarioTitle,
   type OralText,
 } from "@/logic/oralPractice";
 import { StudyAuthoringError } from "@/logic/studyAuthoring";
 import { authoringStateOf, emptyManualSet, frameOf, nextSetOf } from "@/logic/studySetEditing";
 import { useAppData } from "@/state/AppDataContext";
 
+/** Latest finished-answer time per scenario, for choosing a mock oral. An unreadable list counts as never practised. */
+export async function lastPractisedAt(
+  repositories: { oralAnswers: { list(scenarioId: string): Promise<OralAnswer[]> } },
+  scenarios: readonly OralScenario[],
+): Promise<Map<string, string>> {
+  const last = new Map<string, string>();
+  for (const s of scenarios) {
+    try {
+      const latest = (await repositories.oralAnswers.list(s.id)).map((a) => a.finishedAt).sort().pop();
+      if (latest) last.set(s.id, latest);
+    } catch {
+      /* counts as never practised */
+    }
+  }
+  return last;
+}
+
 type Step = "answer" | "reveal";
-type FinishAction = "close" | "next" | "note";
+type FinishAction = "close" | "next" | "note" | "summary";
 
 /**
  * Practice the student's saved scenarios one at a time. Once the student has shown the points,
@@ -38,12 +56,15 @@ export function OralPracticeDialog({
   scenarios,
   startIndex,
   open,
+  mock = false,
   onClose,
 }: {
   material: StudyMaterial;
   scenarios: OralScenario[];
   startIndex: number;
   open: boolean;
+  /** Mock oral: the given scenarios in a row, then one end screen. */
+  mock?: boolean;
   onClose: () => void;
 }) {
   const { mutate, repositories, dataRevision } = useAppData();
@@ -62,6 +83,10 @@ export function OralPracticeDialog({
   const [addMissed, setAddMissed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [retryAction, setRetryAction] = useState<FinishAction | null>(null);
+  const [done, setDone] = useState<{ scenario: OralScenario; covered: boolean[] }[]>([]);
+  const [summary, setSummary] = useState(false);
+  const [addedIds, setAddedIds] = useState<string[]>([]);
+  const [summaryFailed, setSummaryFailed] = useState(false);
   const savingRef = useRef(false);
   const revealRef = useRef<HTMLHeadingElement>(null);
 
@@ -78,9 +103,15 @@ export function OralPracticeDialog({
     setAddMissed(false);
     setConfirming(null);
     setRetryAction(null);
+    setSummary(false);
   };
   useEffect(() => {
-    if (open) startAt(startIndex);
+    if (open) {
+      startAt(startIndex);
+      setDone([]);
+      setAddedIds([]);
+      setSummaryFailed(false);
+    }
   }, [open, startIndex]);
 
   const scenario = scenarios[index];
@@ -102,9 +133,8 @@ export function OralPracticeDialog({
   }, [open, scenarioId, repositories, dataRevision]);
 
   /** The ticked-nothing points as the student's own review cards; safe to run twice (nothing is added twice). */
-  const saveMissedCards = async (): Promise<boolean> => {
-    if (!scenario || step !== "reveal" || !addMissed) return true;
-    const cards = missedPointCards(scenario.prompt, scenario.points, covered);
+  const saveCardsFor = async (target: OralScenario, ticks: boolean[]): Promise<boolean> => {
+    const cards = missedPointCards(target.prompt, target.points, ticks);
     if (cards.length === 0) return true;
     const result = await mutate(async (repos) => {
       try {
@@ -129,6 +159,10 @@ export function OralPracticeDialog({
       }
     });
     return result?.ok === true;
+  };
+  const saveMissedCards = async (): Promise<boolean> => {
+    if (!scenario || step !== "reveal" || !addMissed || mock) return true;
+    return saveCardsFor(scenario, covered);
   };
 
   /** Keep this practice once the student has shown the points and written or ticked something. */
@@ -195,6 +229,11 @@ export function OralPracticeDialog({
         setRetryAction(action);
         return;
       }
+      if (mock && step === "reveal" && scenario) setDone((list) => [...list, { scenario, covered }]);
+      if (action === "summary") {
+        setSummary(true);
+        return;
+      }
       const draft = action === "note" ? oralNoteDraft(text()) : null;
       startAt(action === "next" ? index + 1 : startIndex);
       if (action !== "next") onClose();
@@ -208,7 +247,11 @@ export function OralPracticeDialog({
 
   const hasNext = index < scenarios.length - 1;
   const footer =
-    step === "answer" ? (
+    mock && step === "reveal" && !hasNext ? (
+      <Button variant="primary" onClick={() => void finish("summary")} disabled={saving}>
+        Finish mock oral
+      </Button>
+    ) : step === "answer" ? (
       <>
         <Button onClick={close} disabled={saving}>Cancel</Button>
         <Button variant="primary" onClick={reveal}>
@@ -232,8 +275,57 @@ export function OralPracticeDialog({
       </>
     );
 
+  if (summary) {
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        title="Mock oral finished"
+        footer={<Button variant="primary" onClick={onClose}>Done</Button>}
+      >
+        <div className="stack stack--3">
+          <p className="small muted">Scenarios you practised. Your answers are kept under Earlier answers.</p>
+          <ul className="stack stack--2" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {done.map(({ scenario: item, covered: ticks }) => {
+              const missedCount = item.points.filter((_, at) => !ticks[at]).length;
+              const added = addedIds.includes(item.id);
+              return (
+                <li key={item.id} className="stack stack--1">
+                  <p className="small wrap-anywhere">{oralScenarioTitle(item.prompt)}</p>
+                  {missedCount > 0 ? (
+                    added ? (
+                      <p className="tiny muted" role="status">Missed points added to your review cards.</p>
+                    ) : (
+                      <div>
+                        <Button
+                          size="small"
+                          disabled={saving}
+                          onClick={async () => {
+                            setSummaryFailed(false);
+                            if (await saveCardsFor(item, ticks)) setAddedIds((ids) => [...ids, item.id]);
+                            else setSummaryFailed(true);
+                          }}
+                          aria-label={`Add missed points to my review cards: ${oralScenarioTitle(item.prompt)}`}
+                        >
+                          Add missed points to my review cards
+                        </Button>
+                      </div>
+                    )
+                  ) : (
+                    <p className="tiny muted">You covered every point.</p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {summaryFailed ? <p role="alert" className="small">Couldn't add those cards. Try again.</p> : null}
+        </div>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={open} onClose={close} title="Practice an oral question" footer={footer} dismissible={!saving}>
+    <Dialog open={open} onClose={close} title={mock ? "Mock oral" : "Practice an oral question"} footer={footer} dismissible={!saving}>
       <div className="stack stack--3">
         {retryAction ? (
           <div role="alert">
@@ -380,7 +472,7 @@ export function OralPracticeDialog({
                 <p className="tiny muted">Follow-up answers aren't graded or kept.</p>
               </div>
             ) : null}
-            {missed > 0 ? (
+            {missed > 0 && !mock ? (
               <Checkbox
                 checked={addMissed}
                 disabled={saving}
