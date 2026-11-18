@@ -5,7 +5,7 @@ import { photoToPng, savePhotoPicture } from "@/services/photoPicture";
 import { useAppData } from "@/state/AppDataContext";
 
 /** iPhone: pick a photo or screenshot, save it as a picture, then cover a label on it. */
-export function PhotoPictureButton() {
+export function PhotoPictureButton({ variant = "primary" }: { variant?: "primary" | "secondary" } = {}) {
   const input = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -42,7 +42,7 @@ export function PhotoPictureButton() {
         data-testid="photo-picture-input"
         onChange={(event) => void chosen(event.currentTarget.files?.[0])}
       />
-      <Button variant="primary" disabled={busy} onClick={() => input.current?.click()}>
+      <Button variant={variant} disabled={busy} onClick={() => input.current?.click()}>
         {busy ? "Saving picture…" : "Picture card from a photo"}
       </Button>
       {problem ? <p role="alert" className="small">{problem}</p> : null}

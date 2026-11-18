@@ -105,9 +105,16 @@ it("on the phone offers Add material but no packet import or splitting", async (
     expect(screen.queryByRole("button", { name: "Export handout or cards…" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Import study packet/ })).toBeNull();
     expect(screen.queryAllByRole("button", { name: /Make study-size parts|Split/ })).toHaveLength(0);
+    // One primary button; the photo picture card and the other actions sit under More.
+    const more = screen.getByText("More").closest("details") as HTMLElement;
+    const headerPrimary = Array.from(more.parentElement!.querySelectorAll<HTMLElement>("button")).filter((b) => b.classList.contains("button--primary"));
+    expect(headerPrimary.map((b) => b.textContent)).toEqual([expect.stringContaining("Add material")]);
+    expect(more.contains(headerPrimary[0] ?? null)).toBe(false);
+    fireEvent.click(screen.getByText("More"));
+    for (const name of ["Homework", "Practice test", "My aircraft cards"]) {
+      expect(more.textContent).toContain(name);
+    }
     expect(screen.getByRole("button", { name: "Picture card from a photo" })).toBeTruthy();
-    // No empty "More" menu (it showed as a blank bar over the photo button).
-    expect(screen.queryByText("More")).toBeNull();
     const input = screen.getByTestId("photo-picture-input") as HTMLInputElement;
     expect(input.type).toBe("file");
     expect(input.accept).toBe("image/*");

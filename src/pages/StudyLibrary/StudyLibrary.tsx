@@ -98,6 +98,16 @@ const TABS: LibraryTabChoice[] = [
   { value: "howto", label: "How to" },
 ];
 
+/** Library status badge colours, using the tones the app already has. */
+export function reviewStatusTone(status: string): "complete" | "study" | "due" | "neutral" {
+  switch (status) {
+    case "confident": return "complete";
+    case "studying": return "study";
+    case "needs_review": return "due";
+    default: return "neutral";
+  }
+}
+
 /** Keep our DOM and stable deep-link ids while the hook owns keyboard/focus behavior. */
 function LibraryTabButton({ choice, state }: { choice: LibraryTabChoice; state: TabListState<LibraryTabChoice> }) {
   const ref = useRef<HTMLButtonElement>(null);
@@ -186,6 +196,8 @@ export function StudyLibrary() {
   );
   const [importing, setImporting] = useState(false);
   const [addingPack, setAddingPack] = useState(false);
+  const [practiceRequest, setPracticeRequest] = useState(0);
+  const [aircraftRequest, setAircraftRequest] = useState(0);
   const [exportingHandouts, setExportingHandouts] = useState(false);
   // Kept while the app is open, so moving to a material and back does not
   // throw away the filtering the student just set up.
@@ -578,25 +590,28 @@ export function StudyLibrary() {
         subtitle="Your training binder."
         action={
           <div className="row row--wrap">
-            <Link to="/study/homework" className="button button--secondary">Homework</Link>
-            <PracticeTestPicker practiceTests={data.practiceTests} materials={data.materials} />
-            {deviceCan().splitFiles || deviceCan().sharePrint ? <details ref={moreMenu} className="library__actions-more">
+            <details ref={moreMenu} className="library__actions-more">
               <summary className="button button--secondary">More</summary>
               <div className="library__actions-menu">
+                <Link to="/study/homework" className="button button--secondary" onClick={fromMoreMenu(() => undefined)}>Homework</Link>
+                <Button onClick={fromMoreMenu(() => setPracticeRequest((n) => n + 1))}>Practice test</Button>
                 {deviceCan().splitFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
                 {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0 && !(studyPacksAvailable() && canSharePack)}>
                   {deviceCan().revealFiles ? "Export handout or cards…" : "Save handout or cards"}
                 </Button> : null}
+                {studyPacksAvailable() ? <Button onClick={fromMoreMenu(() => setAddingPack(true))} disabled={addingPack}>Add study pack</Button> : null}
+                <Button onClick={fromMoreMenu(() => setAircraftRequest((n) => n + 1))}>My aircraft cards</Button>
+                {deviceCan().pictureFromPhoto && deviceCan().importFiles ? <PhotoPictureButton variant="secondary" /> : null}
               </div>
-            </details> : null}
-            {studyPacksAvailable() ? <Button onClick={() => setAddingPack(true)} disabled={addingPack}>Add study pack</Button> : null}
+            </details>
+            <PracticeTestPicker practiceTests={data.practiceTests} materials={data.materials} openRequest={practiceRequest} hideTrigger />
+            <MyAircraftDialog openRequest={aircraftRequest} hideTrigger />
             {deviceCan().importFiles ? <Button variant={hasAny && !searching && !arranging && continueItems.length > 0 ? undefined : "primary"} onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button> : null}
-            <MyAircraftDialog />
-            {deviceCan().pictureFromPhoto ? <PhotoPictureButton /> : null}
+            {deviceCan().pictureFromPhoto && !deviceCan().importFiles ? <PhotoPictureButton /> : null}
           </div>
         }
       />
@@ -993,12 +1008,7 @@ function MaterialCard({
   offline?: OfflineBadge;
   folderName?: string;
 }) {
-  const statusTone =
-    material.reviewStatus === "confident"
-      ? "complete"
-      : material.reviewStatus === "studying"
-        ? "study"
-        : "neutral";
+  const statusTone = reviewStatusTone(material.reviewStatus);
 
   if (list) {
     const day = localDayOf(material.createdAt);

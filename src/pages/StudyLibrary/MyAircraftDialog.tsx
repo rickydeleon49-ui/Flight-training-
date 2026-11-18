@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button, Dialog, Field, Select, TextInput } from "@/components/ui";
 import { StudySetSaveError } from "@/data/persistenceErrors";
@@ -14,7 +14,11 @@ const blank = (): PohForm => ({ type: "", values: {}, memory: Array.from({ lengt
  * "My aircraft (from your POH)": you type your own numbers; they become ordinary cards of one
  * study set, "My aircraft: <type>", marked as yours. Saving again updates the same cards.
  */
-export function MyAircraftDialog() {
+export function MyAircraftDialog({ openRequest, hideTrigger }: {
+  /** A page menu owns the button: each new number opens the dialog. */
+  openRequest?: number;
+  hideTrigger?: boolean;
+} = {}) {
   const { data, mutate } = useAppData();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<PohForm>(blank);
@@ -73,13 +77,17 @@ export function MyAircraftDialog() {
     } else setError(outcome?.message ?? "These cards couldn't be saved. Nothing has been saved; your text is still here.");
   };
 
+  const begin = () => { setError(null); if (saved[0]) fill(saved[0].id); else { setChoice("new"); setForm(blank()); } setOpen(true); };
+  const beginRef = useRef(begin);
+  beginRef.current = begin;
+  useEffect(() => { if (openRequest) beginRef.current(); }, [openRequest]);
   const setValue = (key: string, value: string) => setForm((f) => ({ ...f, values: { ...f.values, [key]: value } }));
   const setMemory = (index: number, part: "prompt" | "answer", value: string) =>
     setForm((f) => ({ ...f, memory: f.memory.map((line, i) => (i === index ? { ...line, [part]: value } : line)) }));
 
   return (
     <>
-      <Button onClick={() => { setError(null); if (saved[0]) fill(saved[0].id); else { setChoice("new"); setForm(blank()); } setOpen(true); }}>My aircraft cards</Button>
+      {hideTrigger ? null : <Button onClick={begin}>My aircraft cards</Button>}
       {open ? (
         <Dialog
           open
