@@ -98,4 +98,19 @@ describe("FigurePackCard", () => {
     expect(await screen.findByText("Not downloaded yet")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("keeps the download running across an unmount and remount", async () => {
+    const first = view();
+    fireEvent.click(await screen.findByRole("button", { name: "Download sectionals" }));
+    expect(await screen.findByText("Downloading")).toBeTruthy();
+    first.unmount();
+    view();
+    expect(await screen.findByText("Downloading")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Download sectionals" })).toBeNull();
+    const calls = () => mocks.invoke.mock.calls.filter((c) => c[0] === "figure_pack_download").length;
+    expect(calls()).toBe(1);
+    await act(async () => { finishDownload!(); });
+    expect(await screen.findByText("Available offline")).toBeTruthy();
+    expect(calls()).toBe(1);
+  });
 });
