@@ -619,7 +619,7 @@ function ReadinessTool({ state, save }: ToolProps) {
 
   return (
     <div className="stack stack--5 toolkit-print-area">
-      <Card variant="accent">
+      <Card>
         <CardHeader
           title="Private pilot checkride prep"
           eyebrow="Planning checklist"
@@ -1154,7 +1154,7 @@ function CostTool({ state, save }: ToolProps) {
 
   return (
     <div className="stack stack--5">
-      <Card variant="accent">
+      <Card>
         <CardHeader
           title="Private pilot cost forecast"
           eyebrow="Planning estimate"
@@ -1860,7 +1860,7 @@ function QuizTool({ state, save, onBusyChange }: ToolProps & { onBusyChange?: (b
 
   if (!running && result)
     return (
-      <Card variant="accent">
+      <Card>
         <CardHeader title="Quiz finished" eyebrow="Knowledge quiz" />
         <CardBody>
           <h3 ref={resultHeading} tabIndex={-1} className="display">
@@ -1886,7 +1886,7 @@ function QuizTool({ state, save, onBusyChange }: ToolProps & { onBusyChange?: (b
   if (!running)
     return (
       <div className="toolkit-two-column">
-        <Card variant="accent">
+        <Card>
           <CardHeader title="Knowledge quiz" eyebrow="Eight-question review" />
           <CardBody>
             <p className="small muted">
@@ -2166,7 +2166,7 @@ function CareerTool({ state, save }: ToolProps) {
         </p>
         <Button onClick={() => window.print()}>Print portfolio</Button>
       </div>
-      <Card variant="accent">
+      <Card>
         <CardHeader
           title={`${data.profile.pilotName || "Future airline pilot"} — Aviation Portfolio`}
           eyebrow="Career snapshot"

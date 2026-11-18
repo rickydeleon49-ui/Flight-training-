@@ -53,7 +53,7 @@ export function RadioWords() {
   };
 
   return (
-    <Card variant="accent">
+    <Card>
       <CardHeader
         title="Radio words"
         eyebrow="Radio"

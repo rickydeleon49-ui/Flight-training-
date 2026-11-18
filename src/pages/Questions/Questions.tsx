@@ -356,7 +356,7 @@ export function Questions() {
 
         <div className="questions__lesson">
           {lesson ? (
-            <Card variant="accent">
+            <Card>
               <CardHeader title="Before your next lesson" />
               <CardBody>
                 <div className="stack stack--3">
