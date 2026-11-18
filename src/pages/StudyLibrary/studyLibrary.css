@@ -1005,7 +1005,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 .library__actions-more { position: relative; }
 .library__actions-more > summary { list-style: none; cursor: pointer; }
 .library__actions-more > summary::-webkit-details-marker { display: none; }
-.library__actions-more > summary::after { content: " ▾"; }
+.library__actions-more > summary::after { content: " ▾"; position: static; inset: auto; }
 .library__actions-menu {
   position: absolute;
   right: 0;

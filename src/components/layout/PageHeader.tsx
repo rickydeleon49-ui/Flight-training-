@@ -42,11 +42,11 @@ export function PageHeader({
 
   return (
     <header className="page-header">
-      <div>
+      <div className="page-header__text">
         <h1 ref={heading} className="page-header__title">{title}</h1>
         {subtitle ? <p className="page-header__subtitle">{subtitle}</p> : null}
       </div>
-      {action}
+      {action ? <div className="page-header__action">{action}</div> : null}
     </header>
   );
 }
