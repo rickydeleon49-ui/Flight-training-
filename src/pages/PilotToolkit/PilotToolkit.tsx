@@ -1,3 +1,4 @@
+import { BRING_ITEMS, daysToCheckride } from "@/logic/checkride";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icons";
@@ -570,6 +571,33 @@ function EndorsementChecklist({ state, save }: ToolProps) {
   );
 }
 
+function BringChecklist({ state, save }: ToolProps) {
+  const days = daysToCheckride(state.checkrideDate);
+  if (days === null || days > 30) return null;
+  const checks = state.bringChecks ?? {};
+  const update = (id: string, done: boolean) =>
+    save((current) => ({
+      ...current,
+      bringChecks: { ...(current.bringChecks ?? {}), [id]: done },
+    }));
+  return (
+    <details className="card material-fold" id="bring-checklist">
+      <summary>What to bring</summary>
+      <p className="tiny dim">Your examiner and instructor tell you exactly what to bring.</p>
+      <div className="stack stack--4">
+        {BRING_ITEMS.map((item) => (
+          <Checkbox
+            key={item.id}
+            checked={checks[item.id] === true}
+            onChange={(done) => void update(item.id, done)}
+            label={item.label}
+          />
+        ))}
+      </div>
+    </details>
+  );
+}
+
 function ReadinessTool({ state, save }: ToolProps) {
   const summary = readinessSummary(state.readinessItems);
   const areas = [
@@ -625,6 +653,8 @@ function ReadinessTool({ state, save }: ToolProps) {
       </Card>
 
       <HoursToGoCard state={state} />
+
+      <BringChecklist state={state} save={save} />
 
       {areas.map(([area, title]) => (
         <Card key={area} variant="grouped">
@@ -1483,9 +1513,9 @@ function SafetyTool({ state, save }: ToolProps) {
             <Field label="My decision">
               <Select
                 options={[
-                  { value: "go", label: "Go — no concern identified" },
-                  { value: "discuss", label: "Discuss with instructor" },
-                  { value: "no_go", label: "No-go" },
+                  { value: "go", label: "No concerns you noted" },
+                  { value: "discuss", label: "Talk it over with your instructor" },
+                  { value: "no_go", label: "You chose not to fly" },
                 ]}
                 value={draft.decision}
                 onChange={(decision: SafetyDecision) =>
@@ -1506,7 +1536,7 @@ function SafetyTool({ state, save }: ToolProps) {
               {recordBusy ? "Saving…" : "Save this check-in"}
             </Button>
             <p className="tiny dim">
-              This prompt never makes a go/no-go decision. Stop and involve the
+              This prompt never makes the decision for you. Stop and involve the
               instructor whenever anything is uncertain.
             </p>
           </div>
@@ -1538,10 +1568,10 @@ function SafetyTool({ state, save }: ToolProps) {
                     }
                   >
                     {check.decision === "no_go"
-                      ? "No-go"
+                      ? "Chose not to fly"
                       : check.decision === "go"
-                        ? "Go"
-                        : "Discuss"}
+                        ? "No concerns noted"
+                        : "Talk it over"}
                   </Badge>
                 </div>
               ))}

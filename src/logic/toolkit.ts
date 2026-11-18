@@ -1,3 +1,4 @@
+import { BRING_ITEMS } from "@/logic/checkride";
 import type {
   CredentialRecord,
   IsoDate,
@@ -75,6 +76,16 @@ export function normalizeEndorsementChecks(value: unknown): Record<string, { don
     if (typeof done !== "boolean") continue;
     const day = normalizeCheckrideDate(date);
     out[id] = day ? { done, date: day } : { done };
+  }
+  return out;
+}
+
+export function normalizeBringChecks(value: unknown): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) return out;
+  const input = value as Record<string, unknown>;
+  for (const { id } of BRING_ITEMS) {
+    if (typeof input[id] === "boolean") out[id] = input[id] as boolean;
   }
   return out;
 }
@@ -164,6 +175,9 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     checkrideDate: normalizeCheckrideDate(input.checkrideDate),
     ...(input.endorsementChecks !== undefined
       ? { endorsementChecks: normalizeEndorsementChecks(input.endorsementChecks) }
+      : {}),
+    ...(input.bringChecks !== undefined
+      ? { bringChecks: normalizeBringChecks(input.bringChecks) }
       : {}),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],

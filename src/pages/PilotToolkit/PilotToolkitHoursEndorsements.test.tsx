@@ -61,3 +61,31 @@ it("the endorsements checklist is closed by default and a tick persists", async 
   await waitFor(() => expect(stored.endorsementChecks?.["presolo-knowledge"]).toEqual({ done: true }));
   expect(screen.getByText("61.87(b)")).toBeTruthy();
 });
+
+it("What to bring is hidden with no date or over 30 days, shown within 30, and a tick persists", async () => {
+  const day = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const open = () => render(<MemoryRouter initialEntries={["/?tool=readiness"]}><PilotToolkit /></MemoryRouter>);
+  stored = { ...stored, checkrideDate: null };
+  data = { ...data, toolkit: stored };
+  open();
+  expect(document.getElementById("bring-checklist")).toBeNull();
+  cleanup();
+  stored = { ...stored, checkrideDate: day(31) };
+  data = { ...data, toolkit: stored };
+  open();
+  expect(document.getElementById("bring-checklist")).toBeNull();
+  cleanup();
+  stored = { ...stored, checkrideDate: day(30) };
+  data = { ...data, toolkit: stored };
+  open();
+  const details = document.getElementById("bring-checklist") as HTMLDetailsElement;
+  expect(details).toBeTruthy();
+  expect(screen.getByText("Your examiner and instructor tell you exactly what to bring.")).toBeTruthy();
+  details.open = true;
+  fireEvent.click(screen.getByRole("checkbox", { name: /Photo ID/ }));
+  await waitFor(() => expect(stored.bringChecks?.["photo-id"]).toBe(true));
+});

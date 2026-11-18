@@ -22,3 +22,18 @@ export function checkrideLine(date: IsoDate | null | undefined, today: IsoDate =
 export const CHECKRIDE_TITLE = "Your Flight Deck";
 export const checkrideBody = (days: number): string =>
   days === 1 ? "Your checkride is tomorrow." : `Your checkride is in ${days} days.`;
+
+/** "What to bring" items, in our own words from the ACS Applicant's Practical Test Checklist. */
+export const BRING_ITEMS = [
+  { id: "photo-id", label: "Photo ID" },
+  { id: "medical", label: "Your current medical certificate" },
+  { id: "student-cert", label: "Your student pilot certificate" },
+  { id: "application", label: "Your completed application (FAA Form 8710-1 / IACRA)" },
+  { id: "knowledge-report", label: "Your knowledge test report" },
+  { id: "logbook", label: "Your logbook with your instructor's endorsements" },
+  { id: "aircraft-docs", label: "Aircraft papers: airworthiness certificate, registration, operating limitations" },
+  { id: "maintenance", label: "Aircraft maintenance records" },
+  { id: "handbook", label: "The aircraft's flight manual or handbook" },
+  { id: "charts-tools", label: "Current charts, plotter, flight computer and flight log forms" },
+  { id: "fee", label: "The examiner's fee, if it applies" },
+] as const;
