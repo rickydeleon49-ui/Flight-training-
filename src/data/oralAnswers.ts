@@ -4,7 +4,7 @@
  * `src-tauri/src/oral_scenarios.rs`. Answers live only in the student's database and
  * complete backups; no export, packet or handout reads this table.
  */
-import { ORAL_MAX_ANSWER } from "@/logic/oralPractice";
+import { clipText, ORAL_MAX_ANSWER } from "@/logic/oralPractice";
 
 export interface OralAnswer {
   id: string;
@@ -47,5 +47,5 @@ export const validOralAnswerText = (answer: unknown): answer is string =>
 /** The first non-empty line, for the "Earlier answers" list. */
 export function oralAnswerFirstLine(answer: string): string {
   const line = answer.split(/\r?\n/).find((l) => l.trim())?.trim() ?? "";
-  return line.length > 120 ? `${line.slice(0, 119)}…` : line;
+  return Array.from(line).length > 120 ? `${clipText(line, 119)}…` : line;
 }

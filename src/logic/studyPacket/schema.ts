@@ -80,7 +80,7 @@ const question = z.strictObject({
   question: text("block", { min: 1, max: LIMITS.question }),
   choices: z.array(choice).min(LIMITS.choicesMin).max(LIMITS.choicesMax),
   correctChoiceId: choiceId,
-  explanation: text("block", { min: 1, max: LIMITS.explanation }),
+  explanation: text("block", { max: LIMITS.explanation }),
   sourceRefs: sourceRefs.optional(),
 });
 

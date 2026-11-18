@@ -4,7 +4,7 @@ import { Button, Dialog, Field, Select, TextInput } from "@/components/ui";
 import { StudySetSaveError } from "@/data/persistenceErrors";
 import { newId } from "@/lib/id";
 import { StudyAuthoringError } from "@/logic/studyAuthoring";
-import { applyPohCards, parsePohSet, POH_FIELDS, POH_TITLE_PREFIX, POH_MEMORY_LINES, POH_NOTE, pohCards, pohSetTitle, type PohForm } from "@/logic/pohCards";
+import { applyPohCards, parsePohSet, POH_FIELDS, POH_TITLE_PREFIX, POH_MEMORY_LINES, POH_NOTE, POH_TYPE_MAX, POH_VALUE_MAX, POH_PROMPT_MAX, POH_ANSWER_MAX, pohCards, pohSetTitle, type PohForm } from "@/logic/pohCards";
 import { authoringStateOf, emptyManualSet, frameOf, nextSetOf } from "@/logic/studySetEditing";
 import { useAppData } from "@/state/AppDataContext";
 
@@ -51,10 +51,11 @@ export function MyAircraftDialog({ openRequest, hideTrigger }: {
     const outcome = await mutate(async (repos) => {
       try {
         const known = (await repos.documents.list()).find((m) => m.title.trim().toLowerCase() === title.toLowerCase());
-        const material = known ?? (await repos.documents.create({ title, materialType: "personal_note", topic: "aircraft_systems" }));
-        const read = known ? await repos.documents.readStudySetForEdit(material.id) : null;
+        const read = known ? await repos.documents.readStudySetForEdit(known.id) : null;
         const base = read ? { frame: frameOf(read.set), state: authoringStateOf(read.set) } : emptyManualSet(title);
+        // Check the cards first, so a card that can't be saved leaves no empty study set behind.
         const state = await applyPohCards(base.state, cards);
+        const material = known ?? (await repos.documents.create({ title, materialType: "personal_note", topic: "aircraft_systems" }));
         await repos.documents.saveStudySet({
           operationId: newId(),
           materialId: material.id,
@@ -115,11 +116,12 @@ export function MyAircraftDialog({ openRequest, hideTrigger }: {
               </Field>
             ) : null}
             <Field label="Aircraft type">
-              <TextInput value={form.type} onChange={(event) => setForm((f) => ({ ...f, type: event.target.value }))} />
+              <TextInput maxLength={POH_TYPE_MAX} value={form.type} onChange={(event) => setForm((f) => ({ ...f, type: event.target.value }))} />
             </Field>
             {POH_FIELDS.map((field) => (
               <Field key={field.key} label={field.label}>
                 <TextInput
+                  maxLength={POH_VALUE_MAX}
                   value={form.values[field.key] ?? ""}
                   placeholder={field.unit}
                   onChange={(event) => setValue(field.key, event.target.value)}
@@ -130,10 +132,10 @@ export function MyAircraftDialog({ openRequest, hideTrigger }: {
             {form.memory.map((line, index) => (
               <div className="stack stack--2" key={index}>
                 <Field label={`Memory item ${index + 1}: prompt`}>
-                  <TextInput value={line.prompt} onChange={(event) => setMemory(index, "prompt", event.target.value)} />
+                  <TextInput maxLength={POH_PROMPT_MAX} value={line.prompt} onChange={(event) => setMemory(index, "prompt", event.target.value)} />
                 </Field>
                 <Field label={`Memory item ${index + 1}: answer`}>
-                  <TextInput value={line.answer} onChange={(event) => setMemory(index, "answer", event.target.value)} />
+                  <TextInput maxLength={POH_ANSWER_MAX} value={line.answer} onChange={(event) => setMemory(index, "answer", event.target.value)} />
                 </Field>
               </div>
             ))}

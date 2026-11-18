@@ -140,11 +140,12 @@ export function OralPracticeDialog({
       try {
         const title = ORAL_REVIEW_SET_TITLE;
         const known = (await repos.documents.list()).find((m) => m.title.trim().toLowerCase() === title.toLowerCase());
-        const doc = known ?? (await repos.documents.create({ title, materialType: "personal_note", topic: material.topic }));
-        const read = known ? await repos.documents.readStudySetForEdit(doc.id) : null;
+        const read = known ? await repos.documents.readStudySetForEdit(known.id) : null;
         const base = read ? { frame: frameOf(read.set), state: authoringStateOf(read.set) } : emptyManualSet(title);
+        // Check the cards first, so cards that can't be saved leave no empty study set behind.
         const state = await applyMissedPointCards(base.state, cards);
         if (state === base.state) return { ok: true as const };
+        const doc = known ?? (await repos.documents.create({ title, materialType: "personal_note", topic: material.topic }));
         await repos.documents.saveStudySet({
           operationId: newId(),
           materialId: doc.id,

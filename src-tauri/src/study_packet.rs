@@ -328,7 +328,7 @@ mod import_limits {
     pub const SECTIONS: usize = 100;
     pub const HEADING: usize = 200;
     pub const BODY: usize = 20_000;
-    pub const SOURCE_NOTES: usize = 5_000;
+    pub const SOURCE_NOTES: usize = 20_000;
     pub const FLASHCARDS: usize = 500;
     pub const FRONT: usize = 1_000;
     pub const BACK: usize = 2_000;
@@ -337,7 +337,7 @@ mod import_limits {
     pub const CHOICES_MIN: usize = 2;
     pub const CHOICES_MAX: usize = 6;
     pub const CHOICE_TEXT: usize = 500;
-    pub const EXPLANATION: usize = 4_000;
+    pub const EXPLANATION: usize = 5_000;
 }
 
 /// The stored JSON shapes, in the same field order the app writes for Gemini.
@@ -784,7 +784,7 @@ pub(crate) fn decode_import_operation(value: &Value) -> Check<ImportContent> {
                         question,
                         options,
                         correct_index,
-                        explanation: bounded(q.explanation, Kind::Block, 1, limit::EXPLANATION)?,
+                        explanation: bounded(q.explanation, Kind::Block, 0, limit::EXPLANATION)?,
                         source_page: None,
                     })
                 })

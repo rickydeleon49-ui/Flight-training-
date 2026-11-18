@@ -192,7 +192,7 @@ export function decodeStructuredImport(value: unknown): ImportContent {
         question,
         options,
         correctIndex: raw.correctIndex,
-        explanation: bounded(raw.explanation, "block", 1, LIMITS.explanation),
+        explanation: bounded(raw.explanation, "block", 0, LIMITS.explanation),
         sourcePage: null,
       };
     });

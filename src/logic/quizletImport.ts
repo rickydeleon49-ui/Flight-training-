@@ -11,6 +11,8 @@ export interface QuizletParse {
 
 const key = (text: string) => text.normalize("NFKC").toLowerCase().replace(/\s+/gu, " ").trim();
 
+const hasSeparator = (row: string) => row.includes("\t") || row.includes(",") || row.includes(" - ");
+
 function splitRow(row: string): [string, string] {
   let at = row.indexOf("\t");
   if (at >= 0) return [row.slice(0, at), row.slice(at + 1)];
@@ -23,7 +25,11 @@ function splitRow(row: string): [string, string] {
 
 export function parseQuizletText(text: string, existingFronts: readonly string[]): QuizletParse {
   const clean = text.replace(/^﻿/u, "").replace(/\r\n?/gu, "\n");
-  const rows = !clean.includes("\n") && clean.includes(";") ? clean.split(";") : clean.split("\n");
+  // A single line may hold every card with ";" between them. Only treat ";" that way when each piece
+  // has its own term and definition; otherwise the ";" belongs to the text of one card.
+  const pieces = clean.split(";").filter((piece) => piece.trim());
+  const semicolonRows = !clean.includes("\n") && pieces.length > 1 && pieces.every(hasSeparator);
+  const rows = semicolonRows ? pieces : clean.split("\n");
   const seen = new Set(existingFronts.map(key));
   const cards: { front: string; back: string }[] = [];
   let skippedDuplicates = 0;
