@@ -84,9 +84,11 @@ export function FlightDeck() {
   const [creating, setCreating] = useState(false);
   const [rescheduling, setRescheduling] = useState<NextAction | null>(null);
 
+  const today = useLocalToday();
   const model = useMemo(
     () =>
       buildDashboard({
+        today,
         profile: data.profile,
         actions: data.actions,
         homework: data.homework,
@@ -103,7 +105,7 @@ export function FlightDeck() {
         dailyPlan: data.dailyPlan,
         checkrideDate: data.toolkit.checkrideDate ?? null,
       }),
-    [data],
+    [data, today],
   );
 
   const checkrideText = checkrideLine(data.toolkit.checkrideDate ?? null);

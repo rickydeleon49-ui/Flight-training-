@@ -13,6 +13,7 @@
  * Page references go along as unverified claims, which an import shows and
  * then discards, as it does for any outside packet.
  */
+import { todayIso } from "@/lib/dates";
 import { pdfLabelState, PDF_KIT_LABEL, PDF_KIT_REMINDER, pdfEditLabel } from "./pdfKitLabels";
 import type { PdfItemProvenance } from "@/data/pdfKitSources";
 import type { AiStudySet, PracticeTest, StudyMaterial } from "@/domain/types";
@@ -223,7 +224,7 @@ export function buildExportPacket(source: ExportSource, selection: ExportSelecti
     title,
     source: {
       generator: "Your Flight Deck",
-      createdAt: createdAt.toISOString().slice(0, 10),
+      createdAt: todayIso(createdAt),
       note: provenanceNote(source, selection, true).slice(0, LIMITS.sourceNote),
     },
   };

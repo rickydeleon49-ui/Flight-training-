@@ -543,3 +543,20 @@ it.each([false, true])("iOS saved references pass their material ID and explain 
     device.mockRestore();
   }
 });
+
+it("shows the download date as the local day, not the UTC day", async () => {
+  const original = process.env.TZ;
+  process.env.TZ = "America/Los_Angeles";
+  try {
+    // 17:00 on 30 Oct in Los Angeles is already 31 Oct in UTC.
+    mocks.records.mockResolvedValue([{ ...receipt, downloadedAt: "2026-10-31T00:00:00Z" }]);
+    mocks.materials = [makeMaterial({ id: receipt.materialId, title: "Airplane Flying Handbook, chapter 4", filePath: imported.relativePath })];
+    mount();
+    await screen.findByRole("option", { name: /chapter 4/ });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "afh-3c-ch04" } });
+    await screen.findByText(`FAA-H-8083-3C · 2021 · from www.faa.gov on 2026-10-30 · SHA-256 ${downloaded.sha256}`);
+  } finally {
+    if (original === undefined) delete process.env.TZ;
+    else process.env.TZ = original;
+  }
+});

@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef } from "react";
 
-import { todayIso } from "@/lib/dates";
 import { buildReminders } from "@/logic/toolkit";
 import { notify } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
+import { useLocalToday } from "@/state/useLocalToday";
 
 /** Reminders are viewed in Pilot Toolkit; this only sends permitted OS notices. */
 export function ReminderNotifications() {
   const { data, status } = useAppData();
-  const today = todayIso();
+  const today = useLocalToday();
   const reminders = useMemo(
     () => buildReminders({
       actions: data.actions,

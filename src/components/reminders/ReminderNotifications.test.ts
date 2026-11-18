@@ -108,6 +108,8 @@ it("sends at most one permitted notification per day, including rerenders and re
   expect(notify).toHaveBeenCalledOnce();
   vi.setSystemTime(new Date(start.getTime() + 86_400_000));
   data = { ...data, events: [lesson()] };
+  // The new day is noticed on focus (or at midnight), not on a stray re-render.
+  act(() => { window.dispatchEvent(new Event("focus")); });
   next.rerender(view());
   await flush();
   expect(notify).toHaveBeenCalledTimes(2);
@@ -133,4 +135,17 @@ it("does not open a fallback dialog if a system notification fails", async () =>
   await flush();
   noPopup();
   expect(sessionStorage.getItem(sessionKey())).toBeNull();
+});
+
+it("starts a new day's notice when the local day rolls over while open", async () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+  vi.setSystemTime(new Date(2026, 8, 25, 23, 59, 30));
+  permission("granted");
+  data.events = [makeEvent({ id: "fictional-lesson", date: "2026-09-26" })];
+  render(view());
+  await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+  expect(sessionStorage.getItem("her-flight-deck-reminders-2026-09-25")).toBe("seen");
+  expect(sessionStorage.getItem("her-flight-deck-reminders-2026-09-26")).toBeNull();
+  await act(async () => { await vi.advanceTimersByTimeAsync(40_000); });
+  expect(sessionStorage.getItem("her-flight-deck-reminders-2026-09-26")).toBe("seen");
 });
