@@ -68,7 +68,8 @@ export function weatherMeaning(raw: string): string | null {
   if (!sawPhenomenon && !(rest === "TS" || rest === "SH")) return null;
   if (rest === "FC" && plus?.[1] === "+") return "Tornado or waterspout";
   // "with" / "of" only make sense when a precipitation or obscuration type follows.
-  const text = parts.join(" ").replace(/:\s/, ": ").replace(sawPhenomenon ? /$^/ : / (?:with|of)$/, "");
+  let text = parts.join(" ");
+  if (!sawPhenomenon) text = text.replace(/ (?:with|of)$/, "");
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
