@@ -96,6 +96,7 @@ import { SectionalDrill } from "./SectionalDrill";
 import { RegCardDrill } from "./RegCardDrill";
 import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
+import { WeatherPractice } from "./WeatherPractice";
 import "./pilotToolkit.css";
 
 type Tool =
@@ -221,7 +222,7 @@ function WindsAloftView({ stations, cruise }: { stations: WindsAloftStation[]; c
   );
 }
 
-function MetarTool() {
+function MetarTool({ minimums }: { minimums?: PersonalMinimums }) {
   const [text, setText] = useState("");
   const [cruise, setCruise] = useState("");
   // Detection order: NOTAM (the "!" is unambiguous), then PIREP, winds aloft, TAF, then METAR.
@@ -305,6 +306,8 @@ function MetarTool() {
             <p>{result.categoryNote}</p>
           </div>
         ) : null}
+        <h3>Weather practice</h3>
+        <WeatherPractice minimums={minimums} />
       </CardBody>
     </Card>
   );
@@ -466,7 +469,7 @@ export function PilotToolkit() {
         {tool === "career" ? (
           <CareerTool state={data.toolkit} save={save} />
         ) : null}
-        {tool === "metar" ? <MetarTool /> : null}
+        {tool === "metar" ? <MetarTool minimums={data.toolkit.personalMinimums} /> : null}
         {tool === "e6b" ? <E6bTrainer /> : null}
       </section>
       )}
