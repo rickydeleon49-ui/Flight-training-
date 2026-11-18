@@ -1439,6 +1439,8 @@ export interface ToolkitState {
   personalMinimums?: PersonalMinimums;
   /** Optional: endorsements you have ticked yourself, by checklist id. Off when missing. */
   endorsementChecks?: Record<string, { done: boolean; date?: IsoDate }>;
+  /** Optional: "What to bring" items you have ticked yourself, by item id. Off when missing. */
+  bringChecks?: Record<string, boolean>;
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;
