@@ -42,4 +42,11 @@ describe("parseQuizletText", () => {
     expect(r.cards).toHaveLength(500);
     expect(r.cut).toBe(true);
   });
+  it("keeps a semicolon inside one card when the other pieces are not cards", () => {
+    expect(parseQuizletText("Lift, upward force; opposes weight", []).cards).toEqual([{ front: "Lift", back: "upward force; opposes weight" }]);
+  });
+  it("splits a single line of comma cards on semicolons", () => {
+    const r = parseQuizletText("Lift, up;Drag, back;Thrust, forward;", []);
+    expect(r.cards).toEqual([{ front: "Lift", back: "up" }, { front: "Drag", back: "back" }, { front: "Thrust", back: "forward" }]);
+  });
 });

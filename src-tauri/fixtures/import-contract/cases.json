@@ -287,12 +287,12 @@
    "expected": "CONTENT_LIMIT_EXCEEDED"
   },
   {
-   "name": "source notes at 5,001 code points",
+   "name": "source notes at 20,001 code points",
    "patches": [
     {
      "pointer": "/studySet/sourceNotes",
      "repeat": "n",
-     "count": 5001
+     "count": 20001
     }
    ],
    "expected": "CONTENT_LIMIT_EXCEEDED"

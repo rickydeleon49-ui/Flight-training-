@@ -21,6 +21,11 @@ export const POH_FIELDS: readonly PohField[] = [
 ];
 
 export const POH_MEMORY_LINES = 5;
+/** Typing limits that keep every card and the set title inside what a study set can hold (title 500, front 1,000, back 2,000). */
+export const POH_TYPE_MAX = 100;
+export const POH_VALUE_MAX = 100;
+export const POH_PROMPT_MAX = 500;
+export const POH_ANSWER_MAX = 1000;
 export const POH_NOTE = "Type these from your aircraft's POH. Your instructor's POH numbers win.";
 
 export interface PohForm {

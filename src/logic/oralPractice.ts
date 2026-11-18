@@ -14,6 +14,12 @@ export const ORAL_LONG_ANSWER_WORDS = 120;
 export const ORAL_LENGTH_HINT = "Examiners like short answers: state the rule, then one example.";
 export const ORAL_REVIEW_SET_TITLE = "Oral practice: missed points";
 
+/** The first `max` characters of `text`, never cutting an emoji or other two-part character in half. */
+export function clipText(text: string, max: number): string {
+  const chars = Array.from(text);
+  return chars.length > max ? chars.slice(0, max).join("") : text;
+}
+
 /** A quiet nudge when an answer runs long (over about 120 words). Nothing for short or empty answers. */
 export function answerLengthHint(text: string): string | null {
   const words = text.trim().split(/\s+/u).filter(Boolean).length;
@@ -24,7 +30,8 @@ export function answerLengthHint(text: string): string | null {
 export function missedPointCards(prompt: string, points: readonly string[], covered: readonly boolean[]): { front: string; back: string }[] {
   const text = prompt.trim();
   // A card front holds 1,000 characters at most; keep "Key point?" and shorten a very long scenario.
-  const front = `${text.length > 960 ? `${text.slice(0, 959)}…` : text} Key point?`;
+  const shown = Array.from(text).length > 960 ? `${clipText(text, 959)}…` : text;
+  const front = `${shown} Key point?`;
   return points.flatMap((point, at) => (covered[at] ? [] : [{ front, back: point }]));
 }
 
@@ -88,7 +95,7 @@ export function oralPlainText({ scenario, assumptions, answer, coveredPoints }: 
 
 export function oralNoteDraft(text: OralText): { title: string; body: string } {
   const first = text.scenario.trim().split(/\r?\n/)[0] ?? "";
-  const short = first.length > 60 ? `${first.slice(0, 57)}…` : first;
+  const short = Array.from(first).length > 60 ? `${clipText(first, 57)}…` : first;
   return { title: `Oral question: ${short}`, body: oralPlainText(text) };
 }
 

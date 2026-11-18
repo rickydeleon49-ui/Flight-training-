@@ -186,6 +186,35 @@ describe("a study packet export", () => {
     expect(exportStudyPacket(leaked, ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.credential });
   });
 
+  it("exports a question whose explanation is blank, as the app lets her save it", () => {
+    const blank = practiceTest({
+      questions: [{ question: "A TAF is a…", options: ["Forecast", "Observation"], correctIndex: 0, explanation: "", sourcePage: null }],
+    });
+    const result = exported(source({ practiceTest: blank }));
+    expect(result.counts.questions).toBe(1);
+    expect(validatePacketText(result.text).ok).toBe(true);
+  });
+
+  it("exports the longest explanation and source notes the app can store", () => {
+    const longTest = practiceTest({
+      questions: [{ question: "Q?", options: ["A", "B"], correctIndex: 0, explanation: "e".repeat(5_000), sourcePage: null }],
+    });
+    const longSet = studySet({ sourceNotes: "n".repeat(20_000) });
+    expect(exportStudyPacket(source({ practiceTest: longTest, studySet: longSet }), ALL, NOW).ok).toBe(true);
+  });
+
+  it("cuts a long title by whole characters and trims it", () => {
+    // Character 200 is the first half of a two-part character if cut by code units.
+    const title = `${"a".repeat(198)} ${"😀".repeat(5)}`;
+    const result = exported(source({ material: makeMaterial({ id: "material-1", title }) }));
+    const written = JSON.parse(result.text).title as string;
+    expect(Array.from(written)).toHaveLength(200);
+    expect(written.endsWith("😀")).toBe(true);
+    expect(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(written)).toBe(false);
+    const spaced = exported(source({ material: makeMaterial({ id: "material-1", title: `${"b".repeat(199)} ${"c".repeat(10)}` }) }));
+    expect(JSON.parse(spaced.text).title).toBe("b".repeat(199));
+  });
+
   it("refuses more than the format can hold", () => {
     const many = Array.from({ length: 501 }, (_, i) => ({ front: `Q${i}`, back: `A${i}`, sourcePage: null }));
     expect(exportStudyPacket(source({ studySet: studySet({ flashcards: many }) }), ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.tooLarge });

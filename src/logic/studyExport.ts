@@ -41,6 +41,12 @@ export type ExportPacketResult =
   | { ok: true; text: string; fileName: string; counts: { sections: number; flashcards: number; questions: number } }
   | { ok: false; message: string };
 
+/** The first `max` characters, never cutting an emoji or other two-part character in half. */
+function clip(text: string, max: number): string {
+  const chars = Array.from(text);
+  return chars.length > max ? chars.slice(0, max).join("") : text;
+}
+
 const CHOICE_IDS = ["a", "b", "c", "d", "e", "f"] as const;
 
 /** Messages for a packet this export could not write, in the student's words. */
@@ -199,23 +205,21 @@ function sourceRefs(title: string, page: number | null) {
 
 /** A safe file name for the save dialog's suggestion. */
 export function exportFileName(title: string, extension: "json" | "html" | "ics" | "zip" | "csv"): string {
-  const base =
-    title
+  const base = title
       .normalize("NFC")
       .replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .replace(/^\.+/, "")
-      .slice(0, 80)
-      .trim() || "Study packet";
-  return `${base}.${extension}`;
+      .replace(/^\.+/, "");
+  const name = clip(base, 80).trim() || "Study packet";
+  return `${name}.${extension}`;
 }
 
 /** The packet object for the chosen parts, before validation. */
 export function buildExportPacket(source: ExportSource, selection: ExportSelection, createdAt: Date): Record<string, unknown> {
   source={...source,studySet:source.studySet ? {...source.studySet,flashcards:source.studySet.flashcards.filter(c=>!c.visualRegionId)} : null};
   const available = exportableParts(source);
-  const title = normalizeLine(source.material.title).slice(0, LIMITS.title) || "Study packet";
+  const title = clip(normalizeLine(source.material.title), LIMITS.title).trim() || "Study packet";
   const set = source.studySet;
   const test = source.practiceTest;
   const packet: Record<string, unknown> = {
@@ -225,7 +229,7 @@ export function buildExportPacket(source: ExportSource, selection: ExportSelecti
     source: {
       generator: "Your Flight Deck",
       createdAt: todayIso(createdAt),
-      note: provenanceNote(source, selection, true).slice(0, LIMITS.sourceNote),
+      note: clip(provenanceNote(source, selection, true), LIMITS.sourceNote).trim(),
     },
   };
   if (set && selection.guide && available.guide) {

@@ -84,4 +84,25 @@ describe("My aircraft dialog", { timeout: 60_000 }, () => {
     fireEvent.change(await screen.findByLabelText("Aircraft"), { target: { value: "new" } });
     expect((screen.getByLabelText("Aircraft type") as HTMLInputElement).value).toBe("");
   });
+
+  it("limits what can be typed to what a card can hold", async () => {
+    render(h(AppDataProvider, null, h(MyAircraftDialog)));
+    fireEvent.click(await screen.findByRole("button", { name: "My aircraft cards" }, SLOW));
+    expect((await screen.findByLabelText("Aircraft type") as HTMLInputElement).maxLength).toBe(100);
+    expect((screen.getByLabelText("Vy (best rate of climb)") as HTMLInputElement).maxLength).toBe(100);
+    expect((screen.getByLabelText("Memory item 1: prompt") as HTMLInputElement).maxLength).toBe(500);
+    expect((screen.getByLabelText("Memory item 1: answer") as HTMLInputElement).maxLength).toBe(1000);
+  });
+
+  it("creates nothing when a card is too long to save", async () => {
+    render(h(AppDataProvider, null, h(MyAircraftDialog)));
+    fireEvent.click(await screen.findByRole("button", { name: "My aircraft cards" }, SLOW));
+    fireEvent.change(await screen.findByLabelText("Aircraft type"), { target: { value: "Fake-172" } });
+    fireEvent.change(screen.getByLabelText("Memory item 1: prompt"), { target: { value: "p".repeat(1500) } });
+    fireEvent.change(screen.getByLabelText("Memory item 1: answer"), { target: { value: "Fake answer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save 1 card" }));
+    expect(await screen.findByRole("alert", {}, SLOW)).toBeTruthy();
+    const materials = await db.select<{ n: number }>("SELECT COUNT(*) AS n FROM study_materials WHERE title LIKE 'My aircraft:%'");
+    expect(materials[0]!.n).toBe(0);
+  });
 });

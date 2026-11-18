@@ -792,7 +792,6 @@ fn tb_ipc_13_whitespace_only_required_strings() {
         "/studySet/flashcards/0/front",
         "/studySet/flashcards/0/back",
         "/practiceTest/questions/0/question",
-        "/practiceTest/questions/0/explanation",
         "/practiceTest/questions/0/options/1",
     ] {
         let mut op = operation(ID);
@@ -808,6 +807,22 @@ fn with_title(op: &mut Value, title: &str) {
 }
 
 #[test]
+fn a_blank_explanation_is_saved_as_the_app_allows_it() {
+    let dir = TestDir::new();
+    let conn = setup_db(dir.path());
+    let mut op = operation(ID);
+    *op.pointer_mut("/practiceTest/questions/0/explanation")
+        .unwrap() = json!(" \t\r\n ");
+    save(dir.path(), &op).unwrap();
+    assert_eq!(counts(&conn), [1, 1, 1]);
+    let mut long = operation(ID);
+    *long
+        .pointer_mut("/practiceTest/questions/0/explanation")
+        .unwrap() = json!("e".repeat(5_001));
+    refused_without_writes(&long, "CONTENT_LIMIT_EXCEEDED");
+}
+
+#[test]
 fn tb_ipc_14_exact_boundaries_pass_and_one_more_is_refused() {
     // Code points, not bytes or UTF-16 units: "✈" is 3 bytes, "𝄞" is 2 units.
     let dir = TestDir::new();
@@ -815,7 +830,7 @@ fn tb_ipc_14_exact_boundaries_pass_and_one_more_is_refused() {
     let mut at_limit = operation(ID);
     with_title(&mut at_limit, &"✈".repeat(200));
     at_limit["studySet"]["summary"] = json!("𝄞".repeat(20_000));
-    at_limit["studySet"]["sourceNotes"] = json!("n".repeat(5_000));
+    at_limit["studySet"]["sourceNotes"] = json!("n".repeat(20_000));
     at_limit["practiceTest"]["questions"][0]["options"] =
         json!(["a".repeat(500), "b".repeat(500), "c", "d", "e", "f"]);
     save(dir.path(), &at_limit).unwrap();
@@ -828,7 +843,7 @@ fn tb_ipc_14_exact_boundaries_pass_and_one_more_is_refused() {
     long_summary["studySet"]["summary"] = json!("𝄞".repeat(20_001));
     refused_without_writes(&long_summary, "CONTENT_LIMIT_EXCEEDED");
     let mut long_notes = operation(ID);
-    long_notes["studySet"]["sourceNotes"] = json!("n".repeat(5_001));
+    long_notes["studySet"]["sourceNotes"] = json!("n".repeat(20_001));
     refused_without_writes(&long_notes, "CONTENT_LIMIT_EXCEEDED");
     let mut seven_options = operation(ID);
     seven_options["practiceTest"]["questions"][0]["options"] =
