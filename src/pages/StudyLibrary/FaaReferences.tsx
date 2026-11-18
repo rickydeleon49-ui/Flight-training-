@@ -12,6 +12,7 @@ import {
   type FaaDownloadEntry, type FaaDownloadProgress, type FaaDownloaded,
 } from "@/services/faaDownloads";
 import type { StudyMaterial } from "@/domain/types";
+import { localDayOf } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import {
   FAA_REFERENCES,
@@ -265,7 +266,7 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
       return <div key={record.materialId} className="stack stack--4">
         <h4 className="small">{material.title}</h4>
         <p className="small">Saved for offline study</p>
-        <p className="small wrap-anywhere">{record.edition} · {one ? one.published : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
+        <p className="small wrap-anywhere">{record.edition} · {one ? one.published : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {localDayOf(record.downloadedAt) ?? record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
         <SavedReference material={material} downloaded reference={{ title: one ? one.title : "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
         {deviceCan().splitFiles && phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
@@ -366,7 +367,7 @@ function SavedReference({ material, note, reference, downloaded = false }: {
   return (
     <div className="faa-shelf__copy">
       {faaEditionMessage(reference, note) ? <p className="small wrap-anywhere">{faaEditionMessage(reference, note)}</p> : null}
-      <p className="small muted">Added {material.createdAt.slice(0, 10)}</p>
+      <p className="small muted">Added {localDayOf(material.createdAt) ?? material.createdAt.slice(0, 10)}</p>
       <p className="small" role="status">{AVAILABILITY[availability]}</p>
       <div className="row row--wrap">
         <Button onClick={() => void open()} disabled={busy || availability !== "present"}

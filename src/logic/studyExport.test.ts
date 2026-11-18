@@ -432,3 +432,18 @@ it("bookmark page anchors stay private in v1 packets, print and CSV while instru
     for(const hidden of ["PRIVATE-SOURCE-ID","PRIVATE-SAVED-TITLE","PRIVATE-PRINTED-LABEL","pageSource","CFI PRIVATE"]) expect(text).not.toContain(hidden);
   }
 });
+
+it("writes the Created day as the local day, not the UTC day", () => {
+  const original = process.env.TZ;
+  process.env.TZ = "America/Los_Angeles";
+  try {
+    // 17:00 on 16 Oct in Los Angeles is already 17 Oct in UTC.
+    const result = exportStudyPacket(source(), ALL, new Date("2026-10-17T00:00:00Z"));
+    if (!result.ok) throw new Error(result.message);
+    const packet = JSON.parse(result.text) as { source: { createdAt: string } };
+    expect(packet.source.createdAt).toBe("2026-10-16");
+  } finally {
+    if (original === undefined) delete process.env.TZ;
+    else process.env.TZ = original;
+  }
+});

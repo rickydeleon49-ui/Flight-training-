@@ -166,7 +166,7 @@ describe("More page", () => {
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => setTimeout(() => cb(0), 0) as unknown as number);
     mount("/");
     const nav = document.querySelector(".ios-tab-bar")!;
-    const go = (next: number) => { y = next; act(() => { fireEvent.scroll(window); vi.runAllTimers(); }); };
+    const go = (next: number) => { y = next; act(() => { fireEvent.scroll(window); vi.runOnlyPendingTimers(); }); };
     expect(nav.classList.contains("is-compact")).toBe(false);
     go(300);
     expect(nav.classList.contains("is-compact")).toBe(true);
