@@ -28,6 +28,7 @@ import type { DebriefSaveOperation } from "@/data/db";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
 
+import { useEscapeBack } from "./useEscapeBack";
 import "./journal.css";
 
 interface DebriefDraft {
@@ -742,6 +743,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   // "More details" opens when any of its fields has a value, then stays open (never snaps shut while typing).
   const moreDetailsHasValue = Boolean(draft.departureAirport || draft.arrivalAirport || draft.instructorName || (draft.schoolName ?? existing?.schoolName));
   const [moreDetailsLatched, setMoreDetailsLatched] = useState(false);
+  useEscapeBack(() => navigate(-1), !isSaving);
   useEffect(() => { if (moreDetailsHasValue) setMoreDetailsLatched(true); }, [moreDetailsHasValue]);
   const moreDetailsOpen = moreDetailsHasValue || moreDetailsLatched;
 

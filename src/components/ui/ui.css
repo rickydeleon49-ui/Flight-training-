@@ -605,6 +605,8 @@ dialog:not([open]) { display: none; }
 }
 
 .dialog--narrow { width: min(28rem, calc(100vw - 3rem)); }
+/* Multi-step dialogs keep one height so the close button stays put between steps. */
+.dialog--steady { min-height: min(34rem, calc(100vh - 4rem)); }
 
 .dialog__header {
   display: flex;

@@ -54,3 +54,11 @@ it("never uses verdict words in any scenario", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next scenario" }));
   }
 });
+
+it("puts each revealed answer inside its own question row", () => {
+  render(<WeatherPractice />);
+  const first = WEATHER_PRACTICE[0]!.questions[0]!;
+  fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+  const row = screen.getByText(first.question, { exact: false }).closest("li")!;
+  expect(row.textContent).toContain(first.answer);
+});

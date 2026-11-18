@@ -326,7 +326,7 @@ export function OralPracticeDialog({
   }
 
   return (
-    <Dialog open={open} onClose={close} title={mock ? "Mock oral" : "Practice an oral question"} footer={footer} dismissible={!saving}>
+    <Dialog open={open} onClose={close} title={mock ? "Mock oral" : "Practice an oral question"} footer={footer} dismissible={!saving} className="dialog--steady">
       <div className="stack stack--3">
         {retryAction ? (
           <div role="alert">

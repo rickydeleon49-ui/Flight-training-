@@ -49,18 +49,14 @@ export function WeatherPractice({ minimums }: { minimums?: PersonalMinimums }) {
       <pre className="mono" style={{ whiteSpace: "pre-wrap" }}>{scenario.raw}</pre>
       <ul className="stack stack--2">
         {scenario.questions.map((q) => (
-          <li key={q.question}>{q.question}</li>
+          <li key={q.question}>
+            {q.question}
+            {shown ? <> <strong>{q.answer}</strong></> : null}
+          </li>
         ))}
       </ul>
       {shown ? (
         <div className="stack stack--2" aria-label="Practice answers">
-          <ul className="stack stack--2">
-            {scenario.questions.map((q) => (
-              <li key={q.question}>
-                <strong>{q.question}</strong> {q.answer}
-              </li>
-            ))}
-          </ul>
           <ul className="stack stack--2" aria-label="Decoded practice groups">
             {tokens.map((token, i) => (
               <li key={i}>
