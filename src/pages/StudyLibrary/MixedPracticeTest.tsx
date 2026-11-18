@@ -34,7 +34,7 @@ export function MixedPracticeTest({ practiceTests, materials, onFinished }: {
 
   return <>
     <Button variant="secondary" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (!open) setOpen(true); }}>Mixed practice test</Button>
-    {open ? <Dialog open title="Mixed practice test" onClose={requestClose}>
+    {open ? <Dialog open title="Mixed practice test" onClose={requestClose} className="dialog--steady">
       <div className="stack stack--3">
         {!run ? <>
           {choices.length >= MIXED_MIN_MATERIALS ? <>

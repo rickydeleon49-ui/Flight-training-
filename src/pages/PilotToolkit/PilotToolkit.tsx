@@ -332,8 +332,10 @@ function MetarTool({ minimums }: { minimums?: PersonalMinimums }) {
             <p>{result.categoryNote}</p>
           </div>
         ) : null}
-        <h3>Weather practice</h3>
-        <WeatherPractice minimums={minimums} />
+        <div className="stack stack--2">
+          <h3>Weather practice</h3>
+          <WeatherPractice minimums={minimums} />
+        </div>
       </CardBody>
     </Card>
   );

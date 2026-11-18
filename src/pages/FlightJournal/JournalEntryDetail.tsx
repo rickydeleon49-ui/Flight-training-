@@ -19,6 +19,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 import { SkillEvidenceCard } from "@/pages/FlightPath/skills/SkillEvidenceCard";
 
+import { useEscapeBack } from "./useEscapeBack";
 import "./journal.css";
 
 export function JournalEntryDetail() {
@@ -30,6 +31,7 @@ export function JournalEntryDetail() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const entry = data.journalEntries.find((candidate) => candidate.id === entryId) ?? null;
+  useEscapeBack(() => navigate("/journal"));
 
   if (!entry) {
     return (
