@@ -7270,6 +7270,23 @@ fn fresh_staging(root: &Path) -> Result<(PathBuf, PathBuf), String> {
         Err(e) => return Err(format!("Could not inspect restore journal: {e}")),
     };
 
+    if !has_journal {
+        // No journal does not mean nothing is wrong: an interrupted journal write or an
+        // unrecovered safety copy leaves other evidence. Clearing the pending folder then
+        // could destroy the only copy of what a half-finished restore was moving.
+        match find_unresolved_recovery_evidence(root) {
+            Ok(Some((reason, _))) => {
+                return Err(format!(
+                    "Cannot stage a restore while an unresolved recovery or restore is active: {reason}"
+                ));
+            }
+            Ok(None) => {}
+            Err(e) => {
+                return Err(format!("Could not check for an unfinished restore: {e}"));
+            }
+        }
+    }
+
     if has_journal {
         match read_journal(root) {
             Ok(Some(journal)) => {
@@ -18935,6 +18952,30 @@ mod tests {
             database_contents(&backups_folder.join(DB_FILES[0])),
             "backup safety record"
         );
+
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn start_fresh_staging_refuses_with_interrupted_journal_update_evidence() {
+        let root = scratch("start-fresh-tmp-journal");
+        write_database(&root.join(DB_FILES[0]), "normal record");
+        let pending = root.join(RESTORE_PENDING_DIR);
+        std::fs::create_dir_all(&pending).unwrap();
+        std::fs::write(pending.join("keep.txt"), b"staged bytes").unwrap();
+        std::fs::write(
+            root.join(format!("{RESTORE_JOURNAL_FILE}.tmp123")),
+            b"{partial",
+        )
+        .unwrap();
+
+        let err = stage_start_fresh_in(&root).unwrap_err();
+        assert!(err.contains("unresolved recovery"), "Error was: {err}");
+        assert!(
+            pending.join("keep.txt").is_file(),
+            "pending must be untouched"
+        );
+        assert!(!root.join(RESTORE_STAGING_DIR).exists());
 
         std::fs::remove_dir_all(&root).unwrap();
     }
