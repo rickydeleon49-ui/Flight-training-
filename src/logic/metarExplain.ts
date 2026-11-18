@@ -19,7 +19,7 @@ const PHENOMENON: Record<string, string> = {
   DZ: "drizzle", RA: "rain", SN: "snow", SG: "snow grains", IC: "ice crystals", PL: "ice pellets",
   GR: "hail", GS: "small hail or snow pellets", UP: "unknown precipitation",
   BR: "mist", FG: "fog", FU: "smoke", VA: "volcanic ash", DU: "widespread dust", SA: "sand",
-  HZ: "haze", PY: "spray", PO: "dust or sand whirls", SQ: "squalls", FC: "funnel cloud or tornado",
+  HZ: "haze", PY: "spray", PO: "dust or sand whirls", SQ: "squalls", FC: "funnel cloud",
   SS: "sandstorm", DS: "duststorm",
 };
 export const COVER: Record<string, string> = {
@@ -66,7 +66,9 @@ export function weatherMeaning(raw: string): string | null {
     } else return null;
   }
   if (!sawPhenomenon && !(rest === "TS" || rest === "SH")) return null;
-  const text = parts.join(" ").replace(/:\s/, ": ");
+  if (rest === "FC" && plus?.[1] === "+") return "Tornado or waterspout";
+  // "with" / "of" only make sense when a precipitation or obscuration type follows.
+  const text = parts.join(" ").replace(/:\s/, ": ").replace(sawPhenomenon ? /$^/ : / (?:with|of)$/, "");
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -119,7 +121,7 @@ export function explainMetar(input: string): MetarExplanation {
     else if (raw === "NIL") push(raw, "No report available");
     else if ((m = /^(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT$/.exec(raw))) push(raw, windMeaning(m));
     else if ((m = /^(\d{3})V(\d{3})$/.exec(raw))) push(raw, `Wind direction varying between ${m[1]} and ${m[2]} degrees`);
-    else if (raw === "CAVOK") push(raw, NOT_EXPLAINED);
+    else if (raw === "CAVOK") push(raw, "Ceiling and visibility OK: visibility 10 km or more, no clouds below 5,000 ft, no significant weather");
     else if (/^\d$/.test(raw) && /^\d+\/\d+SM$/.test((words[i + 1] ?? "").toUpperCase())) {
       pendingVisWhole = raw;
     } else if ((m = /^(M|P)?(\d+(?:\/\d+)?)SM$/.exec(raw))) {

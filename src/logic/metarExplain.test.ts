@@ -45,7 +45,7 @@ describe("explainMetar", () => {
   it("explains weather combinations and sky types", () => {
     const r = explainMetar("KMCO 011800Z 18010KT 3SM +TSRA VCSH FEW040TCU SCT250 30/24 A2995");
     expect(meaning(r, "+TSRA")).toBe("Heavy thunderstorm with rain");
-    expect(meaning(r, "VCSH")).toBe("In the vicinity: showers of");
+    expect(meaning(r, "VCSH")).toBe("In the vicinity: showers");
     expect(meaning(r, "FEW040TCU")).toMatch(/towering cumulus/);
     expect(meaning(r, "SCT250")).toMatch(/Scattered clouds.* at 25,000 ft/);
     expect(r.category).toBe("MVFR");
@@ -89,5 +89,19 @@ describe("flightCategory thresholds", () => {
     expect(c(5000, 2)).toBe("IFR");
     expect(c(400, 10)).toBe("LIFR");
     expect(c(null, null)).toBeNull();
+  });
+});
+
+describe("weather group wording", () => {
+  const m = (t: string, raw: string) => explainMetar(`KAAA 011800Z ${t}`).tokens.find((x) => x.raw === raw)!.meaning;
+  it("only says with/of when a type follows", () => {
+    expect(m("TS", "TS")).toBe("Thunderstorm");
+    expect(m("VCTS", "VCTS")).toBe("In the vicinity: thunderstorm");
+    expect(m("TSRA", "TSRA")).toBe("Thunderstorm with rain");
+  });
+  it("decodes +FC, CAVOK and CLR/SKC", () => {
+    expect(m("+FC", "+FC")).toBe("Tornado or waterspout");
+    expect(m("CAVOK", "CAVOK")).toMatch(/^Ceiling and visibility OK/);
+    expect(m("SKC", "SKC")).toBe("Sky clear");
   });
 });

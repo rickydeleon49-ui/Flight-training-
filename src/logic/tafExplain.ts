@@ -29,7 +29,8 @@ const validityText = (m: RegExpExecArray) =>
 
 /** Looks like a TAF (starts with the TAF word, optionally after whitespace). */
 export function looksLikeTaf(input: string): boolean {
-  return /^\s*TAF\b/i.test(input);
+  if (/^\s*(?:METAR|SPECI)\b/i.test(input)) return false;
+  return /^\s*TAF\b/i.test(input) || /(?:^|\s)\d{4}\/\d{4}(?:\s|=|$)/.test(input) || /(?:^|\s)(?:FM\d{6}|PROB(?:30|40))(?:\s|=|$)/i.test(input);
 }
 
 type Group = { label: string; meaning: string; words: string[] };

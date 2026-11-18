@@ -141,7 +141,7 @@ function stamp(value: string): string | null {
   const m = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(value);
   if (!m) return null;
   const [yy, mo, dd, hh, mi] = m.slice(1).map(Number) as [number, number, number, number, number];
-  if (mo < 1 || mo > 12 || dd < 1 || dd > 31 || hh > 23 || mi > 59) return null;
+  if (mo < 1 || mo > 12 || dd < 1 || dd > new Date(Date.UTC(2000 + yy, mo, 0)).getUTCDate() || hh > 23 || mi > 59) return null;
   return `${dd} ${MONTHS[mo - 1]} 20${String(yy).padStart(2, "0")} ${String(hh).padStart(2, "0")}:${String(mi).padStart(2, "0")} UTC`;
 }
 
