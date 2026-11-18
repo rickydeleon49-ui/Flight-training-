@@ -8,6 +8,7 @@ import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge, Card, CardBody, CardHeader, EmptyState, Field, Select } from "@/components/ui";
 import { TOPIC_LABELS, type SkillStatusLabel } from "@/domain/types";
+import { ACS_EDITION_LABEL, examinerLooksFor } from "@/logic/skillExaminerLooksFor";
 import { SKILL_DISCLAIMER, STATUS_WORDS, confidenceText, evidenceSentence, statusText } from "@/logic/skillEvidence";
 import { useAppData } from "@/state/AppDataContext";
 import { useSkillEvidence } from "@/state/useSkillEvidence";
@@ -57,6 +58,8 @@ export function SkillPage() {
     }));
   };
 
+  const examinerTasks = examinerLooksFor(skillId);
+
   return (
     <>
       <PageHeader
@@ -104,6 +107,25 @@ export function SkillPage() {
               <p className="tiny dim skill-evidence__disclaimer">{SKILL_DISCLAIMER}</p>
             </CardBody>
           </Card>
+          {examinerTasks.length ? (
+            <Card>
+              <CardBody>
+                <details className="small">
+                  <summary style={{ cursor: "pointer", minHeight: 44, alignContent: "center" }}>What the examiner looks for</summary>
+                  {examinerTasks.map((task) => (
+                    <div key={task.code}>
+                      <ul>
+                        {task.lines.map((line) => (
+                          <li key={line.code}>{line.text}</li>
+                        ))}
+                      </ul>
+                      <p className="tiny dim">From {ACS_EDITION_LABEL}, {task.label}.</p>
+                    </div>
+                  ))}
+                </details>
+              </CardBody>
+            </Card>
+          ) : null}
         </div>
         <div className="detail__column">
           <Card>

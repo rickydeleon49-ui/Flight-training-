@@ -176,6 +176,19 @@ describe("the skill page", () => {
     expect(text).not.toMatch(/%|score/i);
   });
 
+  it("shows a folded \"What the examiner looks for\" block with the ACS source, and hides it when no task matches", async () => {
+    await mount("/flight-path/skills/builtin.steep_turns", [["/flight-path/skills/:skillId", h(SkillPage)]]);
+    const summary = await screen.findByText("What the examiner looks for");
+    const details = summary.closest("details")!;
+    expect(details.open).toBe(false);
+    expect(within(details).getByText("Clear the area.")).toBeTruthy();
+    expect(within(details).getByText("From FAA-S-ACS-6C, Area V Task A.")).toBeTruthy();
+    cleanup();
+    await mount("/flight-path/skills/builtin.checklist_use", [["/flight-path/skills/:skillId", h(SkillPage)]]);
+    await screen.findByText("Your status: Not set");
+    expect(screen.queryByText("What the examiner looks for")).toBeNull();
+  });
+
   it("status and confidence change only when she sets them, each with its own history", async () => {
     await mount("/flight-path/skills/builtin.steep_turns", [["/flight-path/skills/:skillId", h(SkillPage)]]);
     await screen.findByText("Your status: Not set");
