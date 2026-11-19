@@ -580,8 +580,7 @@ describe("FLIGHTLOG-01: Discovery flight preset and School historical snapshot U
     cleanup();
     await renderApp("/journal");
 
-    // Flight log tab shows 0 logged flights and informs user about notes without flight details
-    expect(screen.getByText("0 logged")).toBeTruthy();
+    // Flight log tab informs user about notes without flight details
     expect(screen.getByText(/1 entry has notes without flight details/i)).toBeTruthy();
 
     // Click into debriefs to view the entry

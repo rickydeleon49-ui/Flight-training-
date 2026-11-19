@@ -62,4 +62,13 @@ describe("Flight Journal header", () => {
     expect(cell).toBeTruthy();
     expect(cell.textContent).toContain("hours");
   });
+
+  it("shows the hours-still-to-go card above the tabs only when a flight is logged", () => {
+    const { unmount } = show({ journalEntries: [entry] });
+    expect(screen.getByText(/Hours still to go/)).toBeTruthy();
+    expect(screen.getByTestId("hours-to-go-total")).toBeTruthy();
+    unmount();
+    show({ journalEntries: [] });
+    expect(screen.queryByText(/Hours still to go/)).toBeNull();
+  });
 });

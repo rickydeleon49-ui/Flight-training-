@@ -9,7 +9,6 @@ import {
   CardHeader,
   EmptyState,
   JournalIcon,
-  Meter,
   PlusIcon,
   Select,
 } from "@/components/ui";
@@ -22,8 +21,9 @@ import {
   flightTimeChecks,
   formatHours,
   hasFlightLogData,
-  privatePilotPart61Reference,
+  flightRhythmLine,
 } from "@/logic/flightLog";
+import { HoursToGoCard } from "@/pages/PilotToolkit/HoursToGoCard";
 import { logbookPages } from "@/logic/logbookPages";
 import { lessonsAwaitingDebrief } from "@/logic/preparation";
 import { useAppData } from "@/state/AppDataContext";
@@ -98,7 +98,7 @@ export function FlightJournal() {
     () => flightActivity(data.journalEntries, today),
     [data.journalEntries, today],
   );
-  const privatePilotReference = useMemo(() => privatePilotPart61Reference(totals), [totals]);
+  const rhythmLine = flightRhythmLine(activity);
   const timeChecks = useMemo(() => flightTimeChecks(data.journalEntries), [data.journalEntries]);
 
   // The "More" disclosure closes on Escape (focus returns to its summary) and on any pointer press outside it.
@@ -150,6 +150,55 @@ export function FlightJournal() {
           </div>
         }
       />
+
+      <div className="stack stack--5" style={{ marginBottom: "var(--space-5)" }}>
+        <Card>
+          <CardBody>
+            <div className="flight-totals ledger-rule">
+              {(
+                [
+                  ["Total hours", formatHours(totals.totalTime), "h"],
+                  ["Solo", formatHours(totals.soloTime), "h"],
+                  ["Landings", String(totals.landings), ""],
+                ] as const
+              ).map(([label, value, unit]) => (
+                <div key={label}>
+                  <p className="flight-totals__value numeric">
+                    {value}
+                    {unit ? <span className="flight-totals__unit"> {unit}</span> : null}
+                  </p>
+                  <p className="tiny dim">{label}</p>
+                </div>
+              ))}
+            </div>
+            {rhythmLine ? <p className="small muted flight-rhythm-line">{rhythmLine}</p> : null}
+            <details className="all-totals">
+              <summary className="all-totals__link">All totals</summary>
+              <div className="flight-log-summary">
+                {(
+                  [
+                    ["Total time", formatHours(totals.totalTime)],
+                    ["Training received", formatHours(totals.dualReceived)],
+                    ["PIC", formatHours(totals.picTime)],
+                    ["Cross-country", formatHours(totals.crossCountryTime)],
+                    ["Night", formatHours(totals.nightTime)],
+                    ["Instrument", formatHours(totals.instrumentTime)],
+                  ] as const
+                ).map(([label, value]) => (
+                  <Card variant="quiet" key={label}>
+                    <CardBody>
+                      <p className="tiny dim">{label}</p>
+                      <p className="flight-log-summary__value numeric">{value}</p>
+                      <p className="tiny dim">hours</p>
+                    </CardBody>
+                  </Card>
+                ))}
+              </div>
+            </details>
+          </CardBody>
+        </Card>
+        {loggedFlights.length > 0 ? <HoursToGoCard state={data.toolkit} /> : null}
+      </div>
 
       <div className="view-tabs filter-chips">
         <button
@@ -233,51 +282,6 @@ export function FlightJournal() {
         </Card>
       ) : view === "log" ? (
         <div className="stack stack--5">
-          <Card>
-            <CardBody>
-              <div className="flight-totals ledger-rule">
-                {(
-                  [
-                    ["Total hours", formatHours(totals.totalTime), "h"],
-                    ["Solo", formatHours(totals.soloTime), "h"],
-                    ["Landings", String(totals.landings), ""],
-                  ] as const
-                ).map(([label, value, unit]) => (
-                  <div key={label}>
-                    <p className="flight-totals__value numeric">
-                      {value}
-                      {unit ? <span className="flight-totals__unit"> {unit}</span> : null}
-                    </p>
-                    <p className="tiny dim">{label}</p>
-                  </div>
-                ))}
-              </div>
-              <details className="all-totals">
-                <summary className="all-totals__link">All totals</summary>
-                <div className="flight-log-summary">
-                  {(
-                    [
-                      ["Total time", formatHours(totals.totalTime)],
-                      ["Training received", formatHours(totals.dualReceived)],
-                      ["PIC", formatHours(totals.picTime)],
-                      ["Cross-country", formatHours(totals.crossCountryTime)],
-                      ["Night", formatHours(totals.nightTime)],
-                      ["Instrument", formatHours(totals.instrumentTime)],
-                    ] as const
-                  ).map(([label, value]) => (
-                    <Card variant="quiet" key={label}>
-                      <CardBody>
-                        <p className="tiny dim">{label}</p>
-                        <p className="flight-log-summary__value numeric">{value}</p>
-                        <p className="tiny dim">hours</p>
-                      </CardBody>
-                    </Card>
-                  ))}
-                </div>
-              </details>
-            </CardBody>
-          </Card>
-
           {timeChecks.length > 0 ? (
             <Card>
               <CardHeader
@@ -312,78 +316,6 @@ export function FlightJournal() {
                 </div>
               </CardBody>
             </Card>
-          ) : null}
-
-          {loggedFlights.length > 0 ? (
-            <div className="flight-progress-grid">
-              <Card>
-                <CardHeader title="Training rhythm" eyebrow="Last 30 days" />
-                <CardBody>
-                  {activity.flightsLast30Days === 0 && activity.hoursLast30Days === 0 ? (
-                    <p className="small muted flight-rhythm__quiet">
-                      No flights in the last 30 days. Average flight: {formatHours(activity.averageFlightTime)} hr.
-                    </p>
-                  ) : (
-                  <div className="flight-rhythm">
-                    <div>
-                      <p className="tiny dim">Recent time</p>
-                      <p className="flight-rhythm__value numeric">
-                        {formatHours(activity.hoursLast30Days)} <span>hr</span>
-                      </p>
-                    </div>
-                    <div>
-                      <p className="tiny dim">Recent flights</p>
-                      <p className="flight-rhythm__value numeric">{activity.flightsLast30Days}</p>
-                    </div>
-                    <div>
-                      <p className="tiny dim">Average flight</p>
-                      <p className="flight-rhythm__value numeric">
-                        {formatHours(activity.averageFlightTime)} <span>hr</span>
-                      </p>
-                    </div>
-                  </div>
-                  )}
-                  <p className="small muted" style={{ marginTop: "var(--space-4)" }}>
-                    {activity.lastFlightDate
-                      ? `Last logged flight: ${formatLongDate(activity.lastFlightDate, today)}`
-                      : "No completed flight has been logged yet."}
-                  </p>
-                </CardBody>
-              </Card>
-
-              <Card>
-                <CardHeader
-                  title="Private pilot hour reference"
-                  eyebrow="Part 61 planning view"
-                />
-                <CardBody>
-                  <div className="hour-reference-list">
-                    {privatePilotReference.map((item) => (
-                      <div className="hour-reference" key={item.key}>
-                        <span className="small">{item.label}</span>
-                        <Meter
-                          value={Math.min(item.logged, item.reference)}
-                          max={item.reference}
-                          startLabel={`${formatHours(item.logged)} hr`}
-                          endLabel={`of ${item.reference} hr`}
-                          ariaLabel={`${item.label}: ${formatHours(item.logged)} logged, compared with ${item.reference} hours`}
-                          ticks={5}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="flight-reference-note tiny dim">
-                    Planning comparison only. Logged categories can overlap, and the rules
-                    include specific training, cross-country, night, instrument, takeoff,
-                    landing, endorsement, and proficiency requirements. Confirm qualifying
-                    time with your instructor and authoritative logbook.
-                    {timeChecks.length > 0
-                      ? " These totals include the flights above whose times don't add up yet."
-                      : ""}
-                  </p>
-                </CardBody>
-              </Card>
-            </div>
           ) : null}
 
           <Card>
