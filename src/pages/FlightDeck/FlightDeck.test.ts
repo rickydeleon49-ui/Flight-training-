@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_DATA, type AppData } from "@/state/AppDataContext";
 import { FlightDeck } from "./FlightDeck";
 import { expectNoA11yViolations } from "@/testing/a11y";
-import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
+import { RemindersCard } from "@/pages/Settings/RemindersCard";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { makeAction, makeEvent, makeJournalEntry, makeMaterial, makePrepItem, makeQuestion } from "@/testing/factories";
 import type { HomeworkSnapshot } from "@/domain/homework";
@@ -155,8 +155,7 @@ describe("FlightDeck and reminders bound homework actions", () => {
     appData.actions = [boundAction];
     appData.homework = [hwSnapshot];
 
-    render(h(MemoryRouter, null, h(PilotToolkit)));
-    fireEvent.click(screen.getByRole("button", { name: /^Reminders/ }));
+    render(h(MemoryRouter, null, h(RemindersCard)));
 
     expect(await screen.findByText("Training reminders")).toBeTruthy();
     expect(screen.getByText("Homework overdue")).toBeTruthy();

@@ -1439,6 +1439,8 @@ export interface ToolkitState {
   studyGuideNotice?: boolean;
   /** Optional: a daily "time to study" notice at a local HH:MM. Off when missing. */
   studyReminder?: StudyReminder;
+  /** Optional (off when missing): show the Career Portfolio tile in the Pilot Toolkit. */
+  showCareerPortfolio?: boolean;
   /** Optional: the practical test day. Counted down on the Flight Deck. Off when missing. */
   checkrideDate?: IsoDate | null;
   /** Optional: personal minimums saved once with an instructor. None when missing. */

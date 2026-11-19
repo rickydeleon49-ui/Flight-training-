@@ -133,9 +133,12 @@ describe("two different medical dates", () => {
     await repos.profile.update({ medicalExpiry: "2031-11-30" });
     render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(Settings))));
     await waitFor(() => expect(status).toBe("ready"));
-    const note = await screen.findByText(/Your saved medical record “Third-class medical” in the Pilot Toolkit/);
+    const note = await screen.findByText(/older medical date/);
     expect(note.getAttribute("role")).toBe("note");
-    expect(note.textContent).toMatch(/October 31, 2031, which differs from the date saved here.*under Certificates in the Pilot Toolkit/);
+    expect(note.textContent).toMatch(/older medical date, .*2031, is still saved here.*“Third-class medical”.*under Certificates and endorsements in the Pilot Toolkit/);
+    // Settings shows the Certificates date read-only, with a way to the one place to edit it.
+    expect(screen.getByTestId("settings-medical-date").textContent).toContain("October 31, 2031");
+    expect(screen.getByRole("link", { name: "Edit in Certificates" }).getAttribute("href")).toBe("/toolkit?tool=records");
   });
 
   it("says nothing when the dates agree", async () => {
@@ -313,7 +316,7 @@ describe("two different medical dates: one choice at a time, against current dat
       fireEvent.click(choices().record);
     });
     fireEvent.click(screen.getByRole("link", { name: "All tools" }));
-    fireEvent.click(screen.getByRole("button", { name: /^Cost Forecast/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Quizzes/ }));
     expect(screen.queryByRole("note", { name: "Medical dates differ" })).toBeNull();
     fireEvent.click(screen.getByRole("link", { name: "All tools" }));
     fireEvent.click(screen.getByRole("button", { name: /^Certificates/ }));
