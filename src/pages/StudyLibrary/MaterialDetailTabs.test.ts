@@ -230,7 +230,14 @@ it("puts the numbered review action above browsing and updates the header status
   await open();
   const review = await screen.findByRole("button", { name: "Flashcards: Start 1 new card" });
   const panelStart = await screen.findByRole("button", { name: "Start 1 new card" });
-  expect(review.classList.contains("button--primary")).toBe(true);
+  // Start here: the one primary button is step 1 (the guide); later steps are quieter.
+  const list = screen.getByRole("list", { name: "Next steps" });
+  expect(within(list).getByRole("button", { name: "Study guide: Start" }).classList.contains("button--primary")).toBe(true);
+  expect(within(list).getAllByRole("button").filter(button => button.classList.contains("button--primary"))).toHaveLength(1);
+  expect(within(list).getAllByRole("listitem").map(item => item.querySelector(".study-actions__title")?.textContent)).toEqual(
+    ["Read your study guide", "Practice the flashcards", "Try the practice test", "Practice an oral question"]);
+  expect(within(list).getByText("No practice questions yet")).toBeTruthy();
+  expect(review.classList.contains("button--primary")).toBe(false);
   expect(panelStart.classList.contains("button--primary")).toBe(false);
   expect(review.compareDocumentPosition(screen.getByRole("button", { name: "Reveal flashcard answer" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(document.querySelector(".material-header-meta")?.textContent).toContain("1 card");
