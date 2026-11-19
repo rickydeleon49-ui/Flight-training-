@@ -34,7 +34,7 @@ export function FigureDrill() {
           </div>
         ) : (
           <>
-            <p className="muted">Practise reading the FAA test figures: airport diagrams, weather reports and charts. Practice, not for flight.</p>
+            <p className="muted">Practice reading the FAA test figures: airport diagrams, weather reports and charts. Practice, not for flight.</p>
             <Button variant="primary" onClick={start}>Start</Button>
           </>
         )}

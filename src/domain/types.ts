@@ -1377,6 +1377,7 @@ export interface CredentialRecord {
   materialId: Id | null;
 }
 
+/** Stored values are internal only; never show them as UI text. */
 export type SafetyDecision = "go" | "discuss" | "no_go";
 export interface SafetyCheck {
   id: Id;

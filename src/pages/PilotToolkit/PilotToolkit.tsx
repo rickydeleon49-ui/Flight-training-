@@ -141,7 +141,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     label: "Plan a flight",
     tools: [
       { id: "metar", label: "Weather and NOTAM Explainer", line: "METAR, TAF, winds aloft, PIREPs and NOTAMs in plain words" },
-      { id: "e6b", label: "E6B", line: "Practise wind and fuel math" },
+      { id: "e6b", label: "E6B", line: "Practice wind and fuel math" },
       { id: "safety", label: "Safety Check", line: "Your personal minimums before a flight" },
     ],
   },
@@ -601,7 +601,7 @@ function EndorsementChecklist({ state, save }: ToolProps) {
 
 function BringChecklist({ state, save }: ToolProps) {
   const days = daysToCheckride(state.checkrideDate);
-  if (days === null || days > 30) return null;
+  const soon = days !== null && days <= 30;
   const checks = state.bringChecks ?? {};
   const update = (id: string, done: boolean) =>
     save((current) => ({
@@ -611,6 +611,7 @@ function BringChecklist({ state, save }: ToolProps) {
   return (
     <details className="card material-fold" id="bring-checklist">
       <summary>What to bring</summary>
+      {soon ? null : <p className="tiny dim">For checkride day. You can look now.</p>}
       <p className="tiny dim">Your examiner and instructor tell you exactly what to bring.</p>
       <div className="stack stack--4">
         {BRING_ITEMS.map((item) => (
@@ -683,6 +684,10 @@ function ReadinessTool({ state, save }: ToolProps) {
       <HoursToGoCard state={state} />
 
       <BringChecklist state={state} save={save} />
+
+      <p className="small">
+        <Link to="/flight-path">What the examiner looks for, by skill</Link>
+      </p>
 
       {areas.map(([area, title]) => (
         <Card key={area} variant="grouped">

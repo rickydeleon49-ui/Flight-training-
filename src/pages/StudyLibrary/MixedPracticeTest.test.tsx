@@ -48,7 +48,7 @@ it("dead end offers Toolkit quizzes and the one material that has questions", ()
   render(h(MemoryRouter, null, h(MixedPracticeTest, { practiceTests: [t("a", 5)], materials })));
   fireEvent.click(screen.getByRole("button", { name: "Mixed practice test" }));
   expect(screen.getByRole("link", { name: "Go to Toolkit quizzes" }).getAttribute("href")).toBe("/toolkit?tool=quiz");
-  expect(screen.getByRole("link", { name: /Practise Mat a on its own/ }).getAttribute("href")).toBe("/study/a#material-practice-test");
+  expect(screen.getByRole("link", { name: /Practice Mat a on its own/ }).getAttribute("href")).toBe("/study/a#material-practice-test");
 });
 
 it("dead end with no questions only offers Toolkit quizzes", () => {
@@ -128,4 +128,20 @@ it("returns focus to the close control after Keep going", () => {
   fireEvent.click(screen.getByRole("button", { name: "Keep going" }));
   expect(leaveOpen()).toBe(false);
   expect(document.activeElement).not.toBe(document.body);
+});
+
+it("Escape closes the picker like the close button, and asks first mid-test", () => {
+  render(h(MixedPracticeTest, { practiceTests: tests, materials }));
+  fireEvent.click(screen.getByRole("button", { name: "Mixed practice test" }));
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.queryByRole("dialog", { name: "Mixed practice test" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Mixed practice test" }));
+  fireEvent.click(screen.getByLabelText(/Mat a/));
+  fireEvent.click(screen.getByLabelText(/Mat c/));
+  fireEvent.click(screen.getByRole("button", { name: "Start mixed test" }));
+  fireEvent.click(screen.getByRole("button", { name: "2. Two" }));
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.getByText("Your answers in this mixed test are not kept.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Leave" }));
+  expect(screen.queryByRole("dialog", { name: "Mixed practice test" })).toBeNull();
 });

@@ -531,9 +531,6 @@ export function StudySetEditor({
           <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "card" })}>
             Add a card
           </Button>
-          <Button size="small" disabled={busy} onClick={() => setQuizletOpen(true)}>
-            Add cards from Quizlet
-          </Button>
     </>
   );
 
@@ -551,6 +548,11 @@ export function StudySetEditor({
       </div>
 
       <div className="stack stack--2">
+        <div>
+          <Button size="small" disabled={busy} onClick={() => setQuizletOpen(true)}>
+            Add cards from Quizlet
+          </Button>
+        </div>
         {cardsOnly ? (<>{cardRows}{sectionRows}</>) : (<>{summaryRow}{sectionRows}{cardRows}</>)}
         <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
       </div>

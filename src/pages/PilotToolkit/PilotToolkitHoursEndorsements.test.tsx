@@ -62,7 +62,7 @@ it("the endorsements checklist is closed by default and a tick persists", async 
   expect(screen.getByText("61.87(b)")).toBeTruthy();
 });
 
-it("What to bring is hidden with no date or over 30 days, shown within 30, and a tick persists", async () => {
+it("What to bring is always folded, says look now with no date or over 30 days, and a tick persists", async () => {
   const day = (n: number) => {
     const d = new Date();
     d.setDate(d.getDate() + n);
@@ -72,18 +72,23 @@ it("What to bring is hidden with no date or over 30 days, shown within 30, and a
   stored = { ...stored, checkrideDate: null };
   data = { ...data, toolkit: stored };
   open();
-  expect(document.getElementById("bring-checklist")).toBeNull();
+  expect(document.getElementById("bring-checklist")).toBeTruthy();
+  expect((document.getElementById("bring-checklist") as HTMLDetailsElement).open).toBe(false);
+  expect(screen.getByText("For checkride day. You can look now.")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "What the examiner looks for, by skill" }).getAttribute("href")).toBe("/flight-path");
   cleanup();
   stored = { ...stored, checkrideDate: day(31) };
   data = { ...data, toolkit: stored };
   open();
-  expect(document.getElementById("bring-checklist")).toBeNull();
+  expect(document.getElementById("bring-checklist")).toBeTruthy();
+  expect(screen.getByText("For checkride day. You can look now.")).toBeTruthy();
   cleanup();
   stored = { ...stored, checkrideDate: day(30) };
   data = { ...data, toolkit: stored };
   open();
   const details = document.getElementById("bring-checklist") as HTMLDetailsElement;
   expect(details).toBeTruthy();
+  expect(screen.queryByText("For checkride day. You can look now.")).toBeNull();
   expect(screen.getByText("Your examiner and instructor tell you exactly what to bring.")).toBeTruthy();
   details.open = true;
   fireEvent.click(screen.getByRole("checkbox", { name: /Photo ID/ }));

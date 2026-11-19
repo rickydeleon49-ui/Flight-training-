@@ -69,7 +69,7 @@ it("keeps backup advice in short blocks with the folder explanation beside its p
   expect(folder.textContent).toContain("Open folder shows the app’s private files at this path.");
   expect(folder.querySelector("button")?.textContent).toBe("Open folder");
   const advice = Array.from(card.querySelectorAll(".card__body p:not([role])"));
-  expect(advice).toHaveLength(6);
+  expect(advice).toHaveLength(7);
   for (const block of advice) {
     expect((block.textContent!.match(/\.(?:\s|$)/g) ?? []).length).toBeLessThanOrEqual(2);
   }
@@ -77,6 +77,7 @@ it("keeps backup advice in short blocks with the folder explanation beside its p
   expect(text.match(/another drive or in a cloud folder/g)).toHaveLength(1);
   expect(text).toContain("Choose where to save it; saving sends nothing online.");
   expect(text).toContain("Save a fresh backup before an update.");
+  expect(text).toContain("This file is not password-protected. Keep it somewhere private.");
   expect(text).toContain("Restore checks the file and asks you first. It keeps a copy of your current data, then restarts with the saved backup.");
   expect(text).toContain("Before a new version runs");
   expect(text).toContain("The 10 newest copies are kept.");
