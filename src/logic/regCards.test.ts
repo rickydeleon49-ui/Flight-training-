@@ -26,3 +26,10 @@ it("scenario cards cite a paragraph and point at a real diagram", () => {
 it("has the 91.213(d) card", () => {
   expect(REG_CARDS.some((c) => c.id === "inop-equipment" && c.reg === "14 CFR 91.213(d)")).toBe(true);
 });
+
+it("reg card answers avoid the verdict words go, no-go, legal and ok to fly (BH-7)", () => {
+  expect(REG_CARDS.map((c) => c.answer).join("\n")).not.toMatch(/\b(go|no-go|legal|ok to fly)\b/i);
+  const emergency = REG_CARDS.find((c) => /emergency/i.test(c.answer));
+  expect(emergency?.answer).toContain("meet the emergency");
+  expect(emergency?.answer).not.toMatch(/\bsafe\b/i);
+});

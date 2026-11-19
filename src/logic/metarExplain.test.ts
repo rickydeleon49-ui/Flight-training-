@@ -105,3 +105,9 @@ describe("weather group wording", () => {
     expect(m("SKC", "SKC")).toBe("Sky clear");
   });
 });
+
+describe("CAVOK category (BH-5)", () => {
+  it("gives VFR for CAVOK", () => {
+    expect(explainMetar("METAR LFPG 171800Z 27008KT CAVOK 12/05 Q1018").category).toBe("VFR");
+  });
+});

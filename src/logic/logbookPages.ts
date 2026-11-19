@@ -1,4 +1,6 @@
 import type { JournalEntry } from "@/domain/types";
+import { todayIso } from "@/lib/dates";
+
 import { flightLogTotals, hasFlightLogData } from "./flightLog";
 
 /** Flights on one paper-style logbook page (one place to change it). */
@@ -27,8 +29,8 @@ const compare = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 // Every number comes from flightLogTotals, so the last page matches the
 // summary tiles exactly. Display only; nothing is written to data.
-const totals = (entries: JournalEntry[]): LedgerTotals => {
-  const t = flightLogTotals(entries);
+const totals = (entries: JournalEntry[], today: string): LedgerTotals => {
+  const t = flightLogTotals(entries, today);
   return {
     totalTime: t.totalTime,
     dualReceived: t.dualReceived,
@@ -44,10 +46,12 @@ const totals = (entries: JournalEntry[]): LedgerTotals => {
 export function logbookPages(
   entries: JournalEntry[],
   pageSize: number = LOGBOOK_PAGE_SIZE,
+  today: string = todayIso(),
 ): LedgerPage[] {
   const size = Math.max(1, Math.floor(pageSize));
   const sorted = entries
-    .filter(hasFlightLogData)
+    // Planned (future-dated) flights are not in the logbook yet, so rows and totals agree.
+    .filter((entry) => hasFlightLogData(entry) && entry.date <= today)
     .sort(
       (a, b) =>
         compare(a.date, b.date) ||
@@ -61,9 +65,9 @@ export function logbookPages(
     pages.push({
       number: pages.length + 1,
       entries: page,
-      thisPage: totals(page),
-      broughtForward: totals(sorted.slice(0, start)),
-      totalToDate: totals(sorted.slice(0, end)),
+      thisPage: totals(page, today),
+      broughtForward: totals(sorted.slice(0, start), today),
+      totalToDate: totals(sorted.slice(0, end), today),
     });
   }
   return pages;

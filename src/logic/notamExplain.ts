@@ -304,7 +304,7 @@ export function explainNotam(text: string): NotamExplanation {
     }
     // Heights and ranges
     if ((m = new RegExp(`^(${LEVEL})-(${LEVEL})$`).exec(c))) {
-      const low = level(m[1]!, false, heightsAreMsl)!;
+      const low = level(m[1]!, nextIsAgl, heightsAreMsl)!;
       const high = level(m[2]!, nextIsAgl, heightsAreMsl)!;
       push(nextIsAgl ? `${word} ${next}` : word, `From ${low} up to ${high}`);
       if (nextIsAgl) i++;

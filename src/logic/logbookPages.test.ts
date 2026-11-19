@@ -86,7 +86,7 @@ describe("logbookPages", () => {
       mk("a", "2026-05-01", "2026-05-01T09:00:00Z"),
       mk("c", "2026-05-01", "2026-05-01T08:00:00Z"),
     ];
-    const ids = () => logbookPages(input)[0]!.entries.map((e) => e.id);
+    const ids = () => logbookPages(input, LOGBOOK_PAGE_SIZE, "2099-12-31")[0]!.entries.map((e) => e.id);
     expect(ids()).toEqual(["c", "a", "b", "z"]);
     expect(ids()).toEqual(["c", "a", "b", "z"]);
   });
@@ -97,4 +97,12 @@ describe("logbookPages", () => {
     logbookPages(input);
     expect(input.map((e) => e.id)).toEqual(before);
   });
+});
+
+it("leaves planned (future-dated) flights off the logbook pages (BH-3)", () => {
+  const past = makeJournalEntry({ id: "p", date: "2026-09-10", totalTime: 1 });
+  const future = makeJournalEntry({ id: "f", date: "2026-12-24", totalTime: 2 });
+  const pages = logbookPages([past, future], 10, "2026-11-19");
+  expect(pages.flatMap((pg) => pg.entries.map((e) => e.id))).toEqual(["p"]);
+  expect(pages.at(-1)?.totalToDate.totalTime).toBe(1);
 });

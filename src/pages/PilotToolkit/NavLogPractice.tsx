@@ -121,6 +121,7 @@ export function NavLogPractice() {
     const stale = !!edited[key];
     return (
       <p
+        id={`navlog-fb-${key}`}
         className={`e6b-check__result e6b-check__result--${g.status}`}
         style={stale ? { visibility: "hidden" } : undefined}
         aria-hidden={stale || undefined}
@@ -142,7 +143,7 @@ export function NavLogPractice() {
       id={aria ? undefined : `navlog-${key}`}
       value={entries[key] ?? ""}
       className={inputClass(key)}
-      aria-describedby={undefined}
+      aria-describedby={grades?.[key] && grades[key]!.status !== "empty" && !edited[key] ? `navlog-fb-${key}` : undefined}
       title={label}
       onChange={(e) => setEntry(key, e.target.value)}
     />
@@ -298,7 +299,7 @@ export function NavLogPractice() {
                 <th scope="row" style={{ textAlign: "left", padding: "4px 6px" }}>Total</th>
                 <td />
                 <td data-label="NM" style={{ padding: "4px 6px" }}>{totals.distanceNm}</td>
-                <td colSpan={9} />
+                <td colSpan={10} />
                 <td data-label="Total ETE" className="navlog-answer" style={{ padding: "4px 6px" }}>
                   {box("totalEte", "Total ETE", "Total ETE (minutes)")}
                   {feedback("totalEte" satisfies Totals)}

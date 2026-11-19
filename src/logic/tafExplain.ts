@@ -142,7 +142,7 @@ function describeGroup(g: Group): TafPeriod {
   }
   if (cavok && category === null) {
     category = "VFR";
-    categoryNote = "VFR: ceiling and visibility OK. A study hint only.";
+    categoryNote = "VFR: ceiling and visibility at or above VFR values. A study hint only.";
   } else if (category !== null && g.label !== "Starting conditions" && !g.label.startsWith("From")) {
     categoryNote += " This group only changes part of the forecast.";
   }

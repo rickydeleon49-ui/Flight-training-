@@ -140,3 +140,14 @@ describe("E6B answer checking", () => {
     expect(summarizeE6bGrades([{ status: "right", message: "" }, { status: "empty", message: "" }, { status: "wrong", message: "" }])).toBe("1 right, 0 close, 1 to fix");
   });
 });
+
+describe("WCA hint (BH-8)", () => {
+  it("does not name a side when the wind is along the course", () => {
+    const p = { id: "x", title: "x", mode: "wind" as const, answer: "", values: { course: "90", tas: "100", windDir: "90", windSpeed: "20", variation: "5", side: "E" as const } };
+    const expected = e6bExpected(p);
+    const g = gradeE6bAnswer("wca", { value: "9" }, p, expected);
+    expect(Math.round(expected.wca ?? 1)).toBe(0);
+    expect(g.message).toContain("no correction");
+    expect(g.message).not.toMatch(/from the (right|left)/);
+  });
+});

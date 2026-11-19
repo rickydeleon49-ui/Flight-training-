@@ -241,7 +241,7 @@ describe("privatePilotHoursToGo with journal ticks (BL-104)", () => {
       entry({ date: "2027-01-12", dualReceived: 1 }),
       entry({ date: "2027-01-05", soloTime: 1, toweredFullStopLandings: 2, longSoloXc: true }),
       entry({ date: "2027-01-06", soloTime: 0, dualReceived: 1, toweredFullStopLandings: 5 }),
-    ]);
+    ], "2027-02-01");
     expect(row(rows, "solo-xc-long")).toMatchObject({ status: "done", statusText: "Ticked on 2027-01-05 — done" });
     expect(row(rows, "solo-tower")).toMatchObject({ status: "to_go", toGo: 1, statusText: "2 / 3 landings — 1 to go" });
     expect(row(rows, "prep")).toMatchObject({ logged: 2, toGo: 1, status: "to_go" });
@@ -252,5 +252,21 @@ describe("privatePilotHoursToGo with journal ticks (BL-104)", () => {
     expect(row(privatePilotHoursToGo(zero, 10, null, base), "night").status).toBe("done");
     expect(row(privatePilotHoursToGo(zero, 9, null, base), "night").status).toBe("to_go");
     expect(row(privatePilotHoursToGo(zero, 10, null, [entry({ dualReceived: 3, nightTime: 3, toweredFullStopLandings: 1 })]), "night").status).toBe("to_go");
+  });
+});
+
+describe("planned flights (BH-3)", () => {
+  it("leaves future-dated flights out of totals and hours to go", () => {
+    const past = makeJournalEntry({ id: "p", date: "2026-09-10", totalTime: 1, soloTime: 1 });
+    const future = makeJournalEntry({ id: "f", date: "2026-12-24", totalTime: 2, soloTime: 2 });
+    const t = flightLogTotals([past, future], "2026-11-19");
+    expect(t.flights).toBe(1);
+    expect(t.totalTime).toBe(1);
+    expect(flightLogTotals([past, future], "2026-12-24").totalTime).toBe(3);
+    const zero = flightLogTotals([]);
+    const row = privatePilotHoursToGo(zero, 0, null, [
+      makeJournalEntry({ id: "a", date: "2026-12-24", dualReceived: 2, crossCountryTime: 2 }),
+    ], "2026-11-19").find((r) => r.key === "xc-training");
+    expect(row?.logged ?? 0).toBe(0);
   });
 });

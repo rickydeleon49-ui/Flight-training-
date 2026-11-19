@@ -48,3 +48,7 @@ describe("explainTaf", () => {
     expect(explainTaf(text).periods.length).toBeGreaterThan(1);
   });
 });
+
+it("category note does not use OK as a verdict (BH-6)", () => {
+  expect(explainTaf("TAF LFPG 171100Z 1712/1818 27008KT CAVOK").periods.map((x) => x.categoryNote).join(" ")).not.toMatch(/\bOK\b/);
+});
