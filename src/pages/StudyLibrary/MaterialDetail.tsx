@@ -1118,6 +1118,7 @@ function MaterialDetailPage() {
             {deviceCan().generate && isPdf && material.filePath ? <Button ref={askPdfButton} variant="secondary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
               <div className="material-actions-menu__group" role="presentation">
+                <Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
                 <Button onClick={() => setEditing(true)}>Edit</Button>
                 {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
                 <MoveToFolderItem
@@ -1191,12 +1192,11 @@ function MaterialDetailPage() {
       ) : null}
 
       <div className="material-detail stack stack--4">
-        <div className="detail__column row row--between">
-          {isPdf && !tipsHidden ? (
+        {isPdf && !tipsHidden ? (
+          <div className="detail__column row row--between">
             <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.{deviceCan().pdfKit && offlineStudyEnabled() && material.filePath && !fileMissing ? <>{" "}<button type="button" className="link-button" onClick={() => jumpTo("read-pdf-text")}>Read this PDF's text</button></> : null}</p>
-          ) : <span />}
-          <Button size="small" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
-        </div>
+          </div>
+        ) : null}
         <div {...tabListProps} ref={tabListRef} className="library-tabs material-tabs">
           {MATERIAL_TABS.map((value) => <MaterialTabButton key={value} value={value} state={tabState} />)}
         </div>
@@ -1216,7 +1216,10 @@ function MaterialDetailPage() {
           {kitMakerAtTop && kitMaker ? <Card>{kitMaker}</Card> : null}
           {studySet || practiceTest ? <StudyActionsList
             review={cardReview}
+            hasGuide={hasSavedGuide}
+            guideReachable={showStudyGuide}
             hasCards={Boolean(studySet && studySet.flashcards.length > 0)}
+            cardsReachable={Boolean(material.filePath || (studySet && studySet.flashcards.length > 0))}
             questionCount={practiceTest?.questions.length ?? 0}
             pausedPractice={pausedPractice}
             onReview={() => { setCardStartSignal((n) => n + 1); jumpTo("material-flashcards"); }}
@@ -2716,9 +2719,9 @@ function GenerationNoticeView({
   );
 }
 
-/** Top of the Study tab: three rows, one obvious next step. */
-function StudyActionsList({ review, hasCards, questionCount, pausedPractice = false, onReview, onJump }: {
-  review: CardReviewController; hasCards: boolean;
+/** Top of the Study tab: a numbered "Start here" path with one primary button. */
+function StudyActionsList({ review, hasGuide, guideReachable, hasCards, cardsReachable, questionCount, pausedPractice = false, onReview, onJump }: {
+  review: CardReviewController; hasGuide: boolean; guideReachable: boolean; hasCards: boolean; cardsReachable: boolean;
   questionCount: number; pausedPractice?: boolean; onReview: () => void; onJump: (id: string) => void;
 }) {
   const { read, clock } = review;
@@ -2731,26 +2734,41 @@ function StudyActionsList({ review, hasCards, questionCount, pausedPractice = fa
     due = summary.dueNow; fresh = summary.newCount; started = summary.startedCount;
   }
   const ready = due + fresh > 0;
+  // The one primary button goes on the first step that has something to open.
+  const primary = hasGuide ? "guide" : hasCards ? "cards" : questionCount > 0 ? "test" : "oral";
+  const variant = (step: string) => (step === primary ? "primary" : "secondary") as "primary" | "secondary";
+  const rows = [
+    <div key="guide"><p className="study-actions__title">Read your study guide</p>
+      <p className="small muted">{hasGuide ? "Read it a section at a time" : "No study guide yet"}</p></div>,
+    <div key="cards"><p className="study-actions__title">Practice the flashcards</p>
+      <p className="small muted">{!hasCards ? "No flashcards yet" : ready ? reviewStatusLine(due, fresh) : "Nothing due"}</p></div>,
+    <div key="test"><p className="study-actions__title">Try the practice test</p>
+      <p className="small muted">{questionCount > 0 ? `${questionCount} question${questionCount === 1 ? "" : "s"}` : "No practice questions yet"}</p></div>,
+    <div key="oral"><p className="study-actions__title">Practice an oral question</p>
+      <p className="small muted">Say it out loud</p></div>,
+  ];
+  const buttons = [
+    guideReachable
+      ? <Button variant={variant("guide")} aria-label={hasGuide ? "Study guide: Start" : "Study guide: Open"} onClick={() => onJump("material-study-guide")}>{hasGuide ? "Start" : "Open"}</Button>
+      : null,
+    !cardsReachable ? null : hasCards && ready
+      ? <Button variant={variant("cards")} aria-label={`Flashcards: ${reviewButtonLabel(due, fresh, started)}`} onClick={onReview}>{reviewButtonLabel(due, fresh, started)}</Button>
+      : <Button variant="secondary" aria-label="Flashcards: Open" onClick={() => onJump("material-flashcards")}>Open</Button>,
+    questionCount > 0
+      ? <Button variant={variant("test")} onClick={() => onJump("material-practice-test")}>{pausedPractice ? "Continue" : "Start"}</Button>
+      : <Button variant="secondary" aria-label="Practice test: Open" onClick={() => onJump("material-practice-test")}>Open</Button>,
+    <Button variant={variant("oral")} aria-label="Oral questions: Open" onClick={() => onJump("material-oral")}>Open</Button>,
+  ];
   return (
     <Card>
-      <ul className="study-actions" aria-label="Next steps">
-        {hasCards ? <li className="study-actions__row">
-          <div><p className="study-actions__title">Flashcards</p>
-            <p className="small muted">{ready ? reviewStatusLine(due, fresh) : "Nothing due"}</p></div>
-          {ready
-            ? <Button variant="primary" aria-label={`Flashcards: ${reviewButtonLabel(due, fresh, started)}`} onClick={onReview}>{reviewButtonLabel(due, fresh, started)}</Button>
-            : <Button variant="secondary" aria-label="Flashcards: Open" onClick={() => onJump("material-flashcards")}>Open ›</Button>}
-        </li> : null}
-        {questionCount > 0 ? <li className="study-actions__row">
-          <div><p className="study-actions__title">Practice test</p>
-            <p className="small muted">{questionCount} question{questionCount === 1 ? "" : "s"}</p></div>
-          <Button variant="secondary" onClick={() => onJump("material-practice-test")}>{pausedPractice ? "Continue" : "Start"}</Button>
-        </li> : null}
-        <li className="study-actions__row">
-          <div><p className="study-actions__title">Oral questions</p></div>
-          <Button variant="ghost" onClick={() => onJump("material-oral")}>Open ›</Button>
-        </li>
-      </ul>
+      <p className="eyebrow study-actions__eyebrow">Start here</p>
+      <ol className="study-actions" aria-label="Next steps">
+        {rows.map((text, index) => <li className="study-actions__row" key={index}>
+          <span className={`study-actions__num${index === ["guide", "cards", "test", "oral"].indexOf(primary) ? " is-primary" : ""}`} aria-hidden="true">{index + 1}</span>
+          <div className="study-actions__text">{text}</div>
+          {buttons[index]}
+        </li>)}
+      </ol>
     </Card>
   );
 }
