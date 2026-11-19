@@ -122,8 +122,10 @@ export function explainMetar(input: string): MetarExplanation {
     else if (raw === "NIL") push(raw, "No report available");
     else if ((m = /^(\d{3}|VRB)(\d{2,3})(G(\d{2,3}))?KT$/.exec(raw))) push(raw, windMeaning(m));
     else if ((m = /^(\d{3})V(\d{3})$/.exec(raw))) push(raw, `Wind direction varying between ${m[1]} and ${m[2]} degrees`);
-    else if (raw === "CAVOK") push(raw, "Ceiling and visibility OK: visibility 10 km or more, no clouds below 5,000 ft, no significant weather");
-    else if (/^\d$/.test(raw) && /^\d+\/\d+SM$/.test((words[i + 1] ?? "").toUpperCase())) {
+    else if (raw === "CAVOK") {
+      visibility = 10000 / 1609.344; // 10 km, about 6.2 SM, with no ceiling
+      push(raw, "Ceiling and visibility OK: visibility 10 km or more, no clouds below 5,000 ft, no significant weather");
+    } else if (/^\d$/.test(raw) && /^\d+\/\d+SM$/.test((words[i + 1] ?? "").toUpperCase())) {
       pendingVisWhole = raw;
     } else if ((m = /^(M|P)?(\d+(?:\/\d+)?)SM$/.exec(raw))) {
       const text = pendingVisWhole ? `${pendingVisWhole} ${m[2]}` : m[2]!;

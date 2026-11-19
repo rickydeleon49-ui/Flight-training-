@@ -217,6 +217,7 @@ const SHAPES: Record<E6bAnswerId, Shape> = {
 
 function hintFor(id: E6bAnswerId, p: E6bPractice, expected: E6bExpected): string {
   if (id === "wca") {
+    if (Math.round(expected.wca ?? 0) === 0) return "Wind is along your course, so there is no correction (0 degrees).";
     const side = (expected.wca ?? 0) >= 0 ? "right" : "left";
     return `Point into the wind. This wind comes from the ${side === "right" ? "right" : "left"} of your course, so the correction is to the ${side}.`;
   }

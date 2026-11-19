@@ -519,8 +519,9 @@ export function PilotToolkit() {
 function HoursToGoCard({ state }: { state: ToolkitState }) {
   const { data } = useAppData();
   const totals = flightLogTotals(data.journalEntries);
+  const flownToday = todayIso();
   const nightLandings = data.journalEntries.reduce(
-    (sum, entry) => sum + (entry.nightLandings ?? 0),
+    (sum, entry) => sum + (entry.date <= flownToday ? (entry.nightLandings ?? 0) : 0),
     0,
   );
   const rows = privatePilotHoursToGo(totals, nightLandings, state.checkrideDate, data.journalEntries);

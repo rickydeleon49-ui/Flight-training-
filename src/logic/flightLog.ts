@@ -32,8 +32,9 @@ export interface FlightLogTotals {
   landings: number;
 }
 
-export function flightLogTotals(entries: JournalEntry[]): FlightLogTotals {
-  const logged = entries.filter(hasFlightLogData);
+/** Flights dated after `today` are planned, not flown, so they are left out of every total. */
+export function flightLogTotals(entries: JournalEntry[], today: IsoDate = todayIso()): FlightLogTotals {
+  const logged = entries.filter((entry) => hasFlightLogData(entry) && entry.date <= today);
   const sum = (read: (entry: JournalEntry) => number | null) =>
     logged.reduce((total, entry) => total + (read(entry) ?? 0), 0);
 
@@ -249,6 +250,7 @@ export function privatePilotHoursToGo(
   nightLandings: number,
   checkrideDate?: string | null,
   entries?: JournalEntry[],
+  today: IsoDate = todayIso(),
 ): HoursToGoRow[] {
   const measured = (
     key: string,
@@ -280,7 +282,7 @@ export function privatePilotHoursToGo(
   const windowStart = prepWindowStart(checkrideDate);
   const tickHint = (meta?: string) => [meta, HOURS_TO_GO_TICK_HINT].filter(Boolean).join(" ");
   const round1 = (n: number) => Math.round(n * 10) / 10;
-  const list = entries ?? [];
+  const list = (entries ?? []).filter((e) => e.date <= today); // planned flights do not count
   const anyTick = list.some(
     (e) =>
       e.toweredFullStopLandings != null ||
@@ -410,7 +412,7 @@ export function privatePilotHoursToGo(
       "Instrument training",
       totals.instrumentTime,
       3,
-      "Counts only training from your instructor by reference to instruments.",
+      "Counts the actual and simulated instrument time you log. Your instructor confirms which counts.",
     ),
     nightRow,
     xcTrainingRow,

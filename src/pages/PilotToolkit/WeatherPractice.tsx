@@ -265,6 +265,8 @@ export function WeatherPractice({ minimums }: { minimums?: PersonalMinimums }) {
     windKt: scenario.windKt,
   };
   const comparison = compareToMinimums(minimums, today);
+  // A practice report with no ceiling layer is above any ceiling minimum, like a live one.
+  if (scenario.ceilingFt === undefined && minimums?.ceilingFt !== undefined) comparison.ceilingFt = "inside";
   const summary = minimumsSummary(comparison);
 
   return (
@@ -322,9 +324,11 @@ export function WeatherPractice({ minimums }: { minimums?: PersonalMinimums }) {
                   {ITEMS.map(([key, label, fmt]) => {
                     const verdict = verdictText(comparison[key]);
                     const value = today[key];
-                    return verdict && value !== undefined ? (
+                    const shownValue =
+                      key === "ceilingFt" && value === undefined ? "none reported" : value !== undefined ? fmt(value) : null;
+                    return verdict && shownValue !== null ? (
                       <p key={key} className="small">
-                        {label} {fmt(value)}: {verdict}
+                        {label} {shownValue}: {verdict}
                       </p>
                     ) : null;
                   })}

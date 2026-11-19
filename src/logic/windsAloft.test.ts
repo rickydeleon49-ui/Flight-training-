@@ -110,3 +110,15 @@ it("places every cell of a real-layout FB table (station elevation blanks)", () 
   expect(abq!.entries.slice(0, 3).map((e) => e.raw)).toEqual(["", "", "2309+09"]);
   expect(abq!.entries[6]!.meaning).toBe("From 270° true at 50 kt, temperature -39 °C");
 });
+
+describe("tab-separated paste (BH-13)", () => {
+  it("places cells by column when the table was copied with tabs", () => {
+    const text = ["FT\t3000\t6000\t9000", "ABQ\t\t2309+09\t2512+05", "ABI\t1807\t2109+19\t2213+13"].join("\n");
+    const out = explainWindsAloft(text);
+    const at = (s: number, a: number) => out.stations[s]!.entries.find((e) => e.altitude === a)!;
+    expect(at(0, 3000).raw).toBe("");
+    expect(at(0, 6000).raw).toBe("2309+09");
+    expect(at(0, 9000).raw).toBe("2512+05");
+    expect(at(1, 3000).raw).toBe("1807");
+  });
+});

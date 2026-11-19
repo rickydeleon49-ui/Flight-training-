@@ -145,3 +145,12 @@ describe("NOTAM dates", () => {
     expect(explainNotam("!ABC 02/001 ZZZ AIRSPACE TEST 2604301300-2604302100").tokens.map((t) => t.meaning).join(" ")).toContain("30 Apr 2026");
   });
 });
+
+describe("height range datum (BH-12)", () => {
+  it("reads both ends of an AGL range as AGL", () => {
+    const text = "!ABC 02/001 ZZZ AIRSPACE TEST 1000FT-3000FT AGL 2602011300-2602012100";
+    const t = explainNotam(text).tokens.find((x) => x.raw.startsWith("1000FT-3000FT"));
+    expect(t?.meaning).not.toMatch(/MSL/);
+    expect(t?.meaning).toMatch(/above ground level/);
+  });
+});

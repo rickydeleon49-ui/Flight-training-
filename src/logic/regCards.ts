@@ -78,7 +78,7 @@ export const REG_CARDS: readonly RegCard[] = [
     id: "pic-authority",
     reg: "14 CFR 91.3",
     prompt: "Who is responsible for the airplane and has final authority?",
-    answer: "The pilot in command. In an emergency you may deviate from the rules as needed to keep the flight safe.",
+    answer: "The pilot in command. In an emergency you may deviate from the rules as needed to meet the emergency.",
   },
   {
     id: "preflight-action",
