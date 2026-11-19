@@ -197,6 +197,25 @@ describe("Quick Find without native modal support", () => {
   });
 });
 
+describe("Quick Find from a focused text box", () => {
+  it("opens from a filter box and sends typing to the palette, not the filter", async () => {
+    restore = removeCapabilities([[HTMLDialogElement.prototype, "showModal"], [HTMLDialogElement.prototype, "close"]]);
+    await mount();
+    const filter = document.createElement("input");
+    filter.type = "text";
+    filter.setAttribute("aria-label", "Filter materials");
+    document.querySelector("main")!.appendChild(filter);
+    filter.focus();
+    expect(document.activeElement).toBe(filter);
+    fireEvent.keyDown(filter, { key: "k", metaKey: true });
+    expect(screen.getByRole("dialog", { name: "Quick find" })).toBeTruthy();
+    expect(document.activeElement).toBe(input());
+    fireEvent.change(input(), { target: { value: "air" } });
+    expect(input().value).toBe("air");
+    expect(filter.value).toBe("");
+  });
+});
+
 describe("Quick Find with native modal support", () => {
   it("still uses showModal and focuses the search", async () => {
     const showModal = vi.fn(function (this: HTMLDialogElement) { this.setAttribute("open", ""); });

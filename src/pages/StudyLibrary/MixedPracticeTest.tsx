@@ -56,7 +56,7 @@ export function MixedPracticeTest({ practiceTests, materials, onFinished }: {
             <p>Mixed practice needs at least two materials that already have practice questions.</p>
             {choices.length === 1 ? <p>
               <Link className="small" onClick={close} to={`/study/${encodeURIComponent(choices[0]!.materialId)}#material-practice-test`}>
-                Practise {choices[0]!.title} on its own
+                Practice {choices[0]!.title} on its own
               </Link>
             </p> : null}
             <p><Link className="small" onClick={close} to="/toolkit?tool=quiz">Go to Toolkit quizzes</Link></p>

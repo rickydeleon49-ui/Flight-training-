@@ -477,7 +477,6 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   border-top: 1px solid var(--border-subtle);
 }
 
-.material-jumps { padding-block: var(--space-2); }
 .card-review__wait { color: inherit; opacity: 0.85; }
 
 /* Standalone card review container and responsive / 200% font safeguards */

@@ -1301,6 +1301,7 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
+              <p className="small muted">This file is not password-protected. Keep it somewhere private.</p>
               {upgradeFailed ? (
                 <p className="small" role="alert">
                   The safety copy before the last update couldn't be made. Make a complete backup now.

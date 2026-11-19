@@ -185,7 +185,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
   return {
     today,
     greeting: greetingFor(sources.profile.pilotName, now),
-    subtitle: [sources.profile.certificateGoal, focusLabel && `Current focus: ${focusLabel}`]
+    subtitle: [sources.profile.certificateGoal.trim(), focusLabel.trim() && `Current focus: ${focusLabel.trim()}`]
       .filter(Boolean)
       .join(" • "),
     planGroups: groupByCategory([...plan, ...doneToday]),
