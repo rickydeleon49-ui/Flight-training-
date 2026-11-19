@@ -5,6 +5,7 @@ import {
   BookIcon,
   CheckIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   ClockIcon,
   DocumentIcon,
   JournalIcon,
@@ -119,10 +120,12 @@ type ToolGroup = { id: string; label: string; tools: ToolChoice[] };
 const TOOL_GROUPS: ToolGroup[] = [
   {
     id: "checkride",
-    label: "Checkride",
+    label: "Checkride and records",
     tools: [
       { id: "readiness", label: "Checkride", line: "Your plan and prep for the big day" },
       { id: "report", label: "Instructor Report", line: "A summary to share with your instructor" },
+      { id: "records", label: "Certificates and endorsements", line: "Your certificates, endorsements and medical date" },
+      { id: "career", label: "Career Portfolio", line: "Your hours and story in one place" },
     ],
   },
   {
@@ -140,14 +143,6 @@ const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       { id: "quiz", label: "Quizzes", line: "Short questions on any topic" },
       { id: "radio", label: "Radio words", line: "Phrases for the radio" },
-    ],
-  },
-  {
-    id: "records",
-    label: "My records",
-    tools: [
-      { id: "records", label: "Certificates and endorsements", line: "Your certificates, endorsements and medical date" },
-      { id: "career", label: "Career Portfolio", line: "Your hours and story in one place" },
     ],
   },
 ];
@@ -414,17 +409,23 @@ export function PilotToolkit() {
               <div className="toolkit-group__head">
                 <h3 id={`toolkit-group-${entry.id}`} className="toolkit-group__title">{entry.label}</h3>
               </div>
-              <div className="toolkit-tiles">
+              <ul className="toolkit-links">
                 {entry.tools.map((item) => {
                   const ToolIcon = TOOL_ICONS[item.id];
                   return (
-                    <button key={item.id} type="button" className="toolkit-tile" onClick={() => openTool(item.id)}>
-                      <ToolIcon size={22} className="toolkit-tile__icon" />
-                      <span className="toolkit-tile__name">{item.label}</span>
-                    </button>
+                    <li key={item.id}>
+                      <button type="button" className="toolkit-link" onClick={() => openTool(item.id)}>
+                        <ToolIcon size={20} className="toolkit-link__icon" />
+                        <span className="toolkit-link__text">
+                          <span className="toolkit-link__name">{item.label}</span>
+                          <span className="toolkit-link__line">{item.line}</span>
+                        </span>
+                        <ChevronRightIcon size={14} className="toolkit-link__chevron" aria-hidden="true" />
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </section>
           ))}
         </section>

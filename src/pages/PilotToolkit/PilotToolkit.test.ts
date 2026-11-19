@@ -59,12 +59,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("PilotToolkit home of tiles", () => {
-  it("shows 4 group headings and 8 tool tiles (Career Portfolio is hidden by default), and no tab strip", () => {
+  it("shows 3 group headings and 8 tool rows (Career Portfolio is hidden by default), and no tab strip", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
     expect(screen.getAllByRole("heading", { level: 3 }).map((e) => e.textContent)).toEqual([
-      "Checkride", "Plan a flight", "Practice", "My records",
+      "Checkride and records", "Plan a flight", "Practice",
     ]);
-    const tiles = document.querySelectorAll("button.toolkit-tile");
+    const tiles = document.querySelectorAll("button.toolkit-link");
+    expect(screen.getByRole("button", { name: /^E6B.*Practice wind and fuel math/ })).toBeTruthy();
     expect(tiles).toHaveLength(8);
     expect(screen.queryAllByRole("tab")).toHaveLength(0);
     expect(screen.getByText("Choose a tool to open it.")).toBeTruthy();
@@ -74,9 +75,9 @@ describe("PilotToolkit home of tiles", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
     fireEvent.click(screen.getByRole("button", { name: /^E6B/ }));
     expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
-    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(0);
+    expect(document.querySelectorAll("button.toolkit-link")).toHaveLength(0);
     fireEvent.click(screen.getByRole("link", { name: "All tools" }));
-    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(8);
+    expect(document.querySelectorAll("button.toolkit-link")).toHaveLength(8);
   });
 
   it("opens a tool directly from ?tool=e6b", () => {
@@ -86,7 +87,7 @@ describe("PilotToolkit home of tiles", () => {
 
   it("shows the home for an unknown ?tool= value", () => {
     render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=nope"] }, h(PilotToolkit)));
-    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(8);
+    expect(document.querySelectorAll("button.toolkit-link")).toHaveLength(8);
   });
 });
 
