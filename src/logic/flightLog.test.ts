@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { JournalEntry } from "@/domain/types";
 import { makeJournalEntry } from "@/testing/factories";
 import {
   flightTimeChecks,
@@ -203,5 +204,53 @@ describe("privatePilotHoursToGo / prepWindowStart (BL-72)", () => {
     expect(row(privatePilotHoursToGo(totals(), 0, "2027-03-15"), "prep").meta).toBe(
       "Your 2-month window starts 2027-01-01 — confirm with your instructor.",
     );
+  });
+});
+
+describe("privatePilotHoursToGo with journal ticks (BL-104)", () => {
+  const zero: FlightLogTotals = {
+    flights: 0, totalTime: 0, dualReceived: 0, soloTime: 0, picTime: 0,
+    crossCountryTime: 0, nightTime: 0, instrumentTime: 0, landings: 0,
+  };
+  const entry = (over: Partial<JournalEntry>): JournalEntry => ({ ...makeJournalEntry(), ...over });
+  const row = (rows: ReturnType<typeof privatePilotHoursToGo>, key: string) => rows.find((r) => r.key === key)!;
+
+  it("counts xc rows from times with min(), even with no ticks", () => {
+    const rows = privatePilotHoursToGo(zero, 0, null, [
+      entry({ dualReceived: 2, crossCountryTime: 1.5 }),
+      entry({ soloTime: 1, crossCountryTime: 3, dualReceived: 0 }),
+      entry({ dualReceived: null, crossCountryTime: 9 }),
+    ]);
+    expect(row(rows, "xc-training")).toMatchObject({ logged: 1.5, toGo: 1.5, status: "to_go", meta: "Confirm with your instructor." });
+    expect(row(rows, "solo-xc")).toMatchObject({ logged: 1, toGo: 4, status: "to_go" });
+  });
+
+  it("stays unknown with a hint when nothing was ever ticked", () => {
+    const rows = privatePilotHoursToGo(zero, 0, null, [entry({ dualReceived: 1 })]);
+    for (const key of ["prep", "solo-xc-long", "solo-tower"]) {
+      expect(row(rows, key)).toMatchObject({ status: "unknown", toGo: null });
+      expect(row(rows, key).meta).toContain("Tick it on the flight in your journal.");
+    }
+    expect(row(rows, "night").status).toBe("unknown");
+  });
+
+  it("counts ticks: long solo XC date, solo tower landings, prep window", () => {
+    const rows = privatePilotHoursToGo(zero, 0, "2027-03-15", [
+      entry({ date: "2026-12-20", dualReceived: 5, checkridePrep: true }),
+      entry({ date: "2027-01-10", dualReceived: 2, checkridePrep: true }),
+      entry({ date: "2027-01-12", dualReceived: 1 }),
+      entry({ date: "2027-01-05", soloTime: 1, toweredFullStopLandings: 2, longSoloXc: true }),
+      entry({ date: "2027-01-06", soloTime: 0, dualReceived: 1, toweredFullStopLandings: 5 }),
+    ]);
+    expect(row(rows, "solo-xc-long")).toMatchObject({ status: "done", statusText: "Ticked on 2027-01-05 — done" });
+    expect(row(rows, "solo-tower")).toMatchObject({ status: "to_go", toGo: 1, statusText: "2 / 3 landings — 1 to go" });
+    expect(row(rows, "prep")).toMatchObject({ logged: 2, toGo: 1, status: "to_go" });
+  });
+
+  it("night is done only when training, night XC tick and landings are all met", () => {
+    const base = [entry({ dualReceived: 3, nightTime: 3, nightXc100: true })];
+    expect(row(privatePilotHoursToGo(zero, 10, null, base), "night").status).toBe("done");
+    expect(row(privatePilotHoursToGo(zero, 9, null, base), "night").status).toBe("to_go");
+    expect(row(privatePilotHoursToGo(zero, 10, null, [entry({ dualReceived: 3, nightTime: 3, toweredFullStopLandings: 1 })]), "night").status).toBe("to_go");
   });
 });

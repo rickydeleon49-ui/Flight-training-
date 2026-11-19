@@ -17,6 +17,22 @@ describe("journal flight log persistence", () => {
 
   afterEach(() => db.close());
 
+  it("keeps optional requirement ticks (null when never ticked)", async () => {
+    const plain = await repositories.journal.create({ date: "2026-09-04" });
+    expect(plain).toMatchObject({ toweredFullStopLandings: null, longSoloXc: null, nightXc100: null, checkridePrep: null });
+    const created = await repositories.journal.create({
+      date: "2026-09-05",
+      toweredFullStopLandings: 3,
+      longSoloXc: true,
+      checkridePrep: true,
+    });
+    let row = (await repositories.journal.list()).find((e) => e.id === created.id)!;
+    expect(row).toMatchObject({ toweredFullStopLandings: 3, longSoloXc: true, nightXc100: null, checkridePrep: true });
+    await repositories.journal.update(created.id, { longSoloXc: null, nightXc100: true });
+    row = (await repositories.journal.list()).find((e) => e.id === created.id)!;
+    expect(row).toMatchObject({ toweredFullStopLandings: 3, longSoloXc: null, nightXc100: true });
+  });
+
   it("stores and updates training-flight details without calculating categories", async () => {
     const created = await repositories.journal.create({
       date: "2026-09-05",

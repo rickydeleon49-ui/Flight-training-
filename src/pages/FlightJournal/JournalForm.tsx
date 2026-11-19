@@ -52,6 +52,10 @@ interface DebriefDraft {
   simulatedInstrumentTime: number | null;
   dayLandings: number | null;
   nightLandings: number | null;
+  toweredFullStopLandings?: number | null;
+  longSoloXc?: boolean | null;
+  nightXc100?: boolean | null;
+  checkridePrep?: boolean | null;
   mission: string;
   practiced: string;
   wentWell: string;
@@ -245,6 +249,10 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         simulatedInstrumentTime: existing.simulatedInstrumentTime,
         dayLandings: existing.dayLandings,
         nightLandings: existing.nightLandings,
+        toweredFullStopLandings: existing.toweredFullStopLandings ?? null,
+        longSoloXc: existing.longSoloXc ?? null,
+        nightXc100: existing.nightXc100 ?? null,
+        checkridePrep: existing.checkridePrep ?? null,
         mission: existing.mission,
         practiced: existing.practiced,
         wentWell: existing.wentWell,
@@ -419,6 +427,10 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       current.simulatedInstrumentTime !== submitted.simulatedInstrumentTime ||
       current.dayLandings !== submitted.dayLandings ||
       current.nightLandings !== submitted.nightLandings ||
+      (current.toweredFullStopLandings ?? null) !== (submitted.toweredFullStopLandings ?? null) ||
+      (current.longSoloXc ?? null) !== (submitted.longSoloXc ?? null) ||
+      (current.nightXc100 ?? null) !== (submitted.nightXc100 ?? null) ||
+      (current.checkridePrep ?? null) !== (submitted.checkridePrep ?? null) ||
       current.aircraftType !== submitted.aircraftType ||
       current.aircraftId !== submitted.aircraftId ||
       current.departureAirport !== submitted.departureAirport ||
@@ -524,13 +536,14 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       draft.simulatedInstrumentTime,
       draft.dayLandings,
       draft.nightLandings,
+      draft.toweredFullStopLandings,
     ];
     if (numberFields.some((value) => value != null && (!Number.isFinite(value) || value < 0))) {
       setError("Flight times and landing counts must be zero or greater.");
       return;
     }
     if (
-      [draft.dayLandings, draft.nightLandings].some(
+      [draft.dayLandings, draft.nightLandings, draft.toweredFullStopLandings].some(
         (value) => value != null && !Number.isInteger(value),
       )
     ) {
@@ -624,6 +637,10 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         simulatedInstrumentTime: payload.simulatedInstrumentTime ?? null,
         dayLandings: payload.dayLandings ?? null,
         nightLandings: payload.nightLandings ?? null,
+        toweredFullStopLandings: payload.toweredFullStopLandings ?? null,
+        longSoloXc: payload.longSoloXc ?? null,
+        nightXc100: payload.nightXc100 ?? null,
+        checkridePrep: payload.checkridePrep ?? null,
         mission: payload.mission ?? "",
         practiced: payload.practiced ?? "",
         wentWell: payload.wentWell ?? "",
@@ -1195,6 +1212,51 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                   />
                 )}
               </Field>
+
+              <details className="field--full" data-testid="requirement-ticks">
+                <summary style={{ minHeight: "var(--hit-min)", cursor: "pointer" }}>Checkride requirement ticks (optional)</summary>
+                <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                  <p className="tiny dim">
+                    Nothing here is required. These help “Hours still to go” count more of your logbook. Your instructor decides what counts.
+                  </p>
+                  <Field label="Full-stop landings at a towered airport" hint="Count them on this flight. Only solo flights count toward the solo row.">
+                    {({ id, describedBy }) => (
+                      <TextInput
+                        id={id}
+                        type="number"
+                        disabled={isSaving}
+                        step="1"
+                        min="0"
+                        aria-describedby={describedBy}
+                        value={draft.toweredFullStopLandings ?? ""}
+                        placeholder="0"
+                        onChange={(e) => update("toweredFullStopLandings", optionalNumber(e.target.value))}
+                      />
+                    )}
+                  </Field>
+                  <Checkbox
+                    checked={draft.longSoloXc === true}
+                    disabled={isSaving}
+                    strikethrough={false}
+                    onChange={(checked) => update("longSoloXc", checked ? true : null)}
+                    label="This was my long solo cross-country (150 NM, 3 full-stop points, one leg over 50 NM)"
+                  />
+                  <Checkbox
+                    checked={draft.nightXc100 === true}
+                    disabled={isSaving}
+                    strikethrough={false}
+                    onChange={(checked) => update("nightXc100", checked ? true : null)}
+                    label="Night cross-country over 100 NM total"
+                  />
+                  <Checkbox
+                    checked={draft.checkridePrep === true}
+                    disabled={isSaving}
+                    strikethrough={false}
+                    onChange={(checked) => update("checkridePrep", checked ? true : null)}
+                    label="Training to get ready for the checkride"
+                  />
+                </div>
+              </details>
 
               <details className="field--full" open={moreDetailsOpen}>
                 <summary style={{ minHeight: "var(--hit-min)", cursor: "pointer" }}>More details (airports, instructor, school)</summary>

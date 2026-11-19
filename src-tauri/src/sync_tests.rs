@@ -11000,7 +11000,11 @@ mod edit_carry {
              DROP TABLE study_pack_acks; DROP TABLE study_pack_items; DROP TABLE study_pack_imports;
              DROP TABLE library_placements; DROP TABLE library_folders;
              ALTER TABLE oral_scenario_versions DROP COLUMN follow_ups_json;
-             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38, 39, 40);",
+             ALTER TABLE journal_entries DROP COLUMN towered_full_stop_landings;
+             ALTER TABLE journal_entries DROP COLUMN long_solo_xc;
+             ALTER TABLE journal_entries DROP COLUMN night_xc_100;
+             ALTER TABLE journal_entries DROP COLUMN checkride_prep;
+             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38, 39, 40, 41);",
         )
         .unwrap();
         crate::backup::verify_application_connection(conn).unwrap();

@@ -118,6 +118,14 @@ pub struct DebriefJournalPayload {
     #[serde(default)]
     pub night_landings: Option<i64>,
     #[serde(default)]
+    pub towered_full_stop_landings: Option<i64>,
+    #[serde(default)]
+    pub long_solo_xc: Option<bool>,
+    #[serde(default)]
+    pub night_xc_100: Option<bool>,
+    #[serde(default)]
+    pub checkride_prep: Option<bool>,
+    #[serde(default)]
     pub mission: Option<String>,
     #[serde(default)]
     pub practiced: Option<String>,
@@ -268,7 +276,9 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 mission = ?19, practiced = ?20, went_well = ?21, was_difficult = ?22,
                 instructor_feedback = ?23, questions_for_next_time = ?24, confidence = ?25,
                 school_name = CASE WHEN ?26 THEN ?27 ELSE school_name END,
-                goal_id = ?28, updated_at = ?29
+                goal_id = ?28, updated_at = ?29,
+                towered_full_stop_landings = ?31, long_solo_xc = ?32,
+                night_xc_100 = ?33, checkride_prep = ?34
              WHERE id = ?30",
             params![
                 event_id,
@@ -301,6 +311,10 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 goal_id,
                 now,
                 journal_id,
+                j.towered_full_stop_landings,
+                j.long_solo_xc,
+                j.night_xc_100,
+                j.checkride_prep,
             ],
         )
         .map_err(|e| format!("Failed to update journal entry: {e}"))?;
@@ -314,10 +328,12 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 simulated_instrument_time, day_landings, night_landings,
                 mission, practiced, went_well, was_difficult,
                 instructor_feedback, questions_for_next_time,
-                confidence, school_name, goal_id, created_at, updated_at
+                confidence, school_name, goal_id, created_at, updated_at,
+                towered_full_stop_landings, long_solo_xc, night_xc_100, checkride_prep
             ) VALUES (
                 ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
-                ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?29
+                ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?29,
+                ?30, ?31, ?32, ?33
             )",
             params![
                 journal_id,
@@ -349,6 +365,10 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 validated_school,
                 goal_id,
                 now,
+                j.towered_full_stop_landings,
+                j.long_solo_xc,
+                j.night_xc_100,
+                j.checkride_prep,
             ],
         )
         .map_err(|e| format!("Failed to insert journal entry: {e}"))?;

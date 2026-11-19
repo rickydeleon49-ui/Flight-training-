@@ -14,7 +14,7 @@ describe("practice unchecked schema 39", () => {
   it("opens a schema-38 library with every old question marked checked", async () => {
     const engine = await openNodeEngine();
     try {
-      await applyMigrations((sql) => engine.exec(sql), new Set([39, 40]));
+      await applyMigrations((sql) => engine.exec(sql), new Set([39, 40, 41]));
       engine.exec("INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m', 'Synthetic', 'now', 'now')");
       engine.exec("INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, content_hash, created_at) VALUES ('v', 'm', 'k', 'Synthetic', 'h', 'now')");
       engine.exec("INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index) VALUES ('i', 'v', 0, 'Old question', '[\"A\",\"B\"]', 0)");

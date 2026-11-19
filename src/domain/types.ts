@@ -1145,6 +1145,11 @@ export interface JournalEntry {
   simulatedInstrumentTime: number | null;
   dayLandings: number | null;
   nightLandings: number | null;
+  /** Optional 61.109(a) ticks (migration 0041). Null/false = not ticked. */
+  toweredFullStopLandings?: number | null;
+  longSoloXc?: boolean | null;
+  nightXc100?: boolean | null;
+  checkridePrep?: boolean | null;
   mission: string;
   practiced: string;
   wentWell: string;

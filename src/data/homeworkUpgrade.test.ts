@@ -56,10 +56,11 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
         expect.objectContaining({ version: 38, description: "library_folders" }),
         expect.objectContaining({ version: 39, description: "practice_unchecked" }),
         expect.objectContaining({ version: 40, description: "oral_follow_ups" }),
+        expect.objectContaining({ version: 41, description: "flight_requirement_tags" }),
       ]);
     } else if (table === "journal_entries") {
       expect(after[table], table).toEqual(
-        rows.map((r) => ({ ...(r as Record<string, unknown>), school_name: null })),
+        rows.map((r) => ({ ...(r as Record<string, unknown>), school_name: null, towered_full_stop_landings: null, long_solo_xc: null, night_xc_100: null, checkride_prep: null })),
       );
     } else expect(after[table], table).toEqual(rows);
   }
