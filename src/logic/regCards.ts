@@ -215,7 +215,7 @@ export const REG_CARDS: readonly RegCard[] = [
   {
     id: "sc-class-g-pattern-night",
     reg: "14 CFR 91.155(b)(2)",
-    prompt: "Night, Class G airspace, flying an airplane in the traffic pattern within half a mile of the runway, visibility 1 mile. Is that legal VFR?",
+    prompt: "Night, Class G airspace, flying an airplane in the traffic pattern within half a mile of the runway, visibility 1 mile. Does that meet the VFR weather minimums?",
     answer: "Yes, as an exception: flight visibility of at least 1 statute mile and clear of clouds, when the airplane stays in the airport traffic pattern within 1/2 mile of the runway.",
     scenario: true,
     diagramId: VFR_MINIMUMS_DIAGRAM_ID,
