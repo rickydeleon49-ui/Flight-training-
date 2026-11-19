@@ -102,7 +102,7 @@ describe("DATES-01 pages save a typed date as typed", () => {
     }
   });
 
-  it("Settings: training started and medical expiry, both optional", async () => {
+  it("Settings: training started, optional", async () => {
     await createRepositories(db).profile.update({ trainingStartedOn: "2026-01-01" });
     await open("/settings");
     expect((screen.getByLabelText("Training started") as HTMLInputElement).value).toBe("01/01/2026");
@@ -114,13 +114,12 @@ describe("DATES-01 pages save a typed date as typed", () => {
     expect((await createRepositories(db).profile.get()).trainingStartedOn).toBe("2026-01-01");
 
     typeDate("Training started", "11052026");
-    typeDate("Medical certificate expires", "11/05/2028");
     await act(async () => {
       fireEvent.click(screen.getAllByRole("button", { name: "Save profile" })[0]!);
     });
     await waitFor(async () => {
       const profile = await createRepositories(db).profile.get();
-      expect([profile.trainingStartedOn, profile.medicalExpiry]).toEqual(["2026-11-05", "2028-11-05"]);
+      expect(profile.trainingStartedOn).toBe("2026-11-05");
     });
   });
 

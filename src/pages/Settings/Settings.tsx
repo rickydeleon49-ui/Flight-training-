@@ -1,7 +1,7 @@
 import { isTauri } from "@/data";
 import { PROVIDER_TERMS } from "@/logic/providerTerms";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { SAVED_KEY_UNREADABLE, retryKeyAccess, type ProviderStatus } from "@/services/provider";
 import { ProviderControls } from "./ProviderControls";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -28,6 +28,8 @@ import {
 import { StudyGuideNoticeCard } from "./StudyGuideNoticeCard";
 import { CheckrideDateCard } from "./CheckrideDateCard";
 import { StudyReminderCard } from "./StudyReminderCard";
+import { RemindersCard } from "./RemindersCard";
+import { CareerPortfolioSwitch } from "./CareerPortfolioSwitch";
 import { restoreAirlineStarterPack } from "@/data/starter";
 import type { LastCompleteBackup } from "@/data/repositories/appRepository";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
@@ -214,6 +216,15 @@ export function Settings() {
   const backupsFold = useRef<HTMLDetailsElement>(null);
   const aboutFold = useRef<HTMLDetailsElement>(null);
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
+  // Certificates is the one place the medical date is edited; this page only shows it.
+  const medicalShown =
+    medicalConflict?.record.expiresOn ??
+    data.toolkit.credentials
+      .filter((item) => item.type === "medical" && item.expiresOn)
+      .map((item) => item.expiresOn as string)
+      .sort()
+      .pop() ??
+    data.profile.medicalExpiry;
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   // Already applied at startup (main.tsx); this only reflects the saved choice.
   const [appearance, setAppearance] = useState<Appearance>(getStoredAppearance);
@@ -226,7 +237,6 @@ export function Settings() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const startedField = useRef<TypedDateFieldHandle>(null);
-  const medicalField = useRef<TypedDateFieldHandle>(null);
   const [dataPath, setDataPath] = useState("");
   const [folderOpenError, setFolderOpenError] = useState<string | null>(null);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
@@ -650,7 +660,6 @@ export function Settings() {
     // Both dates are optional, but a typed one that isn't a date is never saved as none.
     // Stop at the first one that fails, so focus lands on the upper field.
     if (!(startedField.current?.check() ?? true)) return;
-    if (!(medicalField.current?.check() ?? true)) return;
     const result = await mutate((repos) =>
       repos.profile.update({
         ...draft,
@@ -992,6 +1001,10 @@ export function Settings() {
 
         <StudyReminderCard />
 
+        <RemindersCard />
+
+        <CareerPortfolioSwitch />
+
         <CheckrideDateCard />
 
         <StudyGuideNoticeCard />
@@ -1121,19 +1134,21 @@ export function Settings() {
                 onChange={(date) => update("trainingStartedOn", date || null)}
               />
 
-              <TypedDateField
-                ref={medicalField}
+              <Field
                 label="Medical certificate expires"
-                hint="Your own reminder — the certificate itself is what counts."
-                value={draft.medicalExpiry ?? ""}
-                onChange={(date) => update("medicalExpiry", date || null)}
-              />
+                hint="Your own reminder — the certificate itself is what counts. You change it in Certificates and endorsements."
+              >
+                <p className="small" data-testid="settings-medical-date">
+                  {medicalShown ? formatLongDate(medicalShown) : "Not set yet."}{" "}
+                  <Link to="/toolkit?tool=records">Edit in Certificates</Link>
+                </p>
+              </Field>
               {medicalConflict ? (
                 <p role="note" className="small settings-span-all">
-                  Your saved medical record “{medicalConflict.record.title}” in the Pilot Toolkit
-                  says it expires {formatLongDate(medicalConflict.record.expiresOn)}, which
-                  differs from the date saved here. Check your certificate, then choose the right
-                  date under Certificates in the Pilot Toolkit or correct it here.
+                  An older medical date, {formatLongDate(medicalConflict.settingsDate)}, is still saved
+                  here and differs from your saved medical record “{medicalConflict.record.title}”.
+                  Check your certificate, then choose the right date under Certificates and endorsements
+                  in the Pilot Toolkit.
                 </p>
               ) : null}
             </div>

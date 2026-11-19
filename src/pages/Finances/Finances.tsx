@@ -39,6 +39,7 @@ import { useAppData } from "@/state/AppDataContext";
 
 import { TransactionFormDialog, type TransactionDraft } from "./TransactionFormDialog";
 import { SchoolComparisonPanel } from "./SchoolComparisonPanel";
+import { CostForecast } from "./CostForecast";
 import { useLocalToday } from "@/state/useLocalToday";
 import "./finances.css";
 
@@ -96,6 +97,7 @@ export function Finances() {
           />
         </Card>
         <SchoolComparisonPanel />
+        <CostForecast />
         <TransactionFormDialog
           open={formType !== null}
           type={formType ?? "contribution"}
@@ -359,6 +361,7 @@ export function Finances() {
         </div>
 
         <SchoolComparisonPanel />
+        <CostForecast />
       </div>
 
       <TransactionFormDialog

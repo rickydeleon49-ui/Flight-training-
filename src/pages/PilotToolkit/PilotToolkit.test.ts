@@ -4,8 +4,6 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeEvent } from "@/testing/factories";
-import { todayIso } from "@/lib/dates";
 import { DEFAULT_TOOLKIT_STATE, QUIZ_LENGTH, QUIZ_QUESTIONS } from "@/logic/toolkit";
 import type { AppData } from "@/state/AppDataContext";
 
@@ -61,13 +59,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("PilotToolkit home of tiles", () => {
-  it("shows 4 group headings and 11 tool tiles, and no tab strip", () => {
+  it("shows 4 group headings and 8 tool tiles (Career Portfolio is hidden by default), and no tab strip", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
     expect(screen.getAllByRole("heading", { level: 3 }).map((e) => e.textContent)).toEqual([
       "Checkride", "Plan a flight", "Practice", "My records",
     ]);
     const tiles = document.querySelectorAll("button.toolkit-tile");
-    expect(tiles).toHaveLength(11);
+    expect(tiles).toHaveLength(8);
     expect(screen.queryAllByRole("tab")).toHaveLength(0);
     expect(screen.getByText("Choose a tool to open it.")).toBeTruthy();
   });
@@ -78,7 +76,7 @@ describe("PilotToolkit home of tiles", () => {
     expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
     expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(0);
     fireEvent.click(screen.getByRole("link", { name: "All tools" }));
-    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(11);
+    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(8);
   });
 
   it("opens a tool directly from ?tool=e6b", () => {
@@ -88,34 +86,17 @@ describe("PilotToolkit home of tiles", () => {
 
   it("shows the home for an unknown ?tool= value", () => {
     render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=nope"] }, h(PilotToolkit)));
-    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(11);
+    expect(document.querySelectorAll("button.toolkit-tile")).toHaveLength(8);
   });
 });
 
-it("shows reminders in Toolkit and asks notification permission only through its switch", () => {
-  const requestPermission = askPermission;
-  data.events = [makeEvent({ title: "Fictional pattern work", date: todayIso() })];
-  data.toolkit = { ...data.toolkit, remindersEnabled: false };
+it("hides Career Portfolio until Settings turns it on, and still opens it by address", () => {
   render(h(MemoryRouter, null, h(PilotToolkit)));
-  expect(requestPermission).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: /^Reminders/ }));
-  expect(screen.getByText("Fictional pattern work")).toBeTruthy();
-  expect(screen.getByText(/Your reminder list is here in Pilot Toolkit/)).toBeTruthy();
-  expect(screen.queryByText(/popup when the app opens/)).toBeNull();
-  expect(screen.queryByRole("dialog")).toBeNull();
-  expect(requestPermission).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("checkbox", { name: /Show system reminders/ }));
-  expect(requestPermission).toHaveBeenCalledOnce();
-});
-
-it("keeps checked reminder settings readable without a completion strike", () => {
-  data.toolkit = { ...data.toolkit, remindersEnabled: true };
+  expect(screen.queryByRole("button", { name: /^Career Portfolio/ })).toBeNull();
+  cleanup();
+  data.toolkit = { ...data.toolkit, showCareerPortfolio: true };
   render(h(MemoryRouter, null, h(PilotToolkit)));
-  fireEvent.click(screen.getByRole("button", { name: /^Reminders/ }));
-  const checkbox = screen.getByRole("checkbox", { name: /Show system reminders/ }) as HTMLInputElement;
-  expect(checkbox.checked).toBe(true);
-  const label = checkbox.closest("label")!.querySelector<HTMLElement>(".checkbox__label")!;
-  expect(label.style.textDecoration).toBe("none");
+  expect(screen.getByRole("button", { name: /^Career Portfolio/ })).toBeTruthy();
 });
 
 it("lets her clear a half-typed certificate form, and shows Clear only when something is typed", () => {

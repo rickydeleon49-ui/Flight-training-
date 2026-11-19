@@ -3,7 +3,6 @@ import { Fragment, type ReactElement, useEffect, useMemo, useRef, useState } fro
 import { Link, useSearchParams } from "react-router-dom";
 import {
   BookIcon,
-  CalendarIcon,
   CheckIcon,
   ChevronLeftIcon,
   ClockIcon,
@@ -13,7 +12,6 @@ import {
   PlaneIcon,
   QuestionIcon,
   TargetIcon,
-  WalletIcon,
 } from "@/components/ui/Icons";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -69,7 +67,6 @@ import {
   type MinimumVerdict,
 } from "@/logic/personalMinimums";
 import { densityAltitude, windComponents, type DensityResult } from "@/logic/performanceAid";
-import { formatMoney } from "@/lib/money";
 import {
   flightActivity,
   flightLogTotals,
@@ -77,7 +74,6 @@ import {
 } from "@/logic/flightLog";
 import {
   ENDORSEMENT_ITEMS,
-  buildReminders,
   daysUntil,
   makeQuizAttempt,
   medicalDateConflict,
@@ -85,15 +81,12 @@ import {
   selectQuizQuestions,
   readinessSummary,
   reconcileMedicalDates,
-  reminderLeadDays,
-  trainingCostForecast,
 } from "@/logic/toolkit";
 import { explainMetar } from "@/logic/metarExplain";
 import { explainTaf, looksLikeTaf } from "@/logic/tafExplain";
 import { explainWindsAloft, feetText, levelsAround, looksLikeWindsAloft, type WindsAloftStation } from "@/logic/windsAloft";
 import { explainPirep, looksLikePirep } from "@/logic/pirepExplain";
 import { explainNotam, looksLikeNotam } from "@/logic/notamExplain";
-import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { useLeaveGuard } from "@/state/leaveGuard";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
@@ -114,10 +107,8 @@ type Tool =
   | "readiness"
   | "report"
   | "records"
-  | "costs"
   | "safety"
   | "quiz"
-  | "reminders"
   | "career"
   | "metar"
   | "e6b"
@@ -155,9 +146,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     id: "records",
     label: "My records",
     tools: [
-      { id: "records", label: "Certificates", line: "Your certificates, ratings and medical" },
-      { id: "costs", label: "Cost Forecast", line: "What training may cost" },
-      { id: "reminders", label: "Reminders", line: "Medical, flight review and currency dates" },
+      { id: "records", label: "Certificates and endorsements", line: "Your certificates, endorsements and medical date" },
       { id: "career", label: "Career Portfolio", line: "Your hours and story in one place" },
     ],
   },
@@ -171,11 +160,16 @@ const TOOL_ICONS: Record<Tool, (p: { size?: number; className?: string }) => Rea
   quiz: QuestionIcon,
   radio: JournalIcon,
   records: BookIcon,
-  costs: WalletIcon,
-  reminders: CalendarIcon,
   career: PlaneIcon,
 };
 const TOOLS: ToolChoice[] = TOOL_GROUPS.flatMap((group) => group.tools);
+/** Career Portfolio stays out of the home tiles unless Settings turns it on; the tool itself is kept. */
+function visibleGroups(showCareer: boolean): ToolGroup[] {
+  return TOOL_GROUPS.map((group) => ({
+    ...group,
+    tools: group.tools.filter((item) => item.id !== "career" || showCareer),
+  }));
+}
 
 /** `?tool=quiz` opens that tool (the Study Library's Practice test link); anything else shows the home of tool tiles. */
 export function toolFrom(value: string | null): Tool | null {
@@ -415,7 +409,7 @@ export function PilotToolkit() {
           <h2 id="toolkit-home-heading" ref={homeHeading} tabIndex={-1} className="toolkit-home__title">
             All tools
           </h2>
-          {TOOL_GROUPS.map((entry) => (
+          {visibleGroups(data.toolkit.showCareerPortfolio === true).map((entry) => (
             <section key={entry.id} className="toolkit-group" aria-labelledby={`toolkit-group-${entry.id}`}>
               <div className="toolkit-group__head">
                 <h3 id={`toolkit-group-${entry.id}`} className="toolkit-group__title">{entry.label}</h3>
@@ -468,7 +462,6 @@ export function PilotToolkit() {
             medicalChoosing={medicalChoosing}
           />
         ) : null}
-        {tool === "costs" ? <CostTool state={data.toolkit} save={save} /> : null}
         {tool === "safety" ? (
           <>
             <SafetyTool state={data.toolkit} save={save} />
@@ -484,9 +477,6 @@ export function PilotToolkit() {
             <FigureDrill />
             <SectionalDrill />
           </>
-        ) : null}
-        {tool === "reminders" ? (
-          <ReminderTool state={data.toolkit} save={save} />
         ) : null}
         {tool === "radio" ? <RadioWords /> : null}
         {tool === "career" ? (
@@ -1117,104 +1107,6 @@ function RecordsTool({
           });
         }}
       />
-    </div>
-  );
-}
-
-function CostTool({ state, save }: ToolProps) {
-  const { data } = useAppData();
-  const totals = flightLogTotals(data.journalEntries);
-  const forecast = trainingCostForecast(totals, data.transactions, state, data.journalEntries);
-  const [hourly, setHourly] = useState(String(state.estimatedHourlyCost / 100));
-  const [additional, setAdditional] = useState(
-    String(state.additionalTrainingCosts / 100),
-  );
-  const saveAssumptions = () =>
-    save((current) => ({
-      ...current,
-      estimatedHourlyCost: Math.max(0, Math.round(Number(hourly || 0) * 100)),
-      additionalTrainingCosts: Math.max(
-        0,
-        Math.round(Number(additional || 0) * 100),
-      ),
-    }));
-
-  return (
-    <div className="stack stack--5">
-      <Card>
-        <CardHeader
-          title="Private pilot cost forecast"
-          eyebrow="Planning estimate"
-        />
-        <CardBody>
-          <div className="report-grid">
-            <ReportMetric
-              label="Tracked training spending"
-              value={formatMoney(forecast.spent)}
-            />
-            <ReportMetric
-              label="Planning hours remaining to 40"
-              value={`${formatHours(forecast.remainingHours)} hr`}
-            />
-            <ReportMetric
-              label="Estimated remaining"
-              value={formatMoney(forecast.estimatedRemaining)}
-            />
-            <ReportMetric
-              label="Projected tracked + remaining"
-              value={formatMoney(forecast.projectedTotal)}
-            />
-          </div>
-        </CardBody>
-      </Card>
-      <Card variant="grouped">
-        <CardHeader title="Forecast assumptions" />
-        <CardBody>
-          <div className="form-grid">
-            <Field
-              label="Estimated cost per flight hour"
-              hint={
-                forecast.observedHourly !== null
-                  ? `The forecast currently uses ${formatMoney(forecast.observedHourly)} per flight hour: lesson costs from ${forecast.observedLessons} ${forecast.observedLessons === 1 ? "lesson" : "lessons"} with logged flight time.`
-                  : "Used until a lesson has both a recorded cost and a linked journal entry with its total time."
-              }
-            >
-              <TextInput
-                type="number"
-                min="0"
-                step="1"
-                value={hourly}
-                onChange={(event) => setHourly(event.target.value)}
-              />
-            </Field>
-            <Field
-              label="Additional remaining costs"
-              hint="Ground school, tests, medical, supplies, fees, and a personal buffer."
-            >
-              <TextInput
-                type="number"
-                min="0"
-                step="1"
-                value={additional}
-                onChange={(event) => setAdditional(event.target.value)}
-              />
-            </Field>
-          </div>
-          <Button
-            variant="primary"
-            className="toolkit-mt-4"
-            onClick={() => void saveAssumptions()}
-          >
-            Save assumptions
-          </Button>
-        </CardBody>
-      </Card>
-      <p className="tiny dim">
-        This is a budget scenario, not a quote. The 40-hour figure is a Part 61
-        planning reference; proficiency, school program, location, aircraft,
-        instructor, weather, and repeat training can materially change cost and
-        time.
-      </p>
     </div>
   );
 }
@@ -2026,110 +1918,6 @@ function QuizTool({ state, save, onBusyChange }: ToolProps & { onBusyChange?: (b
         </div>
       </CardBody>
     </Card>
-  );
-}
-
-function ReminderTool({ state, save }: ToolProps) {
-  const { data } = useAppData();
-  const [leadDays, setLeadDays] = useState(String(state.reminderLeadDays));
-  const reminders = useMemo(
-    () =>
-      buildReminders({
-        actions: data.actions,
-        events: data.events,
-        credentials: state.credentials,
-        profile: data.profile,
-        homework: data.homework,
-        leadDays: reminderLeadDays(leadDays, 0),
-      }),
-    [data.actions, data.events, data.profile, data.homework, leadDays, state.credentials],
-  );
-
-  const setEnabled = async (enabled: boolean) => {
-    // Asked only from this tap; if you say no, the reminder list still works here.
-    if (enabled) await askPermission();
-    await save((current) => ({ ...current, remindersEnabled: enabled }));
-  };
-  return (
-    <div className="toolkit-two-column">
-      <Card variant="grouped">
-        <CardHeader title="Training reminders" eyebrow="On this computer" />
-        <CardBody>
-          <div className="stack stack--4">
-            <Checkbox
-              checked={state.remindersEnabled}
-              onChange={(enabled) => void setEnabled(enabled)}
-              strikethrough={false}
-              label="Show system reminders"
-              meta="Includes due actions, scheduled training, medical dates, and saved record expirations."
-            />
-            <Field label="How many days ahead">
-              <TextInput
-                type="number"
-                min="0"
-                max="90"
-                value={leadDays}
-                onChange={(event) => setLeadDays(event.target.value)}
-              />
-            </Field>
-            <Button
-              variant="primary"
-              onClick={() =>
-                void save((current) => ({
-                  ...current,
-                  reminderLeadDays: reminderLeadDays(leadDays, 0),
-                }))
-              }
-            >
-              Save reminder window
-            </Button>
-            <p className="tiny dim">
-              Your reminder list is here in Pilot Toolkit. System reminders can
-              appear once a day while the app is running, if you allow notifications.
-            </p>
-          </div>
-        </CardBody>
-      </Card>
-      <Card variant="grouped">
-        <CardHeader
-          title="Coming up"
-          action={
-            <span className="tiny dim">{reminders.length} reminders</span>
-          }
-        />
-        <CardBody>
-          {reminders.length ? (
-            <div className="stack stack--3">
-              {reminders.slice(0, 10).map((item) => (
-                <div className="row row--between toolkit-center" key={item.id}>
-                  <div>
-                    <p className="small">{item.title}</p>
-                    <p className="tiny dim">{item.detail}</p>
-                  </div>
-                  <div className="row toolkit-center toolkit-gap-2">
-                    {item.homeworkId ? (
-                      <Link
-                        className="button button--secondary button--small"
-                        to={`/study/homework/${item.homeworkId}`}
-                      >
-                        Open homework
-                      </Link>
-                    ) : null}
-                    <Badge tone={item.urgent ? "overdue" : "due"}>
-                      {formatShortDate(item.date)}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="small muted">
-              Nothing falls inside this reminder window.
-            </p>
-          )}
-        </CardBody>
-      </Card>
-    </div>
   );
 }
 

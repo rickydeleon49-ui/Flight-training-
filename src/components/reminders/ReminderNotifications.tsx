@@ -5,7 +5,7 @@ import { notify } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { useLocalToday } from "@/state/useLocalToday";
 
-/** Reminders are viewed in Pilot Toolkit; this only sends permitted OS notices. */
+/** Reminders are viewed in Settings; this only sends permitted OS notices. */
 export function ReminderNotifications() {
   const { data, status } = useAppData();
   const today = useLocalToday();
