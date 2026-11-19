@@ -108,7 +108,7 @@ export const WEATHER_PRACTICE: WeatherPracticeScenario[] = [
     visibilitySm: 6,
     windKt: 10,
     questions: [
-      { question: "What are the starting conditions?", answer: "Wind from 180 degrees at 10 knots, 6 SM, scattered clouds at 5,000 ft" },
+      { question: "What are the starting conditions (the first period)?", answer: "Wind from 180 degrees at 10 knots, 6 SM, scattered clouds at 5,000 ft" },
       { question: "What does the TEMPO group say?", answer: "Short-lived: 3 SM in light showers with a broken ceiling at 3,000 ft" },
     ],
   },

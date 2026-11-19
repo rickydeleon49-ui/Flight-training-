@@ -66,7 +66,7 @@ export const RADIO_WORDS: readonly RadioWord[] = [
   { term: "Request", meaning: "Ask the controller for something. Say what you want clearly, then wait for the answer.", example: "Say: \"Request flight following to Ontario.\"" },
   { term: "Flight following", meaning: "Radar traffic advisories given as workload permits. It is not a clearance and does not give separation.", example: "Say: \"Request VFR flight following.\"" },
   { term: "Traffic advisory", meaning: "Controller calls out nearby traffic, usually by clock position, distance, and altitude.", example: "Hear: \"Traffic, 12 o'clock, 3 miles, 3,500.\"" },
-  { term: "Clock position", meaning: "Directions from your nose: 12 is straight ahead, 3 is right, 9 is left, 6 is behind.", example: "Hear: \"Traffic, 2 o'clock.\"" },
+  { term: "Clock position", meaning: "Directions from your ground track (path over the ground), not your nose. In a crosswind, traffic may be off from where you point (AIM 4-1-15).", example: "Hear: \"Traffic, 2 o'clock.\"" },
   { term: "Winds / altimeter", meaning: "Wind direction and speed, and the pressure setting to set on your altimeter.", example: "Hear: \"Wind 270 at 8, altimeter 29.92.\"" },
   { term: "Departure frequency", meaning: "The radar controller you call after takeoff, if told to. It is a different frequency than tower.", example: "Hear: \"Contact departure on 124.3.\"" },
   { term: "Cleared into the Class Bravo", meaning: "Only Class B needs these exact words. For Class C or D, ATC answering with your call sign lets you enter.", example: "Hear: \"Cleared into the Class Bravo.\"" },
@@ -77,7 +77,7 @@ export const RADIO_WORDS: readonly RadioWord[] = [
   { term: "Turn left/right heading", meaning: "Turn in the direction named to the new heading, even if the other way is shorter.", example: "Hear: \"Turn right heading 180.\"" },
   { term: "Descend and maintain", meaning: "Leave your altitude, go down, and level off at the one given.", example: "Hear: \"Descend and maintain 2,500.\"" },
   { term: "Pilot's discretion", meaning: "You may start the altitude change when you choose, and move at the rate you choose.", example: "Hear: \"Descend at pilot's discretion, maintain 4,000.\"" },
-  { term: "Wake turbulence", meaning: "Air disturbance behind a heavy aircraft. It can upset smaller ones. A caution may be given.", example: "Hear: \"Caution, wake turbulence.\"" },
+  { term: "Wake turbulence", meaning: "Every aircraft makes it in flight. Strongest behind heavy, slow, clean aircraft; it can upset smaller ones (AIM 7-4-1).", example: "Hear: \"Caution, wake turbulence.\"" },
   { term: "Cleared as filed", meaning: "You may fly the route in your flight plan exactly as filed. Do not change it.", example: "Hear: \"Cleared to Ontario as filed.\"" },
   { term: "Go ahead", meaning: "Say your message. It does not mean yes.", example: "Hear: \"Cessna 123AB, go ahead.\"" },
   { term: "Disregard", meaning: "Ignore what was last said. Do not use the earlier instruction.", example: "Hear: \"Disregard.\"" },
@@ -87,6 +87,12 @@ export const RADIO_WORDS: readonly RadioWord[] = [
   { term: "Advise", meaning: "Tell me. Used to ask you to give information or a decision.", example: "Hear: \"Advise when ready to copy.\"" },
   { term: "Unicom", meaning: "A non-government ground station that gives airport advice. It is not an air traffic control station.", example: "Say: \"Ontario Unicom, Skyhawk 123AB, request advisory.\"" },
   { term: "CTAF", meaning: "Common Traffic Advisory Frequency: the frequency pilots use to announce positions at airports with no tower.", example: "Say: \"Ontario traffic, Skyhawk, 5 miles west.\"" },
+  { term: "Steady green (light gun)", meaning: "On the ground: cleared for takeoff. In the air: cleared to land.", example: "See: steady green from the tower." },
+  { term: "Flashing green (light gun)", meaning: "On the ground: cleared to taxi. In the air: return for landing, then steady green.", example: "See: flashing green from the tower." },
+  { term: "Steady red (light gun)", meaning: "On the ground: stop. In the air: give way and keep circling.", example: "See: steady red from the tower." },
+  { term: "Flashing red (light gun)", meaning: "On the ground: taxi clear of the runway in use. In the air: airport unsafe, do not land.", example: "See: flashing red from the tower." },
+  { term: "Flashing white (light gun)", meaning: "On the ground: return to your starting point on the airport. Not used in the air.", example: "See: flashing white from the tower." },
+  { term: "Alternating red and green (light gun)", meaning: "Exercise extreme caution, on the ground or in the air.", example: "See: alternating red and green from the tower." },
 ] as const;
 
 export function wordCount(text: string): number {

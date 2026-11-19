@@ -79,13 +79,14 @@ export const CHART_SYMBOLS: ChartSymbol[] = [
   {
     id: "airport-private",
     name: "Private airport",
-    meaning: "A private-use airport, shown with the letters Pvt. Not open to the public.",
-    tip: "Pvt means you need permission before landing.",
-    desc: "A small magenta circle labelled Pvt.",
+    meaning: "A private-use airport, shown with an R inside the circle and (Pvt) below it. Not open to the public.",
+    tip: "(Pvt) means you need permission before landing.",
+    desc: "A small magenta circle with an R inside, labelled (Pvt).",
     drawing: (
       <g>
         <circle cx="80" cy="46" r="14" stroke={M} {...line} />
-        <text x="80" y="82" fontSize="16" fontWeight="600" {...txt}>Pvt</text>
+        <text x="80" y="52" fontSize="16" fontWeight="600" {...txt}>R</text>
+        <text x="80" y="82" fontSize="16" fontWeight="600" {...txt}>(Pvt)</text>
       </g>
     ),
   },
@@ -134,7 +135,7 @@ export const CHART_SYMBOLS: ChartSymbol[] = [
     id: "class-c",
     name: "Class C airspace",
     meaning: "Solid magenta line: the lateral edge of Class C, with floor and ceiling numbers.",
-    tip: "Class C: two-way radio contact before entering; no clearance needed.",
+    tip: "Two-way radio contact before entering, plus a Mode C transponder and ADS-B Out. No clearance needed.",
     desc: "A solid magenta curved boundary with a floor and ceiling number pair.",
     drawing: (
       <g>
@@ -227,7 +228,7 @@ export const CHART_SYMBOLS: ChartSymbol[] = [
     id: "restricted",
     name: "Restricted / prohibited area",
     meaning: "A blue boundary with inward hash marks: R-xxxx restricted, P-xxx prohibited. Often named and numbered.",
-    tip: "Prohibited: never enter. Restricted: stay out unless the controlling agency says it is inactive.",
+    tip: "Prohibited: never enter. Restricted: when it is active, enter only with permission from the controlling agency.",
     desc: "A blue outline with small hash marks along the inside edge and an R-number label.",
     drawing: (
       <g>
@@ -355,7 +356,7 @@ export const CHART_SYMBOLS: ChartSymbol[] = [
     id: "obstruction-lighted",
     name: "Lighted obstruction",
     meaning: "An obstruction symbol with short rays above it: the structure has obstruction lights.",
-    tip: "Rays mean lights, but it can still be hard to see by day.",
+    tip: "Rays mean lights. Lightning-bolt marks instead mean high-intensity lights, which may run part-time.",
     desc: "A peak with short rays radiating from its tip.",
     drawing: (
       <g>
@@ -436,7 +437,7 @@ export const CHART_SYMBOLS: ChartSymbol[] = [
   {
     id: "seaplane-base",
     name: "Seaplane base",
-    meaning: "An anchor shape: a water landing area where seaplanes can dock or moor.",
+    meaning: "An anchor shape: a water landing area where seaplanes can dock or moor. Magenta, or blue when the base has a control tower, like other airports.",
     tip: "The anchor is the only mark: look for water, not runways.",
     desc: "A magenta anchor shape: ring on top, shank, crossbar and curved flukes.",
     drawing: (
