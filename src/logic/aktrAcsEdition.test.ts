@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  acsCheckedNote,
   PRIVATE_AIRPLANE_ACS_6C_SOURCE,
   resolvePrivateAirplaneAcsEdition,
 } from "./aktrAcsEdition";
@@ -16,7 +17,7 @@ describe("Private Airplane AKTR ACS edition resolution", () => {
       document: "FAA-S-ACS-6C",
       published: "2024-04",
       effectiveFrom: "2024-05-31",
-      verifiedThrough: "2026-10-23",
+      verifiedThrough: "2026-11-19",
       indexUrl: "https://www.faa.gov/training_testing/testing/acs",
     });
   });
@@ -31,19 +32,21 @@ describe("Private Airplane AKTR ACS edition resolution", () => {
 
   it("resolves later verified dates to the current 6C source", () => {
     expect(
-      resolvePrivateAirplaneAcsEdition({ ...privateAirplane, testDate: "2026-10-23" }),
+      resolvePrivateAirplaneAcsEdition({ ...privateAirplane, testDate: "2026-11-19" }),
     ).toMatchObject({
       status: "current",
       source: { document: "FAA-S-ACS-6C", effectiveFrom: "2024-05-31" },
     });
   });
 
-  it("leaves dates after the FAA edition was last verified unresolved", () => {
-    expect(resolvePrivateAirplaneAcsEdition({ ...privateAirplane, testDate: "2026-10-24" })).toEqual({
-      status: "unresolved",
-      reason: "after-verified-range",
-      testDate: "2026-10-24",
-    });
+  it("resolves dates after the last check to 6C with a soft flag", () => {
+    const r = resolvePrivateAirplaneAcsEdition({ ...privateAirplane, testDate: "2026-11-20" });
+    expect(r).toMatchObject({ status: "current", checkedThrough: "2026-11-19" });
+    expect(acsCheckedNote(r)).toBe(
+      "Checked against FAA-S-ACS-6C as of 2026-11-19. Confirm it is still current.",
+    );
+    const ok = resolvePrivateAirplaneAcsEdition({ ...privateAirplane, testDate: "2026-11-19" });
+    expect(acsCheckedNote(ok)).toBeNull();
   });
 
   it.each(["2024-02-30", "2024-5-31", "not-a-date"])(

@@ -32,7 +32,7 @@ describe("explainTaf", () => {
   });
   it("gives a flight category per period", () => {
     expect(r.periods.map((p) => p.category)).toEqual(["MVFR", "VFR", "MVFR", "IFR", "LIFR", "VFR"]);
-    expect(r.periods[0]!.tokens.find((t) => t.raw === "28012KT")?.meaning).toBe("Wind from 280 degrees at 12 knots");
+    expect(r.periods[0]!.tokens.find((t) => t.raw === "28012KT")?.meaning).toBe("Wind from 280° true at 12 knots");
   });
   it("handles PROB40 TEMPO and temperatures", () => {
     const x = explainTaf("TAF KBBB 010500Z 0106/0206 18010KT 9999 NSW PROB40 TEMPO 0110/0114 TSRA TX25/0121Z");

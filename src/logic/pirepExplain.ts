@@ -84,7 +84,7 @@ function fieldMeaning(key: string, value: string): string | null {
   switch (key) {
     case "OV":
       if ((m = /^([A-Z][A-Z0-9]{2,3})(\d{3})(\d{3})$/.exec(value))) {
-        return `Location: ${Number(m[3])} nautical miles from ${m[1]} on the ${m[2]}° bearing`;
+        return `Location: ${Number(m[3])} nautical miles from ${m[1]} on the ${m[2]}° radial`;
       }
       if (/^[A-Z][A-Z0-9]{2,3}$/.test(value)) return `Location: over ${value}`;
       return null;
@@ -92,7 +92,7 @@ function fieldMeaning(key: string, value: string): string | null {
       return (m = /^([01]\d|2[0-3])([0-5]\d)$/.exec(value)) ? `Time ${m[1]}${m[2]} Zulu (UTC)` : null;
     case "FL":
       if (value === "UNKN") return "Altitude not known";
-      return /^\d{3}$/.test(value) ? `Altitude ${feet(Number(value) * 100)} (flight level in hundreds of feet)` : null;
+      return /^\d{3}$/.test(value) ? `Altitude ${feet(Number(value) * 100)} MSL (in hundreds of feet)` : null;
     case "TP":
       if (value === "UNKN") return "Aircraft type not known";
       return /^[A-Z0-9-]{2,6}$/.test(value) ? `Aircraft type ${value}` : null;

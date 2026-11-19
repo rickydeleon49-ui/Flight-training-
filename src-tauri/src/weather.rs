@@ -70,7 +70,10 @@ pub(crate) fn icao(input: &str) -> Result<String, Failure> {
     let value = input.trim().to_ascii_uppercase();
     if input.chars().any(char::is_control)
         || value.len() != 4
-        || !value.bytes().all(|b| b.is_ascii_alphabetic())
+        || !value.bytes().next().is_some_and(|b| b.is_ascii_uppercase())
+        || !value
+            .bytes()
+            .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit())
     {
         return Err(failure("icao"));
     }

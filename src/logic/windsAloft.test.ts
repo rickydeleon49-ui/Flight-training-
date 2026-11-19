@@ -22,15 +22,15 @@ const meaningAt = (text: string, altitude: number, station = 0) =>
 
 describe("explainWindsAloft", () => {
   const cases: Array<[string, Record<number, string>, number, string, string]> = [
-    ["normal", { 6000: "2714+08" }, 6000, "2714+08", "From 270° at 14 kt, temperature +8 °C"],
-    ["negative temperature", { 12000: "2427-06" }, 12000, "2427-06", "From 240° at 27 kt, temperature -6 °C"],
-    ["3000 ft has no temperature", { 3000: "1807" }, 3000, "1807", "From 180° at 7 kt"],
+    ["normal", { 6000: "2714+08" }, 6000, "2714+08", "From 270° true at 14 kt, temperature +8 °C"],
+    ["negative temperature", { 12000: "2427-06" }, 12000, "2427-06", "From 240° true at 27 kt, temperature -6 °C"],
+    ["3000 ft has no temperature", { 3000: "1807" }, 3000, "1807", "From 180° true at 7 kt"],
     ["light and variable", { 3000: "9900" }, 3000, "9900", "Light and variable (less than 5 kt)"],
     ["light and variable with temperature", { 6000: "9900+05" }, 6000, "9900+05", "Light and variable (less than 5 kt), temperature +5 °C"],
-    ["100 kt or more rule (7319)", { 18000: "7319-25" }, 18000, "7319-25", "From 230° at 119 kt, temperature -25 °C"],
-    ["199 kt or more", { 18000: "7699-40" }, 18000, "7699-40", "From 260° at 199 kt or more, temperature -40 °C"],
-    ["sign omitted above 24,000 ft", { 30000: "765855" }, 30000, "765855", "From 260° at 158 kt, temperature -55 °C"],
-    ["sign omitted, ordinary speed", { 39000: "270535" }, 39000, "270535", "From 270° at 5 kt, temperature -35 °C"],
+    ["100 kt or more rule (7319)", { 18000: "7319-25" }, 18000, "7319-25", "From 230° true at 119 kt, temperature -25 °C"],
+    ["199 kt or more", { 18000: "7699-40" }, 18000, "7699-40", "From 260° true at 199 kt or more, temperature -40 °C"],
+    ["sign omitted above 24,000 ft", { 30000: "765855" }, 30000, "765855", "From 260° true at 158 kt, temperature -55 °C"],
+    ["sign omitted, ordinary speed", { 39000: "270535" }, 39000, "270535", "From 270° true at 5 kt, temperature -35 °C"],
     ["unknown group", { 9000: "ABCD" }, 9000, "ABCD", NOT_EXPLAINED],
     ["bad direction code", { 9000: "4020" }, 9000, "4020", NOT_EXPLAINED],
     ["unsigned 6-digit at or below 24,000 ft", { 18000: "270535" }, 18000, "270535", NOT_EXPLAINED],
@@ -54,7 +54,7 @@ describe("explainWindsAloft", () => {
     const text = table(row("SLC", { 3000: "1807", 12000: "2427-06", 34000: "766158" }));
     const entries = explainWindsAloft(text).stations[0]!.entries;
     expect(entries.map((e) => e.raw)).toEqual(["1807", "", "", "2427-06", "", "", "", "766158", ""]);
-    expect(entries[7]!.meaning).toBe("From 260° at 161 kt, temperature -58 °C");
+    expect(entries[7]!.meaning).toBe("From 260° true at 161 kt, temperature -58 °C");
   });
 
   it("reads several stations and a header with a single station row", () => {
@@ -108,5 +108,5 @@ it("places every cell of a real-layout FB table (station elevation blanks)", () 
   expect(abi!.unplaced).toEqual([]);
   expect(abi!.entries.map((e) => e.raw)).toEqual(["", "2109+19", "2213+13", "2315+08", "2526-07", "2532-18", "254833", "255443", "256054"]);
   expect(abq!.entries.slice(0, 3).map((e) => e.raw)).toEqual(["", "", "2309+09"]);
-  expect(abq!.entries[6]!.meaning).toBe("From 270° at 50 kt, temperature -39 °C");
+  expect(abq!.entries[6]!.meaning).toBe("From 270° true at 50 kt, temperature -39 °C");
 });

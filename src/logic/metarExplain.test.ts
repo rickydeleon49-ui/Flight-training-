@@ -10,7 +10,7 @@ describe("explainMetar", () => {
     expect(meaning(r, "KJFK")).toBe("Station KJFK");
     expect(meaning(r, "141651Z")).toBe("Day 14 of the month, 1651 Zulu (UTC)");
     expect(meaning(r, "AUTO")).toMatch(/automated/);
-    expect(meaning(r, "28015G25KT")).toBe("Wind from 280 degrees at 15 knots, gusting 25 knots");
+    expect(meaning(r, "28015G25KT")).toBe("Wind from 280° true at 15 knots, gusting 25 knots");
     expect(meaning(r, "250V310")).toMatch(/between 250 and 310/);
     expect(meaning(r, "1 1/2SM")).toBe("Visibility 1 1/2 statute miles");
     expect(meaning(r, "R04R/2000FT")).toBe("Runway 04R visual range 2000 ft");

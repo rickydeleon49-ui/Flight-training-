@@ -21,9 +21,9 @@ describe("explainPirep", () => {
     const text = "UA /OV OKC063064/TM 1522/FL080/TP C172/SK BKN065-TOP090/WX FV03SM HZ/TA M05/WV 270030KT/TB NEG/IC NEG/RM SMOOTH";
     const t = explainPirep(text).tokens;
     expect(t[0]).toEqual({ raw: "UA", meaning: "Routine pilot report" });
-    expect(meaning(text, "OV OKC063064")).toBe("Location: 64 nautical miles from OKC on the 063° bearing");
+    expect(meaning(text, "OV OKC063064")).toBe("Location: 64 nautical miles from OKC on the 063° radial");
     expect(meaning(text, "TM 1522")).toBe("Time 1522 Zulu (UTC)");
-    expect(meaning(text, "FL080")).toBe("Altitude 8,000 ft (flight level in hundreds of feet)");
+    expect(meaning(text, "FL080")).toBe("Altitude 8,000 ft MSL (in hundreds of feet)");
     expect(meaning(text, "TP C172")).toBe("Aircraft type C172");
     expect(meaning(text, "SK BKN065-TOP090")).toContain("base 6,500 ft, top 9,000 ft");
     expect(meaning(text, "WX FV03SM HZ")).toBe("FV03SM: Flight visibility 3 statute miles; HZ: Haze");

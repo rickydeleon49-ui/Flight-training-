@@ -37,7 +37,7 @@ function windMeaning(m: RegExpExecArray): string {
   const speed = `${Number(spd)} knots`;
   const g = gust ? `, gusting ${Number(gust)} knots` : "";
   if (dir === "VRB") return `Wind variable in direction at ${speed}${g}`;
-  return `Wind from ${dir} degrees at ${speed}${g}`;
+  return `Wind from ${dir}° true at ${speed}${g}`;
 }
 
 function parseFraction(text: string): number | null {

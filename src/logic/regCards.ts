@@ -29,7 +29,7 @@ export const REG_CARDS: readonly RegCard[] = [
     id: "medical-third-class",
     reg: "14 CFR 61.23",
     prompt: "How long does a third-class medical last for privileges at the private pilot level?",
-    answer: "60 months if you are under 40 when it is issued, 24 months if you are 40 or older. BasicMed is a separate option.",
+    answer: "Counted from the month of the exam, to the end of that last month: 60 months if you were under 40 on the exam date, 24 months if 40 or older. BasicMed is a separate option.",
   },
   {
     id: "passenger-day-currency",
@@ -122,7 +122,7 @@ export const REG_CARDS: readonly RegCard[] = [
     reg: "14 CFR 91.205",
     prompt: "What instruments and equipment does day VFR require? (a memory aid)",
     answer:
-      "ATOMATOFLAMES is a memory aid for day VFR. Instruments: airspeed indicator, tachometer, oil pressure gauge, manifold pressure gauge (if the engine has one), altimeter, temperature gauge, oil temperature gauge, fuel gauge, landing gear position indicator (if retractable), magnetic compass. Also: anti-collision lights, ELT and safety belts. Check the rule for what your airplane needs.",
+      "ATOMATOFLAMES is a memory aid for day VFR (91.205(b)). Airspeed indicator, tachometer, oil pressure gauge, manifold pressure gauge (altitude engines only), altimeter, temperature gauge (liquid-cooled engines only), oil temperature gauge (air-cooled), fuel gauge, landing gear position indicator (if retractable), magnetic compass, anti-collision lights (small airplanes certificated after 11 Mar 1996), ELT, safety belts, and shoulder harnesses (front seats, small airplanes made after 18 Jul 1978). The ELT is required by 91.207, which has exceptions. Check the rule for your airplane.",
   },
   {
     id: "elt",
@@ -264,7 +264,7 @@ export const REG_CARDS: readonly RegCard[] = [
     id: "sc-special-vfr",
     reg: "14 CFR 91.157",
     prompt: "What are the special VFR minimums in a surface area, and what else do you need?",
-    answer: "1 statute mile flight visibility and clear of clouds, with an ATC clearance. At night you also need an instrument rating and an IFR-equipped airplane.",
+    answer: "1 statute mile flight visibility and clear of clouds, with an ATC clearance. Takeoff and landing also need 1 statute mile ground visibility. At night you also need an instrument rating and an IFR-equipped airplane. Some airports do not allow special VFR.",
     scenario: true,
     diagramId: VFR_MINIMUMS_DIAGRAM_ID,
   },

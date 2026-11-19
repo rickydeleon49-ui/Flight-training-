@@ -61,7 +61,7 @@ export function AirportWeather() {
     <Field label="Airport ICAO code" hint="Enter the airport's four-letter ICAO code to look at its reports.">
       <TextInput value={view.station} autoCapitalize="characters" spellCheck={false} autoComplete="off" onChange={e => airportWeather.setStation(e.target.value)} />
     </Field>
-    {view.station && !normalizeIcao(view.station) && <p className="small">Use four letters for the airport ICAO code.</p>}
+    {view.station && !normalizeIcao(view.station) && <p className="small">Use four letters or digits for the airport code, starting with a letter.</p>}
     <div className="row row--wrap">
       {(["metar", "taf"] as const).map(product => <Button key={product} disabled={!desktop || !normalizeIcao(view.station) || !!view.busy || view.mono < Math.max(view.until, view[product].until)} onClick={() => void airportWeather.request(product)}>{product === "metar" ? "Get observation" : "Get forecast"}</Button>)}
     </div>

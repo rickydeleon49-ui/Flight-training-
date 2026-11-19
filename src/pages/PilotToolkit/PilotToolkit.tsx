@@ -293,7 +293,7 @@ function MetarTool({ minimums }: { minimums?: PersonalMinimums }) {
         </p>
         {fb ? (
           <>
-            <Field label="Your cruise altitude (ft)" hint="Optional. Shows the two forecast levels around it.">
+            <Field label="Your cruise altitude (ft MSL)" hint="Optional. Shows the two forecast levels around it. Winds aloft altitudes are MSL.">
               <TextInput
                 inputMode="numeric"
                 value={cruise}

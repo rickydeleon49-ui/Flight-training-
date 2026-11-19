@@ -23,7 +23,8 @@ fn weather_icao_rejects_selectors_urls_controls_and_unicode() {
     assert_eq!(icao(" kZzz ").unwrap(), "KZZZ");
     for bad in [
         "ZZZ",
-        "KZZ1",
+        "1ZZZ",
+        "KZZ12",
         "KZZZ,KZZB",
         "https://KZZZ",
         "KZ\nZ",
@@ -476,4 +477,15 @@ fn weather_native_session_off_cancels_and_rejects_direct_invocation() {
         tauri::async_runtime::block_on(get_airport_weather("KZ1".into(), Product::Metar, 43));
     assert_eq!(invalid.unwrap_err().kind, "icao");
     *state().lock().unwrap() = State::default();
+}
+
+#[test]
+fn icao_allows_four_chars_with_a_leading_letter() {
+    assert_eq!(icao(" k1v4 ").unwrap(), "K1V4");
+    assert_eq!(icao("KDEN").unwrap(), "KDEN");
+    for bad in [
+        "1V4K", "K1V", "K1V45", "K 1V4", "K-V4", "K1\u{0}4", "KÄ1V", "",
+    ] {
+        assert_eq!(icao(bad).unwrap_err().kind, "icao", "{bad:?}");
+    }
 }

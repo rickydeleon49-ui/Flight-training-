@@ -12,7 +12,7 @@ export const WEATHER_SOURCE_URL = "https://aviationweather.gov/data/api/";
 export const PARTIAL = "Some details are only in the original report.";
 export function normalizeIcao(input: string): string | null {
   const code = input.trim().toUpperCase();
-  return !/[\u0000-\u001f\u007f-\u009f]/.test(input) && /^[A-Za-z]{4}$/.test(input.trim()) && /^[A-Z]{4}$/.test(code) ? code : null;
+  return !/[\u0000-\u001f\u007f-\u009f]/.test(input) && /^[A-Za-z][A-Za-z0-9]{3}$/.test(input.trim()) && /^[A-Z][A-Z0-9]{3}$/.test(code) ? code : null;
 }
 const number = (value: unknown, min: number, max: number): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
