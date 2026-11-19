@@ -166,38 +166,20 @@ export function flightActivity(
   };
 }
 
-export interface HourReference {
-  key: "total" | "training" | "solo";
-  label: string;
-  logged: number;
-  reference: number;
-  percent: number;
-}
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/**
- * A narrow comparison with the headline Part 61 airplane minimums. It is not
- * an eligibility calculation: the log does not capture every required subset,
- * endorsement, or whether each hour qualifies under the current rules.
- */
-export function privatePilotPart61Reference(totals: FlightLogTotals): HourReference[] {
-  const line = (
-    key: HourReference["key"],
-    label: string,
-    logged: number,
-    reference: number,
-  ): HourReference => ({
-    key,
-    label,
-    logged,
-    reference,
-    percent: Math.min(100, Math.max(0, (logged / reference) * 100)),
-  });
-
-  return [
-    line("total", "Total flight time", totals.totalTime, 40),
-    line("training", "Training received", totals.dualReceived, 20),
-    line("solo", "Solo flight time", totals.soloTime, 10),
-  ];
+/** One plain line about the last 30 days, e.g. "Last 30 days: 3 flights, 4.2 hours · last flight 12 Nov 2026". Null when nothing is logged yet. */
+export function flightRhythmLine(activity: FlightActivity): string | null {
+  if (!activity.lastFlightDate) return null;
+  const [year, month, day] = activity.lastFlightDate.split("-").map(Number);
+  const last = `${day} ${MONTHS[(month ?? 1) - 1]} ${year}`;
+  const n = activity.flightsLast30Days;
+  const hours = formatHours(activity.hoursLast30Days);
+  const recent =
+    n === 0
+      ? "no flights"
+      : `${n} ${n === 1 ? "flight" : "flights"}, ${hours} ${hours === "1" || hours === "1.0" ? "hour" : "hours"}`;
+  return `Last 30 days: ${recent} · last flight ${last}`;
 }
 
 export type HoursToGoStatus = "to_go" | "done" | "unknown";

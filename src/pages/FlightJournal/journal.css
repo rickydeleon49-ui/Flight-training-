@@ -204,53 +204,12 @@
   color: var(--text-primary);
 }
 
-.flight-progress-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: var(--space-5);
-}
-
-.flight-rhythm {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
-.flight-rhythm__value {
-  margin-top: var(--space-1);
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  color: var(--text-primary);
-}
-
-.flight-rhythm__quiet { margin: 0; }
+.flight-rhythm-line { margin: var(--space-2) 0 0; }
 
 .flight-totals__unit {
   font-family: inherit;
   font-size: var(--text-sm);
   color: var(--text-secondary);
-}
-
-.flight-rhythm__value span {
-  font-family: inherit;
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-}
-
-.hour-reference-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-/* BL-25: hour meters use the neutral secondary ink, not the berry accent. */
-.hour-reference-list .meter__fill {
-  background: var(--text-secondary);
-}
-
-.flight-reference-note {
-  margin-top: var(--space-4);
-  line-height: 1.5;
 }
 
 .flight-log-table-wrap { overflow-x: auto; }
@@ -326,12 +285,10 @@
 
 @media (max-width: 1100px) {
   .flight-log-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .flight-progress-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
   .flight-log-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .flight-rhythm { grid-template-columns: 1fr; }
 }
 
 /* A saved flight whose times don't add up: what to check, and where. */

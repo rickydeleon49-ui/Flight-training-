@@ -10,7 +10,7 @@ import {
   flightLogTotals,
   flightRoute,
   hasFlightLogData,
-  privatePilotPart61Reference,
+  flightRhythmLine,
   privatePilotHoursToGo,
   prepWindowStart,
   type FlightLogTotals,
@@ -79,24 +79,20 @@ describe("flight log", () => {
     });
   });
 
-  it("builds capped Part 61 planning comparisons from logged categories", () => {
-    const references = privatePilotPart61Reference({
-      flights: 30,
-      totalTime: 50,
-      dualReceived: 10,
-      soloTime: 2.5,
-      picTime: 0,
-      crossCountryTime: 0,
-      nightTime: 0,
-      instrumentTime: 0,
-      landings: 0,
-    });
-
-    expect(references.map(({ key, percent }) => [key, percent])).toEqual([
-      ["total", 100],
-      ["training", 50],
-      ["solo", 25],
-    ]);
+  it("writes one plain rhythm line", () => {
+    const base = { averageFlightTime: 1, hoursLast30Days: 4.2 };
+    expect(
+      flightRhythmLine({ ...base, flightsLast30Days: 3, lastFlightDate: "2026-11-12" }),
+    ).toBe("Last 30 days: 3 flights, 4.2 hours · last flight 12 Nov 2026");
+    expect(
+      flightRhythmLine({ ...base, flightsLast30Days: 0, hoursLast30Days: 0, lastFlightDate: "2026-09-05" }),
+    ).toBe("Last 30 days: no flights · last flight 5 Sep 2026");
+    expect(
+      flightRhythmLine({ ...base, flightsLast30Days: 1, hoursLast30Days: 1, lastFlightDate: "2026-11-12" }),
+    ).toMatch(/1 flight, 1(\.0)? hour ·/);
+    expect(
+      flightRhythmLine({ ...base, flightsLast30Days: 0, lastFlightDate: null }),
+    ).toBeNull();
   });
 });
 

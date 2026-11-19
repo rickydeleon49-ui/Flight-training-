@@ -69,7 +69,7 @@ describe("flights whose times don't add up", () => {
     // The logged times are kept: training received is 1.2 + 1.5.
     const summary = document.querySelector(".flight-log-summary") as HTMLElement;
     expect(within(summary).getByText("Training received").nextElementSibling?.textContent).toBe("2.7");
-    expect(screen.getByText(/These totals include the flights above whose times don't add up yet/)).toBeTruthy();
+    expect(screen.queryByText(/Part 61/)).toBeNull();
     expect(mutate).not.toHaveBeenCalled();
   });
 
