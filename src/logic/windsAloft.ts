@@ -81,7 +81,7 @@ function decodeCell(raw: string, altitude: number): string {
   if (speed === 0) return NOT_EXPLAINED;
   const deg = String(degrees).padStart(3, "0");
   const speedWords = dir >= 51 && spd === 99 ? "199 kt or more" : `${speed} kt`;
-  return `From ${deg}° at ${speedWords}${tail}`;
+  return `From ${deg}° true at ${speedWords}${tail}`;
 }
 
 /** Explain an FB table. Cells are placed by their position under the header, so blanks stay blank. */

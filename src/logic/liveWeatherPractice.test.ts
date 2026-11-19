@@ -124,4 +124,26 @@ describe("practiceFromLiveReport", () => {
     const r = { ...byId("rmk-routine"), conditions: {} };
     expect(practiceFromLiveReport(r, NOW_FRESH).unknown).toEqual(["ceiling", "visibility", "wind"]);
   });
+  describe("string visibility with a leading M", () => {
+    const withVis = (visib: unknown) => ({ ...byId("rmk-routine"), conditions: { ...byId("rmk-routine").conditions, visib } });
+    it("M1/4 is below a quarter mile, never unknown", () => {
+      const p = practiceFromLiveReport(withVis("M1/4"), NOW_FRESH);
+      expect(p.unknown).not.toContain("visibility");
+      expect(p.visibilitySm!).toBeLessThan(0.25);
+      expect(p.visibilitySm!).toBeGreaterThan(0.2);
+    });
+    it("counts as outside any minimum of 1/4 SM or more", () => {
+      for (const min of [0.25, 1, 3]) {
+        const p = practiceFromLiveReport(withVis("M1/4"), NOW_FRESH);
+        const c = compareLiveToMinimums({ ...mins, visibilitySm: min }, p);
+        expect(c.comparison.visibilitySm).toBe("outside");
+      }
+    });
+    it("still reads plain values and rejects junk", () => {
+      expect(practiceFromLiveReport(withVis("1 1/2"), NOW_FRESH).visibilitySm).toBe(1.5);
+      expect(practiceFromLiveReport(withVis("10+"), NOW_FRESH).visibilitySm).toBe(10);
+      expect(practiceFromLiveReport(withVis("M"), NOW_FRESH).unknown).toContain("visibility");
+      expect(practiceFromLiveReport(withVis("M0"), NOW_FRESH).unknown).toContain("visibility");
+    });
+  });
 });

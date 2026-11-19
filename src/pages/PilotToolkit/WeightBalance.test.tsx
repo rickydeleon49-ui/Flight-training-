@@ -68,7 +68,7 @@ it("decodes an example winds aloft and PIREP in the one paste box", () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Try an example winds aloft" }));
   expect(screen.getByLabelText("Decoded winds aloft")).toBeTruthy();
-  expect(screen.getByText(/From 220° at 14 kt, temperature \+5 °C/)).toBeTruthy();
+  expect(screen.getByText(/From 220° true at 14 kt, temperature \+5 °C/)).toBeTruthy();
   expect(screen.getByText(/Light and variable \(less than 5 kt\)/)).toBeTruthy();
   expect(screen.getAllByText(/No forecast for this level/).length).toBeGreaterThan(0);
   fireEvent.change(screen.getByLabelText(/Your cruise altitude/), { target: { value: "7500" } });

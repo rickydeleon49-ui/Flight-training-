@@ -8,7 +8,8 @@ export const syntheticReport: WeatherReport = {
 describe("weather identity and deterministic partial words", () => {
   it("normalizes only four ASCII letters without inference", () => {
     expect(normalizeIcao(" kZzZ ")).toBe("KZZZ");
-    for (const code of ["ZZZ", "KZZ1", "KZZZ,KZZB", "https://KZZZ", "ＫZZZ", "KßZ", "KZ\nZ", "\nKZZZ", "KZZZ\t", "@CA", ""]) expect(normalizeIcao(code)).toBeNull();
+    expect(normalizeIcao("k1v4")).toBe("K1V4");
+    for (const code of ["ZZZ", "1ZZZ", "KZZ12", "KZZZ,KZZB", "https://KZZZ", "ＫZZZ", "KßZ", "KZ\nZ", "\nKZZZ", "KZZZ\t", "@CA", ""]) expect(normalizeIcao(code)).toBeNull();
   });
   it("uses explicit units and preserves uncertainty", () => {
     const text = conditionsSummary(syntheticReport.conditions);

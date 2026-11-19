@@ -55,13 +55,14 @@ export const ENDORSEMENT_ITEMS: { id: string; label: string; cite: string }[] = 
   { id: "presolo-knowledge", label: "Pre-solo knowledge test", cite: "61.87(b)" },
   { id: "presolo-training", label: "Pre-solo flight training", cite: "61.87(c)" },
   { id: "solo-90-days", label: "Solo flight, first 90 days", cite: "61.87(n)" },
+  { id: "solo-90-days-renew", label: "Solo flight, each additional 90 days", cite: "61.87(p)" },
   { id: "solo-25nm", label: "Solo to another airport within 25 NM", cite: "61.93(b)(1)" },
-  { id: "solo-xc-training", label: "Solo cross-country training", cite: "61.93(c)(1)" },
-  { id: "solo-xc-each", label: "Solo cross-country, each flight", cite: "61.93(c)(2)" },
+  { id: "solo-xc-training", label: "Solo cross-country training", cite: "61.93(c)(1) and (c)(2)" },
+  { id: "solo-xc-each", label: "Solo cross-country, each flight", cite: "61.93(c)(3)" },
   { id: "solo-xc-repeat", label: "Repeated solo cross-country within 50 NM", cite: "61.93(b)(2)" },
   { id: "solo-class-b", label: "Solo in Class B airspace, if needed", cite: "61.95" },
-  { id: "knowledge-test", label: "Knowledge test", cite: "61.35(a)(1)" },
-  { id: "practical-test", label: "Practical test", cite: "61.39(a)(6)" },
+  { id: "knowledge-test", label: "Knowledge test", cite: "61.35(a)(1), 61.103(d)" },
+  { id: "practical-test", label: "Practical test", cite: "61.39(a)(6), 61.103(f)" },
 ];
 
 /** Keeps known ids with a boolean `done` and a real optional date; drops the rest. */

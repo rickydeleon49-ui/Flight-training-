@@ -28,10 +28,14 @@ const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFin
 function readVisibility(v: unknown): number | undefined {
   if (isNum(v)) return v;
   if (typeof v !== "string") return undefined;
-  const m = /^(?:(\d+) )?(\d+)\/(\d+)\+?$|^(\d+(?:\.\d+)?)\+?$/.exec(v.trim());
+  // A leading "M" means below that value (e.g. M1/4 = less than 1/4 SM): count it just under the value.
+  const below = /^M/.test(v.trim());
+  const text = below ? v.trim().slice(1) : v.trim();
+  const m = /^(?:(\d+) )?(\d+)\/(\d+)\+?$|^(\d+(?:\.\d+)?)\+?$/.exec(text);
   if (!m) return undefined;
-  if (m[4] !== undefined) return Number(m[4]);
-  return Number(m[3]) === 0 ? undefined : Number(m[1] ?? 0) + Number(m[2]) / Number(m[3]);
+  const n = m[4] !== undefined ? Number(m[4]) : Number(m[3]) === 0 ? undefined : Number(m[1] ?? 0) + Number(m[2]) / Number(m[3]);
+  if (n === undefined) return undefined;
+  return below ? (n > 0 ? n - 0.001 : undefined) : n;
 }
 
 /** Numbers for the minimums comparison, read from the decoded report conditions. */
