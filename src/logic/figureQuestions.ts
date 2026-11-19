@@ -206,7 +206,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
       "About 300 pounds",
     ],
     correctIndex: 1,
-    explanation: "Find the dot marked 30 gal on the fuel line and read left to the weight scale: just under 200. That matches 30 times 6 pounds.",
+    explanation: "Find the dot marked 30 gal on the fuel line and read left to the weight scale: about 180 pounds. That matches 30 times 6 pounds.",
     sourcePage: null,
   },
   {
@@ -704,9 +704,9 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
-    question: "Sign G is yellow with a black bar over four short dashes. What is its job?",
+    question: "Sign G is yellow with two solid black lines beside a row of short dashes. What is its job?",
     options: [
-      "It shows you have left the runway after you pass it",
+      "It marks where you are clear of the runway once you pass it",
       "It shows the taxiway ends ahead",
       "It names the taxiway you are on",
     ],

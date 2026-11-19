@@ -32,8 +32,10 @@ export const BRING_ITEMS = [
   { id: "knowledge-report", label: "Your knowledge test report" },
   { id: "logbook", label: "Your logbook with your instructor's endorsements" },
   { id: "aircraft-docs", label: "Aircraft papers: airworthiness certificate, registration, operating limitations" },
+  { id: "weight-balance", label: "The aircraft's weight and balance data" },
   { id: "maintenance", label: "Aircraft maintenance records" },
   { id: "handbook", label: "The aircraft's flight manual or handbook" },
   { id: "charts-tools", label: "Current charts, plotter, flight computer and flight log forms" },
+  { id: "view-limiting", label: "A view-limiting device (hood or foggles)" },
   { id: "fee", label: "The examiner's fee, if it applies" },
 ] as const;
