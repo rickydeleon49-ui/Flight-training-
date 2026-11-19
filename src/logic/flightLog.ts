@@ -214,9 +214,13 @@ export interface HoursToGoRow {
   meta?: string;
   /** Extra logged figure shown as information only. */
   info?: string;
+  /** Replaces the default right-hand status when the figure is not plain hours. */
+  statusText?: string;
 }
 
 export const HOURS_TO_GO_CANT_TELL = "Can't tell from your journal";
+export const HOURS_TO_GO_TICK_HINT = "Tick it on the flight in your journal.";
+export const HOURS_TO_GO_CONFIRM = "Confirm with your instructor.";
 export const HOURS_TO_GO_NIGHT_STATUS = "Can't tell from your journal — check with your instructor";
 
 /**
@@ -244,6 +248,7 @@ export function privatePilotHoursToGo(
   totals: FlightLogTotals,
   nightLandings: number,
   checkrideDate?: string | null,
+  entries?: JournalEntry[],
 ): HoursToGoRow[] {
   const measured = (
     key: string,
@@ -273,6 +278,128 @@ export function privatePilotHoursToGo(
     ...(meta ? { meta } : {}),
   });
   const windowStart = prepWindowStart(checkrideDate);
+  const tickHint = (meta?: string) => [meta, HOURS_TO_GO_TICK_HINT].filter(Boolean).join(" ");
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+  const list = entries ?? [];
+  const anyTick = list.some(
+    (e) =>
+      e.toweredFullStopLandings != null ||
+      e.longSoloXc === true ||
+      e.nightXc100 === true ||
+      e.checkridePrep === true,
+  );
+  const overlap = (a: number | null, b: number | null) => (a != null && b != null ? Math.min(a, b) : 0);
+  const xcTraining = round1(list.reduce((n, e) => n + overlap(e.dualReceived, e.crossCountryTime), 0));
+  const soloXc = round1(list.reduce((n, e) => n + overlap(e.soloTime, e.crossCountryTime), 0));
+  const nightTraining = round1(list.reduce((n, e) => n + overlap(e.dualReceived, e.nightTime), 0));
+  const longXc = list.filter((e) => e.longSoloXc === true).sort((a, b) => a.date.localeCompare(b.date));
+  const nightXcTicked = list.some((e) => e.nightXc100 === true);
+  const towerLandings = list.reduce(
+    (n, e) => n + ((e.soloTime ?? 0) > 0 ? (e.toweredFullStopLandings ?? 0) : 0),
+    0,
+  );
+  const prepHours = round1(
+    list
+      .filter((e) => e.checkridePrep === true && (windowStart == null || e.date >= windowStart))
+      .reduce((n, e) => n + (e.dualReceived ?? 0), 0),
+  );
+  const prepMeta = windowStart
+    ? `Your 2-month window starts ${windowStart} — confirm with your instructor.`
+    : undefined;
+
+  const xcTrainingRow: HoursToGoRow =
+    entries === undefined
+      ? text("xc-training", "Cross-country training", "3 h")
+      : measured("xc-training", "Cross-country training", xcTraining, 3, HOURS_TO_GO_CONFIRM);
+  const soloXcRow: HoursToGoRow =
+    entries === undefined
+      ? text("solo-xc", "Solo cross-country", "5 h")
+      : measured("solo-xc", "Solo cross-country", soloXc, 5, HOURS_TO_GO_CONFIRM);
+  const prepReference = "3 h within the 2 calendar months before the test month";
+  const prepRow: HoursToGoRow =
+    entries === undefined
+      ? text("prep", "Practical-test prep training", prepReference, prepMeta)
+      : !anyTick
+        ? text("prep", "Practical-test prep training", prepReference, tickHint(prepMeta))
+        : {
+            ...measured(
+              "prep",
+              "Practical-test prep training",
+              prepHours,
+              3,
+              prepMeta ??
+                `Counts every flight you ticked; the window depends on the test date. ${HOURS_TO_GO_CONFIRM}`,
+            ),
+            reference: prepReference,
+          };
+  const longReference =
+    "One solo XC of 150 NM total with full-stop landings at 3 points and one leg over 50 NM straight-line";
+  const longRow: HoursToGoRow =
+    entries === undefined
+      ? text("solo-xc-long", "Long solo cross-country", longReference)
+      : longXc.length > 0
+        ? {
+            key: "solo-xc-long",
+            label: "Long solo cross-country",
+            logged: null,
+            reference: longReference,
+            toGo: null,
+            status: "done",
+            statusText: `Ticked on ${longXc[0]!.date} — done`,
+            meta: HOURS_TO_GO_CONFIRM,
+          }
+        : !anyTick
+          ? text("solo-xc-long", "Long solo cross-country", longReference, tickHint())
+          : {
+              key: "solo-xc-long",
+              label: "Long solo cross-country",
+              logged: null,
+              reference: longReference,
+              toGo: null,
+              status: "to_go",
+              statusText: "Not ticked yet — to go",
+              meta: HOURS_TO_GO_CONFIRM,
+            };
+  const towerReference =
+    "3 solo takeoffs/landings to a full stop at an airport with an operating control tower";
+  const towerRow: HoursToGoRow =
+    entries === undefined
+      ? text("solo-tower", "Solo towered-airport landings", towerReference)
+      : !anyTick
+        ? text("solo-tower", "Solo towered-airport landings", towerReference, tickHint())
+        : {
+            key: "solo-tower",
+            label: "Solo towered-airport landings",
+            logged: null,
+            reference: towerReference,
+            toGo: Math.max(0, 3 - towerLandings),
+            status: towerLandings >= 3 ? "done" : "to_go",
+            statusText:
+              towerLandings >= 3
+                ? `${towerLandings} / 3 landings — done`
+                : `${towerLandings} / 3 landings — ${3 - towerLandings} to go`,
+            meta: `Counts only landings ticked on solo flights. ${HOURS_TO_GO_CONFIRM}`,
+          };
+  const nightInfo = `Logged: ${formatHours(totals.nightTime)} h night, ${nightLandings} night landings`;
+  const nightRow: HoursToGoRow = {
+    key: "night",
+    label: "Night training",
+    logged: totals.nightTime,
+    reference:
+      "3 h night training incl. one night XC over 100 NM total and 10 night takeoffs/landings to a full stop",
+    toGo: null,
+    status: "unknown",
+    info: nightInfo,
+  };
+  if (entries !== undefined && anyTick) {
+    const done = nightTraining >= 3 && nightXcTicked && nightLandings >= 10;
+    nightRow.status = done ? "done" : "to_go";
+    nightRow.info = `${nightInfo}. Night training with your instructor: ${formatHours(nightTraining)} h of 3.`;
+    nightRow.statusText = `${formatHours(nightTraining)} / 3 h, night XC ${nightXcTicked ? "ticked" : "not ticked"}, ${nightLandings} / 10 landings — ${done ? "done" : "to go"}`;
+    nightRow.meta = `Night landings are counted as logged; the journal can't tell which were full stop. ${HOURS_TO_GO_CONFIRM}`;
+  } else if (entries !== undefined) {
+    nightRow.meta = HOURS_TO_GO_TICK_HINT;
+  }
 
   return [
     measured("total", "Total flight time", totals.totalTime, 40),
@@ -285,36 +412,12 @@ export function privatePilotHoursToGo(
       3,
       "Counts only training from your instructor by reference to instruments.",
     ),
-    {
-      key: "night",
-      label: "Night training",
-      logged: totals.nightTime,
-      reference:
-        "3 h night training incl. one night XC over 100 NM total and 10 night takeoffs/landings to a full stop",
-      toGo: null,
-      status: "unknown",
-      info: `Logged: ${formatHours(totals.nightTime)} h night, ${nightLandings} night landings`,
-    },
-    text("xc-training", "Cross-country training", "3 h"),
-    text(
-      "prep",
-      "Practical-test prep training",
-      "3 h within the 2 calendar months before the test month",
-      windowStart
-        ? `Your 2-month window starts ${windowStart} — confirm with your instructor.`
-        : undefined,
-    ),
-    text("solo-xc", "Solo cross-country", "5 h"),
-    text(
-      "solo-xc-long",
-      "Long solo cross-country",
-      "One solo XC of 150 NM total with full-stop landings at 3 points and one leg over 50 NM straight-line",
-    ),
-    text(
-      "solo-tower",
-      "Solo towered-airport landings",
-      "3 solo takeoffs/landings to a full stop at an airport with an operating control tower",
-    ),
+    nightRow,
+    xcTrainingRow,
+    prepRow,
+    soloXcRow,
+    longRow,
+    towerRow,
   ];
 }
 

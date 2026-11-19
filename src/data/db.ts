@@ -274,6 +274,10 @@ export interface DebriefSaveOperation {
     simulatedInstrumentTime?: number | null;
     dayLandings?: number | null;
     nightLandings?: number | null;
+    toweredFullStopLandings?: number | null;
+    longSoloXc?: boolean | null;
+    nightXc100?: boolean | null;
+    checkridePrep?: boolean | null;
     mission?: string | null;
     practiced?: string | null;
     wentWell?: string | null;

@@ -523,7 +523,7 @@ function HoursToGoCard({ state }: { state: ToolkitState }) {
     (sum, entry) => sum + (entry.nightLandings ?? 0),
     0,
   );
-  const rows = privatePilotHoursToGo(totals, nightLandings, state.checkrideDate);
+  const rows = privatePilotHoursToGo(totals, nightLandings, state.checkrideDate, data.journalEntries);
   return (
     <Card variant="grouped">
       <CardHeader title="Hours still to go (14 CFR 61.109(a))" eyebrow="From your journal" />
@@ -537,7 +537,9 @@ function HoursToGoCard({ state }: { state: ToolkitState }) {
               {row.meta ? <p className="tiny dim">{row.meta}</p> : null}
             </div>
             <p className="small numeric">
-              {row.logged != null && row.toGo != null
+              {row.statusText
+                ? row.statusText
+                : row.logged != null && row.toGo != null
                 ? row.status === "done"
                   ? `logged ${formatHours(row.logged)} / ${row.reference} — done`
                   : `logged ${formatHours(row.logged)} / ${row.reference} — ${formatHours(row.toGo)} h to go`

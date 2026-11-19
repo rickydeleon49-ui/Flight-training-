@@ -14,7 +14,14 @@ interface Row {
   practiced: unknown; went_well: unknown; was_difficult: unknown;
   instructor_feedback: unknown; questions_for_next_time: unknown; confidence: unknown;
   school_name: unknown; goal_id: unknown; created_at: unknown; updated_at: unknown;
+  towered_full_stop_landings?: unknown; long_solo_xc?: unknown;
+  night_xc_100?: unknown; checkride_prep?: unknown;
 }
+
+const toTick = (value: unknown): boolean | null =>
+  value == null ? null : Number(value) !== 0;
+const fromTick = (value: boolean | null | undefined): number | null =>
+  value == null ? null : value ? 1 : 0;
 
 const map = (row: Row, materialIds: Id[]): JournalEntry => ({
   id: row.id,
@@ -36,6 +43,10 @@ const map = (row: Row, materialIds: Id[]): JournalEntry => ({
   simulatedInstrumentTime: toNullableNumber(row.simulated_instrument_time),
   dayLandings: toNullableNumber(row.day_landings),
   nightLandings: toNullableNumber(row.night_landings),
+  toweredFullStopLandings: toNullableNumber(row.towered_full_stop_landings),
+  longSoloXc: toTick(row.long_solo_xc),
+  nightXc100: toTick(row.night_xc_100),
+  checkridePrep: toTick(row.checkride_prep),
   mission: toText(row.mission),
   practiced: toText(row.practiced),
   wentWell: toText(row.went_well),
@@ -109,6 +120,10 @@ export function journalRepository(db: SqlDatabase) {
         simulatedInstrumentTime: input.simulatedInstrumentTime ?? null,
         dayLandings: input.dayLandings ?? null,
         nightLandings: input.nightLandings ?? null,
+        toweredFullStopLandings: input.toweredFullStopLandings ?? null,
+        longSoloXc: input.longSoloXc ?? null,
+        nightXc100: input.nightXc100 ?? null,
+        checkridePrep: input.checkridePrep ?? null,
         mission: input.mission ?? "",
         practiced: input.practiced ?? "",
         wentWell: input.wentWell ?? "",
@@ -129,8 +144,9 @@ export function journalRepository(db: SqlDatabase) {
            night_time, actual_instrument_time, simulated_instrument_time,
            day_landings, night_landings, mission, practiced, went_well,
            was_difficult, instructor_feedback, questions_for_next_time,
-           confidence, school_name, goal_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           confidence, school_name, goal_id, created_at, updated_at,
+           towered_full_stop_landings, long_solo_xc, night_xc_100, checkride_prep)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           entry.id, entry.eventId, entry.date, entry.title, entry.aircraftType,
           entry.aircraftId, entry.departureAirport, entry.arrivalAirport,
@@ -140,7 +156,8 @@ export function journalRepository(db: SqlDatabase) {
           entry.dayLandings, entry.nightLandings, entry.mission, entry.practiced,
           entry.wentWell, entry.wasDifficult, entry.instructorFeedback,
           entry.questionsForNextTime, entry.confidence, entry.schoolName, entry.goalId, entry.createdAt,
-          entry.updatedAt,
+          entry.updatedAt, entry.toweredFullStopLandings ?? null, fromTick(entry.longSoloXc),
+          fromTick(entry.nightXc100), fromTick(entry.checkridePrep),
         ],
       );
       await this.setMaterials(entry.id, entry.materialIds);
@@ -166,7 +183,9 @@ export function journalRepository(db: SqlDatabase) {
                 simulated_instrument_time = ?, day_landings = ?, night_landings = ?,
                 mission = ?, practiced = ?, went_well = ?, was_difficult = ?,
                 instructor_feedback = ?, questions_for_next_time = ?, confidence = ?,
-                school_name = ?, goal_id = ?, updated_at = ?
+                school_name = ?, goal_id = ?, updated_at = ?,
+                towered_full_stop_landings = ?, long_solo_xc = ?, night_xc_100 = ?,
+                checkride_prep = ?
           WHERE id = ?`,
         [
           next.eventId, next.date, next.title, next.aircraftType, next.aircraftId,
@@ -176,7 +195,9 @@ export function journalRepository(db: SqlDatabase) {
           next.simulatedInstrumentTime, next.dayLandings, next.nightLandings,
           next.mission, next.practiced, next.wentWell, next.wasDifficult,
           next.instructorFeedback, next.questionsForNextTime, next.confidence,
-          next.schoolName, next.goalId, next.updatedAt, id,
+          next.schoolName, next.goalId, next.updatedAt,
+          next.toweredFullStopLandings ?? null, fromTick(next.longSoloXc),
+          fromTick(next.nightXc100), fromTick(next.checkridePrep), id,
         ],
       );
       if (changes.materialIds) await this.setMaterials(id, changes.materialIds);

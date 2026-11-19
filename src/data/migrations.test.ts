@@ -412,7 +412,7 @@ describe("migrations", () => {
       expect(upgradedJournal.school_name).toBeNull();
       expect(upgradedJournal).toEqual({
         ...originalJournal,
-        school_name: null,
+        school_name: null, towered_full_stop_landings: null, long_solo_xc: null, night_xc_100: null, checkride_prep: null,
       });
 
       expect(db.prepare("SELECT * FROM goals WHERE id = 'g1'").get()).toEqual(originalGoal);
