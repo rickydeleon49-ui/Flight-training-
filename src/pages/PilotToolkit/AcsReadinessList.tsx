@@ -15,6 +15,8 @@ import { daysToCheckride } from "@/logic/checkride";
 import { answerKey } from "@/logic/mockTest";
 import { useAppData } from "@/state/AppDataContext";
 
+import { NeedsWorkList } from "./NeedsWorkList";
+
 import "./AcsReadinessList.css";
 
 /** The newest finished practice attempts the list reads. */
@@ -141,6 +143,7 @@ export function AcsReadinessList() {
         <AcsReadinessRows rows={rows} />
       </CardBody>
       <CardBody>
+        <NeedsWorkList ratings={toolkit.oralRatings ?? []} />
         <p className="tiny dim">{ACS_LIST_FOOTER}</p>
       </CardBody>
     </Card>
