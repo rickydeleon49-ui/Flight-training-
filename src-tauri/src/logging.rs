@@ -74,7 +74,10 @@ mod tests {
     }
 
     fn is_test_only_file(name: &str) -> bool {
-        name.ends_with("_tests.rs") || name == "fake_gemini.rs" || name == "test_wait.rs"
+        name.ends_with("_tests.rs")
+            || name == "tests.rs"
+            || name == "fake_gemini.rs"
+            || name == "test_wait.rs"
     }
 
     fn production_sources() -> Vec<(String, String)> {
