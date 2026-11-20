@@ -33,7 +33,7 @@ permissions:
 jobs:
   scope:
     name: Change scope
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, homeserver]
     timeout-minutes: 5
     outputs:
       web: ${{ steps.filter.outputs.web }}
@@ -86,7 +86,7 @@ jobs:
     name: App tests and build (shard ${{ matrix.shard }}/3)
     needs: scope
     if: needs.scope.outputs.web == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, homeserver]
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -142,7 +142,7 @@ jobs:
     name: Rust tests and the data-safety guards
     needs: scope
     if: needs.scope.outputs.rust == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, homeserver]
     # The Rust tests are most of a full run (about 25 minutes cold).
     timeout-minutes: 50
     steps:
@@ -224,7 +224,7 @@ jobs:
     name: Tests, types, and the data-safety guards
     needs: [scope, web, rust]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, homeserver]
     timeout-minutes: 5
     steps:
       - name: All required sides passed
