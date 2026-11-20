@@ -83,3 +83,22 @@ it("delete asks first", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Delete" }));
   await waitFor(() => expect(toolkit.navLogs).toHaveLength(0));
 });
+
+it("print area has the classes, buttons skip print, Print shows off iPhone", () => {
+  const { container } = render(<Host initial={{ ...emptyDraft(), name: "Trip", legs: [] }} />);
+  expect(container.querySelector(".toolkit-print-area")).not.toBeNull();
+  expect(container.querySelector(".navlog-print")).not.toBeNull();
+  for (const name of ["Save", "New log", "Print", "Add a leg"]) {
+    expect(screen.getByRole("button", { name }).closest(".toolkit-no-print")).not.toBeNull();
+  }
+});
+
+it("hides Print on iPhone", async () => {
+  vi.resetModules();
+  vi.doMock("@/services/platform", () => ({ isIOS: () => true }));
+  const mod = await import("./NavLogEditor");
+  function H() { const [d, s] = useState(mod.emptyDraft()); return <mod.NavLogEditor draft={d} setDraft={s} />; }
+  render(<H />);
+  expect(screen.queryByRole("button", { name: "Print" })).toBeNull();
+  vi.doUnmock("@/services/platform");
+});
