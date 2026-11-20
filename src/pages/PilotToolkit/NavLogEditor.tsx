@@ -5,6 +5,7 @@ import { formatMinutes, fuelForTime } from "@/logic/e6b";
 import { navLogTotals, solveLeg } from "@/logic/navLog";
 import { NAV_LEG_CAP, NAV_LOG_CAP } from "@/logic/savedNavLogs";
 import { useOptionalAppData } from "@/state/AppDataContext";
+import { isIOS } from "@/services/platform";
 import { updateToolkit } from "@/state/toolkitUpdate";
 import type { SavedNavLeg, SavedNavLog } from "@/domain/types";
 import "./FlightComputer.css";
@@ -108,9 +109,9 @@ export function NavLogEditor({ draft, setDraft }: Props) {
   const dash = (v: number | null, unit: string) => (v === null || !Number.isFinite(v) ? DASH : `${v} ${unit}`);
 
   return (
-    <div className="flight-computer stack stack--3">
-      <h3>Nav log</h3>
-      <div className="form-grid">
+    <div className="flight-computer stack stack--3 toolkit-print-area">
+      <h3 className="toolkit-no-print">Nav log</h3>
+      <div className="form-grid toolkit-no-print">
         <Field label="Name"><TextInput value={draft.name} maxLength={60} onChange={(e) => patch({ name: e.target.value })} /></Field>
         <Field label="Aircraft"><TextInput value={draft.aircraft} maxLength={40} onChange={(e) => patch({ aircraft: e.target.value })} /></Field>
         <Field label="Reserve you chose (minutes)">
@@ -121,7 +122,7 @@ export function NavLogEditor({ draft, setDraft }: Props) {
         const p = parsed[i];
         const s = p ? solveLeg(p) : null;
         return (
-          <fieldset className="navlog-leg" key={i}>
+          <fieldset className="navlog-leg toolkit-no-print" key={i}>
             <legend>Leg {i + 1}</legend>
             <div className="form-grid">
               {NUMS.map((k) => (
@@ -145,7 +146,7 @@ export function NavLogEditor({ draft, setDraft }: Props) {
           </fieldset>
         );
       })}
-      <div className="flight-computer__actions">
+      <div className="flight-computer__actions toolkit-no-print">
         <Button variant="secondary" disabled={legsFull} onClick={addBlank}>Add a leg</Button>
         {legsFull ? <span className="tiny dim">{NAV_LEG_CAP} legs is the most in one log.</span> : null}
       </div>
@@ -156,17 +157,45 @@ export function NavLogEditor({ draft, setDraft }: Props) {
         <div className="flight-computer__row"><dt>Reserve you chose</dt><dd>{reserveOk ? `${reserve} min (${dash(totals.reserveFuel, "gal")})` : DASH}</dd></div>
         <div className="flight-computer__row"><dt>Fuel on board needed</dt><dd>{dash(totals.needed, "gal")}</dd></div>
       </dl>
-      <p className="tiny dim">Reserve fuel uses the burn on the last leg. Legs with a blank or bad number are left out of the totals.</p>
-      <div className="flight-computer__actions">
+      <div className="navlog-print" data-testid="navlog-print">
+        <h2>{draft.name.trim() || "Untitled log"}</h2>
+        <p>Aircraft: {draft.aircraft.trim() || DASH}</p>
+        <table>
+          <thead>
+            <tr><th>Leg</th><th>TC</th><th>Dist (nm)</th><th>TAS</th><th>Wind</th><th>TH</th><th>MH</th><th>CH</th><th>GS</th><th>Time</th><th>Fuel (gal)</th></tr>
+          </thead>
+          <tbody>
+            {draft.legs.map((l, i) => {
+              const p = parsed[i];
+              const s = p ? solveLeg(p) : null;
+              return (
+                <tr key={i}>
+                  <td>{i + 1}</td><td>{l.tc || DASH}</td><td>{l.distanceNm || DASH}</td><td>{l.tas || DASH}</td>
+                  <td>{l.windDir && l.windSpeed ? `${l.windDir}/${l.windSpeed}` : DASH}</td>
+                  <td>{s ? pad3(s.th) : DASH}</td><td>{s ? pad3(s.mh) : DASH}</td><td>{s ? pad3(s.ch) : DASH}</td>
+                  <td>{s ? `${s.gs} kt` : DASH}</td><td>{s ? formatMinutes(s.ete) : DASH}</td><td>{s ? s.fuel : DASH}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <p>Distance {complete.length ? `${totals.distanceNm} nm` : DASH} · Time {complete.length ? formatMinutes(totals.ete) : DASH} · Trip fuel {complete.length ? `${totals.fuel} gal` : DASH}</p>
+        <p>Reserve you chose: {reserveOk ? `${reserve} min (${dash(totals.reserveFuel, "gal")})` : DASH} · Fuel on board needed: {dash(totals.needed, "gal")}</p>
+        <p>Reserve fuel uses the burn on the last leg. Legs with a blank or bad number are left out of the totals.</p>
+        <p>A study aid. Check numbers with your instructor and your own plan.</p>
+      </div>
+      <p className="tiny dim toolkit-no-print">Reserve fuel uses the burn on the last leg. Legs with a blank or bad number are left out of the totals.</p>
+      <div className="flight-computer__actions toolkit-no-print">
         <Button onClick={save} disabled={!canSave}>Save</Button>
         <Button variant="secondary" onClick={() => { setDraft(emptyDraft()); setNote(""); }}>New log</Button>
+        {isIOS() ? null : <Button variant="secondary" onClick={() => window.print()}>Print</Button>}
         <span role="status" className="tiny dim">{note}</span>
       </div>
-      {logsFull ? <p className="tiny dim">{NAV_LOG_CAP} saved logs is the most. Delete one to save a new log.</p> : null}
-      {draft.legs.length > 0 && complete.length < draft.legs.length ? <p className="tiny dim">Fill in every field of every leg to save.</p> : null}
-      <h3>Saved logs</h3>
-      {saved.length === 0 ? <p className="tiny dim">Nothing saved yet.</p> : (
-        <ul className="navlog-saved">
+      {logsFull ? <p className="tiny dim toolkit-no-print">{NAV_LOG_CAP} saved logs is the most. Delete one to save a new log.</p> : null}
+      {draft.legs.length > 0 && complete.length < draft.legs.length ? <p className="tiny dim toolkit-no-print">Fill in every field of every leg to save.</p> : null}
+      <h3 className="toolkit-no-print">Saved logs</h3>
+      {saved.length === 0 ? <p className="tiny dim toolkit-no-print">Nothing saved yet.</p> : (
+        <ul className="navlog-saved toolkit-no-print">
           {saved.map((s) => (
             <li key={s.id} className="flight-computer__row">
               <span>{s.name}{s.aircraft ? `, ${s.aircraft}` : ""} ({s.legs.length} legs)</span>
@@ -188,7 +217,7 @@ export function NavLogEditor({ draft, setDraft }: Props) {
         onConfirm={remove}
         onCancel={() => setToDelete(null)}
       />
-      <p className="tiny dim">A study aid. Check numbers with your instructor and your own plan.</p>
+      <p className="tiny dim toolkit-no-print">A study aid. Check numbers with your instructor and your own plan.</p>
     </div>
   );
 }

@@ -18,3 +18,12 @@
 .navlog-leg__out { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .navlog-saved { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .navlog-saved .flight-computer__row { flex-wrap: wrap; align-items: center; }
+.navlog-print { display: none; }
+@media print {
+  .flight-computer-tabs { display: none !important; }
+  .flight-computer__results { display: none !important; }
+  .navlog-print { display: block; color: black; background: white; }
+  .navlog-print table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 8px 0; font-size: 11pt; }
+  .navlog-print th, .navlog-print td { border: 1px solid black; padding: 4px 6px; text-align: left; color: black; overflow-wrap: anywhere; }
+  .navlog-print p { margin: 4px 0; color: black; }
+}
