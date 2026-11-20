@@ -7,6 +7,7 @@ import type { PracticeQuestion } from "@/domain/types";
 export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   {
     figureId: "faa-49",
+    acsTask: "PA.II.D",
     question: "On this airport diagram, which runway is marked as closed?",
     options: [
       "Runway 4-22",
@@ -19,6 +20,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-12",
+    acsTask: "PA.I.C",
     question: "Look at the KINK report. What wind does \"11012G18KT\" give you?",
     options: [
       "From 110 degrees at 12 knots, gusting to 18 knots",
@@ -31,6 +33,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On the crosswind component graph, as the wind angle off the runway gets closer to 90 degrees, what happens to the crosswind part of the same wind speed?",
     options: [
       "It gets larger",
@@ -43,6 +46,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "Look at the table on the right. For an altimeter setting of 30.3, what pressure altitude conversion factor does it give?",
     options: [
       "-348",
@@ -55,6 +59,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "On the chart, you are at the standard temperature (the red line). How does the density altitude compare with the pressure altitude?",
     options: [
       "Density altitude is higher",
@@ -67,6 +72,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "Use the sea level line. At an outside air temperature of 38 degrees C (100 degrees F), about what density altitude do you read on the left scale?",
     options: [
       "About 0 feet (sea level)",
@@ -79,6 +85,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-12",
+    acsTask: "PA.I.C",
     question: "Look at the KBOI report. What altimeter setting does \"A3015\" give you?",
     options: [
       "30.15 inches of mercury",
@@ -91,6 +98,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-12",
+    acsTask: "PA.I.C",
     question: "In the SPECI for KMDW, what does \"OVC007\" tell you about the sky?",
     options: [
       "An overcast layer 7,000 feet above ground",
@@ -103,6 +111,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-12",
+    acsTask: "PA.I.C",
     question: "In the SPECI for KJFK, what does \"R04/2200\" report?",
     options: [
       "Runway 4 visibility of 2,200 miles",
@@ -115,6 +124,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-15",
+    acsTask: "PA.I.C",
     question: "Look at the KOKC forecast. The valid period is written \"0512/0618\". When does it run?",
     options: [
       "From the 5th at 1200Z to the 6th at 1800Z",
@@ -127,6 +137,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-15",
+    acsTask: "PA.I.C",
     question: "In the KMEM forecast, \"PROB40 1220/1222 1SM TSRA OVC008CB\" tells you what?",
     options: [
       "A 40 knot thunderstorm wind from 12 to 22 degrees",
@@ -139,6 +150,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-15",
+    acsTask: "PA.I.C",
     question: "In the KOKC forecast after \"FM051600\", what do \"P6SM SKC\" mean?",
     options: [
       "Visibility exactly 6 statute miles with scattered clouds",
@@ -151,6 +163,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-17",
+    acsTask: "PA.I.C",
     question: "Find the DEN row under 12000. The group \"2532-08\" gives what wind and temperature?",
     options: [
       "From 250 degrees at 32 knots, minus 8 degrees C",
@@ -163,6 +176,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-17",
+    acsTask: "PA.I.C",
     question: "Find the AMA row under 30000. How do you read \"265842\"?",
     options: [
       "From 265 degrees at 84 knots, minus 2 degrees C",
@@ -175,6 +189,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-17",
+    acsTask: "PA.I.C",
     question: "Find the MKC row under 3000. What does \"0507\" tell you?",
     options: [
       "From 5 degrees at 7 knots, minus 0 C",
@@ -187,6 +202,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-34",
+    acsTask: "PA.I.F",
     question: "On the loading graph, at 400 pounds which line reaches the largest moment/1,000?",
     options: [
       "Rear passengers",
@@ -199,6 +215,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-34",
+    acsTask: "PA.I.F",
     question: "On the loading graph, the fuel line is marked 6 lb/gal. About how much does 30 gallons of fuel weigh?",
     options: [
       "About 100 pounds",
@@ -211,6 +228,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-34",
+    acsTask: "PA.I.F",
     question: "The note at the bottom of the loading graph says the empty weight of this airplane...",
     options: [
       "already includes the weight of the oil",
@@ -223,6 +241,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "In the example box, a 40 knot wind at 30 degrees is shown. What crosswind component does it give?",
     options: [
       "20 knots",
@@ -235,6 +254,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "Use the graph for a 40 knot wind 60 degrees off the runway. About what crosswind component do you read?",
     options: [
       "About 20 knots",
@@ -247,6 +267,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On the graph, a wind exactly 90 degrees to the runway (the bottom line) has what headwind component?",
     options: [
       "Half of the wind speed",
@@ -259,6 +280,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the example box, what total distance is given to clear a 50 foot obstacle?",
     options: [
       "1,700 feet",
@@ -271,6 +293,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the speed table at the left, what approach speed is given for a weight of 2,600 pounds?",
     options: [
       "70 knots",
@@ -283,6 +306,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "According to the associated conditions box, what braking does the graph assume?",
     options: [
       "Light braking",
@@ -295,6 +319,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-47",
+    acsTask: "PA.III.A",
     question: "Which picture shows red lights above white lights on each side?",
     options: [
       "A",
@@ -307,6 +332,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-47",
+    acsTask: "PA.III.A",
     question: "Which picture shows all red lights, which on a VASI means you are too low?",
     options: [
       "C",
@@ -319,6 +345,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-47",
+    acsTask: "PA.III.A",
     question: "Picture C shows all white lights. What does that tell you about your approach?",
     options: [
       "You are below the glidepath",
@@ -331,6 +358,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-48",
+    acsTask: "PA.II.D",
     question: "Look at the runway on the far right of the diagram. Which numbers mark its two ends?",
     options: [
       "17L and 35R",
@@ -343,6 +371,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-48",
+    acsTask: "PA.II.D",
     question: "The diagonal runway at the upper left shows the number 12. Which number is at its other end, near the lower right?",
     options: [
       "17",
@@ -355,6 +384,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-48",
+    acsTask: "PA.II.D",
     question: "Area E, beyond the end of runway 30, is painted with chevrons. What can you use that area for?",
     options: [
       "Taxiing only",
@@ -367,6 +397,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-49",
+    acsTask: "PA.II.D",
     question: "How many X marks do you see painted on the runways in this diagram?",
     options: [
       "Two",
@@ -379,6 +410,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-49",
+    acsTask: "PA.II.D",
     question: "What number is painted at the bottom end of the up-and-down runway?",
     options: [
       "18",
@@ -391,6 +423,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-49",
+    acsTask: "PA.II.D",
     question: "What number is painted at the upper right end of the slanted runway?",
     options: [
       "4",
@@ -403,6 +436,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-58",
+    acsTask: "PA.VI.A",
     question: "On the compass card, what do you steer to fly a heading of 120?",
     options: [
       "116",
@@ -415,6 +449,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-58",
+    acsTask: "PA.VI.A",
     question: "On the compass card, what do you steer to fly a heading of 240?",
     options: [
       "236",
@@ -427,6 +462,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-58",
+    acsTask: "PA.VI.A",
     question: "On the compass card, what do you steer to fly south (S)?",
     options: [
       "180",
@@ -439,6 +475,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "What runway number is painted at the top end of the runway in this airport markings figure?",
     options: [
       "19",
@@ -451,6 +488,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "What letter is shown on the black and yellow taxiway signs on the right side of the figure?",
     options: [
       "B",
@@ -463,6 +501,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "What colors are the runway markings and the taxiway center line in this figure?",
     options: [
       "Runway yellow, taxiway white",
@@ -475,6 +514,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Which letter marks the sign with a white circle and bar on red, the no entry sign?",
     options: [
       "D",
@@ -487,6 +527,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign E shows a yellow B on a black background. What does a black sign with a yellow letter tell you?",
     options: [
       "Which way to turn to taxiway B",
@@ -499,6 +540,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign K shows a black B and an arrow on yellow. What does it tell you?",
     options: [
       "That you are on taxiway B",
@@ -511,6 +553,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-68",
+    acsTask: "PA.II.D",
     question: "Which two lettered points are joined by the longest yellow line on this figure?",
     options: [
       "A and B",
@@ -523,6 +566,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-68",
+    acsTask: "PA.II.D",
     question: "The letters N and S sit at the ends of a horizontal line. Which letter is at the left end?",
     options: [
       "S",
@@ -535,6 +579,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-68",
+    acsTask: "PA.II.D",
     question: "The short yellow arrow that starts at the lower airplane points toward which lettered point?",
     options: [
       "B",
@@ -548,6 +593,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   // ---- figq-1117 (BL-86, BL-87): airport markings, airport signs, performance charts ----
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "On the runway, the two broad white rectangles, one on each side of the centerline, are which marking?",
     options: [
       "The threshold bars",
@@ -560,6 +606,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "Down the runway you see pairs of white bars in groups of three, two and one. What are they?",
     options: [
       "Touchdown zone markers",
@@ -572,6 +619,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "Arrow D points at four yellow lines, two solid and two dashed, across the pavement. What do they tell you?",
     options: [
       "The runway is closed beyond this point",
@@ -584,6 +632,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "Arrow E points at a single dashed yellow line across the taxiway. What does it mark?",
     options: [
       "The edge of the taxiway",
@@ -596,6 +645,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "Near the top of the figure, a red box with a white 19 is painted on the taxiway. What does it tell you?",
     options: [
       "You are on taxiway 19",
@@ -608,6 +658,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "Arrows C point at white solid lines, some with a dashed line between them, on the strip beside the terminal. What are they?",
     options: [
       "Vehicle roadway markings",
@@ -620,6 +671,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "The long taxiway has a pair of solid yellow lines along each side. What do these double lines show?",
     options: [
       "A place to stop for a runway",
@@ -632,6 +684,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "Near the bottom, a yellow box with a black A and an arrow is painted on the taxiway. What does it tell you?",
     options: [
       "Taxiway A lies in the direction of the arrow",
@@ -644,6 +697,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-64",
+    acsTask: "PA.II.D",
     question: "The painted runway number in this figure is 19. Which magnetic heading is the runway pointing along, about?",
     options: [
       "About 090 degrees",
@@ -656,6 +710,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign A is white 4-22 on a red background. What does it tell you?",
     options: [
       "You are on runway 4-22",
@@ -668,6 +723,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign B is white 4-APCH on red. What does it mark?",
     options: [
       "A holding position that protects the approach area of runway 4",
@@ -680,6 +736,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign C is white ILS on a red background. What does it tell you?",
     options: [
       "Stop here to stay out of the ILS critical area",
@@ -692,6 +749,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign F is a yellow 22 inside a yellow border on black. What does it tell you?",
     options: [
       "Turn toward runway 22",
@@ -704,6 +762,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign G is yellow with two solid black lines beside a row of short dashes. What is its job?",
     options: [
       "It marks where you are clear of the runway once you pass it",
@@ -716,6 +775,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign L is a white 4 on a black background. If you see it beside the runway while landing, what does it tell you?",
     options: [
       "Runway 4 is ahead",
@@ -728,6 +788,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-65",
+    acsTask: "PA.II.D",
     question: "Sign I is yellow with TERM and an arrow. What does it show?",
     options: [
       "The way to taxi toward the terminal gates",
@@ -740,6 +801,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "In the table on the right, what pressure altitude conversion factor goes with an altimeter setting of 28.5?",
     options: [
       "1,824",
@@ -752,6 +814,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "At the altimeter setting 29.92 in the table, what is the conversion factor and what does it mean?",
     options: [
       "Zero: pressure altitude equals field elevation",
@@ -764,6 +827,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "In this chart, a field at 1,500 feet has an altimeter setting of 29.4. What is the pressure altitude, about?",
     options: [
       "About 1,000 feet",
@@ -776,6 +840,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "In this chart, pressure altitude is 6,000 feet and the outside air temperature is 21 degrees C (70 degrees F). About what density altitude do you read?",
     options: [
       "About 6,000 feet",
@@ -788,6 +853,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-8",
+    acsTask: "PA.I.F",
     question: "In this chart, pressure altitude is 4,000 feet and the outside air temperature is -1 degrees C (30 degrees F). About what density altitude do you read?",
     options: [
       "About 5,000 feet",
@@ -800,6 +866,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On this graph, about what crosswind component does a 30 knot wind give when it is 40 degrees off the runway?",
     options: [
       "About 10 knots",
@@ -812,6 +879,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On this graph, about what headwind component does a 20 knot wind give when it is 30 degrees off the runway?",
     options: [
       "About 10 knots",
@@ -824,6 +892,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On this graph, about what crosswind component does a 30 knot wind give when it is 70 degrees off the runway?",
     options: [
       "About 10 knots",
@@ -836,6 +905,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On this graph, about what crosswind component does a 40 knot wind give when it is only 10 degrees off the runway?",
     options: [
       "About 20 knots",
@@ -848,6 +918,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-36",
+    acsTask: "PA.I.F",
     question: "On this graph, about what headwind component does a 50 knot wind give when it is 40 degrees off the runway?",
     options: [
       "About 38 knots",
@@ -860,6 +931,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the speed table at the left, what approach speed in knots is given for a weight of 2,200 pounds?",
     options: [
       "70 knots",
@@ -872,6 +944,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the example box, what pressure altitude and outside air temperature does the sample airplane start with?",
     options: [
       "3,965 feet and 25 degrees C",
@@ -884,6 +957,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the example box, what wind does the sample airplane have?",
     options: [
       "A 9 knot tailwind",
@@ -896,6 +970,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "On the graph, which wind makes the landing distance longer?",
     options: [
       "A headwind",
@@ -908,6 +983,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the example box, how many more feet does the distance over a 50 foot obstacle take than the ground roll?",
     options: [
       "1,080 feet",
@@ -920,6 +996,7 @@ export const FIGURE_QUESTIONS: readonly PracticeQuestion[] = [
   },
   {
     figureId: "faa-37",
+    acsTask: "PA.I.F",
     question: "In the associated conditions box, what descent rate does the sample airplane hold on final approach?",
     options: [
       "500 feet per minute",
