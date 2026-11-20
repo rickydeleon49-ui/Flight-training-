@@ -4,7 +4,7 @@ import { homeworkAssert } from "@/domain/homework";
  * Initialization validation for the single-connection drivers (sql.js in the
  * plain browser, node:sqlite in tests): the TypeScript twin of the native
  * `verify_application_connection` / `verify_schema_11_semantics` in
- * `src-tauri/src/backup.rs`.
+ * `src-tauri/src/backup/mod.rs`.
  *
  * It runs on the owned connection after migrations and inside the legacy
  * conversion transaction, before the adapter is handed out, so a database

@@ -84,9 +84,9 @@ it("BUGFIX-064: with a bad date, Save profile stops and focuses it", async () =>
   expect(screen.getAllByText("That isn't a date — try 11/05/2026.")).toHaveLength(1);
 });
 
-it("FULLAPP-065: Your data says how many automatic copies are kept, matching backup.rs", async () => {
+it("FULLAPP-065: Your data says how many automatic copies are kept, matching backup/mod.rs", async () => {
   const { readFileSync } = await import("node:fs");
-  const keep = /const KEEP_BACKUPS: usize = (\d+);/.exec(readFileSync("src-tauri/src/backup.rs", "utf8"))?.[1];
+  const keep = /const KEEP_BACKUPS: usize = (\d+);/.exec(readFileSync("src-tauri/src/backup/mod.rs", "utf8"))?.[1];
   expect(keep).toBe("10");
   await open();
   expect(document.body.textContent).toContain(`The ${keep} newest copies are kept.`);

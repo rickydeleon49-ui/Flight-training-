@@ -1,6 +1,6 @@
 //! Platform abstraction boundary for the iOS port.
 //!
-//! Everything in `documents.rs`, `pdf.rs`, and `backup.rs` is already
+//! Everything in `documents.rs`, `pdf.rs`, and `backup/` is already
 //! platform-neutral: it operates on
 //! paths handed to it by `storage::app_root`, which itself resolves through
 //! Tauri's own cross-platform `app_config_dir()`. The two things that
