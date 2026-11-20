@@ -1,0 +1,18 @@
+.acs-list { list-style: none; margin: 0; padding: 0; }
+.acs-list__row {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.acs-list__row:last-child { border-bottom: 0; }
+.acs-list__head { display: flex; gap: var(--space-3); align-items: baseline; min-width: 0; }
+.acs-list__area { flex: none; font-variant-numeric: tabular-nums; }
+.acs-list__meter-line { display: flex; align-items: center; gap: var(--space-3); }
+.acs-list__meter {
+  flex: 1;
+  min-width: 0;
+  height: .55rem;
+  border-radius: var(--radius-pill);
+  accent-color: var(--category-flight-ink);
+}
