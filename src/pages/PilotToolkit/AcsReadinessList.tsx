@@ -52,34 +52,56 @@ export function mockRowsFor(
 }
 
 export function AcsReadinessRows({ rows }: { rows: readonly AcsAreaRow[] }) {
+  const [open, setOpen] = useState<string | null>(null);
   return (
     <ul className="acs-list">
-      {rows.map((row) => (
-        <li className="acs-list__row" key={row.area} data-testid={`acs-row-${row.area}`}>
-          <div className="acs-list__head">
-            <span className="acs-list__area tiny dim">{row.area}</span>
-            <span className="small strong wrap-anywhere">{row.title}</span>
-          </div>
-          {row.percent === null ? (
-            <p className="tiny dim">{NOT_ENOUGH_PRACTICE}</p>
-          ) : (
-            <div className="acs-list__meter-line">
-              <meter
-                className="acs-list__meter"
-                min={0}
-                max={100}
-                value={row.percent}
-                aria-label={`${row.percent} percent in practice`}
-              />
-              <span className="small numeric">{row.percent}%</span>
+      {rows.map((row) => {
+        const expanded = open === row.area;
+        const panelId = `acs-row-panel-${row.area}`;
+        return (
+          <li className="acs-list__row" key={row.area} data-testid={`acs-row-${row.area}`}>
+            <button
+              type="button"
+              className="acs-list__toggle"
+              aria-expanded={expanded}
+              aria-controls={panelId}
+              onClick={() => setOpen(expanded ? null : row.area)}
+            >
+              <span className="acs-list__head">
+                <span className="acs-list__area tiny dim">{row.area}</span>
+                <span className="small strong wrap-anywhere">{row.title}</span>
+              </span>
+            </button>
+            {row.percent === null ? (
+              <p className="tiny dim">{NOT_ENOUGH_PRACTICE}</p>
+            ) : (
+              <div className="acs-list__meter-line">
+                <meter
+                  className="acs-list__meter"
+                  min={0}
+                  max={100}
+                  value={row.percent}
+                  aria-label={`${row.percent} percent in practice`}
+                />
+                <span className="small numeric">{row.percent}%</span>
+              </div>
+            )}
+            {row.oralRated > 0 ? (
+              <p className="tiny dim">Oral: {row.oralSatisfactory} of {row.oralRated} Satisfactory</p>
+            ) : null}
+            {row.nextLook ? <p className="tiny">Next look: {row.nextLook}</p> : null}
+            <div id={panelId} hidden={!expanded}>
+              {expanded ? (
+                <p className="tiny dim">
+                  {row.answered === 0
+                    ? "You have not answered practice questions in this area yet."
+                    : `You answered ${row.answered} practice ${row.answered === 1 ? "question" : "questions"} in this area.`}
+                </p>
+              ) : null}
             </div>
-          )}
-          {row.oralRated > 0 ? (
-            <p className="tiny dim">Oral: {row.oralSatisfactory} of {row.oralRated} Satisfactory</p>
-          ) : null}
-          {row.nextLook ? <p className="tiny">Next look: {row.nextLook}</p> : null}
-        </li>
-      ))}
+          </li>
+        );
+      })}
     </ul>
   );
 }

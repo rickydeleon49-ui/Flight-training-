@@ -117,3 +117,20 @@ it("a figure question shows its figure; a plain one does not", () => {
   expect(screen.getByText("Figure question text")).toBeTruthy();
   expect(document.querySelector(".figure-run--question-first .figure-view")).not.toBeNull();
 });
+
+it("navigator marks the current question with aria-current and says Current in its legend", () => {
+  ui();
+  fireEvent.click(screen.getByRole("button", { name: "Questions" }));
+  const current = screen.getByRole("button", { name: /^Question 1, current/ });
+  expect(current.getAttribute("aria-current")).toBe("true");
+  expect(screen.getByRole("button", { name: /^Question 2,/ }).getAttribute("aria-current")).toBeNull();
+  expect(screen.getByText(/Current is the bold outlined number/)).toBeTruthy();
+});
+
+it("Flag, Back and Next sit together in one pinned controls group after the question", () => {
+  ui();
+  const controls = document.querySelector(".mock-test__controls")!;
+  for (const name of ["Flag for later", "Back", "Next"]) {
+    expect(controls.contains(screen.getByRole("button", { name }))).toBe(true);
+  }
+});

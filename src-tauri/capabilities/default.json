@@ -8,6 +8,7 @@
     "core:default",
     "core:window:allow-start-dragging",
     "core:window:allow-set-theme",
+    "core:webview:allow-print",
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-message",

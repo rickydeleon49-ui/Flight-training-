@@ -20,14 +20,14 @@ export function MockTestNavigator({ ids, answers, flags, index, onJump, onClose 
       <strong>Questions</strong>
       <Button variant="secondary" onClick={onClose}>Close</Button>
     </div>
-    <p className="tiny muted">A tick means answered. A flag means you marked it to check again.</p>
+    <p className="tiny muted">A tick means answered. A flag means you marked it to check again. Current is the bold outlined number.</p>
     <ol className="mock-nav__grid">
       {ids.map((id, i) => {
         const answered = id in answers;
         const flagged = flags.includes(id);
         const label = navStateLabel(answered, flagged, i === index);
         return <li key={id}>
-          <button type="button" className="mock-nav__item" aria-current={i === index ? "step" : undefined}
+          <button type="button" className="mock-nav__item" aria-current={i === index ? "true" : undefined}
             aria-label={`Question ${i + 1}, ${label}`} data-answered={answered} data-flagged={flagged}
             onClick={() => { onJump(i); onClose(); }}>
             <span>{i + 1}</span>

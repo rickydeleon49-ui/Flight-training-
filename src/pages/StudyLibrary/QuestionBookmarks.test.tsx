@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { createElement as h } from "react";
+import { createElement as h, useState } from "react";
 import type { PracticeTest, StudyMaterial } from "@/domain/types";
 import { QuestionBookmarks } from "./QuestionBookmarks";
 
@@ -44,4 +44,15 @@ it("missing questions get one muted line and Remove them", () => {
 it("empty state reads well", () => {
   ui([]);
   expect(screen.getByText(/No bookmarked questions yet/)).toBeTruthy();
+});
+
+it("after Remove, focus moves to the next item's Remove, not the page top", () => {
+  function Host() {
+    const [list, setList] = useState([front, other]);
+    return h(QuestionBookmarks, { practiceTests: tests, materials, bookmarks: list, onChange: setList });
+  }
+  render(h(Host));
+  fireEvent.click(screen.getAllByRole("button", { name: "Remove" })[0]!);
+  expect(screen.getAllByRole("button", { name: "Remove" })).toHaveLength(1);
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove" }));
 });

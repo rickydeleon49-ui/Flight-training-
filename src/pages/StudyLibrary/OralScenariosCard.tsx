@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useInRouterContext, useLocation } from "react-router-dom";
 
 import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorNote } from "@/components/ui";
 import type { OralScenario } from "@/data/oralScenarios";
@@ -15,6 +16,17 @@ export { oralScenarioTitle };
  * with Practice, and one Add a scenario. No grid, no totals.
  */
 export function OralScenariosCard({ material }: { material: StudyMaterial }) {
+  const inRouter = useInRouterContext();
+  return inRouter ? <OralScenariosCardRouted material={material} /> : <OralScenariosCardBody material={material} wanted={null} />;
+}
+
+/** `?scenario=<id>` (from the Needs work list) scrolls to and highlights that scenario. */
+function OralScenariosCardRouted({ material }: { material: StudyMaterial }) {
+  const wanted = new URLSearchParams(useLocation().search).get("scenario");
+  return <OralScenariosCardBody material={material} wanted={wanted} />;
+}
+
+function OralScenariosCardBody({ material, wanted }: { material: StudyMaterial; wanted: string | null }) {
   const { repositories, dataRevision, mutate, deleteWithUndo, pendingDelete } = useAppData();
   const [scenarios, setScenarios] = useState<OralScenario[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -44,6 +56,16 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
   // A scenario waiting to be removed is already gone as far as the student can see.
   const hidden = new Set(pendingDelete?.ids ?? []);
   const visible = scenarios.filter((s) => !hidden.has(s.id));
+
+  const targetPresent = wanted !== null && visible.some((s) => s.id === wanted);
+  useEffect(() => {
+    if (!targetPresent) return;
+    const row = document.getElementById(`oral-scenario-${wanted}`);
+    if (!row) return;
+    row.closest("details")?.setAttribute("open", "");
+    row.focus({ preventScroll: true });
+    row.scrollIntoView?.({ block: "center" });
+  }, [targetPresent, wanted]);
 
   const move = (from: number, to: number) => {
     const order = visible.map((s) => s.id);
@@ -81,7 +103,9 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
               {visible.map((scenario, at) => {
                 const title = oralScenarioTitle(scenario.prompt);
                 return (
-                  <li key={scenario.id} className="stack stack--1">
+                  <li key={scenario.id} id={`oral-scenario-${scenario.id}`} tabIndex={-1}
+                    className="stack stack--1" data-target={scenario.id === wanted ? "true" : undefined}
+                    style={scenario.id === wanted ? { outline: "3px solid var(--border-focus)", borderRadius: 12, padding: 8 } : undefined}>
                     <p className="small wrap-anywhere">
                       {title}
                       {scenario.origin === "instructor" ? <span className="tiny muted"> · From my instructor</span> : null}

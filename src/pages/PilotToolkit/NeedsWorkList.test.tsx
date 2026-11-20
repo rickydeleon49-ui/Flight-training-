@@ -27,7 +27,7 @@ it("shows a needs-work row with Open to its material", async () => {
   view([rate({})]);
   expect(screen.getByText("Engine failure")).toBeTruthy();
   expect(screen.getByText(NEEDS_WORK_FOOTER)).toBeTruthy();
-  await waitFor(() => expect(screen.getByRole("link", { name: /Open/ }).getAttribute("href")).toBe("/study/m1"));
+  await waitFor(() => expect(screen.getByRole("link", { name: /Open/ }).getAttribute("href")).toBe("/study/m1?scenario=s1#material-oral"));
 });
 
 it("hides Open when the material or scenario is gone, without failing", async () => {

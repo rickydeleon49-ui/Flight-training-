@@ -22,7 +22,7 @@ it("bar rows match scoreMock, including Not tagged yet", () => {
   ui();
   const s = scoreMock(run, qs);
   expect(s.rows.some((r) => r.label === "Not tagged yet" && r.total === 1)).toBe(true);
-  for (const r of s.rows) expect(screen.getByText(`${r.label}: ${r.correct} of ${r.total} (${r.percent}%)`)).toBeTruthy();
+  for (const r of s.rows) expect(screen.getByText(`${r.label}: ${r.correct} of ${r.total} right (${r.percent}%)`)).toBeTruthy();
   expect(screen.getAllByRole("img")).toHaveLength(s.rows.length);
   expect(screen.getByText("3 of 4 correct (75%)")).toBeTruthy();
 });

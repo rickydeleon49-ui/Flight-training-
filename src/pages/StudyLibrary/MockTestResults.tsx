@@ -48,8 +48,8 @@ export function MockTestResults({ run, questions, history = [], historyQuestions
       <h4>By ACS area</h4>
       <ul className="mock-results__bars">
         {score.rows.map((row) => <li key={row.key} className="mock-results__row">
-          <span className="small">{row.label}: {row.correct} of {row.total} ({row.percent}%)</span>
-          <div className="mock-results__bar" role="img" aria-label={`${row.label}: ${row.correct} of ${row.total}, ${row.percent}%. The ${PASS_PERCENT}% line is marked.`}>
+          <span className="small">{row.label}: {row.correct} of {row.total} right ({row.percent}%)</span>
+          <div className="mock-results__bar" role="img" aria-label={`${row.label}: ${row.correct} of ${row.total} right, ${row.percent}%. The ${PASS_PERCENT}% line is marked.`}>
             <div className="mock-results__fill" style={{ width: `${row.percent}%` }} />
             <div className="mock-results__line" style={{ left: `${PASS_PERCENT}%` }} />
           </div>
