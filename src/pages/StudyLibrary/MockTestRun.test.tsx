@@ -106,3 +106,14 @@ it("bookmark toggles and stops at the cap of 100 with a note", () => {
   expect(onBookmarks).not.toHaveBeenCalled();
   expect(screen.getByText(/bookmark list is full/i)).toBeTruthy();
 });
+
+it("a figure question shows its figure; a plain one does not", () => {
+  const fq: MockQuestion = { id: "f1", materialId: "figure-questions", materialTitle: "Figure questions",
+    question: { question: "Figure question text", figureId: "faa-49", acsTask: null, sourcePage: null, options: ["a", "b"], correctIndex: 0, explanation: "" } };
+  const both = [qs[0]!, fq];
+  render(h(MemoryRouter, null, h(MockTestRunner, { questions: both, initial: startMockRun(both, T0), onSave: vi.fn(), onClose: vi.fn() })));
+  expect(document.querySelector(".figure-view")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  expect(screen.getByText("Figure question text")).toBeTruthy();
+  expect(document.querySelector(".figure-run--question-first .figure-view")).not.toBeNull();
+});

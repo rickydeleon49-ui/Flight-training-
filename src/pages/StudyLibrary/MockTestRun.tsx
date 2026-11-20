@@ -4,6 +4,8 @@ import type { MockTestRun as Run, PracticeTest, QuestionBookmark, StudyMaterial 
 import {
   answerKey, buildMockTest, formatLongClock, mockSeconds, type MockQuestion,
 } from "@/logic/mockTest";
+import { FigureViewer } from "@/components/FigureViewer";
+import { getFigure } from "@/logic/figures";
 import { MOCK_LAST_CAP, toggleBookmark } from "@/logic/mockTestState";
 import { timeAnnouncement } from "@/logic/timedAttempts";
 import { useOptionalAppData } from "@/state/AppDataContext";
@@ -89,6 +91,7 @@ export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks 
     sinceSave.current += 1;
     update({ ...run, answers: { ...run.answers, [id]: answerKey(option) } }, sinceSave.current >= SAVE_EVERY);
   };
+  const figure = item?.question.figureId ? getFigure(item.question.figureId) : undefined;
   const flagged = id ? run.flags.includes(id) : false;
   const toggleFlag = () => {
     if (!id) return;
@@ -102,6 +105,14 @@ export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks 
     setBookFull(r.full);
     if (!r.full) onBookmarks(r.list);
   };
+  const questionBody = item ? <>
+    <p className="small ai-copy">{item.question.question}</p>
+    <div className="stack stack--2" role="group" aria-label="Answer choices">
+      {item.question.options.map((option, i) => <button key={i} type="button"
+        className="practice-option practice-option--default mock-test__option"
+        aria-pressed={run.answers[item.id] === answerKey(i)} onClick={() => pick(i)}>{i + 1}. {option}</button>)}
+    </div>
+  </> : null;
   const close = () => { if (!finished) onSave(runRef.current); onClose(); };
   const total = run.questionIds.length;
   const answered = Object.keys(run.answers).length;
@@ -113,12 +124,10 @@ export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks 
       <span className="visually-hidden" role="status" aria-live="polite">{finished ? "" : timeAnnouncement(left)}</span>
       {finished ? <MockTestResults run={run} questions={questions} history={history} historyQuestions={historyQuestions} onClose={close} /> : item ? <>
         <p className="tiny muted" role="status" aria-label="Mock test progress">Question {run.index + 1} of {total} · {answered} answered</p>
-        <p className="small ai-copy">{item.question.question}</p>
-        <div className="stack stack--2" role="group" aria-label="Answer choices">
-          {item.question.options.map((option, i) => <button key={i} type="button"
-            className="practice-option practice-option--default mock-test__option"
-            aria-pressed={run.answers[item.id] === answerKey(i)} onClick={() => pick(i)}>{i + 1}. {option}</button>)}
-        </div>
+        {figure ? <div className="figure-run figure-run--question-first">
+          <div className="figure-run__question stack stack--2">{questionBody}</div>
+          <FigureViewer key={figure.id} figure={figure} questionFirst />
+        </div> : questionBody}
         <div className="row row--wrap">
           <Button variant="secondary" aria-pressed={flagged} onClick={toggleFlag}>{flagged ? "Remove flag" : "Flag for later"}</Button>
           {onBookmarks ? <Button variant="secondary" aria-pressed={bookmarked} onClick={toggleMark}>{bookmarked ? "Remove bookmark" : "Bookmark"}</Button> : null}

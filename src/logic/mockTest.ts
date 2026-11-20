@@ -1,9 +1,13 @@
 import type { MockTestRun, PracticeQuestion, PracticeTest, StudyMaterial } from "@/domain/types";
 import { PRIVATE_AIRPLANE_ACS_AREAS } from "./acsAreaMaterialCoverage";
 import { normalizeAcsTask } from "./acsTaskCatalog";
+import { FIGURE_QUESTIONS } from "./figureQuestions";
 import { PASS_PERCENT } from "./practiceWeakAreas";
 
 export const MOCK_MAX_QUESTIONS = 60;
+/** At most this many bundled figure questions are mixed into one mock. */
+export const MOCK_MAX_FIGURE_QUESTIONS = 8;
+export const MOCK_FIGURE_MATERIAL_ID = "figure-questions";
 /** Owner decision: 150 minutes for 60 questions = 2.5 minutes per question. */
 export const MOCK_SECONDS_PER_QUESTION = 150;
 export const MOCK_UNTAGGED_KEY = "untagged";
@@ -48,7 +52,8 @@ function shuffle<T>(items: T[], random: () => number): T[] {
   return copy;
 }
 
-const questionId = (materialId: string, q: PracticeQuestion): string =>
+/** Stable id of a question in a mock: its logical id when stored, else material plus text. */
+export const mockQuestionId = (materialId: string, q: PracticeQuestion): string =>
   (q as { logicalId?: string }).logicalId ?? `${materialId}:${q.question.trim().toLowerCase()}`;
 
 const percentOf = (correct: number, total: number): number =>
@@ -57,21 +62,33 @@ const percentOf = (correct: number, total: number): number =>
 /**
  * Up to `cap` questions of the whole bank: no repeats, dealt round-robin across
  * materials (each pool shuffled first), then shuffled. Questions without a usable
- * answer are skipped.
+ * answer are skipped. Up to MOCK_MAX_FIGURE_QUESTIONS bundled figure questions are mixed in
+ * (all of them when `cap` is infinite, which is how the bank is looked up by id).
  */
 export function buildMockTest(
   tests: readonly PracticeTest[],
   materials: readonly StudyMaterial[],
   random: () => number = Math.random,
   cap = MOCK_MAX_QUESTIONS,
+  figures: readonly PracticeQuestion[] = FIGURE_QUESTIONS,
 ): MockQuestion[] {
   const seen = new Set<string>();
+  const figurePool: MockQuestion[] = [];
+  for (const question of figures) {
+    const id = mockQuestionId(MOCK_FIGURE_MATERIAL_ID, question);
+    const ok = question.figureId && question.options.length >= 2 && question.correctIndex >= 0 && question.correctIndex < question.options.length;
+    if (!ok || seen.has(id)) continue;
+    seen.add(id);
+    figurePool.push({ id, materialId: MOCK_FIGURE_MATERIAL_ID, materialTitle: "Figure questions", question });
+  }
+  const figurePicked = shuffle(figurePool, random).slice(0, Number.isFinite(cap) ? Math.min(MOCK_MAX_FIGURE_QUESTIONS, cap) : figurePool.length);
+  const regularCap = cap - figurePicked.length;
   const pools: MockQuestion[][] = [];
   for (const material of materials) {
     const pool: MockQuestion[] = [];
     for (const test of tests.filter((t) => t.sourceMaterialId === material.id)) {
       for (const question of test.questions) {
-        const id = questionId(material.id, question);
+        const id = mockQuestionId(material.id, question);
         const ok = question.options.length >= 2 && question.correctIndex >= 0 && question.correctIndex < question.options.length;
         if (!ok || seen.has(id)) continue;
         seen.add(id);
@@ -81,15 +98,15 @@ export function buildMockTest(
     if (pool.length) pools.push(shuffle(pool, random));
   }
   const picked: MockQuestion[] = [];
-  for (let round = 0; picked.length < cap; round++) {
+  for (let round = 0; picked.length < regularCap; round++) {
     let any = false;
     for (const pool of pools) {
       const item = pool[round];
-      if (item && picked.length < cap) { picked.push(item); any = true; }
+      if (item && picked.length < regularCap) { picked.push(item); any = true; }
     }
     if (!any) break;
   }
-  return shuffle(picked, random);
+  return shuffle([...picked, ...figurePicked], random);
 }
 
 export const mockSeconds = (count: number): number => Math.max(0, Math.floor(count)) * MOCK_SECONDS_PER_QUESTION;

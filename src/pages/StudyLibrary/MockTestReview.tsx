@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui";
+import { FigureViewer } from "@/components/FigureViewer";
 import type { MockTestRun as Run } from "@/domain/types";
+import { getFigure } from "@/logic/figures";
 import { answerKey, scoreMock, type MockQuestion } from "@/logic/mockTest";
 import "./MockTest.css";
 
@@ -43,10 +45,12 @@ export function MockTestReview({ run, questions, onBack }: {
         const index = chosen === undefined ? -1 : Number(chosen);
         const mine = item.question.options[index];
         const right = item.question.options[item.question.correctIndex];
+        const figure = item.question.figureId ? getFigure(item.question.figureId) : undefined;
         const hit = chosen === answerKey(item.question.correctIndex);
         return <li key={item.id} className="stack stack--1">
           <p className="small"><strong>Question {number}</strong>{flagged.has(item.id) ? " · Flagged" : ""} · {hit ? "Correct" : chosen === undefined ? "Missed (not answered)" : "Missed"}</p>
           <p className="small ai-copy">{item.question.question}</p>
+          {figure ? <FigureViewer figure={figure} /> : null}
           <p className="small">Your answer: {mine ?? "Not answered"}</p>
           <p className="small">Right answer: {right}</p>
           {item.question.explanation ? <p className="tiny muted">{item.question.explanation}</p> : null}
