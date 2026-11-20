@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { PracticeTest, QuestionBookmark, StudyMaterial } from "@/domain/types";
 import { Button } from "@/components/ui";
 import { buildMockTest } from "@/logic/mockTest";
@@ -17,16 +18,33 @@ export function QuestionBookmarks({ practiceTests, materials, bookmarks, onChang
     return item ? [{ b, item }] : [];
   });
   const lost = bookmarks.length - found.length;
+  const listRef = useRef<HTMLUListElement>(null);
+  /** Remove one, then keep focus in the list: the next item's Remove, else the previous one, else the list. */
+  const pendingAt = useRef<number | null>(null);
+  useEffect(() => {
+    const at = pendingAt.current;
+    if (at === null) return;
+    pendingAt.current = null;
+    const list = listRef.current;
+    const buttons = list?.querySelectorAll<HTMLElement>("[data-remove-bookmark]");
+    const target = buttons && buttons.length > 0 ? buttons[Math.min(at, buttons.length - 1)] : list;
+    target?.focus();
+  }, [bookmarks.length]);
+  /** Remove one; focus then moves to the next item's Remove (or the previous one, or the list). */
+  const removeAt = (at: number, b: QuestionBookmark) => {
+    pendingAt.current = at;
+    onChange(without(b));
+  };
   const without = (b: QuestionBookmark) => bookmarks.filter((x) => x !== b);
   if (bookmarks.length === 0) return <p className="small muted">No bookmarked questions yet. Use Bookmark during a mock test to save one.</p>;
   return <div className="stack stack--3 question-bookmarks">
-    {found.length ? <ul className="stack stack--3">
-      {found.map(({ b, item }) => <li key={`${b.materialId}:${b.questionId}`} className="stack stack--1">
+    {found.length ? <ul className="stack stack--3" ref={listRef} tabIndex={-1}>
+      {found.map(({ b, item }, at) => <li key={`${b.materialId}:${b.questionId}`} className="stack stack--1">
         <p className="small ai-copy">{item.question.question}</p>
         <p className="small">Right answer: {item.question.options[item.question.correctIndex]}</p>
         {item.question.explanation ? <p className="tiny muted">{item.question.explanation}</p> : null}
         <p className="tiny muted">From: {item.materialTitle}</p>
-        <div><Button variant="secondary" onClick={() => onChange(without(b))}>Remove</Button></div>
+        <div><Button variant="secondary" data-remove-bookmark="" onClick={() => removeAt(at, b)}>Remove</Button></div>
       </li>)}
     </ul> : null}
     {lost > 0 ? <p className="tiny muted">

@@ -606,7 +606,7 @@ function ReadinessTool({ state, save }: ToolProps) {
               <p className="toolkit-number numeric">
                 {summary.ready}/{summary.total}
               </p>
-              <p className="tiny dim">feel ready or signed off</p>
+              <p className="tiny dim">feel confident or signed off</p>
             </div>
             <div>
               <p className="toolkit-number numeric">{summary.signedOff}</p>

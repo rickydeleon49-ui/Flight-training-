@@ -41,9 +41,21 @@
   color: inherit;
   font: inherit;
 }
-.mock-nav__item[aria-current="step"] {
+.mock-nav__item[aria-current="true"] {
   border-color: var(--border-focus);
   background: var(--accent-fill);
+  border-width: 3px;
+  font-weight: 700;
+}
+/* Narrow: the figure is capped (zoom and Full screen show detail), the question scrolls with the page,
+   and Flag, Back and Next stay pinned at the bottom. */
+@media (max-width: 899px) {
+  .dialog--mock .figure-run--question-first .figure-run__question { position: static; max-height: none; }
+  .dialog--mock .figure-view--question-first .figure-stage__scroll { max-height: 32vh; }
+  .mock-test__controls {
+    position: sticky; bottom: 0; z-index: 2; padding: var(--space-2) 0;
+    background: var(--surface-raised);
+  }
 }
 .mock-results__bars,
 .mock-results__history,

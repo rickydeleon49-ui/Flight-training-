@@ -16,3 +16,16 @@
   border-radius: var(--radius-pill);
   accent-color: var(--category-flight-ink);
 }
+.acs-list__toggle {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.acs-list__toggle[aria-expanded="true"] .acs-list__head { text-decoration: underline; }

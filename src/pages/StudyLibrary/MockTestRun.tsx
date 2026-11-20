@@ -128,18 +128,20 @@ export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks 
           <div className="figure-run__question stack stack--2">{questionBody}</div>
           <FigureViewer key={figure.id} figure={figure} questionFirst />
         </div> : questionBody}
+        {bookFull ? <p className="tiny muted" role="status">Your bookmark list is full (100). Remove one to add another.</p> : null}
+        {navOpen ? <MockTestNavigator ids={run.questionIds} answers={run.answers} flags={run.flags} index={run.index}
+          onJump={(i) => { setBookFull(false); go(i); }} onClose={() => setNavOpen(false)} /> : null}
+        <div className="mock-test__controls stack stack--2">
         <div className="row row--wrap">
           <Button variant="secondary" aria-pressed={flagged} onClick={toggleFlag}>{flagged ? "Remove flag" : "Flag for later"}</Button>
           {onBookmarks ? <Button variant="secondary" aria-pressed={bookmarked} onClick={toggleMark}>{bookmarked ? "Remove bookmark" : "Bookmark"}</Button> : null}
           <Button variant="secondary" aria-expanded={navOpen} onClick={() => setNavOpen((o) => !o)}>Questions</Button>
         </div>
-        {bookFull ? <p className="tiny muted" role="status">Your bookmark list is full (100). Remove one to add another.</p> : null}
-        {navOpen ? <MockTestNavigator ids={run.questionIds} answers={run.answers} flags={run.flags} index={run.index}
-          onJump={(i) => { setBookFull(false); go(i); }} onClose={() => setNavOpen(false)} /> : null}
         <div className="row row--wrap">
           <Button variant="secondary" disabled={run.index === 0} onClick={() => go(run.index - 1)}>Back</Button>
           <Button variant="secondary" disabled={run.index >= total - 1} onClick={() => go(run.index + 1)}>Next</Button>
           <Button variant="secondary" onClick={() => setEnding(true)}>End test</Button>
+        </div>
         </div>
       </> : <p>This question is no longer in your materials.</p>}
     </div>

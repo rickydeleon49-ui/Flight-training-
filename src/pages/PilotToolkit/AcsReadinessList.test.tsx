@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -66,4 +66,16 @@ it("resolves mock question ids against the bank", () => {
     [{ sourceMaterialId: "m1", questions: [q] }],
   );
   expect(rows).toEqual([{ acsTask: "PA.I.A", correct: true }]);
+});
+
+it("each area row is a button that expands and collapses", () => {
+  render(<AcsReadinessRows rows={[row({ answered: 3 }), row({ area: "PA.II", title: "Preflight Procedures" })]} />);
+  const buttons = screen.getAllByRole("button");
+  expect(buttons).toHaveLength(2);
+  expect(buttons[0]!.getAttribute("aria-expanded")).toBe("false");
+  fireEvent.click(buttons[0]!);
+  expect(buttons[0]!.getAttribute("aria-expanded")).toBe("true");
+  expect(screen.getByText("You answered 3 practice questions in this area.")).toBeTruthy();
+  fireEvent.click(buttons[0]!);
+  expect(buttons[0]!.getAttribute("aria-expanded")).toBe("false");
 });

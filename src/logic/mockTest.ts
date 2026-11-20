@@ -1,5 +1,5 @@
 import type { MockTestRun, PracticeQuestion, PracticeTest, StudyMaterial } from "@/domain/types";
-import { PRIVATE_AIRPLANE_ACS_AREAS } from "./acsAreaMaterialCoverage";
+import { PRIVATE_AIRPLANE_ACS_AREAS, summarizeAcsAreaMaterialCoverage } from "./acsAreaMaterialCoverage";
 import { normalizeAcsTask } from "./acsTaskCatalog";
 import { FIGURE_QUESTIONS } from "./figureQuestions";
 import { PASS_PERCENT } from "./practiceWeakAreas";
@@ -127,6 +127,13 @@ function areaKey(question: PracticeQuestion): string {
   return roman && (PRIVATE_AIRPLANE_ACS_AREAS as readonly string[]).includes(roman) ? roman : MOCK_UNTAGGED_KEY;
 }
 
+/** Plain area name for a roman numeral key, e.g. "Preflight Preparation"; the numeral alone is a fallback. */
+function areaName(key: string): string {
+  const i = (PRIVATE_AIRPLANE_ACS_AREAS as readonly string[]).indexOf(key);
+  const label = summarizeAcsAreaMaterialCoverage()[i]?.areaLabel;
+  return label ? label.replace(/^Area of Operation [IVX]+:\s*/, "") : `Area ${key}`;
+}
+
 /**
  * Practice score of a run. Questions are counted in the run's frozen order;
  * unanswered counts as missed. Rows: ACS areas I..XII that have questions, then
@@ -156,7 +163,7 @@ export function scoreMock(
     const g = groups.get(key);
     return g ? [{
       key,
-      label: key === MOCK_UNTAGGED_KEY ? "Not tagged yet" : `Area ${key}`,
+      label: key === MOCK_UNTAGGED_KEY ? "Not tagged yet" : areaName(key),
       correct: g.correct, total: g.total, percent: percentOf(g.correct, g.total),
     }] : [];
   });

@@ -91,7 +91,7 @@ export function NeedsWorkList({ ratings }: { ratings: readonly OralRating[] }) {
                     <span className="small wrap-anywhere">{r.title}</span>
                     <span className="tiny dim"> {formatLongDate(r.date)}</span>
                     {materialId ? (
-                      <Link className="button button--secondary" to={`/study/${encodeURIComponent(materialId)}`}>
+                      <Link className="button button--secondary" to={`/study/${encodeURIComponent(materialId)}?scenario=${encodeURIComponent(r.scenarioId)}#material-oral`}>
                         Open<span className="visually-hidden">: {r.title}</span>
                       </Link>
                     ) : null}

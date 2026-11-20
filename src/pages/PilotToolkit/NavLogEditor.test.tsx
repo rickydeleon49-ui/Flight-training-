@@ -102,3 +102,13 @@ it("hides Print on iPhone", async () => {
   expect(screen.queryByRole("button", { name: "Print" })).toBeNull();
   vi.doUnmock("@/services/platform");
 });
+
+it("Add a leg stays below the legs, before the totals, after each add", () => {
+  render(<Host />);
+  for (let n = 0; n < 2; n++) {
+    fireEvent.click(screen.getByRole("button", { name: "Add a leg" }));
+    const add = screen.getByRole("button", { name: "Add a leg" });
+    const lastLeg = screen.getAllByText(/^Leg \d+$/).at(-1)!;
+    expect(lastLeg.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
+});

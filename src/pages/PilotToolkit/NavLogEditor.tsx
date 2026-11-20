@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button, ConfirmDialog, Field, TextInput } from "@/components/ui";
 import { formatMinutes, fuelForTime } from "@/logic/e6b";
@@ -79,7 +79,13 @@ export function NavLogEditor({ draft, setDraft }: Props) {
   const patch = (p: Partial<NavDraft>) => setDraft({ ...draft, ...p });
   const patchLeg = (i: number, p: Partial<DraftLeg>) =>
     patch({ legs: draft.legs.map((l, n) => (n === i ? { ...l, ...p } : l)) });
-  const addBlank = () =>
+  const addRef = useRef<HTMLDivElement>(null);
+  const addBlank = () => {
+    // The button stays below the legs; keep it in view so it is under the pointer-line again.
+    requestAnimationFrame(() => addRef.current?.scrollIntoView?.({ block: "nearest" }));
+    addLeg();
+  };
+  const addLeg = () =>
     patch({ legs: [...draft.legs, { ...(Object.fromEntries(NUMS.map((k) => [k, ""])) as Record<Key, string>), deviation: "0", side: "E" }] });
 
   const save = async () => {
@@ -146,7 +152,7 @@ export function NavLogEditor({ draft, setDraft }: Props) {
           </fieldset>
         );
       })}
-      <div className="flight-computer__actions toolkit-no-print">
+      <div className="flight-computer__actions toolkit-no-print" ref={addRef}>
         <Button variant="secondary" disabled={legsFull} onClick={addBlank}>Add a leg</Button>
         {legsFull ? <span className="tiny dim">{NAV_LEG_CAP} legs is the most in one log.</span> : null}
       </div>
