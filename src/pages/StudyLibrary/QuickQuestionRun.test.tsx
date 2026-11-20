@@ -22,6 +22,16 @@ it("shows a figure only when figureId is set and resolves", () => {
   expect(screen.queryByRole("img")).toBeNull();
 });
 
+it("uses the question-first layout class only in figure runs", () => {
+  const { container, rerender } = render(h(QuickQuestionRun, { questions: [mq("Plain")], resultLabel: "r", onDone: () => {} }));
+  expect(container.querySelector(".figure-run")).toBeNull();
+  rerender(h(QuickQuestionRun, { questions: [mq("Fig", "faa-49")], resultLabel: "r", onDone: () => {} }));
+  const run = container.querySelector(".figure-run")!;
+  expect(run.classList.contains("figure-run--question-first")).toBe(true);
+  expect(run.firstElementChild!.classList.contains("figure-run__question")).toBe(true);
+  expect(container.querySelector(".figure-view--question-first")).toBeTruthy();
+});
+
 it("calls onFinished once with the missed questions", () => {
   const onFinished = vi.fn();
   render(h(QuickQuestionRun, { questions: [mq("A"), mq("B")], resultLabel: "r", onDone: () => {}, onFinished }));

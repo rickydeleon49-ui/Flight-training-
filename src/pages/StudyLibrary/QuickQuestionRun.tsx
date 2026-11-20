@@ -71,9 +71,9 @@ export function QuickQuestionRun({ questions, resultLabel, onDone, onProgress, o
     </> : null;
 
   return <>
-    {figure ? <div className="figure-run figure-run--with">
-      <FigureViewer key={figure.id} figure={figure} src={resolved?.src} />
-      <div className="stack stack--2">{body}</div>
+    {figure ? <div className="figure-run figure-run--question-first">
+      <div className="figure-run__question stack stack--2">{body}</div>
+      <FigureViewer key={figure.id} figure={figure} src={resolved?.src} questionFirst />
     </div> : body}
     {finished ? <section className="stack stack--2" aria-label={resultLabel}>
       <h3 ref={heading} tabIndex={-1} className="ai-guide__title">{correct} of {total} correct</h3>
