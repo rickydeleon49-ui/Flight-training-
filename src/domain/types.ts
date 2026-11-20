@@ -1428,6 +1428,63 @@ export interface PersonalMinimums {
   note?: string;
 }
 
+/** One mock test run. `current` has no finishedAt; finished runs do. */
+export interface MockTestRun {
+  /** Frozen at start, in order. */
+  questionIds: string[];
+  /** Question id -> chosen answer key. */
+  answers: Record<string, string>;
+  /** Question ids flagged for review. */
+  flags: string[];
+  /** Position of the question on screen. */
+  index: number;
+  /** ISO timestamps (wall clock). */
+  startedAt: string;
+  deadline: string;
+  finishedAt?: string;
+}
+
+export interface MockTestState {
+  current?: MockTestRun;
+  /** Newest first, small cap. */
+  last: MockTestRun[];
+}
+
+export interface QuestionBookmark {
+  /** Logical question id. */
+  questionId: string;
+  materialId: string;
+}
+
+export interface OralRating {
+  scenarioId: string;
+  title: string;
+  rating: "Satisfactory" | "Needs work";
+  /** ACS area code, for example "PA.I". */
+  area: string;
+  date: IsoDate;
+}
+
+export interface SavedNavLeg {
+  tc: number;
+  distanceNm: number;
+  tas: number;
+  windDir: number;
+  windSpeed: number;
+  variation: number;
+  side: "E" | "W";
+  deviation: number;
+  gph: number;
+}
+
+export interface SavedNavLog {
+  id: string;
+  name: string;
+  aircraft: string;
+  reserveMinutes: number;
+  legs: SavedNavLeg[];
+}
+
 export interface ToolkitState {
   version: 1;
   readinessItems: ReadinessItem[];
@@ -1449,6 +1506,14 @@ export interface ToolkitState {
   endorsementChecks?: Record<string, { done: boolean; date?: IsoDate }>;
   /** Optional: "What to bring" items you have ticked yourself, by item id. Off when missing. */
   bringChecks?: Record<string, boolean>;
+  /** Optional: Mock FAA test runs (stay on this device). */
+  mockTest?: MockTestState;
+  /** Optional: questions the student starred. */
+  questionBookmarks?: QuestionBookmark[];
+  /** Optional: the student's own oral-practice ratings. */
+  oralRatings?: OralRating[];
+  /** Optional: saved navigation logs. */
+  navLogs?: SavedNavLog[];
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;

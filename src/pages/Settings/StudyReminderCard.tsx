@@ -5,6 +5,7 @@ import { normalizeStudyReminder } from "@/logic/toolkit";
 import { askPermission } from "@/services/notify";
 import { schedulesDailyReminder } from "@/services/platform";
 import { useAppData } from "@/state/AppDataContext";
+import { updateToolkit } from "@/state/toolkitUpdate";
 
 export const REMINDER_DENIED_LINE = "Turn on notifications for Your Flight Deck in Settings";
 export const REMINDER_MAC_LINE = "Your Flight Deck needs to be open (it can be minimized) for the reminder to show.";
@@ -15,7 +16,7 @@ export function StudyReminderCard() {
   const [denied, setDenied] = useState(false);
   const current = normalizeStudyReminder(data.toolkit.studyReminder);
   const save = (next: { enabled: boolean; time: string }) =>
-    mutate((repos) => repos.toolkit.save({ ...data.toolkit, studyReminder: next }));
+    updateToolkit(mutate, (toolkit) => ({ ...toolkit, studyReminder: next }));
 
   const change = async (enabled: boolean) => {
     setDenied(false);
