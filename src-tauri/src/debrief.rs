@@ -1876,7 +1876,8 @@ mod tests {
     #[test]
     fn listed_modules_do_not_reference_reqwest_directly_outside_gemini() {
         let modules = [
-            ("backup.rs", include_str!("backup.rs")),
+            ("backup/mod.rs", include_str!("backup/mod.rs")),
+            ("backup/tests.rs", include_str!("backup/tests.rs")),
             ("debrief.rs", include_str!("debrief.rs")),
             ("documents.rs", include_str!("documents.rs")),
             ("pdf.rs", include_str!("pdf.rs")),
