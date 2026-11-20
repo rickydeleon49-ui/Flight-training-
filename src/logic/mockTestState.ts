@@ -71,3 +71,13 @@ export function normalizeQuestionBookmarks(value: unknown): QuestionBookmark[] |
   }
   return out.length ? out : undefined;
 }
+
+/** Adds or removes a bookmark. `full` is true when an add was refused by the cap. */
+export function toggleBookmark(
+  list: readonly QuestionBookmark[], mark: QuestionBookmark,
+): { list: QuestionBookmark[]; full: boolean } {
+  const same = (b: QuestionBookmark) => b.questionId === mark.questionId && b.materialId === mark.materialId;
+  if (list.some(same)) return { list: list.filter((b) => !same(b)), full: false };
+  if (list.length >= BOOKMARK_CAP) return { list: [...list], full: true };
+  return { list: [...list, mark], full: false };
+}

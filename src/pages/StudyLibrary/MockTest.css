@@ -14,3 +14,34 @@
   border-color: var(--border-focus);
   background: var(--accent-fill);
 }
+.mock-nav {
+  border: 1px solid var(--border-control);
+  border-radius: 16px;
+  padding: 1rem;
+  background: var(--surface-card);
+}
+.mock-nav__grid {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
+  gap: 0.5rem;
+}
+.mock-nav__item {
+  width: 100%;
+  min-height: 2.75rem;
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-control);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.mock-nav__item[aria-current="step"] {
+  border-color: var(--border-focus);
+  background: var(--accent-fill);
+}
