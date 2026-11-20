@@ -10,6 +10,7 @@ import { useOptionalAppData } from "@/state/AppDataContext";
 import { useLeaveGuard } from "@/state/leaveGuard";
 import { updateToolkit } from "@/state/toolkitUpdate";
 import { MockTestNavigator } from "./MockTestNavigator";
+import { MockTestResults } from "./MockTestResults";
 import "./MockTest.css";
 
 /** Saved on every Nth answer (each save reloads all app data), on page hide and at the end. */
@@ -29,7 +30,7 @@ export function startMockRun(questions: readonly MockQuestion[], now = Date.now(
 }
 
 /** The runner keeps its own copy of the run; `onSave` is called with it, never read back. */
-export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks = [], onBookmarks }: {
+export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks = [], onBookmarks, history, historyQuestions }: {
   questions: readonly MockQuestion[];
   initial: Run;
   onSave: (run: Run) => void;
@@ -37,6 +38,9 @@ export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks 
   bookmarks?: readonly QuestionBookmark[];
   /** Called with the new bookmark list; omit to hide the bookmark button. */
   onBookmarks?: (list: QuestionBookmark[]) => void;
+  /** Earlier finished mocks for the results screen (newest first). */
+  history?: readonly Run[];
+  historyQuestions?: readonly MockQuestion[];
 }) {
   const [run, setRun] = useState(initial);
   const [now, setNow] = useState(() => Date.now());
@@ -107,11 +111,7 @@ export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks 
     headerActions={finished ? null : <p className="mock-test__clock" aria-label="Time left">{formatLongClock(left)}</p>}>
     <div className="stack stack--3">
       <span className="visually-hidden" role="status" aria-live="polite">{finished ? "" : timeAnnouncement(left)}</span>
-      {finished ? <div className="stack stack--2" role="status">
-        <p><strong>Finished</strong></p>
-        <p className="small">{answered} of {total} answered. This was practice, not a prediction.</p>
-        <Button onClick={close}>Close</Button>
-      </div> : item ? <>
+      {finished ? <MockTestResults run={run} questions={questions} history={history} historyQuestions={historyQuestions} onClose={close} /> : item ? <>
         <p className="tiny muted" role="status" aria-label="Mock test progress">Question {run.index + 1} of {total} · {answered} answered</p>
         <p className="small ai-copy">{item.question.question}</p>
         <div className="stack stack--2" role="group" aria-label="Answer choices">
@@ -169,6 +169,7 @@ export function MockTestEntry({ practiceTests, materials, onStarted }: {
         ? { last: [run, ...last].slice(0, MOCK_LAST_CAP) } : { ...t.mockTest, last, current: run } };
     });
   }, [mutate]);
+  const historyQuestions = useMemo(() => [...bankById(practiceTests, materials).values()], [practiceTests, materials]);
   if (!app) return null;
   const begin = (next: { run: Run; questions: MockQuestion[] }, store: boolean) => {
     if (store) save(next.run);
@@ -184,6 +185,6 @@ export function MockTestEntry({ practiceTests, materials, onStarted }: {
       <Button variant="secondary" onClick={() => begin(resumable, false)}>Resume your mock test</Button>
     </p> : null}
     {session ? <MockTestRunner questions={session.questions} initial={session.run} onSave={save}
-      bookmarks={bookmarks} onBookmarks={saveBookmarks} onClose={() => setSession(null)} /> : null}
+      bookmarks={bookmarks} onBookmarks={saveBookmarks} history={app.data.toolkit.mockTest?.last} historyQuestions={historyQuestions} onClose={() => setSession(null)} /> : null}
   </>;
 }
