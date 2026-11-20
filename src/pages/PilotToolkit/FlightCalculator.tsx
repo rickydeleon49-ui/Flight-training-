@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Button, Field, TextInput } from "@/components/ui";
 import { formatMinutes, fuelForTime, timeForFuel, timeSpeedDistance } from "@/logic/e6b";
 import { solveLeg, type NavLogLeg, type NavLogSolution } from "@/logic/navLog";
+import { NAV_LEG_CAP } from "@/logic/savedNavLogs";
+import { legFromInputs, parseLeg, type DraftLeg } from "./NavLogEditor";
 import "./FlightComputer.css";
 
 const DASH = "–";
@@ -44,7 +46,7 @@ export function windOutputs(i: WindInputs): WindOutputs {
   return out;
 }
 
-export function FlightCalculator() {
+export function FlightCalculator({ onAddLeg, legCount = 0 }: { onAddLeg?: (leg: DraftLeg) => void; legCount?: number } = {}) {
   const [f, setF] = useState({
     tc: "", tas: "", windDir: "", windSpeed: "", variation: "", deviation: "",
     distance: "", speed: "", time: "", burn: "", minutes: "", fuel: "",
@@ -85,6 +87,13 @@ export function FlightCalculator() {
       setCopied("Could not copy. Select the numbers instead.");
     }
   };
+
+  const legDraft = legFromInputs({
+    tc: f.tc, distanceNm: f.distance, tas: f.tas, windDir: f.windDir, windSpeed: f.windSpeed,
+    variation: f.variation, deviation: f.deviation, gph: f.burn, side,
+  });
+  const legReady = parseLeg(legDraft) !== null;
+  const legsFull = legCount >= NAV_LEG_CAP;
 
   const row = (label: string, value: string) => (
     <div className="flight-computer__row" key={label}>
@@ -133,8 +142,13 @@ export function FlightCalculator() {
       <dl className="flight-computer__results">{row(fuelLabel, fuelText)}</dl>
       <div className="flight-computer__actions">
         <Button variant="secondary" onClick={copy}>Copy</Button>
+        {onAddLeg ? (
+          <Button variant="secondary" disabled={!legReady || legsFull} onClick={() => onAddLeg(legDraft)}>Add as a leg</Button>
+        ) : null}
         <span role="status" className="tiny dim">{copied}</span>
       </div>
+      {onAddLeg && legsFull ? <p className="tiny dim">{NAV_LEG_CAP} legs is the most in one log.</p> : null}
+      {onAddLeg && !legReady ? <p className="tiny dim">To add a leg, fill in course, speed, wind, variation, distance and burn.</p> : null}
       <p className="tiny dim">A study aid. Check numbers with your instructor and your own plan.</p>
     </div>
   );
