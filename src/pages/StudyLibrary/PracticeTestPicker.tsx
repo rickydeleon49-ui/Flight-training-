@@ -4,6 +4,7 @@ import { Button, Dialog } from "@/components/ui";
 import type { PracticeTest, StudyMaterial } from "@/domain/types";
 import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
 import { MixedPracticeTest } from "./MixedPracticeTest";
+import { MockTestEntry } from "./MockTestRun";
 
 export function PracticeTestPicker({ practiceTests, materials, openRequest, hideTrigger }: {
   practiceTests: readonly PracticeTest[];
@@ -26,6 +27,7 @@ export function PracticeTestPicker({ practiceTests, materials, openRequest, hide
         <div className="row row--wrap">
           <CheckrideTopicPractice practiceTests={practiceTests} materials={materials} />
           <MixedPracticeTest practiceTests={practiceTests} materials={materials} onFinished={() => setOpen(false)} />
+          <MockTestEntry practiceTests={practiceTests} materials={materials} />
         </div>
         {rows.length ? <ul className="stack stack--2" aria-label="Materials with a practice test">
           {rows.map(({ material, count }) => <li key={material.id}>

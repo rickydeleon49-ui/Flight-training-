@@ -12,6 +12,7 @@ let data: AppData;
 let mutateMock = vi.fn().mockResolvedValue(null);
 vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({ data, mutate: (...args: unknown[]) => mutateMock(...args) }),
+  useOptionalAppData: () => ({ data, mutate: (...args: unknown[]) => mutateMock(...args) }),
 }));
 
 // Exercise the library's response to the content panel without native search.
