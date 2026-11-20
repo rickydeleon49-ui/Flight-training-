@@ -50,3 +50,11 @@ it("lists history newest first and Close works", () => {
   fireEvent.click(screen.getByRole("button", { name: "Close" }));
   expect(onClose).toHaveBeenCalled();
 });
+
+it("Review questions opens the review and Back returns", () => {
+  ui();
+  fireEvent.click(screen.getByRole("button", { name: "Review questions" }));
+  expect(screen.getByText("Q b")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Back to results" }));
+  expect(screen.getByText("3 of 4 correct (75%)")).toBeTruthy();
+});

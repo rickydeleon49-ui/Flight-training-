@@ -12,6 +12,7 @@ import { StudyLibrary } from "./StudyLibrary";
 
 let db: TestDatabase;
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({
     data: { materials: [makeMaterial({ id: "synthetic-material", title: "Synthetic study notes" })], actions: [], goals: [], events: [], aiStudySets: [], practiceTests: [], questions: [] } as unknown as AppData,
     dataRevision: 0,

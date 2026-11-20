@@ -20,6 +20,7 @@ vi.mock("@/services/platform", async (importOriginal) => ({
   isIOS: () => ios,
 }));
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({
     data: {
       materials,
