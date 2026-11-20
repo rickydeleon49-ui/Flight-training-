@@ -102,6 +102,7 @@ import { E6bTrainer } from "./E6bTrainer";
 import { RadioWords } from "./RadioWords";
 import { WeatherPractice } from "./WeatherPractice";
 import { HoursToGoCard } from "./HoursToGoCard";
+import { AcsReadinessList } from "./AcsReadinessList";
 import "./pilotToolkit.css";
 
 type Tool =
@@ -593,6 +594,7 @@ function ReadinessTool({ state, save }: ToolProps) {
 
   return (
     <div className="stack stack--5 toolkit-print-area">
+      <AcsReadinessList />
       <Card>
         <CardHeader
           title="Private pilot checkride prep"
