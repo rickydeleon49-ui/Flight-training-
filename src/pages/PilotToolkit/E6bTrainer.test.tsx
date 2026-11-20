@@ -12,6 +12,7 @@ afterEach(cleanup);
 
 it("fills the wind problem and shows the worked result and answer", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   expect(screen.getByText("E6B practice")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 1/ }));
   expect(screen.getByText(/Given: true course 90 degrees, true airspeed 100 kt/)).toBeTruthy();
@@ -25,6 +26,7 @@ it("fills the wind problem and shows the worked result and answer", () => {
 
 it("solves time and fuel practice, and explains impossible wind", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 2/ }));
   fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
   expect(screen.getByText(/Time: 1 h 30 min \(90 minutes\)/)).toBeTruthy();
@@ -40,6 +42,7 @@ it("solves time and fuel practice, and explains impossible wind", () => {
 
 it("checks all typed wind answers at once: right, close, not quite, empty skipped", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 1/ }));
   fireEvent.change(screen.getByLabelText("Wind correction angle"), { target: { value: "12" } });
   fireEvent.click(screen.getByRole("button", { name: "Right" }));
@@ -56,6 +59,7 @@ it("checks all typed wind answers at once: right, close, not quite, empty skippe
 
 it("skips empty boxes and grades a time answer", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 2/ }));
   fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
   expect(screen.queryByText(/Not quite/)).toBeNull();
@@ -66,6 +70,7 @@ it("skips empty boxes and grades a time answer", () => {
 
 it("drops the check summary once the answer is shown or a box changes (R23)", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 2/ }));
   fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "90" } });
   fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
@@ -81,6 +86,7 @@ it("drops the check summary once the answer is shown or a box changes (R23)", ()
 
 it("keeps the feedback line in the layout while the student retypes a checked box (BL-64)", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: /Fill in E6B 2/ }));
   fireEvent.change(screen.getByLabelText("Trip time (minutes)"), { target: { value: "90" } });
   fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
@@ -106,6 +112,7 @@ it("Nav log mode renders and grades a correct and a wrong box", () => {
   const leg = generateLeg(500001);
   const sol = solveLeg(leg)!;
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
   expect(screen.getByText(/Practice numbers, not for flight\. Use your own charts, POH and weather with your instructor\./)).toBeTruthy();
   expect(screen.getByText(/East is least, West is best/)).toBeTruthy();
@@ -120,6 +127,7 @@ it("Nav log mode renders and grades a correct and a wrong box", () => {
 
 it("Nav log whole trip shows the table with totals", () => {
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
   fireEvent.click(screen.getByRole("button", { name: "Whole trip" }));
   expect(screen.getByRole("columnheader", { name: "CH" })).toBeTruthy();
@@ -136,6 +144,7 @@ it("Nav log diversion view grades answers and shows fuel left", () => {
   const d = generateDiversion(500001);
   const sol = solveDiversion(d)!;
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
   fireEvent.click(screen.getByRole("button", { name: "Diversion" }));
   expect(screen.getByText(/You divert to an alternate/)).toBeTruthy();
@@ -156,6 +165,7 @@ it("Nav log fuel reserve view grades answers and shows the reserve line", () => 
   const sc = generateReserveScenario(500001);
   const sol = solveReserve(sc);
   render(<E6bTrainer />);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   fireEvent.click(screen.getByRole("button", { name: "Nav log" }));
   fireEvent.click(screen.getByRole("button", { name: "Fuel reserve" }));
   fireEvent.change(screen.getByLabelText(/^Total fuel used/), { target: { value: String(sol.fuelUsed) } });

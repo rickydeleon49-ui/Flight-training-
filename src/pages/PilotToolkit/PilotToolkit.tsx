@@ -133,7 +133,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     label: "Plan a flight",
     tools: [
       { id: "metar", label: "Weather and NOTAM Explainer", line: "METAR, TAF, winds aloft, PIREPs and NOTAMs in plain words" },
-      { id: "e6b", label: "E6B", line: "Practice wind and fuel math" },
+      { id: "e6b", label: "Flight computer", line: "Practice wind and fuel math" },
       { id: "safety", label: "Safety Check", line: "Your personal minimums before a flight" },
     ],
   },
