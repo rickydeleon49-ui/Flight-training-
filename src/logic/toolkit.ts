@@ -17,6 +17,7 @@ import { addDays, daysBetween, todayIso } from "@/lib/dates";
 import { normalizePersonalMinimums } from "./personalMinimums";
 import { normalizeMockTest, normalizeQuestionBookmarks } from "./mockTestState";
 import { normalizeOralRatings } from "./oralRatings";
+import { normalizeManeuverChecks } from "./maneuverChecks";
 import { normalizeNavLogs } from "./savedNavLogs";
 import { trainingCostSummary } from "./finance";
 import type { FlightLogTotals } from "./flightLog";
@@ -180,6 +181,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     questionBookmarks: _bookmarks,
     oralRatings: _ratings,
     navLogs: _navLogs,
+    maneuverChecks: _maneuverChecks,
     ...rest
   } = input;
   const personalMinimums = normalizePersonalMinimums(storedMinimums);
@@ -200,6 +202,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     ...optionalField("questionBookmarks", normalizeQuestionBookmarks(input.questionBookmarks)),
     ...optionalField("oralRatings", normalizeOralRatings(input.oralRatings)),
     ...optionalField("navLogs", normalizeNavLogs(input.navLogs)),
+    ...optionalField("maneuverChecks", normalizeManeuverChecks(input.maneuverChecks)),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
