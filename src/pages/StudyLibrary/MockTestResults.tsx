@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Button } from "@/components/ui";
 import type { MockTestRun as Run } from "@/domain/types";
 import { scoreMock, type MockQuestion } from "@/logic/mockTest";
 import { PASS_PERCENT } from "@/logic/practiceWeakAreas";
+import { MockTestReview } from "./MockTestReview";
 import "./MockTest.css";
 
 /** "1 h 12 min"; under an hour "45 min"; never negative. Rounds up so 20 s reads "1 min". */
@@ -27,6 +29,7 @@ export function MockTestResults({ run, questions, history = [], historyQuestions
   historyQuestions?: readonly MockQuestion[];
   onClose: () => void;
 }) {
+  const [reviewing, setReviewing] = useState(false);
   const score = scoreMock(run, questions);
   const started = Date.parse(run.startedAt);
   const allowed = Date.parse(run.deadline) - started;
@@ -35,6 +38,7 @@ export function MockTestResults({ run, questions, history = [], historyQuestions
     const s = scoreMock(r, historyQuestions);
     return r.finishedAt && s.total > 0 ? [{ key: r.finishedAt, when: r.finishedAt, percent: s.percent }] : [];
   });
+  if (reviewing) return <MockTestReview run={run} questions={questions} onBack={() => setReviewing(false)} />;
   return <div className="stack stack--3 mock-results">
     <h3>Finished</h3>
     <p role="status"><strong>{score.correct} of {score.total} correct ({score.percent}%)</strong></p>
@@ -59,6 +63,9 @@ export function MockTestResults({ run, questions, history = [], historyQuestions
         {past.map((p) => <li key={p.key} className="small">{dateLabel(p.when)}: {p.percent}%</li>)}
       </ul>
     </section> : null}
-    <Button onClick={onClose}>Close</Button>
+    <div className="row row--wrap">
+      <Button variant="secondary" onClick={() => setReviewing(true)}>Review questions</Button>
+      <Button onClick={onClose}>Close</Button>
+    </div>
   </div>;
 }

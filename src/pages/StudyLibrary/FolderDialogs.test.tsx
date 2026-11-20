@@ -13,6 +13,7 @@ import { StudyLibrary } from "./StudyLibrary";
 let db: TestDatabase;
 let materials: StudyMaterial[] = [];
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({
     data: {
       materials,

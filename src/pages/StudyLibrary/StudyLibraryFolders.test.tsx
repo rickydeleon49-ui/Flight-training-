@@ -14,6 +14,7 @@ let db: TestDatabase;
 let materials: StudyMaterial[] = [];
 let revision = 0;
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({
     data: {
       materials,

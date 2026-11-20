@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Dialog } from "@/components/ui";
-import type { PracticeTest, StudyMaterial } from "@/domain/types";
+import type { PracticeTest, QuestionBookmark, StudyMaterial } from "@/domain/types";
 import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
 import { MixedPracticeTest } from "./MixedPracticeTest";
+import { useOptionalAppData } from "@/state/AppDataContext";
+import { updateToolkit } from "@/state/toolkitUpdate";
 import { MockTestEntry } from "./MockTestRun";
+import { QuestionBookmarks } from "./QuestionBookmarks";
 
 export function PracticeTestPicker({ practiceTests, materials, openRequest, hideTrigger }: {
   practiceTests: readonly PracticeTest[];
@@ -14,6 +17,13 @@ export function PracticeTestPicker({ practiceTests, materials, openRequest, hide
   hideTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [showMarks, setShowMarks] = useState(false);
+  const app = useOptionalAppData();
+  const marks = app?.data.toolkit?.questionBookmarks ?? [];
+  const mutate = app?.mutate;
+  const saveMarks = (list: QuestionBookmark[]) => {
+    if (mutate) void updateToolkit(mutate, (t) => ({ ...t, questionBookmarks: list }));
+  };
   useEffect(() => { if (openRequest) setOpen(true); }, [openRequest]);
   const rows = practiceTests.flatMap((test) => {
     const material = materials.find((entry) => entry.id === test.sourceMaterialId);
@@ -29,6 +39,10 @@ export function PracticeTestPicker({ practiceTests, materials, openRequest, hide
           <MixedPracticeTest practiceTests={practiceTests} materials={materials} onFinished={() => setOpen(false)} />
           <MockTestEntry practiceTests={practiceTests} materials={materials} />
         </div>
+        {app && marks.length > 0 ? <div className="stack stack--2">
+          <Button variant="secondary" aria-expanded={showMarks} onClick={() => setShowMarks((v) => !v)}>Bookmarks ({marks.length})</Button>
+          {showMarks ? <QuestionBookmarks practiceTests={practiceTests} materials={materials} bookmarks={marks} onChange={saveMarks} /> : null}
+        </div> : null}
         {rows.length ? <ul className="stack stack--2" aria-label="Materials with a practice test">
           {rows.map(({ material, count }) => <li key={material.id}>
             <Link to={`/study/${encodeURIComponent(material.id)}#material-practice-test`}>

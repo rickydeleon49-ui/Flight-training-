@@ -17,6 +17,7 @@ const part = (n: number) =>
     lineage: { rootMaterialId: "book" } as never,
   });
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({
     data: {
       materials: [makeMaterial({ id: "book", title: "Big Book" }), part(1), part(2), part(3)],

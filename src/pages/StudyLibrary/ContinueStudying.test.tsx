@@ -14,6 +14,7 @@ import { recordOpened } from "./recentlyOpened";
 let db: TestDatabase;
 let materials: StudyMaterial[] = [];
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({
     data: {
       materials,

@@ -10,6 +10,7 @@ import { isLibraryPath, useClearLibrarySearchOnLeave } from "./librarySearchRese
 
 let data: AppData;
 vi.mock("@/state/AppDataContext", () => ({
+  useOptionalAppData: () => null,
   useAppData: () => ({ data, mutate: vi.fn().mockResolvedValue(null) }),
 }));
 
