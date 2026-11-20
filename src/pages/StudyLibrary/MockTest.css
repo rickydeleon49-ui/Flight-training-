@@ -1,0 +1,16 @@
+/* Mock FAA test: one question fills the dialog. */
+.dialog.dialog--mock {
+  width: min(56rem, 100vw);
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+}
+.mock-test__clock {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.mock-test__option[aria-pressed="true"] {
+  border-color: var(--border-focus);
+  background: var(--accent-fill);
+}
