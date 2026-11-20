@@ -49,9 +49,10 @@
   position: sticky; top: 0; z-index: 1; max-height: 50dvh; overflow-y: auto;
   padding-bottom: var(--space-2); background: var(--surface-page);
 }
+.card .figure-run--question-first .figure-run__question { background: var(--surface-card); }
 .figure-view--question-first .figure-stage__scroll { max-height: 60vh; }
 @media (min-width: 900px) {
   .figure-run--question-first { grid-template-columns: 440px minmax(0, 1fr); gap: var(--space-5); }
-  .figure-run--question-first .figure-run__question { position: static; max-height: none; overflow: visible; padding-bottom: 0; }
+  .figure-run--question-first .figure-run__question { position: static; max-height: none; overflow: visible; padding-bottom: 0; background: transparent; }
   .figure-view--question-first .figure-stage__scroll { max-height: 70vh; }
 }

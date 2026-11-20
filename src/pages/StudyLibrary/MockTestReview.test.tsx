@@ -44,3 +44,11 @@ it("empty filters read as one friendly line", () => {
   fireEvent.click(screen.getByRole("button", { name: "Flagged" }));
   expect(screen.getByText("No flagged questions in this test.")).toBeTruthy();
 });
+
+it("review shows the figure for a figure question only", () => {
+  const fq: MockQuestion = { ...mk("f"), question: { ...mk("f").question, figureId: "faa-49" } };
+  const two = [mk("p"), fq];
+  const r: MockTestRun = { ...run, questionIds: ["p", "f"], answers: {}, flags: [] };
+  render(h(MockTestReview, { run: r, questions: two, onBack: vi.fn() }));
+  expect(document.querySelectorAll(".figure-view")).toHaveLength(1);
+});
