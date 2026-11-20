@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 
 import { Button, Card, CardBody, CardHeader, Field, TextInput } from "@/components/ui";
 import { NavLogPractice } from "./NavLogPractice";
+import { FlightCalculator } from "./FlightCalculator";
 import {
   E6B_PRACTICE,
   describeE6bPractice,
@@ -32,7 +33,7 @@ const MODES: { id: Mode; label: string }[] = [
 const num = (v: string) => (v.trim() === "" ? NaN : Number(v));
 const pad3 = (n: number) => String(n).padStart(3, "0");
 
-export function E6bTrainer() {
+function E6bPractice() {
   const [mode, setMode] = useState<Mode>("wind");
   const [course, setCourse] = useState("");
   const [tas, setTas] = useState("");
@@ -289,5 +290,55 @@ export function E6bTrainer() {
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+type Tab = "calculator" | "navlog" | "practice";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "calculator", label: "Calculator" },
+  { id: "navlog", label: "Nav log" },
+  { id: "practice", label: "Practice" },
+];
+
+export function E6bTrainer() {
+  const [tab, setTab] = useState<Tab>("calculator");
+  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const i = TABS.findIndex((t) => t.id === tab);
+    const next = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : null;
+    if (next === null) return;
+    e.preventDefault();
+    const t = TABS[(next + TABS.length) % TABS.length]!;
+    setTab(t.id);
+    document.getElementById(`flight-computer-tab-${t.id}`)?.focus();
+  };
+  return (
+    <div>
+      <div role="tablist" aria-label="Flight computer" className="flight-computer-tabs" onKeyDown={onKey}>
+        {TABS.map((t) => (
+          <Button
+            key={t.id}
+            role="tab"
+            id={`flight-computer-tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`flight-computer-panel-${t.id}`}
+            tabIndex={tab === t.id ? 0 : -1}
+            variant={tab === t.id ? "primary" : "secondary"}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </Button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`flight-computer-panel-${tab}`} aria-labelledby={`flight-computer-tab-${tab}`}>
+        {tab === "calculator" ? (
+          <Card variant="grouped">
+            <CardHeader title="Calculator" eyebrow="Study aid only" />
+            <CardBody><FlightCalculator /></CardBody>
+          </Card>
+        ) : null}
+        {tab === "navlog" ? <p className="dim">Saved nav logs are coming here soon.</p> : null}
+        {tab === "practice" ? <E6bPractice /> : null}
+      </div>
+    </div>
   );
 }

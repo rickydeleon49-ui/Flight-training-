@@ -101,6 +101,7 @@ it("decodes an example NOTAM in the same paste box", () => {
 it("shows the E6B trainer on its own tab, not in Safety Check", () => {
   expect(toolFrom("e6b")).toBe("e6b");
   render(<MemoryRouter initialEntries={["/?tool=e6b"]}><PilotToolkit /></MemoryRouter>);
+  fireEvent.click(screen.getByRole("tab", { name: "Practice" }));
   expect(screen.getByText("E6B practice")).toBeTruthy();
   fireEvent.click(screen.getByRole("link", { name: "All tools" }));
   fireEvent.click(screen.getByRole("button", { name: /^Safety Check/ }));

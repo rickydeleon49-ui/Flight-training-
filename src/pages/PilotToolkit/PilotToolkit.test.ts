@@ -65,7 +65,7 @@ describe("PilotToolkit home of tiles", () => {
       "Checkride and records", "Plan a flight", "Practice",
     ]);
     const tiles = document.querySelectorAll("button.toolkit-link");
-    expect(screen.getByRole("button", { name: /^E6B.*Practice wind and fuel math/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Flight computer.*Practice wind and fuel math/ })).toBeTruthy();
     expect(tiles).toHaveLength(8);
     expect(screen.queryAllByRole("tab")).toHaveLength(0);
     expect(screen.getByText("Choose a tool to open it.")).toBeTruthy();
@@ -73,8 +73,8 @@ describe("PilotToolkit home of tiles", () => {
 
   it("opens a tool from its tile, and All tools returns to the home", () => {
     render(h(MemoryRouter, null, h(PilotToolkit)));
-    fireEvent.click(screen.getByRole("button", { name: /^E6B/ }));
-    expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Flight computer/ }));
+    expect(screen.getByRole("heading", { level: 2, name: "Flight computer" })).toBeTruthy();
     expect(document.querySelectorAll("button.toolkit-link")).toHaveLength(0);
     fireEvent.click(screen.getByRole("link", { name: "All tools" }));
     expect(document.querySelectorAll("button.toolkit-link")).toHaveLength(8);
@@ -82,7 +82,7 @@ describe("PilotToolkit home of tiles", () => {
 
   it("opens a tool directly from ?tool=e6b", () => {
     render(h(MemoryRouter, { initialEntries: ["/toolkit?tool=e6b"] }, h(PilotToolkit)));
-    expect(screen.getByRole("heading", { level: 2, name: "E6B" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Flight computer" })).toBeTruthy();
   });
 
   it("shows the home for an unknown ?tool= value", () => {
