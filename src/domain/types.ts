@@ -1465,6 +1465,17 @@ export interface OralRating {
   date: IsoDate;
 }
 
+export type ManeuverCheckRating = "Within" | "Close" | "Not yet";
+
+/** One self-check of a maneuver against its ACS tolerance lines. */
+export interface ManeuverCheck {
+  /** ACS task code, for example "PA.V.A". */
+  task: string;
+  date: IsoDate;
+  items: { code: string; label: string; rating: ManeuverCheckRating }[];
+  note?: string;
+}
+
 export interface SavedNavLeg {
   tc: number;
   distanceNm: number;
@@ -1514,6 +1525,8 @@ export interface ToolkitState {
   oralRatings?: OralRating[];
   /** Optional: saved navigation logs. */
   navLogs?: SavedNavLog[];
+  /** Optional: the student's own maneuver self-checks (oldest first). */
+  maneuverChecks?: ManeuverCheck[];
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;

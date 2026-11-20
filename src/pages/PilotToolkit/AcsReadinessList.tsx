@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Card, CardBody, CardHeader } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import type { MockTestRun, OralRating, PracticeQuestion } from "@/domain/types";
 import { formatLongDate } from "@/lib/dates";
 import { normalizeAcsTask } from "@/logic/acsTaskCatalog";
@@ -15,6 +15,7 @@ import { daysToCheckride } from "@/logic/checkride";
 import { answerKey } from "@/logic/mockTest";
 import { useAppData } from "@/state/AppDataContext";
 
+import { ManeuverSelfCheck } from "./ManeuverSelfCheck";
 import { NeedsWorkList } from "./NeedsWorkList";
 
 import "./AcsReadinessList.css";
@@ -88,6 +89,7 @@ export function AcsReadinessList() {
   const { data, dataRevision, repositories } = useAppData();
   const sessions = repositories?.practiceSessions;
   const [attempts, setAttempts] = useState<ReadinessAttempt[] | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     if (!sessions) {
@@ -144,6 +146,10 @@ export function AcsReadinessList() {
       </CardBody>
       <CardBody>
         <NeedsWorkList ratings={toolkit.oralRatings ?? []} />
+        <Button size="small" variant="secondary" aria-expanded={checking} onClick={() => setChecking((v) => !v)}>
+          Maneuver self-check
+        </Button>
+        {checking ? <ManeuverSelfCheck /> : null}
         <p className="tiny dim">{ACS_LIST_FOOTER}</p>
       </CardBody>
     </Card>
