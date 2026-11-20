@@ -1,5 +1,6 @@
 import { Card, CardBody, CardHeader, Checkbox } from "@/components/ui";
 import { useAppData } from "@/state/AppDataContext";
+import { updateToolkit } from "@/state/toolkitUpdate";
 
 /** Career Portfolio is hidden in the Pilot Toolkit until this is switched on. */
 export function CareerPortfolioSwitch() {
@@ -13,7 +14,7 @@ export function CareerPortfolioSwitch() {
           <Checkbox
             appearance="switch"
             checked={on}
-            onChange={(next) => void mutate((repos) => repos.toolkit.save({ ...data.toolkit, showCareerPortfolio: next }))}
+            onChange={(next) => void updateToolkit(mutate, (toolkit) => ({ ...toolkit, showCareerPortfolio: next }))}
             strikethrough={false}
             label="Show Career Portfolio"
           />

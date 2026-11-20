@@ -22,7 +22,7 @@ beforeEach(() => {
   phone.on = false;
   askPermission.mockReset();
   save.mockReset();
-  mutate.mockReset().mockImplementation(async (work: (repos: unknown) => Promise<unknown>) => work({ toolkit: { save } }));
+  mutate.mockReset().mockImplementation(async (work: (repos: unknown) => Promise<unknown>) => work({ toolkit: { save, get: async () => ({ ...DEFAULT_TOOLKIT_STATE, ...(reminder === undefined ? {} : { studyReminder: reminder }) }) } }));
 });
 afterEach(cleanup);
 

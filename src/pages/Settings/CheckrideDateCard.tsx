@@ -1,6 +1,7 @@
 import { Button, Card, CardBody, CardHeader, TypedDateField } from "@/components/ui";
 import { normalizeCheckrideDate } from "@/logic/toolkit";
 import { useAppData } from "@/state/AppDataContext";
+import { updateToolkit } from "@/state/toolkitUpdate";
 
 export const CHECKRIDE_COUNTDOWN_LINE = "We'll count down the days on your Flight Deck.";
 
@@ -9,7 +10,7 @@ export function CheckrideDateCard() {
   const { data, mutate } = useAppData();
   const current = normalizeCheckrideDate(data.toolkit.checkrideDate);
   const save = (checkrideDate: string | null) =>
-    mutate((repos) => repos.toolkit.save({ ...data.toolkit, checkrideDate }));
+    updateToolkit(mutate, (toolkit) => ({ ...toolkit, checkrideDate }));
 
   return (
     <Card variant="grouped">

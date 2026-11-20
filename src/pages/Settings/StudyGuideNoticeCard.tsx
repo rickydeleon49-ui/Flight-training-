@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, CardBody, CardHeader, Checkbox } from "@/components/ui";
 import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
+import { updateToolkit } from "@/state/toolkitUpdate";
 
 export const NOTICE_DENIED_LINE =
   "Turn on notifications for Your Flight Deck in System Settings › Notifications.";
@@ -21,7 +22,7 @@ export function StudyGuideNoticeCard() {
       setDenied(true);
       return;
     }
-    await mutate((repos) => repos.toolkit.save({ ...data.toolkit, studyGuideNotice: enabled }));
+    await updateToolkit(mutate, (toolkit) => ({ ...toolkit, studyGuideNotice: enabled }));
   };
 
   return (

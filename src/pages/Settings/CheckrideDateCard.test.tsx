@@ -16,7 +16,7 @@ import { CHECKRIDE_COUNTDOWN_LINE, CheckrideDateCard } from "./CheckrideDateCard
 beforeEach(() => {
   date = undefined;
   save.mockReset();
-  mutate.mockReset().mockImplementation(async (work: (repos: unknown) => Promise<unknown>) => work({ toolkit: { save } }));
+  mutate.mockReset().mockImplementation(async (work: (repos: unknown) => Promise<unknown>) => work({ toolkit: { save, get: async () => ({ ...DEFAULT_TOOLKIT_STATE, ...(date === undefined ? {} : { checkrideDate: date }) }) } }));
 });
 afterEach(cleanup);
 

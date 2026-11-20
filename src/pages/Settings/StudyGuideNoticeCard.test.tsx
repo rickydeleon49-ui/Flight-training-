@@ -20,7 +20,7 @@ beforeEach(() => {
   notice = undefined;
   askPermission.mockReset();
   save.mockReset();
-  mutate.mockReset().mockImplementation(async (work: (repos: unknown) => Promise<unknown>) => work({ toolkit: { save } }));
+  mutate.mockReset().mockImplementation(async (work: (repos: unknown) => Promise<unknown>) => work({ toolkit: { save, get: async () => ({ ...DEFAULT_TOOLKIT_STATE, ...(notice === undefined ? {} : { studyGuideNotice: notice }) }) } }));
 });
 afterEach(cleanup);
 

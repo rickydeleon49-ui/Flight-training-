@@ -15,6 +15,9 @@ import type {
 } from "@/domain/types";
 import { addDays, daysBetween, todayIso } from "@/lib/dates";
 import { normalizePersonalMinimums } from "./personalMinimums";
+import { normalizeMockTest, normalizeQuestionBookmarks } from "./mockTestState";
+import { normalizeOralRatings } from "./oralRatings";
+import { normalizeNavLogs } from "./savedNavLogs";
 import { trainingCostSummary } from "./finance";
 import type { FlightLogTotals } from "./flightLog";
 
@@ -150,6 +153,11 @@ export function reminderLeadDays(value: unknown, fallback = 7): number {
   return Math.min(90, Math.max(0, Math.floor(number)));
 }
 
+/** Spread helper: a normalised optional field is either kept or removed (even if stored badly). */
+function optionalField<K extends string, V>(key: K, value: V | undefined): Partial<Record<K, V>> {
+  return value === undefined ? {} : ({ [key]: value } as Record<K, V>);
+}
+
 /**
  * Fill in defaults and repair stored toolkit state. The result shares nothing
  * with the input or the defaults, so editing it cannot change either.
@@ -165,7 +173,15 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     (item) => item?.id && !DEFAULT_READINESS_ITEMS.some((fallback) => fallback.id === item.id),
   );
 
-  const { studyGuideNotice, personalMinimums: storedMinimums, ...rest } = input;
+  const {
+    studyGuideNotice,
+    personalMinimums: storedMinimums,
+    mockTest: _mockTest,
+    questionBookmarks: _bookmarks,
+    oralRatings: _ratings,
+    navLogs: _navLogs,
+    ...rest
+  } = input;
   const personalMinimums = normalizePersonalMinimums(storedMinimums);
   return copyToolkitData({
     ...DEFAULT_TOOLKIT_STATE,
@@ -180,6 +196,10 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     ...(input.bringChecks !== undefined
       ? { bringChecks: normalizeBringChecks(input.bringChecks) }
       : {}),
+    ...optionalField("mockTest", normalizeMockTest(input.mockTest)),
+    ...optionalField("questionBookmarks", normalizeQuestionBookmarks(input.questionBookmarks)),
+    ...optionalField("oralRatings", normalizeOralRatings(input.oralRatings)),
+    ...optionalField("navLogs", normalizeNavLogs(input.navLogs)),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
