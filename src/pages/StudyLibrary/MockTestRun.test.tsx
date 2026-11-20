@@ -80,3 +80,29 @@ it("saves on every 5th answer and when the page hides; clock announces politely"
   const live = document.querySelector('[aria-live="polite"]');
   expect(live?.textContent).toBe("1 minute left");
 });
+
+it("flag saves at once and survives resume; navigator jumps with text labels", () => {
+  const onSave = vi.fn();
+  const first = ui(startMockRun(qs, T0), onSave);
+  fireEvent.click(screen.getByRole("button", { name: "Flag for later" }));
+  expect(onSave).toHaveBeenCalledTimes(1);
+  const saved = onSave.mock.calls[0]![0];
+  expect(saved.flags).toEqual(["q0"]);
+  first.unmount();
+  ui({ ...saved, answers: { q1: "1" } });
+  fireEvent.click(screen.getByRole("button", { name: "Questions" }));
+  expect(screen.getByRole("button", { name: "Question 1, current, not answered, flagged" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Question 2, answered" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Question 3, not answered" }));
+  expect(screen.getByText("Question text 2")).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "Question navigator" })).toBeNull();
+});
+
+it("bookmark toggles and stops at the cap of 100 with a note", () => {
+  const onBookmarks = vi.fn();
+  const full = Array.from({ length: 100 }, (_, n) => ({ questionId: `x${n}`, materialId: "m" }));
+  render(h(MemoryRouter, null, h(MockTestRunner, { questions: qs, initial: startMockRun(qs, T0), onSave: vi.fn(), onClose: vi.fn(), bookmarks: full, onBookmarks })));
+  fireEvent.click(screen.getByRole("button", { name: "Bookmark" }));
+  expect(onBookmarks).not.toHaveBeenCalled();
+  expect(screen.getByText(/bookmark list is full/i)).toBeTruthy();
+});

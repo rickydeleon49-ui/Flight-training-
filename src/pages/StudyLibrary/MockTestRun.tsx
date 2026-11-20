@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, ConfirmDialog, Dialog } from "@/components/ui";
-import type { MockTestRun as Run, PracticeTest, StudyMaterial } from "@/domain/types";
+import type { MockTestRun as Run, PracticeTest, QuestionBookmark, StudyMaterial } from "@/domain/types";
 import {
   answerKey, buildMockTest, formatLongClock, mockSeconds, type MockQuestion,
 } from "@/logic/mockTest";
-import { MOCK_LAST_CAP } from "@/logic/mockTestState";
+import { MOCK_LAST_CAP, toggleBookmark } from "@/logic/mockTestState";
 import { timeAnnouncement } from "@/logic/timedAttempts";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { useLeaveGuard } from "@/state/leaveGuard";
 import { updateToolkit } from "@/state/toolkitUpdate";
+import { MockTestNavigator } from "./MockTestNavigator";
 import "./MockTest.css";
 
 /** Saved on every Nth answer (each save reloads all app data), on page hide and at the end. */
@@ -28,16 +29,21 @@ export function startMockRun(questions: readonly MockQuestion[], now = Date.now(
 }
 
 /** The runner keeps its own copy of the run; `onSave` is called with it, never read back. */
-export function MockTestRunner({ questions, initial, onSave, onClose }: {
+export function MockTestRunner({ questions, initial, onSave, onClose, bookmarks = [], onBookmarks }: {
   questions: readonly MockQuestion[];
   initial: Run;
   onSave: (run: Run) => void;
   onClose: () => void;
+  bookmarks?: readonly QuestionBookmark[];
+  /** Called with the new bookmark list; omit to hide the bookmark button. */
+  onBookmarks?: (list: QuestionBookmark[]) => void;
 }) {
   const [run, setRun] = useState(initial);
   const [now, setNow] = useState(() => Date.now());
   const [ending, setEnding] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [bookFull, setBookFull] = useState(false);
   const runRef = useRef(run);
   runRef.current = run;
   const sinceSave = useRef(0);
@@ -79,6 +85,19 @@ export function MockTestRunner({ questions, initial, onSave, onClose }: {
     sinceSave.current += 1;
     update({ ...run, answers: { ...run.answers, [id]: answerKey(option) } }, sinceSave.current >= SAVE_EVERY);
   };
+  const flagged = id ? run.flags.includes(id) : false;
+  const toggleFlag = () => {
+    if (!id) return;
+    const flags = flagged ? run.flags.filter((f) => f !== id) : [...run.flags, id];
+    update({ ...run, flags }, true);
+  };
+  const bookmarked = item ? bookmarks.some((b) => b.questionId === item.id && b.materialId === item.materialId) : false;
+  const toggleMark = () => {
+    if (!item || !onBookmarks) return;
+    const r = toggleBookmark(bookmarks, { questionId: item.id, materialId: item.materialId });
+    setBookFull(r.full);
+    if (!r.full) onBookmarks(r.list);
+  };
   const close = () => { if (!finished) onSave(runRef.current); onClose(); };
   const total = run.questionIds.length;
   const answered = Object.keys(run.answers).length;
@@ -100,6 +119,14 @@ export function MockTestRunner({ questions, initial, onSave, onClose }: {
             className="practice-option practice-option--default mock-test__option"
             aria-pressed={run.answers[item.id] === answerKey(i)} onClick={() => pick(i)}>{i + 1}. {option}</button>)}
         </div>
+        <div className="row row--wrap">
+          <Button variant="secondary" aria-pressed={flagged} onClick={toggleFlag}>{flagged ? "Remove flag" : "Flag for later"}</Button>
+          {onBookmarks ? <Button variant="secondary" aria-pressed={bookmarked} onClick={toggleMark}>{bookmarked ? "Remove bookmark" : "Bookmark"}</Button> : null}
+          <Button variant="secondary" aria-expanded={navOpen} onClick={() => setNavOpen((o) => !o)}>Questions</Button>
+        </div>
+        {bookFull ? <p className="tiny muted" role="status">Your bookmark list is full (100). Remove one to add another.</p> : null}
+        {navOpen ? <MockTestNavigator ids={run.questionIds} answers={run.answers} flags={run.flags} index={run.index}
+          onJump={(i) => { setBookFull(false); go(i); }} onClose={() => setNavOpen(false)} /> : null}
         <div className="row row--wrap">
           <Button variant="secondary" disabled={run.index === 0} onClick={() => go(run.index - 1)}>Back</Button>
           <Button variant="secondary" disabled={run.index >= total - 1} onClick={() => go(run.index + 1)}>Next</Button>
@@ -130,6 +157,10 @@ export function MockTestEntry({ practiceTests, materials, onStarted }: {
     return questions.length ? { run: saved, questions } : null;
   }, [saved, practiceTests, materials]);
   const mutate = app?.mutate;
+  const bookmarks = app?.data.toolkit?.questionBookmarks;
+  const saveBookmarks = useCallback((list: QuestionBookmark[]) => {
+    if (mutate) void updateToolkit(mutate, (t) => ({ ...t, questionBookmarks: list }));
+  }, [mutate]);
   const save = useCallback((run: Run) => {
     if (!mutate) return;
     void updateToolkit(mutate, (t) => {
@@ -153,6 +184,6 @@ export function MockTestEntry({ practiceTests, materials, onStarted }: {
       <Button variant="secondary" onClick={() => begin(resumable, false)}>Resume your mock test</Button>
     </p> : null}
     {session ? <MockTestRunner questions={session.questions} initial={session.run} onSave={save}
-      onClose={() => setSession(null)} /> : null}
+      bookmarks={bookmarks} onBookmarks={saveBookmarks} onClose={() => setSession(null)} /> : null}
   </>;
 }
