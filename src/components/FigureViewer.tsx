@@ -72,11 +72,11 @@ function FigureStage({ figure, tall, src }: { figure: FaaFigure; tall?: boolean;
   );
 }
 
-/** Inline figure card: zoomable image, caption with credit, and a full-screen dialog. */
-export function FigureViewer({ figure, src }: { figure: FaaFigure; src?: string }) {
+/** Inline figure card: zoomable image, caption with credit, and a full-screen dialog. `questionFirst` is for a question-beside-figure layout (see .figure-run--question-first). */
+export function FigureViewer({ figure, src, questionFirst }: { figure: FaaFigure; src?: string; questionFirst?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
-    <figure className="figure-view">
+    <figure className={`figure-view${questionFirst ? " figure-view--question-first" : ""}`}>
       <div className="figure-view__bar">
         <span className="figure-view__title">{figure.title}</span>
         <Button type="button" size="small" variant="secondary" onClick={() => setOpen(true)}>Full screen</Button>

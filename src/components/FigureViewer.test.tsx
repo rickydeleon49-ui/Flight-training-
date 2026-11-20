@@ -58,3 +58,10 @@ it("uses the src override when given", () => {
   render(h(FigureViewer, { figure, src: "data:image/webp;base64,AAAA" }));
   expect((screen.getByRole("img", { name: figure.alt }) as HTMLImageElement).getAttribute("src")).toBe("data:image/webp;base64,AAAA");
 });
+
+it("keeps the default layout unless questionFirst is set", () => {
+  const { container, rerender } = render(h(FigureViewer, { figure }));
+  expect(container.querySelector(".figure-view--question-first")).toBeNull();
+  rerender(h(FigureViewer, { figure, questionFirst: true }));
+  expect(container.querySelector(".figure-view--question-first")).toBeTruthy();
+});
