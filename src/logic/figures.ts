@@ -17,6 +17,8 @@ export type FaaFigure = {
   edition: "FAA-CT-8080-2H (2018)";
   width: number;
   height: number;
+  /** Image pixels per nautical mile, measured from the scale bar printed on this figure. Only set when measured; the ruler needs it. */
+  pxPerNm?: number;
 };
 
 function f(faaNumber: number, title: string, alt: string, width: number, height: number): FaaFigure {

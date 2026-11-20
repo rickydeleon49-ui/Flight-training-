@@ -24,7 +24,14 @@
 .figure-stage--tall .figure-stage__scroll { max-height: calc(100dvh - 12rem); }
 .figure-stage__scroll--zoomed { cursor: grab; }
 .figure-stage__scroll:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-.figure-stage__img { display: block; max-width: none; height: auto; user-select: none; }
+.figure-stage__layer { position: relative; }
+.figure-stage__img { display: block; width: 100%; max-width: none; height: auto; user-select: none; }
+.figure-stage__readout { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+/* F8: ruler drawn in image pixels (viewBox), so it scales with zoom. */
+.figure-ruler { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.figure-ruler__line { stroke: var(--border-focus); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.figure-ruler__end { fill: var(--surface-card); fill-opacity: 0.6; stroke: var(--border-focus); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: all; cursor: grab; touch-action: none; }
+.figure-ruler__end:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 2px; }
 
 .dialog.dialog--figure { width: calc(100vw - 48px); max-width: 70rem; }
 

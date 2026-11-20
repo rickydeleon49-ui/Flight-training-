@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 import { Button, Dialog } from "@/components/ui";
+import { FigureRuler } from "@/components/FigureRuler";
+import { defaultRuler, formatRuler, rulerDistance, type RulerPoint } from "@/logic/figureRuler";
 import { figureCredit, figureUrl, type FaaFigure } from "@/logic/figures";
 import "./FigureViewer.css";
 
@@ -12,6 +14,7 @@ const STEP = 25;
 /** One figure with zoom 100-400%, drag to pan, and Fit. Used inline and inside the full-screen dialog. */
 function FigureStage({ figure, tall, src }: { figure: FaaFigure; tall?: boolean; src?: string }) {
   const [percent, setPercent] = useState(MIN);
+  const [ruler, setRuler] = useState<[RulerPoint, RulerPoint] | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const zoom = (delta: number) => setPercent((p) => Math.min(MAX, Math.max(MIN, p + delta)));
@@ -33,7 +36,16 @@ function FigureStage({ figure, tall, src }: { figure: FaaFigure; tall?: boolean;
           <span aria-hidden="true">+</span>
         </button>
         <button type="button" className="figure-stage__btn figure-stage__btn--text" onClick={() => setPercent(MIN)}>Fit</button>
+        {figure.pxPerNm ? (
+          <button type="button" className="figure-stage__btn figure-stage__btn--text" aria-pressed={ruler !== null} onClick={() => setRuler(ruler ? null : defaultRuler(figure.width, figure.height))}>Ruler</button>
+        ) : null}
       </div>
+      {ruler && figure.pxPerNm ? (
+        <p className="figure-stage__readout" aria-live="polite" data-testid="figure-ruler-readout">
+          {formatRuler(rulerDistance(ruler[0], ruler[1], figure.pxPerNm).nm)}
+          <span className="tiny dim"> Uses the scale printed on this figure.</span>
+        </p>
+      ) : null}
       <div
         ref={scroller}
         className={`figure-stage__scroll${percent > MIN ? " figure-stage__scroll--zoomed" : ""}`}
@@ -56,17 +68,19 @@ function FigureStage({ figure, tall, src }: { figure: FaaFigure; tall?: boolean;
         onPointerUp={() => { drag.current = null; }}
         onPointerCancel={() => { drag.current = null; }}
       >
-        <img
-          className="figure-stage__img"
-          src={src ?? figureUrl(figure)}
-          alt={figure.alt}
-          width={figure.width}
-          height={figure.height}
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-          style={{ width: `${percent}%` }}
-        />
+        <div className="figure-stage__layer" style={{ width: `${percent}%` }}>
+          <img
+            className="figure-stage__img"
+            src={src ?? figureUrl(figure)}
+            alt={figure.alt}
+            width={figure.width}
+            height={figure.height}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />
+          {ruler ? <FigureRuler width={figure.width} height={figure.height} points={ruler} onChange={setRuler} /> : null}
+        </div>
       </div>
     </div>
   );

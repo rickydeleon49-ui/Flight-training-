@@ -65,3 +65,48 @@ it("keeps the default layout unless questionFirst is set", () => {
   rerender(h(FigureViewer, { figure, questionFirst: true }));
   expect(container.querySelector(".figure-view--question-first")).toBeTruthy();
 });
+
+it("shows a Ruler toggle only for figures with a scale", () => {
+  render(h(FigureViewer, { figure }));
+  expect(screen.queryByRole("button", { name: "Ruler" })).toBeNull();
+  cleanup();
+  render(h(FigureViewer, { figure: { ...figure, pxPerNm: 20 } }));
+  expect(screen.getByRole("button", { name: "Ruler" })).toBeTruthy();
+  expect(screen.queryByTestId("figure-ruler")).toBeNull();
+});
+
+it("ruler ends stay put at 100% and 300% zoom, keys move them, and the readout updates", () => {
+  const fig = { ...figure, width: 900, height: 600, pxPerNm: 30 };
+  render(h(FigureViewer, { figure: fig }));
+  fireEvent.click(screen.getByRole("button", { name: "Ruler" }));
+  const end = () => screen.getByRole("slider", { name: "Ruler end" });
+  const pos = () => [end().getAttribute("cx"), end().getAttribute("cy")];
+  expect(pos()).toEqual(["600", "300"]);
+  expect(screen.getByTestId("figure-ruler-readout").textContent).toContain("10.0 NM (11.5 SM)");
+  for (let i = 0; i < 8; i++) fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+  expect(screen.getByTestId("figure-zoom-label").textContent).toBe("300%");
+  expect(pos()).toEqual(["600", "300"]);
+  fireEvent.keyDown(end(), { key: "ArrowRight", shiftKey: true });
+  expect(pos()).toEqual(["630", "300"]);
+  fireEvent.keyDown(end(), { key: "ArrowDown" });
+  expect(pos()).toEqual(["630", "306"]);
+  expect(screen.getByTestId("figure-ruler-readout").textContent).toContain("11.0 NM");
+  fireEvent.click(screen.getByRole("button", { name: "Ruler" }));
+  expect(screen.queryByTestId("figure-ruler")).toBeNull();
+});
+
+it("dragging an end maps the pointer to the same image point at 100% and 300%", () => {
+  const fig = { ...figure, width: 900, height: 600, pxPerNm: 30 };
+  render(h(FigureViewer, { figure: fig }));
+  fireEvent.click(screen.getByRole("button", { name: "Ruler" }));
+  const end = () => screen.getByRole("slider", { name: "Ruler start" });
+  const svg = screen.getByTestId("figure-ruler");
+  for (const scale of [1, 3]) {
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 300 * scale, height: 200 * scale, right: 300 * scale, bottom: 200 * scale, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    (end() as unknown as SVGElement).setPointerCapture = () => {};
+    (end() as unknown as SVGElement).hasPointerCapture = () => true;
+    fireEvent.pointerDown(end(), { button: 0, pointerId: 1 });
+    fireEvent.pointerMove(end(), { pointerId: 1, clientX: 60 * scale, clientY: 40 * scale });
+    expect([end().getAttribute("cx"), end().getAttribute("cy")]).toEqual(["180", "120"]);
+  }
+});
