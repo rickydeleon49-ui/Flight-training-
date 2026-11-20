@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Checkbox, Dialog, Field, TextArea } from "@/components/ui";
+import { OralDebriefRating } from "./OralDebriefRating";
 import { ReadAloudButton } from "@/components/ReadAloudButton";
 import type { OralScenario } from "@/data/oralScenarios";
 import { coveredIndexes, oralAnswerFirstLine, type OralAnswer } from "@/data/oralAnswers";
@@ -447,6 +448,7 @@ export function OralPracticeDialog({
                 />
               ))}
             </div>
+            <OralDebriefRating key={scenario.id} scenarioId={scenario.id} title={oralScenarioTitle(scenario.prompt)} material={material} />
             {followUps.length > 0 && followAt < followUps.length ? (
               <div className="stack stack--1">
                 <p className="small wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
