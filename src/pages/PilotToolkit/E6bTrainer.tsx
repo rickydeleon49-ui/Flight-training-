@@ -3,6 +3,7 @@ import { useState, type KeyboardEvent } from "react";
 import { Button, Card, CardBody, CardHeader, Field, TextInput } from "@/components/ui";
 import { NavLogPractice } from "./NavLogPractice";
 import { FlightCalculator } from "./FlightCalculator";
+import { NavLogEditor, useNavDraft } from "./NavLogEditor";
 import {
   E6B_PRACTICE,
   describeE6bPractice,
@@ -302,6 +303,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function E6bTrainer() {
   const [tab, setTab] = useState<Tab>("calculator");
+  const { draft, setDraft, addLeg } = useNavDraft();
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     const i = TABS.findIndex((t) => t.id === tab);
     const next = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : null;
@@ -333,10 +335,15 @@ export function E6bTrainer() {
         {tab === "calculator" ? (
           <Card variant="grouped">
             <CardHeader title="Calculator" eyebrow="Study aid only" />
-            <CardBody><FlightCalculator /></CardBody>
+            <CardBody><FlightCalculator legCount={draft.legs.length} onAddLeg={(leg) => { addLeg(leg); setTab("navlog"); }} /></CardBody>
           </Card>
         ) : null}
-        {tab === "navlog" ? <p className="dim">Saved nav logs are coming here soon.</p> : null}
+        {tab === "navlog" ? (
+          <Card variant="grouped">
+            <CardHeader title="Nav log" eyebrow="Study aid only" />
+            <CardBody><NavLogEditor draft={draft} setDraft={setDraft} /></CardBody>
+          </Card>
+        ) : null}
         {tab === "practice" ? <E6bPractice /> : null}
       </div>
     </div>
