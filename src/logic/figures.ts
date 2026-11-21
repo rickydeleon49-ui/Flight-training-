@@ -28,6 +28,8 @@ function f(faaNumber: number, title: string, alt: string, width: number, height:
 export const FAA_FIGURES: FaaFigure[] = [
   f(2, "Load factor chart", "Table and graph showing how the load factor grows as the bank angle increases", 1341, 1033),
   f(4, "Airspeed indicator", "Airspeed indicator in knots with white, green, yellow and red markings around the dial", 1345, 1062),
+  f(5, "Turn coordinator", "Turn coordinator dial with a small airplane symbol, left and right turn marks, a ball in a curved tube and the label 2 MIN", 1346, 1057),
+  f(6, "Heading indicator", "Heading indicator dial showing compass headings around the circle with a small airplane symbol in the center", 1345, 1058),
   f(8, "Density altitude chart", "Chart for finding density altitude from pressure altitude and temperature", 1334, 1361),
   f(12, "METAR reports", "Five coded METAR and SPECI weather reports for airports, one per row", 1334, 360),
   f(15, "Terminal aerodrome forecasts (TAF)", "Coded terminal aerodrome forecasts for several airports", 1344, 555),
@@ -40,6 +42,7 @@ export const FAA_FIGURES: FaaFigure[] = [
   f(47, "VASI illustrations", "Visual approach slope indicator light patterns for too high, on glidepath and too low", 1334, 1489),
   f(48, "Airport diagram", "Airport diagram with runways, taxiways and the control tower", 1332, 1534),
   f(49, "Airport diagram", "Airport diagram with two crossing runways, taxiways and the control tower", 1335, 1198),
+  f(50, "Wind sock airport landing indicator", "Drawing of a wind sock on a pole in the middle of a dashed segmented circle, with four L-shaped markers around it, a north arrow and the wind cone labeled", 1336, 1198),
   f(58, "Compass card", "Compass card showing headings around the circle", 1354, 342),
   f(64, "Airport markings", "Runway and taxiway pavement markings, with their names", 1334, 1431),
   f(65, "U.S. airport signs", "Airport signs and their meanings, such as mandatory, direction and location signs", 1244, 1756),

@@ -17,7 +17,7 @@ describe("FAA figure manifest", () => {
   it("matches the folder exactly", () => {
     expect(FAA_FIGURES.map((x) => x.file).sort()).toEqual([...shipped].sort());
     expect(FAA_FIGURES.length).toBeGreaterThanOrEqual(12);
-    expect(FAA_FIGURES.length).toBeLessThanOrEqual(18);
+    expect(FAA_FIGURES.length).toBeLessThanOrEqual(21);
     for (const fig of FAA_FIGURES) expect(fig.id).toBe(`faa-${fig.faaNumber}`);
   });
 
