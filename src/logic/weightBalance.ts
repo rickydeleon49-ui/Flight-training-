@@ -1,6 +1,10 @@
 // Weight and balance practice math. A study aid only: no aircraft data is
 // shipped; the student types in numbers from the airplane's own POH.
 
+import type { MyAirplane } from "@/domain/types";
+
+export type { MyAirplane };
+
 export const AVGAS_LB_PER_GAL = 6;
 
 export type WbRowKey = "empty" | "front" | "rear" | "fuel" | "baggage";
@@ -65,6 +69,76 @@ export function emptyWbInput(): WbInput {
     maxGross: "",
     forwardLimit: "",
     aftLimit: "",
+  };
+}
+
+export const MY_AIRPLANE_NAME_MAX = 40;
+
+const MY_AIRPLANE_NUMBERS = [
+  "emptyWeight", "emptyArm", "maxGross", "frontArm", "rearArm", "fuelArm", "baggageArm", "forwardLimit", "aftLimit",
+] as const;
+
+/** Repair a stored value. Anything that is not a full, sensible set of numbers becomes undefined. */
+export function normalizeMyAirplane(value: unknown): MyAirplane | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const v = value as Record<string, unknown>;
+  const out = {} as Record<(typeof MY_AIRPLANE_NUMBERS)[number], number>;
+  for (const k of MY_AIRPLANE_NUMBERS) {
+    const n = v[k];
+    if (typeof n !== "number" || !Number.isFinite(n)) return undefined;
+    out[k] = n;
+  }
+  if (!(out.emptyWeight > 0) || !(out.maxGross > 0)) return undefined;
+  if (!(out.forwardLimit < out.aftLimit)) return undefined;
+  const name = typeof v.name === "string" ? v.name.trim().slice(0, MY_AIRPLANE_NAME_MAX).trim() : "";
+  return { ...(name ? { name } : {}), ...(out as Omit<MyAirplane, "name">) };
+}
+
+/** Read the typed POH boxes (and an optional name) into a saveable airplane, or say what is missing. */
+export function myAirplaneFromInput(input: WbInput, name = ""): MyAirplane | { error: string } {
+  const fields: Array<[string, string, string]> = [
+    ["emptyWeight", input.rows.empty.amount, "Basic empty weight"],
+    ["emptyArm", input.rows.empty.arm, "Basic empty weight arm"],
+    ["maxGross", input.maxGross, "Max gross weight"],
+    ["frontArm", input.rows.front.arm, "Front seat arm"],
+    ["rearArm", input.rows.rear.arm, "Rear seats arm"],
+    ["fuelArm", input.rows.fuel.arm, "Fuel arm"],
+    ["baggageArm", input.rows.baggage.arm, "Baggage arm"],
+    ["forwardLimit", input.forwardLimit, "Forward CG limit"],
+    ["aftLimit", input.aftLimit, "Aft CG limit"],
+  ];
+  const raw: Record<string, unknown> = {};
+  for (const [key, text, label] of fields) {
+    const n = num(text);
+    if (!Number.isFinite(n)) return { error: `${label}: enter a number from your POH.` };
+    raw[key] = n;
+  }
+  if (!((raw.emptyWeight as number) > 0)) return { error: "Basic empty weight: enter a number above zero." };
+  if (!((raw.maxGross as number) > 0)) return { error: "Max gross weight: enter a number above zero." };
+  if (!((raw.forwardLimit as number) < (raw.aftLimit as number))) {
+    return { error: "Forward CG limit must be less than the aft CG limit." };
+  }
+  if (name.trim().length > MY_AIRPLANE_NAME_MAX) {
+    return { error: `Airplane name: use ${MY_AIRPLANE_NAME_MAX} characters or fewer.` };
+  }
+  const airplane = normalizeMyAirplane({ ...raw, name });
+  return airplane ?? { error: "Check your POH numbers." };
+}
+
+/** Fill the POH boxes from a saved airplane. People, fuel and baggage amounts stay as typed. */
+export function applyMyAirplane(input: WbInput, a: MyAirplane): WbInput {
+  const s = String;
+  return {
+    rows: {
+      empty: { amount: s(a.emptyWeight), arm: s(a.emptyArm) },
+      front: { ...input.rows.front, arm: s(a.frontArm) },
+      rear: { ...input.rows.rear, arm: s(a.rearArm) },
+      fuel: { ...input.rows.fuel, arm: s(a.fuelArm) },
+      baggage: { ...input.rows.baggage, arm: s(a.baggageArm) },
+    },
+    maxGross: s(a.maxGross),
+    forwardLimit: s(a.forwardLimit),
+    aftLimit: s(a.aftLimit),
   };
 }
 

@@ -211,7 +211,7 @@ export function SafetyTool({ state, save }: ToolProps) {
       </Card>
       <PerformanceAidCard />
     </div>
-    <WeightBalancePractice />
+    <WeightBalancePractice state={state} save={save} />
     </>
   );
 }
