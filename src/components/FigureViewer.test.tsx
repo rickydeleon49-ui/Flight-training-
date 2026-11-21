@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
@@ -64,6 +66,13 @@ it("keeps the default layout unless questionFirst is set", () => {
   expect(container.querySelector(".figure-view--question-first")).toBeNull();
   rerender(h(FigureViewer, { figure, questionFirst: true }));
   expect(container.querySelector(".figure-view--question-first")).toBeTruthy();
+});
+
+it("caps the pinned question so the Ruler bar stays reachable on a phone", () => {
+  const css = readFileSync(resolve(__dirname, "FigureViewer.css"), "utf8");
+  const rule = css.match(/\.figure-run--question-first \.figure-run__question \{[^}]*max-height: (\d+)dvh/);
+  expect(rule).toBeTruthy();
+  expect(Number(rule![1])).toBeLessThanOrEqual(40);
 });
 
 it("shows a Ruler toggle only for figures with a scale", () => {

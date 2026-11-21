@@ -128,7 +128,7 @@ function areaKey(question: PracticeQuestion): string {
 }
 
 /** Plain area name for a roman numeral key, e.g. "Preflight Preparation"; the numeral alone is a fallback. */
-function areaName(key: string): string {
+export function areaName(key: string): string {
   const i = (PRIVATE_AIRPLANE_ACS_AREAS as readonly string[]).indexOf(key);
   const label = summarizeAcsAreaMaterialCoverage()[i]?.areaLabel;
   return label ? label.replace(/^Area of Operation [IVX]+:\s*/, "") : `Area ${key}`;
