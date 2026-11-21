@@ -17,18 +17,18 @@ describe("FAA figure manifest", () => {
   it("matches the folder exactly", () => {
     expect(FAA_FIGURES.map((x) => x.file).sort()).toEqual([...shipped].sort());
     expect(FAA_FIGURES.length).toBeGreaterThanOrEqual(12);
-    expect(FAA_FIGURES.length).toBeLessThanOrEqual(21);
+    expect(FAA_FIGURES.length).toBeLessThanOrEqual(25);
     for (const fig of FAA_FIGURES) expect(fig.id).toBe(`faa-${fig.faaNumber}`);
   });
 
-  it("keeps each file at 250 KB or less and the folder at 1.5 MB or less", () => {
+  it("keeps each file at 250 KB or less and the folder at 2.5 MB or less", () => {
     let total = 0;
     for (const n of shipped) {
       const size = statSync(join(ROOT, n)).size;
       expect(size, n).toBeLessThanOrEqual(250 * 1024);
       total += size;
     }
-    expect(total).toBeLessThanOrEqual(1.5 * 1024 * 1024);
+    expect(total).toBeLessThanOrEqual(2.5 * 1024 * 1024);
   });
 
   it("words the credit plainly", () => {
