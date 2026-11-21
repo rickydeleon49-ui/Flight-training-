@@ -42,11 +42,11 @@
   .figure-run--with .figure-stage__scroll { max-height: 70vh; }
 }
 
-/* F7: opt-in "question first" layout (figure runs). Phone: question pinned on top, figure scrolls under it.
+/* F7: opt-in "question first" layout (figure runs). Phone: question pinned on top (capped at 36dvh, scrolls inside) so the figure and its Zoom/Ruler bar stay within reach.
    Wide: question left, figure right. Screens that do not add .figure-run--question-first keep .figure-run--with. */
 .figure-run--question-first { align-items: start; }
 .figure-run--question-first .figure-run__question {
-  position: sticky; top: 0; z-index: 1; max-height: 50dvh; overflow-y: auto;
+  position: sticky; top: 0; z-index: 1; max-height: 36dvh; overflow-y: auto;
   padding-bottom: var(--space-2); background: var(--surface-page);
 }
 .card .figure-run--question-first .figure-run__question { background: var(--surface-card); }

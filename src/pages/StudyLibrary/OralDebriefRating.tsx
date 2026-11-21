@@ -4,6 +4,7 @@ import { Button, Select } from "@/components/ui";
 import type { OralRating, StudyMaterial } from "@/domain/types";
 import { localDayOf, nowIso } from "@/lib/dates";
 import { PRIVATE_AIRPLANE_ACS_AREAS, summarizeAcsAreaMaterialCoverage } from "@/logic/acsAreaMaterialCoverage";
+import { areaName } from "@/logic/mockTest";
 import { ORAL_RATING_CAP } from "@/logic/oralRatings";
 import { useAppData } from "@/state/AppDataContext";
 import { updateToolkit } from "@/state/toolkitUpdate";
@@ -83,7 +84,7 @@ export function OralDebriefRating({
             onChange={setArea}
             options={PRIVATE_AIRPLANE_ACS_AREAS.map((roman) => ({
               value: roman,
-              label: areas.find((a) => a.area === roman)?.areaLabel || `Area ${roman}`,
+              label: areaName(roman),
             }))}
           />
           <p className="tiny muted">Your own view. Your instructor decides.</p>

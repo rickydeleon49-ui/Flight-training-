@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import type { OralRating } from "@/domain/types";
 import { formatLongDate } from "@/lib/dates";
+import { areaName } from "@/logic/mockTest";
 import { ACS_TASK_CATALOG } from "@/logic/acsTaskCatalog";
 import { referencesForTask, type AcsReferenceDocument } from "@/logic/acsTaskReferences";
 import { useAppData } from "@/state/AppDataContext";
@@ -82,7 +83,7 @@ export function NeedsWorkList({ ratings }: { ratings: readonly OralRating[] }) {
         const refs = areaReferences(area);
         return (
           <section key={area} data-testid={`needs-work-${area}`}>
-            <p className="tiny dim">{area}</p>
+            <p className="tiny dim">{area.startsWith("PA.") ? areaName(area.slice(3)) : area}</p>
             <ul className="acs-list">
               {rows.map((r) => {
                 const materialId = materials.get(r.scenarioId);

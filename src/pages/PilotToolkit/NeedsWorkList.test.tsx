@@ -30,6 +30,12 @@ it("shows a needs-work row with Open to its material", async () => {
   await waitFor(() => expect(screen.getByRole("link", { name: /Open/ }).getAttribute("href")).toBe("/study/m1?scenario=s1#material-oral"));
 });
 
+it("labels the area with its plain name, not the code", () => {
+  view([rate({ area: "PA.I" })]);
+  expect(screen.getByText("Preflight Preparation")).toBeTruthy();
+  expect(screen.queryByText("PA.I")).toBeNull();
+});
+
 it("hides Open when the material or scenario is gone, without failing", async () => {
   ctx.repositories = { oralScenarios: { list: async () => { throw new Error("gone"); } } };
   view([rate({})]);

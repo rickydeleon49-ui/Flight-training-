@@ -37,6 +37,13 @@ it("saves the rating with area and title", async () => {
   ]);
 });
 
+it("lists areas by plain name", async () => {
+  mount();
+  const select = await screen.findByLabelText("ACS area");
+  expect(select.textContent).toContain("Preflight Preparation");
+  expect(select.textContent).not.toContain("Area of Operation");
+});
+
 it("skip saves nothing and the save button needs a rating and an area", async () => {
   mount();
   const save = await screen.findByRole("button", { name: "Save my rating" });
