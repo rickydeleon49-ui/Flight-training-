@@ -11004,7 +11004,10 @@ mod edit_carry {
              ALTER TABLE journal_entries DROP COLUMN long_solo_xc;
              ALTER TABLE journal_entries DROP COLUMN night_xc_100;
              ALTER TABLE journal_entries DROP COLUMN checkride_prep;
-             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38, 39, 40, 41);",
+             ALTER TABLE practice_attempts DROP COLUMN timed_started_ms;
+             ALTER TABLE practice_attempts DROP COLUMN timed_deadline_ms;
+             ALTER TABLE practice_attempts DROP COLUMN timed_seconds_used;
+             DELETE FROM _sqlx_migrations WHERE version IN (35, 36, 37, 38, 39, 40, 41, 42);",
         )
         .unwrap();
         crate::backup::verify_application_connection(conn).unwrap();

@@ -15,7 +15,7 @@ describe("library folders schema 38", () => {
     expect(native).toMatch(
       /version: 38,\s+description: "library_folders",\s+sql: include_str!\("\.\.\/migrations\/0038_library_folders\.sql"\)/,
     );
-    expect(MIGRATIONS).toHaveLength(41);
+    expect(MIGRATIONS).toHaveLength(42);
   });
 
   it("deleting a material cascades and removes its placement row", async () => {
@@ -131,7 +131,7 @@ describe("library folders schema 38", () => {
     try {
       await applyMigrations(
         (sql) => engine.exec(sql),
-        new Set([38, 39, 40, 41]),
+        new Set([38, 39, 40, 41, 42]),
       );
       engine.exec(
         "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat-prev', 'Previous Book', 'now', 'now')",

@@ -26,6 +26,7 @@ import type {
   PracticeTestItem,
   PracticeTestVersion,
 } from "@/domain/types";
+import { LEGACY_TIMED_STORAGE_KEY, isTimedRecord, type TimedAttemptRecord } from "@/logic/timedAttempts";
 import type { SqlDatabase } from "../db";
 
 export interface PracticeSessionRepository {
@@ -42,6 +43,36 @@ export interface PracticeSessionRepository {
   getItems(versionId: string): Promise<PracticeTestItem[]>;
   getResponses(attemptId: string): Promise<PracticeResponse[]>;
   getConversionStatus(materialId: string): Promise<{ legacyMigratedAt: string | null; legacyError: string | null } | null>;
+  /** Test conditions (BL-106): the clock of an attempt, or null when it was not timed. */
+  getTimedRecord(attemptId: string): Promise<TimedAttemptRecord | null>;
+  /** Starts the clock once; a later call keeps the first values. */
+  setTimedStart(attemptId: string, startedMs: number, deadlineMs: number): Promise<void>;
+  /** Records the whole seconds used once, on a timed attempt; a later call keeps the first value. */
+  setTimedFinish(attemptId: string, secondsUsed: number): Promise<void>;
+  /**
+   * One-time move of the old browser-storage records onto their attempt rows.
+   * Only fills rows whose timed columns are still NULL, then removes the key.
+   */
+  importLegacyTimedAttempts(storage?: Pick<Storage, "getItem" | "removeItem"> | null): Promise<void>;
+}
+
+interface TimedColumns {
+  timed_started_ms: number | null;
+  timed_deadline_ms: number | null;
+  timed_seconds_used: number | null;
+}
+
+function timedFields(row: TimedColumns): {
+  timedStartedMs: number | null;
+  timedDeadlineMs: number | null;
+  timedSecondsUsed: number | null;
+} {
+  const n = (v: number | null) => (v === null || v === undefined ? null : Number(v));
+  return {
+    timedStartedMs: n(row.timed_started_ms),
+    timedDeadlineMs: n(row.timed_deadline_ms),
+    timedSecondsUsed: n(row.timed_seconds_used),
+  };
 }
 
 interface AttemptRow {
@@ -59,11 +90,15 @@ interface AttemptRow {
   incorrect_count: number;
   dont_know_count: number;
   score_percent: number | null;
+  timed_started_ms: number | null;
+  timed_deadline_ms: number | null;
+  timed_seconds_used: number | null;
 }
 
 const ATTEMPT_COLUMNS = `id, version_id, source_material_id, source_material_title,
                 started_at, completed_at, status, revision, total_questions,
-                answered_count, correct_count, incorrect_count, dont_know_count, score_percent`;
+                answered_count, correct_count, incorrect_count, dont_know_count, score_percent,
+                timed_started_ms, timed_deadline_ms, timed_seconds_used`;
 
 function attemptFromRow(row: AttemptRow): PracticeAttempt {
   return {
@@ -81,11 +116,88 @@ function attemptFromRow(row: AttemptRow): PracticeAttempt {
     incorrectCount: Number(row.incorrect_count),
     dontKnowCount: Number(row.dont_know_count),
     scorePercent: row.score_percent !== null ? Number(row.score_percent) : null,
+    ...timedFields(row),
   };
 }
 
 export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepository {
+  async function importLegacyTimedAttempts(
+    storage: Pick<Storage, "getItem" | "removeItem"> | null | undefined = globalThis.localStorage,
+  ): Promise<void> {
+    let raw: string | null = null;
+    try {
+      raw = storage?.getItem(LEGACY_TIMED_STORAGE_KEY) ?? null;
+    } catch {
+      return;
+    }
+    if (raw === null) return;
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null; // unreadable: drop it
+    }
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      for (const [attemptId, value] of Object.entries(parsed as Record<string, unknown>)) {
+        if (!isTimedRecord(value)) continue;
+        await db.execute(
+          `UPDATE practice_attempts
+           SET timed_started_ms = ?, timed_deadline_ms = ?, timed_seconds_used = ?
+           WHERE id = ? AND timed_started_ms IS NULL AND timed_deadline_ms IS NULL AND timed_seconds_used IS NULL`,
+          [Math.round(value.startedMs), Math.round(value.deadlineMs), value.secondsUsed === undefined ? null : Math.round(value.secondsUsed), attemptId],
+        );
+      }
+    }
+    try {
+      storage?.removeItem(LEGACY_TIMED_STORAGE_KEY);
+    } catch {
+      /* A leftover key is harmless: the import only fills empty rows. */
+    }
+  }
+
+  // The import runs before the first timed read of this repository, once.
+  let imported: Promise<void> | null = null;
+  const ensureImported = (): Promise<void> => {
+    imported ??= importLegacyTimedAttempts().catch(() => {
+      imported = null;
+    });
+    return imported;
+  };
+
   return {
+    importLegacyTimedAttempts,
+
+    async getTimedRecord(attemptId: string): Promise<TimedAttemptRecord | null> {
+      await ensureImported();
+      const rows = await db.select<TimedColumns>(
+        "SELECT timed_started_ms, timed_deadline_ms, timed_seconds_used FROM practice_attempts WHERE id = ?",
+        [attemptId],
+      );
+      const row = rows[0];
+      if (!row || row.timed_started_ms === null || row.timed_deadline_ms === null) return null;
+      const record: TimedAttemptRecord = {
+        startedMs: Number(row.timed_started_ms),
+        deadlineMs: Number(row.timed_deadline_ms),
+      };
+      if (row.timed_seconds_used !== null) record.secondsUsed = Number(row.timed_seconds_used);
+      return record;
+    },
+
+    async setTimedStart(attemptId: string, startedMs: number, deadlineMs: number): Promise<void> {
+      await db.execute(
+        "UPDATE practice_attempts SET timed_started_ms = ?, timed_deadline_ms = ? WHERE id = ? AND timed_started_ms IS NULL",
+        [Math.round(startedMs), Math.round(deadlineMs), attemptId],
+      );
+    },
+
+    async setTimedFinish(attemptId: string, secondsUsed: number): Promise<void> {
+      await db.execute(
+        `UPDATE practice_attempts SET timed_seconds_used = ?
+         WHERE id = ? AND timed_started_ms IS NOT NULL AND timed_seconds_used IS NULL`,
+        [Math.max(0, Math.round(secondsUsed)), attemptId],
+      );
+    },
+
     async saveSessionAction(action: PracticeSessionAction): Promise<PracticeSessionActionResult> {
       if (typeof db.savePracticeSessionAtomically !== "function") {
         throw new Error("Practice session mutations require a database driver with atomic transaction support.");
@@ -148,6 +260,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
     },
 
     async getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null> {
+      await ensureImported();
       const attempts = await db.select<{
         id: string;
         version_id: string;
@@ -155,8 +268,9 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         total_questions: number;
         answered_count: number;
         revision: number;
-      }>(
-        `SELECT id, version_id, started_at, total_questions, answered_count, revision
+      } & TimedColumns>(
+        `SELECT id, version_id, started_at, total_questions, answered_count, revision,
+                timed_started_ms, timed_deadline_ms, timed_seconds_used
          FROM practice_attempts
          WHERE source_material_id = ? AND status = 'in_progress'`,
         [materialId],
@@ -212,10 +326,12 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         revision: Number(attempt.revision),
         nextUnansweredOrdinal,
         responses,
+        ...timedFields(attempt),
       };
     },
 
     async getAttempt(attemptId: string): Promise<PracticeAttempt | null> {
+      await ensureImported();
       const rows = await db.select<AttemptRow>(
         `SELECT ${ATTEMPT_COLUMNS}
          FROM practice_attempts
@@ -241,6 +357,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
     },
 
     async getCompletedHistory(historyKey: string, limit?: number): Promise<CompletedHistoryItem[]> {
+      await ensureImported();
       if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) throw new Error("Invalid history limit");
       const rows = await db.select<{
         attempt_id: string;
@@ -256,11 +373,12 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         incorrect_count: number;
         dont_know_count: number;
         score_percent: number;
-      }>(
+      } & TimedColumns>(
         `SELECT a.id AS attempt_id, a.version_id, v.version_number, v.history_key,
                 v.source_material_title, a.started_at, a.completed_at,
                 a.total_questions, a.answered_count, a.correct_count,
-                a.incorrect_count, a.dont_know_count, a.score_percent
+                a.incorrect_count, a.dont_know_count, a.score_percent,
+                a.timed_started_ms, a.timed_deadline_ms, a.timed_seconds_used
          FROM practice_attempts a
          JOIN practice_test_versions v ON a.version_id = v.id
          WHERE v.history_key = ? AND a.status = 'completed'
@@ -286,6 +404,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
           dontKnowCount: Number(r.dont_know_count),
           unansweredCount: total - answered,
           scorePercent: Number(r.score_percent),
+          ...timedFields(r),
         };
       });
     },

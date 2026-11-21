@@ -7,10 +7,7 @@ import { createRepositories, type Repositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import type { PracticeTest } from "@/domain/types";
 import {
-  TIMED_STORAGE_KEY,
   formatClock,
-  isTimedAttempt,
-  readTimedAttempt,
   timeAnnouncement,
 } from "@/logic/timedAttempts";
 import { makeMaterial } from "@/testing/factories";
@@ -100,7 +97,8 @@ describe("PracticeTestPanel test conditions", () => {
     expect(screen.getByText(/Explanation one/)).toBeTruthy();
     expect(screen.queryByText(/Time left/)).toBeNull();
     const attempt = await repos.practiceSessions.getCurrentAttempt("mat-1");
-    expect(attempt && isTimedAttempt(attempt.attemptId)).toBe(false);
+    expect(attempt?.timedStartedMs).toBeNull();
+    expect(await repos.practiceSessions.getTimedRecord(attempt?.attemptId ?? "")).toBeNull();
   });
 
   it("timed: counts down from questions x 2 minutes, hides feedback, finish confirms unanswered", async () => {
@@ -139,7 +137,26 @@ describe("PracticeTestPanel test conditions", () => {
     expect(screen.queryByText(/would pass|ready/i)).toBeNull();
     const link = screen.getByRole("link", { name: "Question 1" });
     expect(link.getAttribute("href")).toContain("?review=missed");
-    expect(readTimedAttempt((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.attemptId ?? "") ?? true).toBeTruthy();
+    const [done] = await db.select<{ id: string; timed_started_ms: number; timed_deadline_ms: number; timed_seconds_used: number }>(
+      "SELECT id, timed_started_ms, timed_deadline_ms, timed_seconds_used FROM practice_attempts WHERE status = 'completed'",
+    );
+    expect(done?.timed_deadline_ms).toBe(done!.timed_started_ms + 240_000);
+    expect(done?.timed_seconds_used).toBeGreaterThanOrEqual(30);
+    expect(await repos.practiceSessions.getTimedRecord(done!.id)).toMatchObject({ startedMs: done!.timed_started_ms });
+  });
+
+  it("timed: remounting resumes the clock from the database, not from the browser", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(new Date("2026-11-15T10:00:00Z"));
+    const first = await renderPanel();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Test conditions/ }));
+    await saveTimedAnswer(1);
+    expect(screen.getByText("Time left: 04:00")).toBeTruthy();
+    expect(localStorage.getItem("hfd.timedAttempts.v1")).toBeNull();
+    first.unmount();
+    vi.setSystemTime(new Date("2026-11-15T10:01:00Z"));
+    await renderPanel();
+    expect(await screen.findByText("Time left: 03:00")).toBeTruthy();
   });
 
   it("timed: auto-finishes at the deadline and unanswered count as missed", async () => {
@@ -164,11 +181,8 @@ describe("PracticeTestPanel test conditions", () => {
     expect(timeAnnouncement(60_000)).toBe("1 minute left");
   });
 
-  it("old saved data still loads: no side record means untimed; garbage storage is ignored", () => {
-    expect(readTimedAttempt("attempt-from-before")).toBeNull();
-    localStorage.setItem(TIMED_STORAGE_KEY, "{not json");
-    expect(isTimedAttempt("x")).toBe(false);
-    localStorage.setItem(TIMED_STORAGE_KEY, JSON.stringify({ x: { startedMs: 1, deadlineMs: 2 } }));
-    expect(isTimedAttempt("x")).toBe(true);
+  it("old saved data still loads: untimed attempts read NULL", async () => {
+    await renderPanel();
+    expect(await repos.practiceSessions.getTimedRecord("attempt-from-before")).toBeNull();
   });
 });

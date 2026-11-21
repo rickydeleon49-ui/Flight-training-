@@ -1,12 +1,12 @@
 /**
  * "Test conditions" for a practice test. The pace is the FAA written-test pace
  * for the Private Pilot Airplane test (60 questions in 2.0 hours), i.e. two
- * minutes per question. The timing is kept in a small add-only side record per
- * attempt, so the saved attempt format does not change and attempts saved
- * before this existed load exactly as they did.
+ * minutes per question. The timing lives on the attempt row (nullable columns,
+ * NULL = not timed), so attempts saved before this existed load as untimed.
  */
 export const SECONDS_PER_QUESTION = 120;
-export const TIMED_STORAGE_KEY = "hfd.timedAttempts.v1";
+/** Old browser-storage key, read once to move earlier records into the database. */
+export const LEGACY_TIMED_STORAGE_KEY = "hfd.timedAttempts.v1";
 
 export interface TimedAttemptRecord {
   /** Epoch ms the clock started. */
@@ -21,71 +21,26 @@ export function timedSecondsFor(questionCount: number): number {
   return Math.max(0, Math.floor(questionCount)) * SECONDS_PER_QUESTION;
 }
 
-function readAll(): Record<string, TimedAttemptRecord> {
-  try {
-    const raw = globalThis.localStorage?.getItem(TIMED_STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, TimedAttemptRecord>)
-      : {};
-  } catch {
-    return {};
-  }
+/** The record for a clock started at `nowMs` for a test of `questionCount` questions. */
+export function newTimedRecord(questionCount: number, nowMs: number = Date.now()): TimedAttemptRecord {
+  return { startedMs: nowMs, deadlineMs: nowMs + timedSecondsFor(questionCount) * 1000 };
 }
 
-function writeAll(all: Record<string, TimedAttemptRecord>): void {
-  try {
-    globalThis.localStorage?.setItem(TIMED_STORAGE_KEY, JSON.stringify(all));
-  } catch {
-    /* Timing is a convenience; the attempt itself is saved elsewhere. */
-  }
-}
-
-function isRecord(value: unknown): value is TimedAttemptRecord {
+export function isTimedRecord(value: unknown): value is TimedAttemptRecord {
   const v = value as TimedAttemptRecord | null;
-  return !!v && typeof v.startedMs === "number" && typeof v.deadlineMs === "number";
-}
-
-export function readTimedAttempt(attemptId: string): TimedAttemptRecord | null {
-  const value = readAll()[attemptId];
-  return isRecord(value) ? value : null;
-}
-
-export function isTimedAttempt(attemptId: string): boolean {
-  return readTimedAttempt(attemptId) !== null;
-}
-
-export function startTimedAttempt(
-  attemptId: string,
-  questionCount: number,
-  nowMs: number = Date.now(),
-): TimedAttemptRecord {
-  const record: TimedAttemptRecord = {
-    startedMs: nowMs,
-    deadlineMs: nowMs + timedSecondsFor(questionCount) * 1000,
-  };
-  writeAll({ ...readAll(), [attemptId]: record });
-  return record;
+  return (
+    !!v &&
+    typeof v === "object" &&
+    Number.isFinite(v.startedMs) &&
+    Number.isFinite(v.deadlineMs) &&
+    (v.secondsUsed === undefined || Number.isFinite(v.secondsUsed))
+  );
 }
 
 /** Whole seconds used by `finishedMs`, never more than the time allowed. */
 export function secondsUsedAt(record: TimedAttemptRecord, finishedMs: number): number {
   const limit = Math.round((record.deadlineMs - record.startedMs) / 1000);
   return Math.min(limit, Math.max(0, Math.round((finishedMs - record.startedMs) / 1000)));
-}
-
-/** Records the time used once; later calls keep the first value. */
-export function finishTimedAttempt(
-  attemptId: string,
-  finishedMs: number = Date.now(),
-): TimedAttemptRecord | null {
-  const all = readAll();
-  const record = all[attemptId];
-  if (!isRecord(record)) return null;
-  if (typeof record.secondsUsed === "number") return record;
-  const next = { ...record, secondsUsed: secondsUsedAt(record, finishedMs) };
-  writeAll({ ...all, [attemptId]: next });
-  return next;
 }
 
 export function remainingMs(record: TimedAttemptRecord, nowMs: number = Date.now()): number {
