@@ -618,6 +618,10 @@ export interface PracticeAttempt {
   incorrectCount: number;
   dontKnowCount: number;
   scorePercent: number | null;
+  /** Test conditions (BL-106): epoch ms the clock started; null/absent = not timed. */
+  timedStartedMs?: number | null;
+  timedDeadlineMs?: number | null;
+  timedSecondsUsed?: number | null;
 }
 
 export interface PracticeResponse {
@@ -649,6 +653,10 @@ export interface PracticeSessionState {
   revision: number;
   nextUnansweredOrdinal: number | null;
   responses: PracticeSessionResponseSummary[];
+  /** Test conditions (BL-106): epoch ms the clock started; null/absent = not timed. */
+  timedStartedMs?: number | null;
+  timedDeadlineMs?: number | null;
+  timedSecondsUsed?: number | null;
 }
 
 export interface PracticeRecordResponseResult {
@@ -750,6 +758,10 @@ export interface CompletedHistoryItem {
   dontKnowCount: number;
   unansweredCount: number;
   scorePercent: number;
+  /** Test conditions (BL-106): epoch ms the clock started; null/absent = not timed. */
+  timedStartedMs?: number | null;
+  timedDeadlineMs?: number | null;
+  timedSecondsUsed?: number | null;
 }
 
 export interface EraseHistoryAction {

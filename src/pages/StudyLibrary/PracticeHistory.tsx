@@ -26,7 +26,6 @@ import type {
   PracticeTestVersion,
 } from "@/domain/types";
 import { formatLongDate, localDayOf } from "@/lib/dates";
-import { isTimedAttempt } from "@/logic/timedAttempts";
 import {
   REVIEW_QUERY_PARAM,
   buildAttemptReview,
@@ -427,7 +426,7 @@ function HistoryGroupDetailPage({ historyKey }: { historyKey: string }) {
                         {attempt.correctCount} of {attempt.totalQuestions} correct
                       </Badge>
                       <Badge tone="neutral">Version {attempt.versionNumber}</Badge>
-                      {isTimedAttempt(attempt.attemptId) ? <Badge tone="neutral">Timed</Badge> : null}
+                      {attempt.timedStartedMs != null ? <Badge tone="neutral">Timed</Badge> : null}
                     </div>
                     <p className="tiny dim">
                       {completedText(attempt.completedAt)} • {attempt.correctCount} correct

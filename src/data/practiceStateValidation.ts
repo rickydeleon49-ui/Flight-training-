@@ -54,6 +54,20 @@ async function validatePracticeUnchecked(query: ValidationQuery): Promise<void> 
   }
 }
 
+const TIMED_COLUMNS = ["timed_started_ms", "timed_deadline_ms", "timed_seconds_used"];
+
+async function validateTimedAttempts(query: ValidationQuery): Promise<void> {
+  for (const name of TIMED_COLUMNS) {
+    const rows = await query(`SELECT type, "notnull" AS required FROM pragma_table_info('practice_attempts') WHERE name = ?`, [name]);
+    if (rows.length !== 1) refuse(`Table practice_attempts is missing required column: ${name}`);
+    const row = rows[0]!;
+    if (text(row, "type").toLowerCase() !== "integer" || int(row, "required") !== 0) refuse(`Table practice_attempts column ${name} type mismatch.`);
+    if ((await count(query, `SELECT COUNT(*) AS n FROM practice_attempts WHERE ${name} IS NOT NULL AND typeof(${name}) <> 'integer'`, [])) !== 0) {
+      refuse(`Table practice_attempts has an invalid ${name} value.`);
+    }
+  }
+}
+
 function refuse(message: string): never {
   throw new PracticeStateValidationError(message);
 }
@@ -270,6 +284,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 37) await validateStudyPackState(query, reference);
   if (newest >= 38) await validateLibraryFolders(query, reference);
   if (newest >= 39) await validatePracticeUnchecked(query);
+  if (newest >= 42) await validateTimedAttempts(query);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -297,6 +312,8 @@ export async function validatePracticeState(query: ValidationQuery, reference: V
       if (table === "practice_test_items" && (name === "logical_id" || name === "replaces_id")) continue;
       // 0039 adds the "not checked" flag; checked by the schema-39 gate below.
       if (table === "practice_test_items" && name === "unchecked") continue;
+      // 0042 adds the timed-attempt columns; checked by the schema-42 gate below.
+      if (table === "practice_attempts" && TIMED_COLUMNS.includes(name)) continue;
       const column = actual.get(name);
       if (!column) refuse(`Table ${table} is missing required column: ${name}`);
       if (text(column, "type").toLowerCase() !== text(ref, "type").toLowerCase()) refuse(`Table ${table} column ${name} type mismatch.`);

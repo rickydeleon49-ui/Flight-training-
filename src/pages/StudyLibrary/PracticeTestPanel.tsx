@@ -30,12 +30,10 @@ import { TryMissedAgain } from "./TryMissedAgain";
 import { attemptReviewPath, buildAttemptReview, isMissedOrSkipped } from "@/logic/practiceAttemptReview";
 import {
   describeDuration,
-  finishTimedAttempt,
   formatClock,
-  readTimedAttempt,
   remainingMs,
   secondsUsedAt,
-  startTimedAttempt,
+  newTimedRecord,
   timeAnnouncement,
   type TimedAttemptRecord,
 } from "@/logic/timedAttempts";
@@ -934,13 +932,24 @@ export function PracticeTestPanel({
   const timedActive = timedRecord !== null && attemptInProgress;
 
   useEffect(() => {
-    if (!attemptIdNow || !attemptInProgress) return;
-    let record = readTimedAttempt(attemptIdNow);
-    if (!record && timedWanted && totalQuestions > 0) {
-      record = startTimedAttempt(attemptIdNow, totalQuestions);
-    }
-    setTimedState(record ? { attemptId: attemptIdNow, record } : null);
-  }, [attemptIdNow, attemptInProgress, timedWanted, totalQuestions]);
+    if (!attemptIdNow || !attemptInProgress || !repositories) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        let record = await repositories.getTimedRecord(attemptIdNow);
+        if (!record && timedWanted && totalQuestions > 0) {
+          record = newTimedRecord(totalQuestions);
+          await repositories.setTimedStart(attemptIdNow, record.startedMs, record.deadlineMs);
+        }
+        if (!cancelled) setTimedState(record ? { attemptId: attemptIdNow, record } : null);
+      } catch {
+        /* Timing is a convenience; the attempt itself is saved elsewhere. */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [attemptIdNow, attemptInProgress, timedWanted, totalQuestions, repositories]);
 
   useEffect(() => {
     if (!timedActive) return;
@@ -951,11 +960,26 @@ export function PracticeTestPanel({
 
   useEffect(() => {
     const result = state.completedResult;
-    if (!result) return;
+    if (!result || !repositories) return;
     setTimedWanted(false);
-    const record = finishTimedAttempt(result.attemptId, Date.parse(result.completedAt) || Date.now());
-    if (record) setTimedState({ attemptId: result.attemptId, record });
-  }, [state.completedResult]);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const record = await repositories.getTimedRecord(result.attemptId);
+        if (!record) return;
+        const finished = record.secondsUsed === undefined
+          ? { ...record, secondsUsed: secondsUsedAt(record, Date.parse(result.completedAt) || Date.now()) }
+          : record;
+        if (record.secondsUsed === undefined) await repositories.setTimedFinish(result.attemptId, finished.secondsUsed!);
+        if (!cancelled) setTimedState({ attemptId: result.attemptId, record: finished });
+      } catch {
+        /* The result screen falls back to the clock it already has. */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.completedResult, repositories]);
 
   const timeLeftMs = timedRecord ? remainingMs(timedRecord, nowMs) : 0;
 

@@ -327,6 +327,9 @@ pub(super) fn verify_application_connection_with_ceiling(
     if newest_migration >= 39 {
         verify_schema_39_practice_unchecked(connection)?;
     }
+    if newest_migration >= 42 {
+        verify_schema_42_timed_attempts(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -644,6 +647,44 @@ pub(crate) fn verify_schema_39_practice_unchecked(connection: &Connection) -> Re
     )? != 0
     {
         return Err(damaged());
+    }
+    Ok(())
+}
+
+/// BL-106: the three timed-attempt columns on `practice_attempts` exactly as migrated
+/// (nullable INTEGER, no default). Values must be whole numbers or NULL.
+pub(crate) fn verify_schema_42_timed_attempts(connection: &Connection) -> Result<(), String> {
+    for column in [
+        "timed_started_ms",
+        "timed_deadline_ms",
+        "timed_seconds_used",
+    ] {
+        let found: Option<(String, i64)> = connection
+            .query_row(
+                "SELECT type, [notnull] FROM pragma_table_info('practice_attempts') WHERE name = ?1",
+                [column],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()
+            .map_err(|e| format!("Failed to read practice_attempts columns: {e}"))?;
+        let Some((kind, notnull)) = found else {
+            return Err(format!(
+                "Table practice_attempts missing required column: {column}"
+            ));
+        };
+        if !kind.eq_ignore_ascii_case("INTEGER") || notnull != 0 {
+            return Err("Damaged practice timer record.".to_string());
+        }
+        let bad = m3_count(
+            connection,
+            &format!(
+                "SELECT COUNT(*) FROM practice_attempts WHERE {column} IS NOT NULL AND typeof({column}) <> 'integer'"
+            ),
+            &[],
+        )?;
+        if bad != 0 {
+            return Err("Damaged practice timer record.".to_string());
+        }
     }
     Ok(())
 }
@@ -2701,6 +2742,16 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), 
             }
             if table == "practice_test_items" && col_name == "unchecked" {
                 continue; // added by 0039; required by verify_schema_39_practice_unchecked
+            }
+            if table == "practice_attempts"
+                && [
+                    "timed_started_ms",
+                    "timed_deadline_ms",
+                    "timed_seconds_used",
+                ]
+                .contains(&col_name.as_str())
+            {
+                continue; // added by 0042; required by verify_schema_42_timed_attempts
             }
             let Some((actual_type, actual_notnull, actual_pk)) = conn_cols.get(&col_name) else {
                 return Err(format!("Table {table} missing required column: {col_name}"));

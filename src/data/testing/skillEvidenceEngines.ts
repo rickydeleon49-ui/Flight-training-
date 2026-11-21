@@ -348,6 +348,7 @@ export function withoutSchema16And17Columns(rows: Record<string, unknown[]>): Re
   if ("material_bookmarks" in rows) out.material_bookmarks = strip("material_bookmarks", { quote: null });
   if ("practice_tests" in rows) out.practice_tests = strip("practice_tests", { retired_json: "[]" });
   if ("practice_test_items" in rows) out.practice_test_items = strip("practice_test_items", { logical_id: null, replaces_id: null, unchecked: 0 });
+  if ("practice_attempts" in rows) out.practice_attempts = strip("practice_attempts", { timed_started_ms: null, timed_deadline_ms: null, timed_seconds_used: null });
   if ("journal_entries" in rows) out.journal_entries = strip("journal_entries", { school_name: null, towered_full_stop_landings: null, long_solo_xc: null, night_xc_100: null, checkride_prep: null });
   return out;
 }

@@ -9395,6 +9395,108 @@ mod practice_unchecked_backup_tests {
 }
 
 #[cfg(test)]
+mod timed_attempts_backup_tests {
+    use super::*;
+
+    const SEED: &str = "INSERT INTO study_materials (id, title, material_type, topic, created_at, updated_at) VALUES ('m', 'T', 'study_guide', 'other', 'now', 'now');
+         INSERT INTO practice_test_versions (id, source_material_id, history_key, source_material_title, content_hash, created_at, is_active)
+           VALUES ('v', 'm', 'k', 'T', 'h', 'now', 0);
+         INSERT INTO practice_test_items (id, version_id, ordinal, question_text, options_json, correct_index)
+           VALUES ('i', 'v', 0, 'Q', '[\"A\",\"B\"]', 0);";
+
+    fn copy(connection: &Connection) -> Connection {
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+        restored
+    }
+
+    #[test]
+    fn schema_42_accepts_the_new_schema_and_round_trips_the_values() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_42_timed_attempts(&connection).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY);
+                 INSERT INTO schema_migrations (version) VALUES (42);",
+            )
+            .unwrap();
+        connection.execute_batch(SEED).unwrap();
+        connection
+            .execute_batch(
+                "INSERT INTO practice_attempts (id, version_id, source_material_id, source_material_title, started_at, status, total_questions, timed_started_ms, timed_deadline_ms, timed_seconds_used)
+                   VALUES ('a', 'v', 'm', 'T', 'now', 'in_progress', 1, 1000, 121000, 42);",
+            )
+            .unwrap();
+        let restored = copy(&connection);
+        verify_application_connection(&restored).unwrap();
+        let row: (i64, i64, i64) = restored
+            .query_row(
+                "SELECT timed_started_ms, timed_deadline_ms, timed_seconds_used FROM practice_attempts WHERE id = 'a'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(row, (1000, 121000, 42));
+    }
+
+    #[test]
+    fn schema_42_rejects_a_damaged_timer_value() {
+        let connection = get_reference_schema_connection().unwrap();
+        connection.execute_batch(SEED).unwrap();
+        connection
+            .execute_batch(
+                "INSERT INTO practice_attempts (id, version_id, source_material_id, source_material_title, started_at, status, total_questions, timed_started_ms)
+                   VALUES ('a', 'v', 'm', 'T', 'now', 'in_progress', 1, 'soon');",
+            )
+            .unwrap();
+        assert!(verify_schema_42_timed_attempts(&connection)
+            .unwrap_err()
+            .contains("timer"));
+    }
+
+    #[test]
+    fn schema_41_backup_restores_and_migrates_with_null_timer_values() {
+        let connection = get_reference_schema_connection_through(41).unwrap();
+        connection
+            .execute_batch(
+                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY);
+                 INSERT INTO schema_migrations (version) VALUES (41);",
+            )
+            .unwrap();
+        connection.execute_batch(SEED).unwrap();
+        connection
+            .execute_batch(
+                "INSERT INTO practice_attempts (id, version_id, source_material_id, source_material_title, started_at, status, total_questions)
+                   VALUES ('a', 'v', 'm', 'T', 'now', 'in_progress', 1);",
+            )
+            .unwrap();
+        let restored = copy(&connection);
+        // A schema-41 backup has no timer columns and still passes verification.
+        verify_application_connection(&restored).unwrap();
+        for m in crate::migrations().into_iter().filter(|m| m.version > 41) {
+            restored.execute_batch(m.sql).unwrap();
+            restored
+                .execute(
+                    "INSERT INTO schema_migrations (version) VALUES (?1)",
+                    [m.version],
+                )
+                .unwrap();
+        }
+        verify_schema_42_timed_attempts(&restored).unwrap();
+        let nulls = m3_count(
+            &restored,
+            "SELECT COUNT(*) FROM practice_attempts WHERE timed_started_ms IS NULL AND timed_deadline_ms IS NULL AND timed_seconds_used IS NULL",
+            &[],
+        )
+        .unwrap();
+        assert_eq!(nulls, 1);
+    }
+}
+
+#[cfg(test)]
 mod kit_queue_tests {
     use super::*;
 
