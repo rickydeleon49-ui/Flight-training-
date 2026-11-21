@@ -97,7 +97,7 @@ it("#ai-provider is visible without opening a fold and the material page links t
   await open();
   fireEvent.click(screen.getByRole("link", { name: "Provider settings" }));
   expect(document.getElementById("ai-provider")?.closest("details")).toBeNull();
-  const material = readFileSync(`${process.cwd()}/src/pages/StudyLibrary/MaterialDetail.tsx`, "utf8");
+  const material = readFileSync(`${process.cwd()}/src/pages/StudyLibrary/MaterialDetailNotices.tsx`, "utf8");
   expect(material).toContain('to="/settings#ai-provider">Open Settings</Link>');
 });
 it("an asynchronous provider error shows in the AI helper section", async () => {
