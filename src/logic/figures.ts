@@ -27,9 +27,11 @@ function f(faaNumber: number, title: string, alt: string, width: number, height:
 
 export const FAA_FIGURES: FaaFigure[] = [
   f(2, "Load factor chart", "Table and graph showing how the load factor grows as the bank angle increases", 1341, 1033),
+  f(3, "Altimeter", "Three altimeter dials numbered 1 to 3, each with three hands, a pressure setting window and a feet scale", 649, 1793),
   f(4, "Airspeed indicator", "Airspeed indicator in knots with white, green, yellow and red markings around the dial", 1345, 1062),
   f(5, "Turn coordinator", "Turn coordinator dial with a small airplane symbol, left and right turn marks, a ball in a curved tube and the label 2 MIN", 1346, 1057),
   f(6, "Heading indicator", "Heading indicator dial showing compass headings around the circle with a small airplane symbol in the center", 1345, 1058),
+  f(7, "Attitude indicator", "Attitude indicator with a tilted horizon line, a miniature airplane and a bank pointer at the top, marked A, B and C", 1346, 1229),
   f(8, "Density altitude chart", "Chart for finding density altitude from pressure altitude and temperature", 1334, 1361),
   f(12, "METAR reports", "Five coded METAR and SPECI weather reports for airports, one per row", 1334, 360),
   f(15, "Terminal aerodrome forecasts (TAF)", "Coded terminal aerodrome forecasts for several airports", 1344, 555),
@@ -38,6 +40,7 @@ export const FAA_FIGURES: FaaFigure[] = [
   f(34, "Airplane weight and balance graphs", "Loading graph of weight against moment, and a graph of the loaded airplane's weight and moment limits", 1334, 1766),
   f(36, "Crosswind component graph", "Graph for finding the crosswind and headwind parts of a wind from its angle and speed", 1334, 1165),
   f(37, "Airplane landing distance graph", "Graph for finding landing distance from altitude, temperature, weight and wind", 1093, 1794),
+  f(38, "Airplane landing distance table", "Table of landing ground roll and distance to clear a 50 foot obstacle at four altitudes, with three notes below", 1600, 359),
   f(40, "Airplane takeoff distance graph", "Graph for finding takeoff distance from temperature, altitude, weight, wind and obstacle height, with a worked example and a speed table", 1795, 1044),
   f(47, "VASI illustrations", "Visual approach slope indicator light patterns for too high, on glidepath and too low", 1334, 1489),
   f(48, "Airport diagram", "Airport diagram with runways, taxiways and the control tower", 1332, 1534),
@@ -47,6 +50,7 @@ export const FAA_FIGURES: FaaFigure[] = [
   f(64, "Airport markings", "Runway and taxiway pavement markings, with their names", 1334, 1431),
   f(65, "U.S. airport signs", "Airport signs and their meanings, such as mandatory, direction and location signs", 1244, 1756),
   f(68, "Wind triangle", "Wind triangle with an airplane flying from point A to point B in a wind", 957, 1785),
+  f(72, "Velocity vs. G-loads", "Graph of load factor against indicated airspeed showing the normal operating range, the caution range and the never exceed speed", 1600, 752),
 ];
 
 export function getFigure(id: string): FaaFigure | undefined {
