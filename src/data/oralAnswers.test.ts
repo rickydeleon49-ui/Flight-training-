@@ -177,7 +177,7 @@ it("no export, packet, handout or Markdown code reads her answers", () => {
   const readers = files.filter((f) => readFileSync(f, "utf8").includes("oral_answers")).sort();
   // Only the migration list, the verifiers and her own repository: no export, packet or handout.
   expect(readers).toEqual([
-    "src-tauri/src/backup/mod.rs",
+    "src-tauri/src/backup/verify_schema.rs",
     "src-tauri/src/lib.rs",
     "src-tauri/src/oral_scenarios.rs",
     "src/data/migrations.ts",
