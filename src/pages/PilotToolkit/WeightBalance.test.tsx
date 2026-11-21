@@ -1,27 +1,36 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
+import type { ToolkitState } from "@/domain/types";
+import { WeightBalancePractice } from "./WeightBalancePractice";
 
 import type { AppData } from "@/state/AppDataContext";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
 import { makeProfile } from "@/testing/factories";
 import { PilotToolkit, toolFrom } from "./PilotToolkit";
 
+let store: ToolkitState = DEFAULT_TOOLKIT_STATE;
+
 vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({
     data: {
       profile: makeProfile({ pilotName: "Synthetic pilot" }),
-      toolkit: DEFAULT_TOOLKIT_STATE,
+      toolkit: store,
       milestones: [], goals: [], checklistItems: [], actions: [], materials: [],
       aiStudySets: [], practiceTests: [], tags: [], events: [], prepItems: [],
       journalEntries: [], questions: [], notes: [], transactions: [],
     } as unknown as AppData,
-    mutate: async () => null,
+    mutate: async (fn: (repos: unknown) => Promise<unknown>) =>
+      fn({ toolkit: { get: async () => store, save: async (next: ToolkitState) => { store = next; return next; } } }),
   }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  store = DEFAULT_TOOLKIT_STATE;
+});
 
 it("fills a practice problem and reveals its answer", () => {
   render(<MemoryRouter initialEntries={["/?tool=safety"]}><PilotToolkit /></MemoryRouter>);
@@ -117,4 +126,50 @@ it("scrolls to the top when the Toolkit opens and when its tool changes", () => 
   fireEvent.click(screen.getByRole("button", { name: /^Safety Check/ }));
   expect(scrollTo).toHaveBeenCalledWith(0, 0);
   vi.unstubAllGlobals();
+});
+
+const PLANE = { emptyWeight: 1500, emptyArm: 85, maxGross: 2300, frontArm: 80, rearArm: 118, fuelArm: 95, baggageArm: 142, forwardLimit: 82, aftLimit: 95 };
+
+function Harness({ start }: { start?: typeof PLANE }) {
+  const [state, setState] = useState<ToolkitState>({ ...DEFAULT_TOOLKIT_STATE, ...(start ? { myAirplane: start } : {}) });
+  const save = async (change: (c: ToolkitState) => ToolkitState) => { setState(change(state)); return true; };
+  return <WeightBalancePractice state={state} save={save} />;
+}
+const type = (label: RegExp | string, value: string) =>
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
+
+it("shows the empty state, saves my airplane, then clears it", async () => {
+  render(<Harness />);
+  fireEvent.click(screen.getByRole("radio", { name: "My airplane" }));
+  expect(screen.getByText("Add your airplane's POH numbers")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  expect((screen.getByRole("button", { name: "Save my airplane" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.getByText(/Save is off\./)).toBeTruthy();
+  type("Basic empty weight (lb)", "1500");
+  type("Basic empty weight arm (in)", "85");
+  type("Pilot and front seat arm (in)", "80");
+  type("Rear seats arm (in)", "118");
+  type("Fuel arm (in)", "95");
+  type("Baggage arm (in)", "142");
+  type("Max gross weight (lb)", "2300");
+  type("Forward CG limit (in)", "82");
+  type("Aft CG limit (in)", "95");
+  fireEvent.click(screen.getByRole("button", { name: "Save my airplane" }));
+  expect(await screen.findByText("Saved your airplane.")).toBeTruthy();
+  expect(screen.getByText(/Max gross weight: 2300 lb/)).toBeTruthy();
+  type("Pilot and front seat (lb)", "340");
+  type("Fuel (gallons)", "30");
+  expect(screen.getByText(/Center of gravity:/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Clear my airplane" }));
+  expect(await screen.findByText("Cleared your airplane.")).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Fill in Problem 1/ })).toBeTruthy();
+});
+
+it("prefills from a saved airplane on mount and keeps blank practice separate", () => {
+  render(<Harness start={PLANE} />);
+  expect(screen.getByText(/Basic empty weight: 1500 lb at 85 in/)).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Fill in Problem 1/ })).toBeNull();
+  fireEvent.click(screen.getByRole("radio", { name: "Blank practice" }));
+  expect(screen.getByRole("button", { name: /Fill in Problem 1/ })).toBeTruthy();
+  expect((screen.getByLabelText("Max gross weight (lb, optional)") as HTMLInputElement).value).toBe("");
 });

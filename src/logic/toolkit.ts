@@ -14,6 +14,7 @@ import type {
   Transaction,
 } from "@/domain/types";
 import { addDays, daysBetween, todayIso } from "@/lib/dates";
+import { normalizeMyAirplane } from "./weightBalance";
 import { normalizePersonalMinimums } from "./personalMinimums";
 import { normalizeMockTest, normalizeQuestionBookmarks } from "./mockTestState";
 import { normalizeOralRatings } from "./oralRatings";
@@ -177,6 +178,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
   const {
     studyGuideNotice,
     personalMinimums: storedMinimums,
+    myAirplane: storedAirplane,
     mockTest: _mockTest,
     questionBookmarks: _bookmarks,
     oralRatings: _ratings,
@@ -198,6 +200,7 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     ...(input.bringChecks !== undefined
       ? { bringChecks: normalizeBringChecks(input.bringChecks) }
       : {}),
+    ...optionalField("myAirplane", normalizeMyAirplane(storedAirplane)),
     ...optionalField("mockTest", normalizeMockTest(input.mockTest)),
     ...optionalField("questionBookmarks", normalizeQuestionBookmarks(input.questionBookmarks)),
     ...optionalField("oralRatings", normalizeOralRatings(input.oralRatings)),

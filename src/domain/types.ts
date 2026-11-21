@@ -1414,6 +1414,20 @@ export interface StudyReminder {
   time: string;
 }
 
+/** The student's own POH numbers, saved once. Lb and inches; fuel arm is the arm of the fuel row. */
+export interface MyAirplane {
+  name?: string;
+  emptyWeight: number;
+  emptyArm: number;
+  maxGross: number;
+  frontArm: number;
+  rearArm: number;
+  fuelArm: number;
+  baggageArm: number;
+  forwardLimit: number;
+  aftLimit: number;
+}
+
 /** Optional personal minimums set with an instructor. Every field is optional. */
 export interface PersonalMinimums {
   /** Lowest ceiling, feet AGL. */
@@ -1511,6 +1525,8 @@ export interface ToolkitState {
   showCareerPortfolio?: boolean;
   /** Optional: the practical test day. Counted down on the Flight Deck. Off when missing. */
   checkrideDate?: IsoDate | null;
+  /** Optional: the student's own airplane POH numbers for the weight and balance card. None when missing. */
+  myAirplane?: MyAirplane;
   /** Optional: personal minimums saved once with an instructor. None when missing. */
   personalMinimums?: PersonalMinimums;
   /** Optional: endorsements you have ticked yourself, by checklist id. Off when missing. */

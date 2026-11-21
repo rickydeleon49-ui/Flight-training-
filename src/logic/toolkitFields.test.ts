@@ -99,3 +99,15 @@ describe("updateToolkit", () => {
     expect(stored.checkrideDate).toBe("2027-01-01");
   });
 });
+
+describe("myAirplane field", () => {
+  const plane = { emptyWeight: 1500, emptyArm: 85, maxGross: 2300, frontArm: 80, rearArm: 118, fuelArm: 95, baggageArm: 142, forwardLimit: 82, aftLimit: 95 };
+  it("round trips, drops bad, stays absent", () => {
+    const base = defaultToolkitState();
+    const kept = normalizeToolkitState({ ...base, myAirplane: plane, checkrideDate: "2027-01-01" });
+    expect(kept.myAirplane).toEqual(plane);
+    expect(kept.checkrideDate).toBe("2027-01-01");
+    expect("myAirplane" in normalizeToolkitState({ ...base, myAirplane: { ...plane, aftLimit: 1 } })).toBe(false);
+    expect("myAirplane" in normalizeToolkitState(base)).toBe(false);
+  });
+});
