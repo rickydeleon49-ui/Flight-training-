@@ -7,7 +7,7 @@ describe("S9 sections and control scale", () => {
   it("Notes composer, Schedule month and Toolkit read-only blocks use Section", () => {
     expect(read("./Notes/Notes.tsx")).toContain('<Section title="Write something down">');
     expect(read("./Schedule/Schedule.tsx")).toContain("<Section\n          title={formatMonthYear(monthAnchor)}");
-    const tk = read("./PilotToolkit/PilotToolkit.tsx");
+    const tk = read("./PilotToolkit/PilotToolkit.tsx") + read("./PilotToolkit/InstructorReport.tsx");
     for (const t of ["Current goals", "Recent instructor feedback", "Discussion notes"]) {
       expect(tk).toContain(`<Section title="${t}">`);
     }
